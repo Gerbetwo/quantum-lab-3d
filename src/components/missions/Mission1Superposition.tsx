@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Sparkles, Scan, RotateCcw, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Scan, RotateCcw, ArrowRight, CheckCircle2, HelpCircle, Activity, Info, Coins } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playLaserScan, playQuantumCollapse } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 
@@ -12,19 +12,17 @@ interface Props {
 
 export default function Mission1Superposition({ onComplete }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [theta, setTheta] = useState(Math.PI / 2); // default 90 deg = equator (50/50 superposition)
+  const [theta, setTheta] = useState(Math.PI / 2);
   const [isSuperposition, setIsSuperposition] = useState(true);
   const [collapsedState, setCollapsedState] = useState<number | null>(null);
   const [measureCount, setMeasureCount] = useState(0);
   const [userDeduction, setUserDeduction] = useState<string | null>(null);
   const [showDeductionFeedback, setShowDeductionFeedback] = useState(false);
 
-  // Three.js scene refs
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const vectorArrowRef = useRef<THREE.ArrowHelper | null>(null);
   const shockwaveRef = useRef<THREE.Mesh | null>(null);
-  const particlesRef = useRef<THREE.Points | null>(null);
   const animFrameId = useRef<number | null>(null);
 
   useEffect(() => {
@@ -33,7 +31,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
     const width = container.clientWidth || 360;
     const height = 300;
 
-    // 1. Scene, Camera, Renderer
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
@@ -48,48 +45,46 @@ export default function Mission1Superposition({ onComplete }: Props) {
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // 2. Translucent Bloch Sphere
+    // Bloch Sphere
     const sphereGeo = new THREE.SphereGeometry(1, 32, 24);
     const sphereMat = new THREE.MeshBasicMaterial({
       color: 0x00f0ff,
       wireframe: true,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.14,
     });
     const sphere = new THREE.Mesh(sphereGeo, sphereMat);
     scene.add(sphere);
 
-    // 3. Equator Ring (Superposition Circle)
+    // Equator Ring
     const ringGeo = new THREE.RingGeometry(0.98, 1.02, 48);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xa855f7,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.4,
+      opacity: 0.35,
     });
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = Math.PI / 2;
     scene.add(ring);
 
-    // 4. Pole Markers (|0> North, |1> South)
+    // Poles
     const poleGeo = new THREE.SphereGeometry(0.06, 16, 16);
-    const poleMat0 = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-    const pole0 = new THREE.Mesh(poleGeo, poleMat0);
+    const pole0 = new THREE.Mesh(poleGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
     pole0.position.set(0, 1, 0);
     scene.add(pole0);
 
-    const poleMat1 = new THREE.MeshBasicMaterial({ color: 0x10b981 });
-    const pole1 = new THREE.Mesh(poleGeo, poleMat1);
+    const pole1 = new THREE.Mesh(poleGeo, new THREE.MeshBasicMaterial({ color: 0x10b981 }));
     pole1.position.set(0, -1, 0);
     scene.add(pole1);
 
-    // 5. State Vector Arrow
+    // State Vector
     const dir = new THREE.Vector3(Math.sin(theta), Math.cos(theta), 0).normalize();
     const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0, 0, 0), 1, 0x00f0ff, 0.2, 0.1);
     vectorArrowRef.current = arrow;
     scene.add(arrow);
 
-    // 6. Expanding Shockwave Mesh (for collapse)
+    // Shockwave Ring
     const shockGeo = new THREE.RingGeometry(0.1, 0.2, 32);
     const shockMat = new THREE.MeshBasicMaterial({
       color: 0x00f0ff,
@@ -102,42 +97,32 @@ export default function Mission1Superposition({ onComplete }: Props) {
     shockwaveRef.current = shock;
     scene.add(shock);
 
-    // 7. Ambient Particle Field
-    const particleCount = 60;
+    // Ambient Particles
     const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount * 3; i += 3) {
+    const pPos = new Float32Array(50 * 3);
+    for (let i = 0; i < 50 * 3; i += 3) {
       pPos[i] = (Math.random() - 0.5) * 3;
       pPos[i + 1] = (Math.random() - 0.5) * 3;
       pPos[i + 2] = (Math.random() - 0.5) * 3;
     }
     pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    const pMat = new THREE.PointsMaterial({
-      color: 0x00f0ff,
-      size: 0.035,
-      transparent: true,
-      opacity: 0.35,
-    });
-    const particles = new THREE.Points(pGeo, pMat);
-    particlesRef.current = particles;
+    const particles = new THREE.Points(
+      pGeo,
+      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.03, transparent: true, opacity: 0.3 })
+    );
     scene.add(particles);
 
-    // 8. Animation loop
     let shockScale = 0;
     const animate = () => {
       animFrameId.current = requestAnimationFrame(animate);
-
-      // Slow orbital rotation of sphere
       sphere.rotation.y += 0.003;
       particles.rotation.y -= 0.001;
 
-      // Animate shockwave if triggered
       if (shockMat.opacity > 0) {
         shockScale += 0.08;
         shock.scale.set(shockScale, shockScale, shockScale);
         shockMat.opacity -= 0.035;
       }
-
       renderer.render(scene, camera);
     };
     animate();
@@ -160,7 +145,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
     };
   }, []);
 
-  // Update vector arrow when theta or collapse state changes
   useEffect(() => {
     if (!vectorArrowRef.current) return;
     let targetTheta = theta;
@@ -169,21 +153,20 @@ export default function Mission1Superposition({ onComplete }: Props) {
     }
     const newDir = new THREE.Vector3(Math.sin(targetTheta), Math.cos(targetTheta), 0).normalize();
     vectorArrowRef.current.setDirection(newDir);
-    vectorArrowRef.current.setColor(isSuperposition ? 0x00f0ff : (collapsedState === 0 ? 0x00f0ff : 0x10b981));
+    vectorArrowRef.current.setColor(
+      isSuperposition ? 0x00f0ff : collapsedState === 0 ? 0x00f0ff : 0x10b981
+    );
   }, [theta, isSuperposition, collapsedState]);
 
-  // Trigger measurement detector
   const handleMeasure = () => {
     playLaserScan();
     setTimeout(() => playQuantumCollapse(), 150);
 
-    // Trigger visual shockwave
     if (shockwaveRef.current) {
       shockwaveRef.current.scale.set(0.1, 0.1, 0.1);
       (shockwaveRef.current.material as THREE.MeshBasicMaterial).opacity = 0.9;
     }
 
-    // Probability rule: P(0) = cos^2(theta/2), P(1) = sin^2(theta/2)
     const prob0 = Math.cos(theta / 2) ** 2;
     const outcome = Math.random() < prob0 ? 0 : 1;
 
@@ -219,65 +202,63 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800 pb-4">
-        <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-cyan px-2 py-0.5 rounded bg-cyan/10 border border-cyan/30">
-            Fase 01: Superposición
-          </span>
-          <h2 className="text-2xl font-bold font-orbitron text-white mt-1">
-            El Misterio del Qubit y el Colapso
-          </h2>
+      {/* Header section */}
+      <div className="border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-2 text-cyan font-mono text-xs uppercase tracking-wider">
+          <Activity className="w-3.5 h-3.5" /> Misión 1 de 4
         </div>
-        <div className="text-xs text-slate-400 font-mono">
-          Mediciones realizadas: <span className="text-cyan font-bold">{measureCount}</span>
-        </div>
+        <h2 className="text-xl sm:text-2xl font-orbitron font-bold text-white mt-1">
+          Qubit y Superposición Cuántica
+        </h2>
+        <p className="text-sm text-slate-300 mt-1">
+          Experimenta cómo un bit clásico solo puede ser 0 o 1, mientras que un qubit existe en una combinación de ambos hasta que es medido.
+        </p>
       </div>
 
-      {/* Main Grid: 3D Canvas + Controls */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        {/* 3D Viewport */}
-        <div className="lg:col-span-7 bg-[#0b0f1d] border border-cyan/20 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden shadow-2xl">
-          <div className="absolute top-3 left-4 text-xs font-mono text-slate-400 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-cyan animate-ping" />
-            ESFERA DE BLOCH 3D (ESPACIO DE HILBERT)
+      {/* Main interactive split */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* 3D Canvas Box */}
+        <div className="lg:col-span-7 bg-[#080d1a] border border-slate-800 rounded-xl p-4 flex flex-col items-center relative">
+          <div className="w-full flex justify-between items-center text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-2 mb-2">
+            <span>Esfera de Bloch (Espacio de Estados)</span>
+            <span>Mediciones: <strong className="text-cyan">{measureCount}</strong></span>
           </div>
 
           <div ref={containerRef} className="w-full cursor-grab active:cursor-grabbing" />
 
-          {/* Holographic readout */}
-          <div className="w-full mt-2 flex justify-between items-center bg-black/40 border border-slate-800 rounded-xl px-4 py-2 text-xs font-mono">
-            <div>
-              ESTADO:{' '}
+          {/* Telemetry bar */}
+          <div className="w-full mt-3 bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs font-mono">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">Estado actual:</span>
               {isSuperposition ? (
-                <span className="text-purple-400 font-bold animate-pulse">
-                  SUPERPOSICIÓN (|0⟩ y |1⟩ simultáneos)
+                <span className="text-purple-300 font-bold bg-purple-950/60 border border-purple-500/40 px-2 py-0.5 rounded">
+                  Superposición (|0⟩ + |1⟩)
                 </span>
               ) : (
-                <span className="text-emerald-400 font-bold">
-                  COLAPSO DEFINITIVO A |{collapsedState}⟩
+                <span className="text-emerald-300 font-bold bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
+                  Colapsado a |{collapsedState}⟩
                 </span>
               )}
             </div>
             <div className="text-slate-400">
-              P(|0⟩): {Math.round(Math.cos(theta / 2) ** 2 * 100)}% | P(|1⟩):{' '}
+              Probabilidad: |0⟩ = {Math.round(Math.cos(theta / 2) ** 2 * 100)}% | |1⟩ ={' '}
               {Math.round(Math.sin(theta / 2) ** 2 * 100)}%
             </div>
           </div>
         </div>
 
-        {/* Controls & Discovery Panel */}
+        {/* Controls and Insight */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col gap-4">
-            <h3 className="text-sm font-rajdhani font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan" /> Manipulación Cuántica
-            </h3>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+            <div className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <Scan className="w-4 h-4 text-cyan" /> Controles de Medición
+            </div>
 
             {/* Slider */}
             <div>
-              <div className="flex justify-between text-xs font-mono text-slate-400 mb-1">
+              <div className="flex justify-between text-xs text-slate-400 mb-1.5 font-mono">
                 <span>Polo Norte |0⟩</span>
-                <span className="text-cyan font-bold">Ecuador (Superposición 50/50)</span>
+                <span className="text-cyan font-semibold">Ecuador (50/50)</span>
                 <span>Polo Sur |1⟩</span>
               </div>
               <input
@@ -292,70 +273,75 @@ export default function Mission1Superposition({ onComplete }: Props) {
                   setCollapsedState(null);
                 }}
                 className="w-full accent-cyan cursor-pointer"
+                aria-label="Ajustar ángulo del qubit"
               />
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+            {/* Buttons */}
+            <div className="flex gap-2.5 pt-1">
               <button
                 onClick={handleMeasure}
-                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan to-blue-600 text-black font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-cyan/25"
+                className="flex-1 py-3 px-4 rounded-lg bg-cyan text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyan/90 transition-all shadow-md shadow-cyan/20 active:scale-95"
               >
-                <Scan className="w-4 h-4" /> Disparar Detector
+                <Scan className="w-4 h-4" /> Medir Qubit
               </button>
               <button
                 onClick={handleReset}
-                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-orbitron text-xs flex items-center justify-center gap-1.5 transition-all"
-                title="Reiniciar a Superposición"
+                className="py-3 px-3.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono flex items-center justify-center transition-all border border-slate-700"
+                title="Reiniciar superposición"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Intuitive Insight Callout */}
-          <div className="bg-cyan/5 border-l-4 border-cyan p-4 rounded-r-xl text-xs leading-relaxed text-slate-300">
-            <strong className="text-cyan block mb-1 font-orbitron text-[11px]">
-              🪙 Analogía de la Moneda en el Aire:
-            </strong>
-            Una moneda apoyada es cara o sello (bit clásico). Mientras gira en el aire, es una combinación de ambos a la vez (superposición). Pero al atraparla en la mano para observarla... ¡colapsa de inmediato a una sola cara!
+          {/* Simple Observation Box */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-300">
+            <Coins className="w-5 h-5 text-cyan shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-white block font-medium mb-1">
+                Analogía cotidiana: La moneda girando en el aire
+              </strong>
+              Una moneda clásica apoyada en la mesa solo puede ser cara o sello (0 o 1). Mientras gira en el aire representa ambos estados a la vez (superposición). Al atraparla para observarla, la superposición desaparece y colapsa a una única cara definitiva.
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Gamified Deductive Challenge */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 mt-2">
-        <h4 className="text-sm font-rajdhani font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
-          🎯 Reto de Descubrimiento: ¿Qué le ocurre al qubit al ser medido por el detector?
-        </h4>
+      {/* Discovery Task */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <div className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 text-cyan" />
+          Reto de comprensión: ¿Qué ocurre físicamente cuando se mide un qubit que está en superposición?
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => handleDeductionSelect('duplicate')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userDeduction === 'duplicate'
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
-            A) Se duplica en dos partículas idénticas independientes
+            A) Se duplica en dos qubits independientes
           </button>
           <button
             onClick={() => handleDeductionSelect('collapse')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userDeduction === 'collapse'
-                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
             B) Colapsa a uno de los estados posibles (0 o 1)
           </button>
           <button
             onClick={() => handleDeductionSelect('infinite')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userDeduction === 'infinite'
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
             C) Permanece en superposición indefinidamente
@@ -364,26 +350,30 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
         {showDeductionFeedback && (
           <div
-            className={`mt-4 p-3 rounded-xl text-xs flex items-center justify-between ${
+            className={`mt-4 p-3.5 rounded-lg text-xs flex items-center justify-between gap-3 ${
               userDeduction === 'collapse'
-                ? 'bg-emerald-500/10 border border-emerald-500/40 text-emerald-300'
-                : 'bg-rose-500/10 border border-rose-500/40 text-rose-300'
+                ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
+                : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <div className="flex items-center gap-2.5">
+              {userDeduction === 'collapse' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              ) : (
+                <Info className="w-4 h-4 text-rose-400 shrink-0" />
+              )}
               <span>
                 {userDeduction === 'collapse'
-                  ? '¡Exacto! La interacción con el instrumento de medida destruye la superposición y fuerza el colapso.'
-                  : 'Pista: Observa el vector en 3D al pulsar el detector. ¿Ves que se fija firmemente en un polo?'}
+                  ? 'Correcto. La medición destruye la superposición y fuerza al qubit a colapsar a un único estado clásico.'
+                  : 'Pista: Observa el vector en la esfera 3D al medir: ¿permanece a mitad de camino o se fija en un polo?'}
               </span>
             </div>
             {userDeduction === 'collapse' && (
               <button
                 onClick={onComplete}
-                className="ml-3 px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-orbitron font-bold text-xs uppercase flex items-center gap-1 hover:brightness-110 shrink-0"
+                className="px-3.5 py-1.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs flex items-center gap-1.5 shrink-0 transition-colors"
               >
-                Avanzar a Fase 2 <ArrowRight className="w-3.5 h-3.5" />
+                Siguiente Misión <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>

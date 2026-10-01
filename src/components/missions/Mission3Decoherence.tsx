@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { ThermometerSnowflake, AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ThermometerSnowflake, AlertTriangle, ArrowRight, CheckCircle2, HelpCircle, Info, Sliders } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playDecoherenceAlert } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 
@@ -13,7 +13,7 @@ interface Props {
 
 export default function Mission3Decoherence({ onComplete, onBack }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [temperature, setTemperature] = useState(15); // 15 millikelvin = 0.015 K
+  const [temperature, setTemperature] = useState(15);
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
@@ -47,7 +47,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // 1. Chandelier Rings (Golden cryostat plates)
+    // Chandelier Rings
     const chandelier = new THREE.Group();
     chandelierRingsRef.current = chandelier;
 
@@ -55,27 +55,22 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     const ringHeights = [0.8, 0.4, 0.0];
     ringRadii.forEach((r, idx) => {
       const ringGeo = new THREE.TorusGeometry(r, 0.025, 16, 40);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true });
-      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      const ringMesh = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true }));
       ringMesh.rotation.x = Math.PI / 2;
       ringMesh.position.y = ringHeights[idx];
       chandelier.add(ringMesh);
     });
     scene.add(chandelier);
 
-    // 2. Central Quantum Processor Core
+    // Quantum Core
     const coreGeo = new THREE.BoxGeometry(0.5, 0.25, 0.5);
-    const coreMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      wireframe: true,
-    });
-    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+    const coreMesh = new THREE.Mesh(coreGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true }));
     coreMesh.position.y = -0.3;
     coreMeshRef.current = coreMesh;
     scene.add(coreMesh);
 
-    // 3. Thermal Noise Particles
-    const pCount = 90;
+    // Thermal Particles
+    const pCount = 80;
     const pGeo = new THREE.BufferGeometry();
     const pPos = new Float32Array(pCount * 3);
     const pVel = new Float32Array(pCount * 3);
@@ -90,23 +85,18 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
     particleVelocitiesRef.current = pVel;
 
-    const pMat = new THREE.PointsMaterial({
-      color: 0x00f0ff,
-      size: 0.035,
-      transparent: true,
-      opacity: 0.6,
-    });
-    const particles = new THREE.Points(pGeo, pMat);
+    const particles = new THREE.Points(
+      pGeo,
+      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.035, transparent: true, opacity: 0.6 })
+    );
     particlesRef.current = particles;
     scene.add(particles);
 
-    // 4. Animation
     const animate = () => {
       animFrameId.current = requestAnimationFrame(animate);
       chandelier.rotation.y += 0.005;
       coreMesh.rotation.y += 0.01;
 
-      // Jitter core if hot
       if (coreMeshRef.current && temperature > 120) {
         coreMeshRef.current.position.x = (Math.random() - 0.5) * 0.03;
         coreMeshRef.current.position.z = (Math.random() - 0.5) * 0.03;
@@ -115,7 +105,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
         coreMeshRef.current.position.z = 0;
       }
 
-      // Animate thermal particles based on temperature
       if (particlesRef.current && particleVelocitiesRef.current) {
         const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
         const speedMultiplier = 1 + (temperature / 300) * 12;
@@ -153,7 +142,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     };
   }, []);
 
-  // Handle temperature changes and update materials
   const handleTempChange = (val: number) => {
     setTemperature(val);
 
@@ -190,62 +178,58 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800 pb-4">
-        <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-cyan px-2 py-0.5 rounded bg-cyan/10 border border-cyan/30">
-            Fase 03: Estabilidad Térmica
-          </span>
-          <h2 className="text-2xl font-bold font-orbitron text-white mt-1">
-            El Congelador Cuántico y la Decoherencia
-          </h2>
+      {/* Header */}
+      <div className="border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-2 text-cyan font-mono text-xs uppercase tracking-wider">
+          <ThermometerSnowflake className="w-3.5 h-3.5" /> Misión 3 de 4
         </div>
-        <div className="text-xs text-slate-400 font-mono">
-          Estado criogénico:{' '}
-          <span className={isDecoherent ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
-            {isDecoherent ? 'DECOHERENCIA CRÍTICA' : 'SUPERCONDUCTOR COHERENTE'}
-          </span>
-        </div>
+        <h2 className="text-xl sm:text-2xl font-orbitron font-bold text-white mt-1">
+          Criogenia y Decoherencia Cuántica
+        </h2>
+        <p className="text-sm text-slate-300 mt-1">
+          Observa por qué los procesadores cuánticos operan dentro de refrigeradores de dilución a temperaturas cercanas al cero absoluto.
+        </p>
       </div>
 
-      {/* 3D Simulation & Thermal Slider */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        {/* 3D Viewport */}
-        <div className="lg:col-span-7 bg-[#0b0f1d] border border-cyan/20 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden shadow-2xl">
-          <div className="absolute top-3 left-4 text-xs font-mono text-slate-400 flex items-center gap-1.5">
-            <ThermometerSnowflake className="w-3.5 h-3.5 text-cyan animate-pulse" />
-            CRIÓSTATO DE DILUCIÓN (CERO ABSOLUTO)
+      {/* Main split */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* 3D Canvas Viewport */}
+        <div className="lg:col-span-7 bg-[#080d1a] border border-slate-800 rounded-xl p-4 flex flex-col items-center relative">
+          <div className="w-full flex justify-between items-center text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-2 mb-2">
+            <span>Cámara Criogénica de Dilución</span>
+            <span className={isDecoherent ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+              {isDecoherent ? 'Alerta: Decoherencia' : 'Coherencia Estable'}
+            </span>
           </div>
 
           <div ref={containerRef} className="w-full cursor-grab active:cursor-grabbing" />
 
           {/* Temperature HUD */}
-          <div className="w-full mt-2 flex justify-between items-center bg-black/50 border border-slate-800 rounded-xl px-4 py-2.5">
-            <div className="text-xs font-mono">
-              TEMPERATURA DEL NÚCLEO:{' '}
-              <span className={`font-bold font-orbitron text-base ${isDecoherent ? 'text-rose-400' : 'text-cyan'}`}>
+          <div className="w-full mt-3 bg-slate-900 border border-slate-800 rounded-lg p-3 flex justify-between items-center font-mono text-xs">
+            <div>
+              <span className="text-slate-400">Temperatura del chip:</span>{' '}
+              <strong className={`text-base font-orbitron ${isDecoherent ? 'text-rose-400' : 'text-cyan'}`}>
                 {temperature === 15 ? '0.015 K (-273.13 °C)' : `${temperature} K`}
-              </span>
+              </strong>
             </div>
             {isDecoherent && (
-              <div className="flex items-center gap-1 text-[11px] font-mono text-rose-400 font-bold uppercase animate-pulse">
-                <AlertTriangle className="w-3.5 h-3.5" /> Ruido Térmico Destructivo
+              <div className="flex items-center gap-1.5 text-rose-400 font-bold font-sans">
+                <AlertTriangle className="w-4 h-4 shrink-0" /> Ruido térmico destructivo
               </div>
             )}
           </div>
         </div>
 
-        {/* Controls & Insight */}
+        {/* Controls */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col gap-4">
-            <h3 className="text-sm font-rajdhani font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <ThermometerSnowflake className="w-4 h-4 text-cyan" /> Regulador Térmico
-            </h3>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+            <div className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-cyan" /> Regulador de Temperatura
+            </div>
 
-            {/* Temperature Slider */}
             <div>
-              <div className="flex justify-between text-xs font-mono text-slate-400 mb-1">
-                <span className="text-cyan font-bold">0.015 K (Cero Absoluto)</span>
+              <div className="flex justify-between text-xs text-slate-400 mb-1.5 font-mono">
+                <span className="text-cyan font-semibold">0.015 K (Cero Absoluto)</span>
                 <span className="text-rose-400">300 K (Ambiente)</span>
               </div>
               <input
@@ -256,96 +240,106 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
                 value={temperature}
                 onChange={(e) => handleTempChange(parseInt(e.target.value))}
                 className="w-full accent-cyan cursor-pointer"
+                aria-label="Ajustar temperatura del procesador"
               />
             </div>
 
-            <p className="text-xs text-slate-400">
-              👉 <strong>Arrastra el slider a la derecha:</strong> Las vibraciones atómicas y el calor colisionan con el chip, destruyendo la superposición. Esto se denomina <strong className="text-white">Decoherencia Cuántica</strong>.
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Desliza hacia la derecha para calentar la cámara. A temperatura ambiente, las vibraciones y el calor del entorno colisionan con el chip provocando la pérdida del estado cuántico (<strong className="text-white">decoherencia</strong>).
             </p>
           </div>
 
-          <div className="bg-amber-500/5 border-l-4 border-amber-500 p-4 rounded-r-xl text-xs leading-relaxed text-slate-300">
-            <strong className="text-amber-400 block mb-1 font-orbitron text-[11px]">
-              ❄️ ¿Por qué tanto frío?
-            </strong>
-            No es por estética ni para que los procesadores pesen menos. Se enfría a temperaturas más gélidas que el espacio exterior para reducir al mínimo el ruido del entorno que provocaría la pérdida del estado cuántico.
+          {/* Simple Observation Box */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-300">
+            <ThermometerSnowflake className="w-5 h-5 text-cyan shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-white block font-medium mb-1">
+                El propósito del frío extremo
+              </strong>
+              Operar cerca del cero absoluto no es un requisito estético ni busca reducir el peso físico de los componentes. Su único propósito es reducir el ruido y las interferencias del entorno que destruyen el estado cuántico.
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Deductive Challenge */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 mt-2">
-        <h4 className="text-sm font-rajdhani font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
-          🎯 Reto de Descubrimiento: ¿Por qué muchas computadoras cuánticas operan a temperaturas cercanas al cero absoluto?
-        </h4>
+      {/* Discovery Task */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <div className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 text-cyan" />
+          Reto de comprensión: ¿Por qué muchas computadoras cuánticas operan a temperaturas cercanas al cero absoluto?
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => handleChoice('weight')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'weight'
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
             A) Para que los qubits y los cables pesen menos físicamente
           </button>
           <button
             onClick={() => handleChoice('noise_reduction')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'noise_reduction'
-                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
             B) Para reducir el ruido y la interferencia que provocan la pérdida del estado cuántico (decoherencia)
           </button>
           <button
             onClick={() => handleChoice('aesthetic')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'aesthetic'
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
-            C) Es un requerimiento puramente estético del diseño del equipo
+            C) Por un requerimiento estético del diseño exterior de los equipos
           </button>
         </div>
 
         {showFeedback && (
           <div
-            className={`mt-4 p-3 rounded-xl text-xs flex items-center justify-between ${
+            className={`mt-4 p-3.5 rounded-lg text-xs flex items-center justify-between gap-3 ${
               userChoice === 'noise_reduction'
-                ? 'bg-emerald-500/10 border border-emerald-500/40 text-emerald-300'
-                : 'bg-rose-500/10 border border-rose-500/40 text-rose-300'
+                ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
+                : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <div className="flex items-center gap-2.5">
+              {userChoice === 'noise_reduction' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              ) : (
+                <Info className="w-4 h-4 text-rose-400 shrink-0" />
+              )}
               <span>
                 {userChoice === 'noise_reduction'
-                  ? '¡Excelente deducción! El cero absoluto detiene las vibraciones que de otro modo destruirían la computación cuántica.'
-                  : 'Pista: Recuerda lo que viste en la simulación: el calor genera ruido que destruye la coherencia cuántica.'}
+                  ? 'Correcto. El frío extremo silencia las perturbaciones térmicas para evitar la decoherencia.'
+                  : 'Pista: Recuerda lo observado: el calor genera ruido en el entorno que colapsa el estado de superposición.'}
               </span>
             </div>
             {userChoice === 'noise_reduction' && (
               <button
                 onClick={onComplete}
-                className="ml-3 px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-orbitron font-bold text-xs uppercase flex items-center gap-1 hover:brightness-110 shrink-0"
+                className="px-3.5 py-1.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs flex items-center gap-1.5 shrink-0 transition-colors"
               >
-                Avanzar a Fase 4 <ArrowRight className="w-3.5 h-3.5" />
+                Siguiente Misión <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         )}
       </div>
 
-      <div className="flex justify-between items-center pt-2">
+      <div className="flex justify-between items-center pt-1">
         <button
           onClick={onBack}
           className="text-xs font-mono text-slate-400 hover:text-white transition-colors"
         >
-          ← Regresar a Fase 2
+          ← Regresar a Misión 2
         </button>
       </div>
     </div>

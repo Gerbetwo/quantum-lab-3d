@@ -9,6 +9,7 @@ import Mission4Applications from '@/components/missions/Mission4Applications';
 import CelebrationModal from '@/components/CelebrationModal';
 import { getStoredProgress, updateStoredMetrics } from '@/lib/cookies';
 import { playButtonClick } from '@/lib/sound';
+import { Check } from 'lucide-react';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -33,7 +34,6 @@ export default function Home() {
         return prev - 1;
       });
 
-      // Update total elapsed time in cookies every second
       updateStoredMetrics((prev) => ({
         ...prev,
         totalTimeSeconds: prev.totalTimeSeconds + 1,
@@ -63,7 +63,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col bg-[#070913] text-slate-100">
+    <div className="flex-1 flex flex-col bg-[#070913] text-slate-100 min-h-screen">
       {/* Top Header */}
       <Header
         timeLeft={timeLeft}
@@ -74,7 +74,7 @@ export default function Home() {
       {/* Progress Track */}
       <div className="w-full bg-slate-900 h-1">
         <div
-          className="h-full bg-gradient-to-r from-cyan via-purple-500 to-emerald-400 transition-all duration-500 shadow-sm shadow-cyan/50"
+          className="h-full bg-cyan transition-all duration-300 shadow-sm shadow-cyan/50"
           style={{ width: `${((activeTab + 1) / tabs.length) * 100}%` }}
         />
       </div>
@@ -90,28 +90,28 @@ export default function Home() {
               <button
                 key={idx}
                 onClick={() => handleTabChange(idx)}
-                className={`p-3 rounded-2xl border text-left flex flex-col gap-0.5 transition-all ${
+                className={`p-3 rounded-xl border text-left flex flex-col gap-1 transition-all ${
                   isActive
-                    ? 'bg-cyan/10 border-cyan text-white shadow-lg shadow-cyan/15'
+                    ? 'bg-slate-900 border-cyan text-white shadow-md shadow-cyan/10'
                     : isDone
-                    ? 'bg-slate-900/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                    ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
                     : 'bg-black/40 border-slate-900 text-slate-500 hover:text-slate-400'
                 }`}
               >
-                <div className="flex items-center justify-between text-xs font-orbitron font-bold">
+                <div className="flex items-center justify-between text-xs font-orbitron font-semibold">
                   <span className={isActive ? 'text-cyan' : isDone ? 'text-emerald-400' : ''}>
                     {tab.title}
                   </span>
-                  {isDone && <span className="text-[10px] text-emerald-400">✓</span>}
+                  {isDone && <Check className="w-3.5 h-3.5 text-emerald-400" />}
                 </div>
-                <div className="text-[11px] font-mono text-slate-400">{tab.desc}</div>
+                <div className="text-[11px] font-sans text-slate-400">{tab.desc}</div>
               </button>
             );
           })}
         </div>
 
         {/* Active Mission Render */}
-        <div className="flex-1 bg-[#0b0f1d]/80 border border-slate-800/80 rounded-3xl p-5 sm:p-8 shadow-2xl backdrop-blur-xl">
+        <div className="flex-1 bg-slate-950/70 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xl">
           {activeTab === 0 && (
             <Mission1Superposition onComplete={() => handleMissionComplete(0)} />
           )}

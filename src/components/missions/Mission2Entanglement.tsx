@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Radio, ArrowRight, CheckCircle2, Zap } from 'lucide-react';
+import { Radio, ArrowRight, CheckCircle2, Globe, Satellite, HelpCircle, Info, Share2 } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playLaserScan, playQuantumCollapse } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 
@@ -13,7 +13,7 @@ interface Props {
 
 export default function Mission2Entanglement({ onComplete, onBack }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [distance, setDistance] = useState(80); // Distance slider value
+  const [distance, setDistance] = useState(80);
   const [aliceVal, setAliceVal] = useState<string>('?');
   const [bobVal, setBobVal] = useState<string>('?');
   const [isEntangled, setIsEntangled] = useState(true);
@@ -25,7 +25,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const aliceMeshRef = useRef<THREE.Mesh | null>(null);
   const bobMeshRef = useRef<THREE.Mesh | null>(null);
-  const laserBeamRef = useRef<THREE.Line | null>(null);
   const animFrameId = useRef<number | null>(null);
 
   useEffect(() => {
@@ -48,57 +47,50 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // 1. Central Emitter
+    // Emitter
     const emitterGeo = new THREE.OctahedronGeometry(0.2, 0);
     const emitterMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
     const emitter = new THREE.Mesh(emitterGeo, emitterMat);
     scene.add(emitter);
 
-    // 2. Alice Station (Left)
+    // Alice Station (Left)
     const stationGeo = new THREE.IcosahedronGeometry(0.35, 1);
-    const aliceMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
-    const aliceMesh = new THREE.Mesh(stationGeo, aliceMat);
+    const aliceMesh = new THREE.Mesh(stationGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true }));
     aliceMesh.position.set(-1.8, 0, 0);
     aliceMeshRef.current = aliceMesh;
     scene.add(aliceMesh);
 
-    // 3. Bob Station (Right)
-    const bobMat = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true });
-    const bobMesh = new THREE.Mesh(stationGeo, bobMat);
+    // Bob Station (Right)
+    const bobMesh = new THREE.Mesh(stationGeo, new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true }));
     bobMesh.position.set(1.8, 0, 0);
     bobMeshRef.current = bobMesh;
     scene.add(bobMesh);
 
-    // 4. Entanglement Resonance Line
+    // Resonance line
     const lineGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-1.8, 0, 0),
       new THREE.Vector3(1.8, 0, 0),
     ]);
-    const lineMat = new THREE.LineDashedMaterial({
-      color: 0xa855f7,
-      dashSize: 0.1,
-      gapSize: 0.05,
-    });
+    const lineMat = new THREE.LineDashedMaterial({ color: 0xa855f7, dashSize: 0.1, gapSize: 0.05 });
     const laserBeam = new THREE.Line(lineGeo, lineMat);
     laserBeam.computeLineDistances();
-    laserBeamRef.current = laserBeam;
     scene.add(laserBeam);
 
-    // 5. Starfield / cosmic particles
-    const starCount = 80;
+    // Cosmic background particles
     const starGeo = new THREE.BufferGeometry();
-    const starPos = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount * 3; i += 3) {
+    const starPos = new Float32Array(70 * 3);
+    for (let i = 0; i < 70 * 3; i += 3) {
       starPos[i] = (Math.random() - 0.5) * 8;
       starPos[i + 1] = (Math.random() - 0.5) * 5;
       starPos[i + 2] = (Math.random() - 0.5) * 4;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, transparent: true, opacity: 0.5 });
-    const stars = new THREE.Points(starGeo, starMat);
+    const stars = new THREE.Points(
+      starGeo,
+      new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, transparent: true, opacity: 0.4 })
+    );
     scene.add(stars);
 
-    // 6. Animation
     const animate = () => {
       animFrameId.current = requestAnimationFrame(animate);
       emitter.rotation.y += 0.02;
@@ -166,57 +158,59 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800 pb-4">
-        <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-purple-400 px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30">
-            Fase 02: Entrelazamiento
-          </span>
-          <h2 className="text-2xl font-bold font-orbitron text-white mt-1">
-            La Conexión Fantasmagórica a Distancia
-          </h2>
+      {/* Header */}
+      <div className="border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-2 text-purple-400 font-mono text-xs uppercase tracking-wider">
+          <Share2 className="w-3.5 h-3.5" /> Misión 2 de 4
         </div>
-        <div className="text-xs text-slate-400 font-mono">
-          Pares analizados: <span className="text-purple-400 font-bold">{measuredCount}</span>
-        </div>
+        <h2 className="text-xl sm:text-2xl font-orbitron font-bold text-white mt-1">
+          Entrelazamiento Cuántico y No-Localidad
+        </h2>
+        <p className="text-sm text-slate-300 mt-1">
+          Descubre cómo dos o más partículas pueden compartir un estado correlacionado sin importar la distancia física que las separe.
+        </p>
       </div>
 
-      {/* 3D Simulation & Control */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        {/* 3D Viewport */}
-        <div className="lg:col-span-7 bg-[#0b0f1d] border border-purple-500/20 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden shadow-2xl">
-          <div className="absolute top-3 left-4 text-xs font-mono text-slate-400 flex items-center gap-1.5">
-            <Radio className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-            ENLACE CUÁNTICO INTERESTELAR (PARES BELL)
+      {/* Main split */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* 3D Canvas Viewport */}
+        <div className="lg:col-span-7 bg-[#080d1a] border border-slate-800 rounded-xl p-4 flex flex-col items-center relative">
+          <div className="w-full flex justify-between items-center text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-2 mb-2">
+            <span>Enlace entre Detectores Cuánticos</span>
+            <span>Pares analizados: <strong className="text-purple-400">{measuredCount}</strong></span>
           </div>
 
           <div ref={containerRef} className="w-full cursor-grab active:cursor-grabbing" />
 
-          {/* Detector Readout */}
-          <div className="w-full mt-2 grid grid-cols-2 gap-3">
-            <div className="bg-black/50 border border-cyan/40 rounded-xl p-3 text-center">
-              <div className="text-[10px] font-mono text-cyan tracking-wider">DETECTOR ALICE (TIERRA)</div>
-              <div className="text-xl font-orbitron font-bold text-white mt-0.5">{aliceVal}</div>
+          {/* Detector Readout Cards */}
+          <div className="w-full mt-3 grid grid-cols-2 gap-3 font-mono">
+            <div className="bg-slate-900 border border-cyan/40 rounded-lg p-3 text-center">
+              <div className="text-[11px] text-cyan flex items-center justify-center gap-1.5 font-sans font-semibold">
+                <Globe className="w-3.5 h-3.5" /> Estación Alice (Tierra)
+              </div>
+              <div className="text-xl font-orbitron font-bold text-white mt-1">{aliceVal}</div>
             </div>
-            <div className="bg-black/50 border border-emerald-500/40 rounded-xl p-3 text-center">
-              <div className="text-[10px] font-mono text-emerald-400 tracking-wider">DETECTOR BOB (ANDRÓMEDA)</div>
-              <div className="text-xl font-orbitron font-bold text-white mt-0.5">{bobVal}</div>
+            <div className="bg-slate-900 border border-emerald-500/40 rounded-lg p-3 text-center">
+              <div className="text-[11px] text-emerald-400 flex items-center justify-center gap-1.5 font-sans font-semibold">
+                <Satellite className="w-3.5 h-3.5" /> Estación Bob (Andrómeda)
+              </div>
+              <div className="text-xl font-orbitron font-bold text-white mt-1">{bobVal}</div>
             </div>
           </div>
         </div>
 
         {/* Controls */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col gap-4">
-            <h3 className="text-sm font-rajdhani font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-purple-400" /> Control del Experimento Bell
-            </h3>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+            <div className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <Radio className="w-4 h-4 text-purple-400" /> Control del Par Entrelazado
+            </div>
 
             {/* Distance Slider */}
             <div>
-              <div className="flex justify-between text-xs font-mono text-slate-400 mb-1">
-                <span>Distancia:</span>
-                <span className="text-purple-400 font-bold font-mono">
+              <div className="flex justify-between text-xs text-slate-400 mb-1.5 font-mono">
+                <span>Distancia relativa:</span>
+                <span className="text-purple-300 font-semibold">
                   {(distance * 0.035).toFixed(2)} Millones de Años Luz
                 </span>
               </div>
@@ -227,111 +221,120 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
                 value={distance}
                 onChange={(e) => setDistance(parseInt(e.target.value))}
                 className="w-full accent-purple-500 cursor-pointer"
+                aria-label="Ajustar distancia entre detectores"
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+            {/* Buttons */}
+            <div className="flex gap-2.5 pt-1">
               <button
                 onClick={handleMeasureAlice}
                 disabled={!isEntangled}
-                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 disabled:opacity-50 transition-all shadow-lg shadow-purple-500/25"
+                className="flex-1 py-3 px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-40 transition-all shadow-md shadow-purple-600/20 active:scale-95"
               >
-                🔬 Medir Qubit de Alice
+                <Radio className="w-4 h-4" /> Medir Qubit de Alice
               </button>
               <button
                 onClick={handleResetPair}
-                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-orbitron text-xs flex items-center justify-center gap-1.5 transition-all"
-                title="Generar Nuevo Par Entrelazado"
+                className="py-3 px-3.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono flex items-center justify-center transition-all border border-slate-700"
+                title="Generar nuevo par"
               >
-                Nuevo Par
+                Reiniciar
               </button>
             </div>
           </div>
 
-          {/* Deep Insight */}
-          <div className="bg-purple-500/5 border-l-4 border-purple-500 p-4 rounded-r-xl text-xs leading-relaxed text-slate-300">
-            <strong className="text-purple-400 block mb-1 font-orbitron text-[11px]">
-              🌌 La Regla de Correlación:
-            </strong>
-            No existe un cable físico ni señal electromagnética viajando entre Alice y Bob. Sin embargo, al medir la partícula de Alice, el estado de la de Bob queda fijado en el mismo instante exacto.
+          {/* Simple Observation Box */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-300">
+            <Share2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-white block font-medium mb-1">
+                La naturaleza de la correlación cuántica
+              </strong>
+              No existe ningún cable físico ni señal electromagnética viajando entre Alice y Bob tras haberse separado. Sin embargo, al medir la partícula de Alice, el estado de la partícula de Bob queda correlacionado al instante.
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Deductive Challenge */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 mt-2">
-        <h4 className="text-sm font-rajdhani font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
-          🎯 Reto de Descubrimiento: Que dos partículas entrelazadas mantengan su correlación &ldquo;sin importar la distancia&rdquo; significa que...
-        </h4>
+      {/* Discovery Task */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <div className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 text-purple-400" />
+          Reto de comprensión: Que dos partículas entrelazadas mantengan su correlación &ldquo;sin importar la distancia&rdquo; significa que...
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => handleChoice('ftls')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'ftls'
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
             A) La información clásica viaja por el espacio más rápido que la luz
           </button>
           <button
             onClick={() => handleChoice('instant_info')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'instant_info'
-                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
             B) Al medir una partícula se conoce de inmediato información sobre el estado de la otra, aunque estén muy separadas
           </button>
           <button
             onClick={() => handleChoice('local')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'local'
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
-            C) Solo funciona si ambas partículas están unidas físicamente por un cable
+            C) Solo funciona si ambas partículas están físicamente unidas por un cable
           </button>
         </div>
 
         {showFeedback && (
           <div
-            className={`mt-4 p-3 rounded-xl text-xs flex items-center justify-between ${
+            className={`mt-4 p-3.5 rounded-lg text-xs flex items-center justify-between gap-3 ${
               userChoice === 'instant_info'
-                ? 'bg-emerald-500/10 border border-emerald-500/40 text-emerald-300'
-                : 'bg-rose-500/10 border border-rose-500/40 text-rose-300'
+                ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
+                : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <div className="flex items-center gap-2.5">
+              {userChoice === 'instant_info' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              ) : (
+                <Info className="w-4 h-4 text-rose-400 shrink-0" />
+              )}
               <span>
                 {userChoice === 'instant_info'
-                  ? '¡Brillante! El entrelazamiento establece una correlación cuántica intrínseca que no depende de la distancia física.'
-                  : 'Pista: La teoría de la relatividad impide señales superlumínicas. Lo que ocurre es una correlación instantánea al medir.'}
+                  ? 'Correcto. La medición revela de inmediato el estado correlacionado sin requerir un medio de transmisión físico.'
+                  : 'Pista: La teoría de la relatividad prohíbe señales físicas más rápidas que la luz. Lo que ocurre es una correlación instantánea al medir.'}
               </span>
             </div>
             {userChoice === 'instant_info' && (
               <button
                 onClick={onComplete}
-                className="ml-3 px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-orbitron font-bold text-xs uppercase flex items-center gap-1 hover:brightness-110 shrink-0"
+                className="px-3.5 py-1.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs flex items-center gap-1.5 shrink-0 transition-colors"
               >
-                Avanzar a Fase 3 <ArrowRight className="w-3.5 h-3.5" />
+                Siguiente Misión <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         )}
       </div>
 
-      <div className="flex justify-between items-center pt-2">
+      <div className="flex justify-between items-center pt-1">
         <button
           onClick={onBack}
           className="text-xs font-mono text-slate-400 hover:text-white transition-colors"
         >
-          ← Regresar a Fase 1
+          ← Regresar a Misión 1
         </button>
       </div>
     </div>

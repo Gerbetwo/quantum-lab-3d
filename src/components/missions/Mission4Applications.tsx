@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Layers, Trophy, CheckCircle2 } from 'lucide-react';
+import { Layers, CheckCircle2, HelpCircle, Info, FlaskConical, Network, ShieldCheck, Award } from 'lucide-react';
 import { playButtonClick, playChimeSuccess } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 
@@ -46,7 +46,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     activeMeshGroup.current = group;
     scene.add(group);
 
-    // Initial render of molecule
     build3DModel('molecule', group);
 
     const animate = () => {
@@ -80,7 +79,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     }
 
     if (type === 'molecule') {
-      // Atoms and bonds
       const atomGeo = new THREE.SphereGeometry(0.18, 16, 16);
       const atomMat1 = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
       const atomMat2 = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
@@ -99,21 +97,17 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         group.add(atom);
       });
     } else if (type === 'optimization') {
-      // Globe with routing arcs
       const globeGeo = new THREE.SphereGeometry(0.9, 16, 16);
       const globeMat = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true, transparent: true, opacity: 0.35 });
       const globe = new THREE.Mesh(globeGeo, globeMat);
       group.add(globe);
 
       const ringGeo = new THREE.TorusGeometry(1.05, 0.02, 16, 32);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
+      const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
       group.add(ring);
     } else {
-      // Cryptographic shield lattice
       const icoGeo = new THREE.IcosahedronGeometry(0.9, 1);
-      const icoMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true });
-      const shield = new THREE.Mesh(icoGeo, icoMat);
+      const shield = new THREE.Mesh(icoGeo, new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true }));
       group.add(shield);
     }
   };
@@ -146,124 +140,133 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800 pb-4">
-        <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
-            Fase 04: El Futuro Práctico
-          </span>
-          <h2 className="text-2xl font-bold font-orbitron text-white mt-1">
-            ¿Para qué sirve realmente la Computación Cuántica?
-          </h2>
+      {/* Header */}
+      <div className="border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs uppercase tracking-wider">
+          <Layers className="w-3.5 h-3.5" /> Misión 4 de 4
         </div>
+        <h2 className="text-xl sm:text-2xl font-orbitron font-bold text-white mt-1">
+          Aplicaciones de la Computación Cuántica
+        </h2>
+        <p className="text-sm text-slate-300 mt-1">
+          Conoce en qué áreas genera una ventaja computacional real frente a las computadoras clásicas.
+        </p>
       </div>
 
-      {/* 3D Simulation & Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        {/* 3D Viewport */}
-        <div className="lg:col-span-7 bg-[#0b0f1d] border border-emerald-500/20 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden shadow-2xl">
-          <div className="absolute top-3 left-4 text-xs font-mono text-slate-400 flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
-            HOLOGRAFO DE APLICACIONES CUÁNTICAS
+      {/* Main split */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* 3D Canvas Viewport */}
+        <div className="lg:col-span-7 bg-[#080d1a] border border-slate-800 rounded-xl p-4 flex flex-col items-center relative">
+          <div className="w-full flex justify-between items-center text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-2 mb-2">
+            <span>Visualización de Casos de Uso</span>
+            <span className="text-emerald-400 font-sans font-medium">Modelo 3D Activo</span>
           </div>
 
           <div ref={containerRef} className="w-full cursor-grab active:cursor-grabbing" />
 
           {/* Model Selector Buttons */}
-          <div className="w-full mt-2 grid grid-cols-3 gap-2">
+          <div className="w-full mt-3 grid grid-cols-3 gap-2">
             <button
               onClick={() => handleSelectApp('molecule')}
-              className={`p-2 rounded-xl text-center text-xs font-mono border transition-all ${
+              className={`p-2.5 rounded-lg text-center text-xs border flex items-center justify-center gap-1.5 transition-all ${
                 selectedApp === 'molecule'
-                  ? 'bg-cyan/20 border-cyan text-cyan font-bold'
-                  : 'bg-black/40 border-slate-800 text-slate-400'
+                  ? 'bg-cyan/15 border-cyan text-cyan font-semibold'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
-              🧪 Simulación Molecular
+              <FlaskConical className="w-3.5 h-3.5" /> Fármacos
             </button>
             <button
               onClick={() => handleSelectApp('optimization')}
-              className={`p-2 rounded-xl text-center text-xs font-mono border transition-all ${
+              className={`p-2.5 rounded-lg text-center text-xs border flex items-center justify-center gap-1.5 transition-all ${
                 selectedApp === 'optimization'
-                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold'
-                  : 'bg-black/40 border-slate-800 text-slate-400'
+                  ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 font-semibold'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
-              ⚡ Optimización Global
+              <Network className="w-3.5 h-3.5" /> Optimización
             </button>
             <button
               onClick={() => handleSelectApp('crypto')}
-              className={`p-2 rounded-xl text-center text-xs font-mono border transition-all ${
+              className={`p-2.5 rounded-lg text-center text-xs border flex items-center justify-center gap-1.5 transition-all ${
                 selectedApp === 'crypto'
-                  ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold'
-                  : 'bg-black/40 border-slate-800 text-slate-400'
+                  ? 'bg-amber-500/15 border-amber-500 text-amber-400 font-semibold'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
-              🔐 Criptografía
+              <ShieldCheck className="w-3.5 h-3.5" /> Criptografía
             </button>
           </div>
         </div>
 
-        {/* Real Info Panel */}
-        <div className="lg:col-span-5 flex flex-col gap-3">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 text-xs leading-relaxed text-slate-300">
-            <h4 className="font-orbitron font-bold text-sm text-white mb-2 flex items-center gap-2">
-              {selectedApp === 'molecule' && '🧪 Modelado Atómico & Nuevos Fármacos'}
-              {selectedApp === 'optimization' && '⚡ Logística de Billones de Variables'}
-              {selectedApp === 'crypto' && '🔐 Criptoanálisis y Redes Inviolables'}
-            </h4>
+        {/* Info Column */}
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-xs leading-relaxed text-slate-300">
+            <div className="font-semibold text-sm text-white mb-1.5 flex items-center gap-2">
+              {selectedApp === 'molecule' && <FlaskConical className="w-4 h-4 text-cyan" />}
+              {selectedApp === 'optimization' && <Network className="w-4 h-4 text-emerald-400" />}
+              {selectedApp === 'crypto' && <ShieldCheck className="w-4 h-4 text-amber-400" />}
+
+              {selectedApp === 'molecule' && 'Simulación molecular y desarrollo de fármacos'}
+              {selectedApp === 'optimization' && 'Optimización compleja y logística'}
+              {selectedApp === 'crypto' && 'Criptografía y seguridad cuántica'}
+            </div>
             <p>
               {selectedApp === 'molecule' &&
-                'Las moléculas complejas obedecen las leyes de la mecánica cuántica. Simular sus enlaces químicos en una supercomputadora clásica requeriría millones de años; una computadora cuántica lo procesa en su lenguaje natural para descubrir medicinas.'}
+                'Las moléculas obedecen principios cuánticos. Simular el acoplamiento atómico en computadoras clásicas es inviable por la cantidad de combinaciones; las computadoras cuánticas modelan estas estructuras de forma directa.'}
               {selectedApp === 'optimization' &&
-                'Rutas de aviación mundial, flujos de energía e inversiones financieras. El algoritmo explora simultáneamente innumerables combinaciones gracias a la superposición cuántica.'}
+                'Permite evaluar millones de rutas y asignaciones energéticas o financieras en paralelo, resolviendo problemas de optimización combinatoria que saturarían procesadores tradicionales.'}
               {selectedApp === 'crypto' &&
-                'Permite factorizar números primos de gran tamaño y crear sistemas de distribución cuántica de claves que alertan si alguien intenta interceptar la señal.'}
+                'Facilita la factorización de grandes números primos y habilita la distribución cuántica de claves para comunicaciones seguras.'}
             </p>
           </div>
 
-          <div className="bg-rose-500/5 border-l-4 border-rose-500 p-4 rounded-r-xl text-xs leading-relaxed text-slate-300">
-            <strong className="text-rose-400 block mb-1 font-orbitron text-[11px]">
-              🚫 Lo que NO es la Computación Cuántica:
-            </strong>
-            No reemplazará tu laptop para ver videos o navegar por internet, ni hará que la batería de tu celular cargue más rápido. Su nicho exclusivo son problemas matemáticos intratables.
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-300">
+            <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-white block font-medium mb-1">
+                Límites y alcance
+              </strong>
+              La computación cuántica no busca sustituir computadoras personales para navegar por internet ni aumentar la velocidad de carga de baterías de teléfonos. Su función se concentra en problemas matemáticos y físicos de alta complejidad.
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Deductive Challenge */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 mt-2">
-        <h4 className="text-sm font-rajdhani font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
-          🎯 Reto de Descubrimiento: ¿Cuál es una aplicación potencial de la computación cuántica?
-        </h4>
+      {/* Discovery Task */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <div className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 text-emerald-400" />
+          Reto de comprensión: ¿Cuál es una aplicación potencial de la computación cuántica?
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => handleChoice('web_browsing')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'web_browsing'
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
-            A) Reemplazar totalmente las computadoras de casa en tareas como navegar en internet
+            A) Reemplazar totalmente las computadoras clásicas en tareas cotidianas como navegar en internet
           </button>
           <button
             onClick={() => handleChoice('real_applications')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'real_applications'
-                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
             B) Optimización compleja, simulación de moléculas para el desarrollo de fármacos y criptografía
           </button>
           <button
             onClick={() => handleChoice('phone_battery')}
-            className={`p-3 rounded-xl border text-left text-xs transition-all ${
+            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
               userChoice === 'phone_battery'
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-black/30 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
             C) Aumentar la velocidad de carga de las baterías de los celulares
@@ -272,38 +275,42 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
 
         {showFeedback && (
           <div
-            className={`mt-4 p-3 rounded-xl text-xs flex items-center justify-between ${
+            className={`mt-4 p-3.5 rounded-lg text-xs flex items-center justify-between gap-3 ${
               userChoice === 'real_applications'
-                ? 'bg-emerald-500/10 border border-emerald-500/40 text-emerald-300'
-                : 'bg-rose-500/10 border border-rose-500/40 text-rose-300'
+                ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
+                : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <div className="flex items-center gap-2.5">
+              {userChoice === 'real_applications' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              ) : (
+                <Info className="w-4 h-4 text-rose-400 shrink-0" />
+              )}
               <span>
                 {userChoice === 'real_applications'
-                  ? '¡Perfección absoluta! Has descubierto el trío dorado de aplicaciones cuánticas reales.'
-                  : 'Pista: La computación cuántica resuelve problemas de optimización y física molecular, no tareas cotidianas.'}
+                  ? 'Correcto. La computación cuántica destaca en optimización, física molecular y criptografía.'
+                  : 'Pista: Recuerda los modelos vistos: optimización de redes y modelado molecular para medicamentos.'}
               </span>
             </div>
             {userChoice === 'real_applications' && (
               <button
                 onClick={onFinishAll}
-                className="ml-3 px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-orbitron font-bold text-xs uppercase flex items-center gap-1 hover:brightness-110 shrink-0"
+                className="px-3.5 py-1.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs flex items-center gap-1.5 shrink-0 transition-colors"
               >
-                🏆 Finalizar Entrenamiento y Ver Insignia <Trophy className="w-3.5 h-3.5" />
+                Completar y Ver Resumen <Award className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         )}
       </div>
 
-      <div className="flex justify-between items-center pt-2">
+      <div className="flex justify-between items-center pt-1">
         <button
           onClick={onBack}
           className="text-xs font-mono text-slate-400 hover:text-white transition-colors"
         >
-          ← Regresar a Fase 3
+          ← Regresar a Misión 3
         </button>
       </div>
     </div>
