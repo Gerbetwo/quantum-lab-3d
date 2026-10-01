@@ -56,10 +56,10 @@ export default function Home() {
   };
 
   const tabs = [
-    { title: '1. Superposición', desc: 'Qubit & Colapso' },
-    { title: '2. Entrelazamiento', desc: 'Alice & Bob' },
-    { title: '3. Cero Absoluto', desc: 'Decoherencia' },
-    { title: '4. Aplicaciones', desc: 'Fármacos & Cripto' },
+    { title: 'Tarea 1: Superposición', desc: 'Bit vs. Qubit y Colapso' },
+    { title: 'Tarea 2: Entrelazamiento', desc: 'Alice & Bob a Distancia' },
+    { title: 'Tarea 3: Cero Absoluto', desc: 'Criogenia y Decoherencia' },
+    { title: 'Tarea 4: Aplicaciones', desc: 'Moléculas y Criptografía' },
   ];
 
   return (
