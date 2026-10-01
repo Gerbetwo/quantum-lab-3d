@@ -1,9 +1,28 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { Radio, ArrowRight, CheckCircle2, Globe, Satellite, HelpCircle, Info, Share2 } from 'lucide-react';
-import { playButtonClick, playChimeSuccess, playLaserScan, playQuantumCollapse } from '@/lib/sound';
+import {
+  Radio,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  Globe,
+  Satellite,
+  HelpCircle,
+  Share2,
+  Zap,
+  Sparkles,
+  Link as LinkIcon,
+  RotateCcw,
+  Check,
+} from 'lucide-react';
+import {
+  playButtonClick,
+  playChimeSuccess,
+  playLaserScan,
+  playQuantumCollapse,
+} from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 
 interface Props {
@@ -12,32 +31,74 @@ interface Props {
 }
 
 export default function Mission2Entanglement({ onComplete, onBack }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [distance, setDistance] = useState(80);
-  const [aliceVal, setAliceVal] = useState<string>('?');
-  const [bobVal, setBobVal] = useState<string>('?');
-  const [isEntangled, setIsEntangled] = useState(true);
-  const [measuredCount, setMeasuredCount] = useState(0);
-  const [userChoice, setUserChoice] = useState<string | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
+  // Step index: 0 = Independientes, 1 = Creación del Enlace, 2 = Separación Espacial, 3 = Medición Instantánea, 4 = Reto Final
+  const [step, setStep] = useState<number>(0);
+  const totalSteps = 5;
 
+  // Step 0 states (Independent qubits)
+  const [aliceIndependentVal, setAliceIndependentVal] = useState<number>(0);
+  const [bobIndependentVal, setBobIndependentVal] = useState<number>(0);
+
+  // Step 1 states (Bell state generation)
+  const [isEntangled, setIsEntangled] = useState<boolean>(false);
+
+  // Step 2 states (Distance slider)
+  const [distanceKm, setDistanceKm] = useState<number>(384400); // Earth to Moon ~384,400 km
+
+  // Step 3 states (Measurement correlation)
+  const [aliceMeasured, setAliceMeasured] = useState<number | null>(null);
+  const [bobMeasured, setBobMeasured] = useState<number | null>(null);
+  const [hasTriggeredMeasurement, setHasTriggeredMeasurement] = useState<boolean>(false);
+
+  // Step 4 states (Quiz)
+  const [userChoice, setUserChoice] = useState<string | null>(null);
+  const [showFeedback, setShowFeedback] = useState<boolean>(false);
+
+  // Three.js References
+  const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const aliceMeshRef = useRef<THREE.Mesh | null>(null);
   const bobMeshRef = useRef<THREE.Mesh | null>(null);
+  const beamLineRef = useRef<THREE.Line | null>(null);
   const animFrameId = useRef<number | null>(null);
 
+  // Navigation handlers
+  const goToNextStep = useCallback(() => {
+    playButtonClick();
+    setStep((prev) => Math.min(prev + 1, totalSteps - 1));
+  }, [totalSteps]);
+
+  const goToPrevStep = useCallback(() => {
+    playButtonClick();
+    setStep((prev) => Math.max(prev - 1, 0));
+  }, []);
+
+  // Keyboard navigation
   useEffect(() => {
-    if (!containerRef.current) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' && step < totalSteps - 1) {
+        goToNextStep();
+      } else if (e.key === 'ArrowLeft' && step > 0) {
+        goToPrevStep();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, totalSteps, goToNextStep, goToPrevStep]);
+
+  // Three.js Scene Setup (Mounts on Steps 1, 2, and 3)
+  useEffect(() => {
+    if ((step !== 1 && step !== 2 && step !== 3) || !containerRef.current) return;
     const container = containerRef.current;
-    const width = container.clientWidth || 360;
-    const height = 300;
+    const width = container.clientWidth || 600;
+    const height = 360;
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0.5, 4.5);
+    camera.position.set(0, 0.5, 4.8);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -47,39 +108,46 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // Emitter
-    const emitterGeo = new THREE.OctahedronGeometry(0.2, 0);
-    const emitterMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
-    const emitter = new THREE.Mesh(emitterGeo, emitterMat);
-    scene.add(emitter);
-
-    // Alice Station (Left)
-    const stationGeo = new THREE.IcosahedronGeometry(0.35, 1);
-    const aliceMesh = new THREE.Mesh(stationGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true }));
+    // Alice Node (Left)
+    const stationGeo = new THREE.IcosahedronGeometry(0.38, 1);
+    const aliceMesh = new THREE.Mesh(
+      stationGeo,
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
+    );
     aliceMesh.position.set(-1.8, 0, 0);
     aliceMeshRef.current = aliceMesh;
     scene.add(aliceMesh);
 
-    // Bob Station (Right)
-    const bobMesh = new THREE.Mesh(stationGeo, new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true }));
+    // Bob Node (Right)
+    const bobMesh = new THREE.Mesh(
+      stationGeo,
+      new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true })
+    );
     bobMesh.position.set(1.8, 0, 0);
     bobMeshRef.current = bobMesh;
     scene.add(bobMesh);
 
-    // Resonance line
+    // Entanglement Quantum Beam
     const lineGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-1.8, 0, 0),
       new THREE.Vector3(1.8, 0, 0),
     ]);
-    const lineMat = new THREE.LineDashedMaterial({ color: 0xa855f7, dashSize: 0.1, gapSize: 0.05 });
-    const laserBeam = new THREE.Line(lineGeo, lineMat);
-    laserBeam.computeLineDistances();
-    scene.add(laserBeam);
+    const lineMat = new THREE.LineDashedMaterial({
+      color: 0xa855f7,
+      dashSize: 0.12,
+      gapSize: 0.06,
+      transparent: true,
+      opacity: step >= 1 ? 0.8 : 0.1,
+    });
+    const beam = new THREE.Line(lineGeo, lineMat);
+    beam.computeLineDistances();
+    beamLineRef.current = beam;
+    scene.add(beam);
 
-    // Cosmic background particles
+    // Background Stars
     const starGeo = new THREE.BufferGeometry();
-    const starPos = new Float32Array(70 * 3);
-    for (let i = 0; i < 70 * 3; i += 3) {
+    const starPos = new Float32Array(80 * 3);
+    for (let i = 0; i < 80 * 3; i += 3) {
       starPos[i] = (Math.random() - 0.5) * 8;
       starPos[i + 1] = (Math.random() - 0.5) * 5;
       starPos[i + 2] = (Math.random() - 0.5) * 4;
@@ -87,15 +155,22 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
     const stars = new THREE.Points(
       starGeo,
-      new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, transparent: true, opacity: 0.4 })
+      new THREE.PointsMaterial({ color: 0xffffff, size: 0.025, transparent: true, opacity: 0.4 })
     );
     scene.add(stars);
 
+    // Animation Loop
     const animate = () => {
       animFrameId.current = requestAnimationFrame(animate);
-      emitter.rotation.y += 0.02;
       aliceMesh.rotation.y += 0.01;
+      aliceMesh.rotation.x += 0.005;
       bobMesh.rotation.y -= 0.01;
+      bobMesh.rotation.x -= 0.005;
+
+      if (lineMat && step >= 1) {
+        lineMat.opacity = 0.5 + Math.sin(Date.now() * 0.005) * 0.35;
+      }
+
       renderer.render(scene, camera);
     };
     animate();
@@ -114,20 +189,50 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
       if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
       renderer.dispose();
       stationGeo.dispose();
-      emitterGeo.dispose();
+      lineGeo.dispose();
+      lineMat.dispose();
+      starGeo.dispose();
     };
-  }, []);
+  }, [step]);
 
-  const handleMeasureAlice = () => {
-    if (!isEntangled) return;
+  // Adjust node positions on distance slider (Step 2)
+  useEffect(() => {
+    if (step !== 2 || !aliceMeshRef.current || !bobMeshRef.current || !beamLineRef.current) return;
+    const factor = (distanceKm / 400000) * 0.5 + 1.4; // 1.4 to 1.9
+    aliceMeshRef.current.position.x = -factor;
+    bobMeshRef.current.position.x = factor;
+
+    const points = [new THREE.Vector3(-factor, 0, 0), new THREE.Vector3(factor, 0, 0)];
+    beamLineRef.current.geometry.setFromPoints(points);
+    beamLineRef.current.computeLineDistances();
+  }, [distanceKm, step]);
+
+  // Entangle action (Step 1)
+  const handleGenerateEntanglement = () => {
     playLaserScan();
-    setTimeout(() => playQuantumCollapse(), 120);
+    setTimeout(() => playChimeSuccess(), 200);
+    setIsEntangled(true);
+    updateStoredMetrics((prev) => ({
+      ...prev,
+      actions: {
+        ...prev.actions,
+        entanglementMeasurements: prev.actions.entanglementMeasurements + 1,
+      },
+    }));
+  };
 
-    const outcome = Math.random() < 0.5 ? '0' : '1';
-    setAliceVal(`|${outcome}⟩`);
-    setBobVal(`|${outcome}⟩`);
-    setIsEntangled(false);
-    setMeasuredCount((prev) => prev + 1);
+  // Alice Measure Action (Step 3)
+  const handleMeasureAlice = () => {
+    playLaserScan();
+    setTimeout(() => playQuantumCollapse(), 150);
+
+    // Random outcome for Alice: 0 or 1
+    const outcome = Math.random() < 0.5 ? 0 : 1;
+
+    setAliceMeasured(outcome);
+    // Instantaneous correlation: Bob collapses to the exact same correlated state!
+    setBobMeasured(outcome);
+    setHasTriggeredMeasurement(true);
 
     updateStoredMetrics((prev) => ({
       ...prev,
@@ -138,17 +243,17 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     }));
   };
 
-  const handleResetPair = () => {
+  const handleResetMeasurement = () => {
     playButtonClick();
-    setAliceVal('?');
-    setBobVal('?');
-    setIsEntangled(true);
+    setAliceMeasured(null);
+    setBobMeasured(null);
+    setHasTriggeredMeasurement(false);
   };
 
-  const handleChoice = (choice: string) => {
+  const handleQuizChoice = (choice: string) => {
     setUserChoice(choice);
     setShowFeedback(true);
-    if (choice === 'instant_info') {
+    if (choice === 'instant_same') {
       playChimeSuccess();
       saveCompletedMission(1);
     } else {
@@ -157,185 +262,378 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="border-b border-slate-800 pb-3">
-        <div className="flex items-center gap-2 text-purple-400 font-mono text-xs uppercase tracking-wider">
-          <Share2 className="w-3.5 h-3.5" /> Misión 2 de 4
+    <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
+      {/* ========================================================================= */}
+      {/* TOP PROGRESS STEPPER                                                      */}
+      {/* ========================================================================= */}
+      <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-400 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30">
+            Tarea 2
+          </span>
+          <span className="text-xs font-mono text-slate-400">
+            Paso {step + 1} de {totalSteps}
+          </span>
         </div>
-        <h2 className="text-xl sm:text-2xl font-orbitron font-bold text-white mt-1">
-          Entrelazamiento Cuántico y No-Localidad
-        </h2>
-        <p className="text-sm text-slate-300 mt-1">
-          Descubre cómo dos o más partículas pueden compartir un estado correlacionado sin importar la distancia física que las separe.
-        </p>
+
+        {/* Progress Pills */}
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                playButtonClick();
+                setStep(i);
+              }}
+              className={`h-2 rounded-full transition-all ${
+                step === i
+                  ? 'w-8 bg-purple-500 shadow-sm shadow-purple-500/50'
+                  : i < step
+                  ? 'w-3 bg-emerald-500'
+                  : 'w-2 bg-slate-800 hover:bg-slate-700'
+              }`}
+              title={`Ir al paso ${i + 1}`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Main split */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* 3D Canvas Viewport */}
-        <div className="lg:col-span-7 bg-[#080d1a] border border-slate-800 rounded-xl p-4 flex flex-col items-center relative">
-          <div className="w-full flex justify-between items-center text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-2 mb-2">
-            <span>Enlace entre Detectores Cuánticos</span>
-            <span>Pares analizados: <strong className="text-purple-400">{measuredCount}</strong></span>
+      {/* ========================================================================= */}
+      {/* PASO 1: DOS QUBITS INDEPENDIENTES (SIN CONEXIÓN)                          */}
+      {/* ========================================================================= */}
+      {step === 0 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+              <Share2 className="w-4 h-4 text-purple-400" /> Ausencia de Enlace
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
+              Dos Qubits Independientes
+            </h2>
+            <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
+              En condiciones normales, dos partículas u ordenadores cuánticos en lugares distintos son <strong className="text-white">totalmente independientes</strong>.
+            </p>
           </div>
 
-          <div ref={containerRef} className="w-full cursor-grab active:cursor-grabbing" />
-
-          {/* Detector Readout Cards */}
-          <div className="w-full mt-3 grid grid-cols-2 gap-3 font-mono">
-            <div className="bg-slate-900 border border-cyan/40 rounded-lg p-3 text-center">
-              <div className="text-[11px] text-cyan flex items-center justify-center gap-1.5 font-sans font-semibold">
-                <Globe className="w-3.5 h-3.5" /> Estación Alice (Tierra)
+          {/* Interactive Independent Stations */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+            {/* Alice Box */}
+            <div className="p-6 rounded-3xl bg-slate-950/80 border border-cyan/40 backdrop-blur-md shadow-xl flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2 text-cyan font-orbitron font-bold text-sm">
+                <Globe className="w-4 h-4" /> Qubit de Alice (Tierra)
               </div>
-              <div className="text-xl font-orbitron font-bold text-white mt-1">{aliceVal}</div>
+              <div className="text-4xl font-orbitron font-bold text-white">
+                |{aliceIndependentVal}⟩
+              </div>
+              <button
+                onClick={() => {
+                  playButtonClick();
+                  setAliceIndependentVal((prev) => (prev === 0 ? 1 : 0));
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-cyan/15 hover:bg-cyan/25 border border-cyan/40 text-cyan text-xs font-mono font-semibold transition-all active:scale-95"
+              >
+                Conmutar Alice (0 ↔ 1)
+              </button>
             </div>
-            <div className="bg-slate-900 border border-emerald-500/40 rounded-lg p-3 text-center">
-              <div className="text-[11px] text-emerald-400 flex items-center justify-center gap-1.5 font-sans font-semibold">
-                <Satellite className="w-3.5 h-3.5" /> Estación Bob (Andrómeda)
+
+            {/* Bob Box */}
+            <div className="p-6 rounded-3xl bg-slate-950/80 border border-emerald-500/40 backdrop-blur-md shadow-xl flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2 text-emerald-400 font-orbitron font-bold text-sm">
+                <Satellite className="w-4 h-4" /> Qubit de Bob (Luna)
               </div>
-              <div className="text-xl font-orbitron font-bold text-white mt-1">{bobVal}</div>
+              <div className="text-4xl font-orbitron font-bold text-white">
+                |{bobIndependentVal}⟩
+              </div>
+              <button
+                onClick={() => {
+                  playButtonClick();
+                  setBobIndependentVal((prev) => (prev === 0 ? 1 : 0));
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-semibold transition-all active:scale-95"
+              >
+                Conmutar Bob (0 ↔ 1)
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-400 max-w-md">
+            Nota que cambiar el estado de Alice no produce ningún efecto en Bob. No existe ninguna conexión cuántica... todavía.
+          </p>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PASO 2: CREACIÓN DEL PAR ENTRELAZADO (ESTADO DE BELL)                     */}
+      {/* ========================================================================= */}
+      {step === 1 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-2 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-400" /> Correlación Cuántica
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
+              Creación del Par de Bell
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
+              Al hacer interactuar dos qubits en el laboratorio, sus estados se entrelazan formando una única función de onda compartida.
+            </p>
+          </div>
+
+          {/* 3D Canvas Box + Entangle Action */}
+          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
+            <div ref={containerRef} className="w-full" />
+
+            <div className="w-full max-w-md mt-2 flex flex-col gap-3">
+              <button
+                onClick={handleGenerateEntanglement}
+                className={`w-full py-3.5 px-6 rounded-2xl font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 ${
+                  isEntangled
+                    ? 'bg-purple-600 text-white shadow-purple-600/30 ring-2 ring-purple-400'
+                    : 'bg-cyan text-slate-950 shadow-cyan/25 hover:bg-cyan/90'
+                }`}
+              >
+                <LinkIcon className="w-4 h-4" />
+                {isEntangled ? '¡Enlace Cuántico Activo (|00⟩ + |11⟩)!' : 'Generar Entrelazamiento Láser'}
+              </button>
+
+              {isEntangled && (
+                <div className="p-3 rounded-2xl bg-purple-950/40 border border-purple-500/50 text-purple-200 text-xs text-left animate-in fade-in">
+                  <strong className="block text-white mb-1">Estado de Bell creado:</strong>
+                  Ambos qubits han dejado de tener identidades separadas. Ahora describen un único sistema cuántico indivisible.
+                </div>
+              )}
             </div>
           </div>
         </div>
+      )}
 
-        {/* Controls */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <Radio className="w-4 h-4 text-purple-400" /> Control del Par Entrelazado
+      {/* ========================================================================= */}
+      {/* PASO 3: SEPARACIÓN A DISTANCIA CÓSMICA                                    */}
+      {/* ========================================================================= */}
+      {step === 2 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              <Radio className="w-4 h-4 text-purple-400" /> No-Localidad
             </div>
+            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
+              Separación a Distancia
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
+              ¿Qué ocurre si separamos a Alice y Bob a cientos de miles de kilómetros de distancia?
+            </p>
+          </div>
 
-            {/* Distance Slider */}
-            <div>
-              <div className="flex justify-between text-xs text-slate-400 mb-1.5 font-mono">
-                <span>Distancia relativa:</span>
-                <span className="text-purple-300 font-semibold">
-                  {(distance * 0.035).toFixed(2)} Millones de Años Luz
-                </span>
+          {/* 3D Canvas Box + Distance Slider */}
+          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
+            <div ref={containerRef} className="w-full" />
+
+            <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+              <div className="flex justify-between items-center text-xs font-mono">
+                <span className="text-slate-400">Distancia entre Alice y Bob:</span>
+                <span className="text-purple-400 font-bold">{distanceKm.toLocaleString()} km</span>
               </div>
+
               <input
                 type="range"
-                min="1"
-                max="100"
-                value={distance}
-                onChange={(e) => setDistance(parseInt(e.target.value))}
+                min="1000"
+                max="400000"
+                step="1000"
+                value={distanceKm}
+                onChange={(e) => setDistanceKm(parseInt(e.target.value))}
                 className="w-full accent-purple-500 cursor-pointer"
-                aria-label="Ajustar distancia entre detectores"
               />
-            </div>
 
-            {/* Buttons */}
-            <div className="flex gap-2.5 pt-1">
-              <button
-                onClick={handleMeasureAlice}
-                disabled={!isEntangled}
-                className="flex-1 py-3 px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-40 transition-all shadow-md shadow-purple-600/20 active:scale-95"
-              >
-                <Radio className="w-4 h-4" /> Medir Qubit de Alice
-              </button>
-              <button
-                onClick={handleResetPair}
-                className="py-3 px-3.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono flex items-center justify-center transition-all border border-slate-700"
-                title="Generar nuevo par"
-              >
-                Reiniciar
-              </button>
-            </div>
-          </div>
-
-          {/* Simple Observation Box */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-300">
-            <Share2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-white block font-medium mb-1">
-                La naturaleza de la correlación cuántica
-              </strong>
-              No existe ningún cable físico ni señal electromagnética viajando entre Alice y Bob tras haberse separado. Sin embargo, al medir la partícula de Alice, el estado de la partícula de Bob queda correlacionado al instante.
+              <p className="text-xs text-slate-300 text-left leading-normal border-t border-slate-800/80 pt-2">
+                A pesar de la separación física en el espacio, la correlación cuántica <strong className="text-white">no se atenúa ni se desgasta</strong> por la distancia.
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Discovery Task */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <div className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-          <HelpCircle className="w-4 h-4 text-purple-400" />
-          Reto de comprensión: Que dos partículas entrelazadas mantengan su correlación &ldquo;sin importar la distancia&rdquo; significa que...
-        </div>
+      {/* ========================================================================= */}
+      {/* PASO 4: MEDICIÓN CORRELACIONADA INSTANTÁNEA                               */}
+      {/* ========================================================================= */}
+      {step === 3 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              <Zap className="w-4 h-4 text-purple-400" /> Colapso Correlacionado
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
+              Medición Instantánea
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
+              Alice mide su qubit. Observa cómo el resultado determina en el acto el estado de Bob, sin retardo de tiempo.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button
-            onClick={() => handleChoice('ftls')}
-            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
-              userChoice === 'ftls'
-                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
-                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-            }`}
-          >
-            A) La información clásica viaja por el espacio más rápido que la luz
-          </button>
-          <button
-            onClick={() => handleChoice('instant_info')}
-            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
-              userChoice === 'instant_info'
-                ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200'
-                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-            }`}
-          >
-            B) Al medir una partícula se conoce de inmediato información sobre el estado de la otra, aunque estén muy separadas
-          </button>
-          <button
-            onClick={() => handleChoice('local')}
-            className={`p-3.5 rounded-lg border text-left text-xs leading-normal transition-all ${
-              userChoice === 'local'
-                ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
-                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-            }`}
-          >
-            C) Solo funciona si ambas partículas están físicamente unidas por un cable
-          </button>
-        </div>
+          {/* 3D Canvas Box + Measurement Control */}
+          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
+            <div ref={containerRef} className="w-full" />
 
-        {showFeedback && (
-          <div
-            className={`mt-4 p-3.5 rounded-lg text-xs flex items-center justify-between gap-3 ${
-              userChoice === 'instant_info'
-                ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
-                : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              {userChoice === 'instant_info' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              ) : (
-                <Info className="w-4 h-4 text-rose-400 shrink-0" />
+            {/* Readouts */}
+            <div className="w-full max-w-md mt-2 flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-2xl bg-cyan/10 border border-cyan/40 text-center">
+                  <div className="text-[10px] font-mono text-slate-400">Alice (Tierra)</div>
+                  <div className="text-2xl font-orbitron font-bold text-cyan mt-1">
+                    {aliceMeasured !== null ? `|${aliceMeasured}⟩` : 'Superposición'}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-center">
+                  <div className="text-[10px] font-mono text-slate-400">Bob (Luna)</div>
+                  <div className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">
+                    {bobMeasured !== null ? `|${bobMeasured}⟩` : 'Superposición'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2.5">
+                <button
+                  onClick={handleMeasureAlice}
+                  className="flex-1 py-3.5 px-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-600/30 active:scale-95"
+                >
+                  <Zap className="w-4 h-4" /> Medir en Laboratorio de Alice
+                </button>
+                <button
+                  onClick={handleResetMeasurement}
+                  className="py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-xs flex items-center justify-center transition-all border border-slate-800"
+                  title="Reiniciar y medir de nuevo"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
+
+              {hasTriggeredMeasurement && (
+                <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left animate-in fade-in">
+                  <div className="font-bold flex items-center gap-1.5 mb-1 text-sm font-orbitron">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    ¡Correlación Perfecta Instantánea!
+                  </div>
+                  Cuando Alice midió y obtuvo <strong className="text-white font-mono">|{aliceMeasured}⟩</strong>, el qubit de Bob colapsó simultáneamente en <strong className="text-white font-mono">|{bobMeasured}⟩</strong> a pesar de estar a miles de kilómetros.
+                </div>
               )}
-              <span>
-                {userChoice === 'instant_info'
-                  ? 'Correcto. La medición revela de inmediato el estado correlacionado sin requerir un medio de transmisión físico.'
-                  : 'Pista: La teoría de la relatividad prohíbe señales físicas más rápidas que la luz. Lo que ocurre es una correlación instantánea al medir.'}
-              </span>
             </div>
-            {userChoice === 'instant_info' && (
-              <button
-                onClick={onComplete}
-                className="px-3.5 py-1.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs flex items-center gap-1.5 shrink-0 transition-colors"
-              >
-                Siguiente Misión <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="flex justify-between items-center pt-1">
+      {/* ========================================================================= */}
+      {/* PASO 5: RETO DE COMPRENSIÓN                                               */}
+      {/* ========================================================================= */}
+      {step === 4 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              <HelpCircle className="w-4 h-4 text-purple-400" /> Comprobación Final
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
+              Reto de Comprensión
+            </h2>
+            <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
+              Si Alice y Bob tienen un par entrelazado y Alice mide su qubit obteniendo |1⟩, ¿qué resultado medirá Bob de forma instantánea?
+            </p>
+          </div>
+
+          <div className="w-full max-w-xl flex flex-col gap-3.5">
+            <button
+              onClick={() => handleQuizChoice('random')}
+              className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
+                userChoice === 'random'
+                  ? 'bg-rose-950/40 border-rose-500 text-rose-200'
+                  : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              A) Un valor completamente aleatorio e independiente de Alice
+            </button>
+            <button
+              onClick={() => handleQuizChoice('instant_same')}
+              className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
+                userChoice === 'instant_same'
+                  ? 'bg-emerald-950/60 border-emerald-500 text-emerald-200 font-semibold shadow-xl shadow-emerald-500/20 ring-2 ring-emerald-500/40'
+                  : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              B) Instantáneamente el estado correlacionado (|1⟩), sin retardo de tiempo
+            </button>
+            <button
+              onClick={() => handleQuizChoice('wait_signal')}
+              className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
+                userChoice === 'wait_signal'
+                  ? 'bg-rose-950/40 border-rose-500 text-rose-200'
+                  : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              C) No se sabe hasta que una señal de radio viaje de Alice a Bob
+            </button>
+          </div>
+
+          {showFeedback && (
+            <div
+              className={`w-full max-w-xl p-4 rounded-2xl text-sm flex items-center justify-between gap-4 text-left ${
+                userChoice === 'instant_same'
+                  ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
+                  : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {userChoice === 'instant_same' ? (
+                  <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
+                ) : (
+                  <HelpCircle className="w-6 h-6 text-rose-400 shrink-0" />
+                )}
+                <span>
+                  {userChoice === 'instant_same'
+                    ? '¡Correcto! En un estado entrelazado, la medición de un qubit fija el estado del otro de forma inmediata y no local.'
+                    : 'Pista: En el experimento 3D observaste que cuando Alice midió su qubit, el de Bob cambió en el mismo instante exacto.'}
+                </span>
+              </div>
+
+              {userChoice === 'instant_same' && (
+                <button
+                  onClick={onComplete}
+                  className="py-2.5 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center gap-2 shrink-0 transition-all shadow-md shadow-emerald-500/20 active:scale-95"
+                >
+                  Pasar a Tarea 3 <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* BOTTOM NAVIGATION                                                         */}
+      {/* ========================================================================= */}
+      <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-4">
         <button
-          onClick={onBack}
-          className="text-xs font-mono text-slate-400 hover:text-white transition-colors"
+          onClick={step === 0 ? onBack : goToPrevStep}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900 transition-all font-mono text-xs uppercase"
         >
-          ← Regresar a Misión 1
+          <ArrowLeft className="w-4 h-4" /> {step === 0 ? 'Volver a Tarea 1' : 'Paso Anterior'}
         </button>
+
+        <span className="text-xs font-mono text-slate-500 hidden sm:inline">
+          Tip: Usa las flechas del teclado (← / →) para avanzar entre pasos
+        </span>
+
+        {step < totalSteps - 1 && (
+          <button
+            onClick={goToNextStep}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 text-white hover:bg-purple-500 transition-all font-orbitron font-bold text-xs uppercase tracking-wider shadow-md shadow-purple-600/20 active:scale-95"
+          >
+            Siguiente Paso <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
+
+        {step === totalSteps - 1 && userChoice !== 'instant_same' && (
+          <span className="text-xs font-mono text-slate-400">
+            Responde la pregunta arriba para continuar
+          </span>
+        )}
       </div>
     </div>
   );
