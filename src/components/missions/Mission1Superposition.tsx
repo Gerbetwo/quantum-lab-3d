@@ -1,18 +1,21 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import {
   Scan,
   RotateCcw,
   ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   HelpCircle,
   Info,
   ToggleLeft,
   ToggleRight,
   Sparkles,
-  ArrowLeft,
+  Layers,
+  Activity,
+  Check,
 } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playLaserScan, playQuantumCollapse } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
@@ -22,23 +25,23 @@ interface Props {
 }
 
 export default function Mission1Superposition({ onComplete }: Props) {
-  // Step navigation: 'intro' (interactive bit vs qubit) -> 'lab' (3D bloch sphere) -> 'quiz' (deduction)
-  const [subStep, setSubStep] = useState<'intro' | 'lab' | 'quiz'>('intro');
+  // Slide index: 0 = Bit Clásico, 1 = Qubit y Superposición, 2 = Esfera 3D, 3 = Medición y Colapso, 4 = Reto Final
+  const [slide, setSlide] = useState<number>(0);
+  const totalSlides = 5;
 
-  // Interactive Classical Bit state in intro
+  // Slide 0: Classic Bit state
   const [classicBit, setClassicBit] = useState<0 | 1>(0);
 
-  // 3D Lab states
+  // Slide 2 & 3: 3D Bloch Lab states
   const containerRef = useRef<HTMLDivElement>(null);
   const [theta, setTheta] = useState(Math.PI / 2);
   const [isSuperposition, setIsSuperposition] = useState(true);
   const [collapsedState, setCollapsedState] = useState<number | null>(null);
-  const [hasMeasuredAtLeastOnce, setHasMeasuredAtLeastOnce] = useState(false);
-  const [measureCount, setMeasureCount] = useState(0);
+  const [hasMeasured, setHasMeasured] = useState(false);
 
-  // Quiz state
-  const [userDeduction, setUserDeduction] = useState<string | null>(null);
-  const [showDeductionFeedback, setShowDeductionFeedback] = useState(false);
+  // Slide 4: Quiz
+  const [userChoice, setUserChoice] = useState<string | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   // Three.js scene refs
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -47,12 +50,36 @@ export default function Mission1Superposition({ onComplete }: Props) {
   const shockwaveRef = useRef<THREE.Mesh | null>(null);
   const animFrameId = useRef<number | null>(null);
 
-  // Initialize Three.js scene when entering the lab
+  // Navigation handlers
+  const goToNextSlide = useCallback(() => {
+    playButtonClick();
+    setSlide((prev) => Math.min(prev + 1, totalSlides - 1));
+  }, [totalSlides]);
+
+  const goToPrevSlide = useCallback(() => {
+    playButtonClick();
+    setSlide((prev) => Math.max(prev - 1, 0));
+  }, []);
+
+  // Keyboard navigation (Arrow keys)
   useEffect(() => {
-    if (subStep !== 'lab' || !containerRef.current) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' && slide < totalSlides - 1) {
+        goToNextSlide();
+      } else if (e.key === 'ArrowLeft' && slide > 0) {
+        goToPrevSlide();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [slide, totalSlides, goToNextSlide, goToPrevSlide]);
+
+  // Three.js initialization when on Slide 2 (Esfera 3D) or Slide 3 (Medición)
+  useEffect(() => {
+    if ((slide !== 2 && slide !== 3) || !containerRef.current) return;
     const container = containerRef.current;
-    const width = container.clientWidth || 360;
-    const height = 300;
+    const width = container.clientWidth || 480;
+    const height = 360;
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
@@ -85,13 +112,13 @@ export default function Mission1Superposition({ onComplete }: Props) {
       color: 0xa855f7,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.4,
+      opacity: 0.35,
     });
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = Math.PI / 2;
     scene.add(ring);
 
-    // Poles
+    // Poles (|0> North, |1> South)
     const poleGeo = new THREE.SphereGeometry(0.06, 16, 16);
     const pole0 = new THREE.Mesh(poleGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
     pole0.position.set(0, 1, 0);
@@ -103,11 +130,11 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
     // State Vector
     const dir = new THREE.Vector3(Math.sin(theta), Math.cos(theta), 0).normalize();
-    const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0, 0, 0), 1, 0x00f0ff, 0.2, 0.1);
+    const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0, 0, 0), 1, 0x00f0ff, 0.22, 0.12);
     vectorArrowRef.current = arrow;
     scene.add(arrow);
 
-    // Shockwave Ring
+    // Shockwave
     const shockGeo = new THREE.RingGeometry(0.1, 0.2, 32);
     const shockMat = new THREE.MeshBasicMaterial({
       color: 0x00f0ff,
@@ -131,7 +158,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
     pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
     const particles = new THREE.Points(
       pGeo,
-      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.03, transparent: true, opacity: 0.3 })
+      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.03, transparent: true, opacity: 0.35 })
     );
     scene.add(particles);
 
@@ -166,8 +193,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
       sphereGeo.dispose();
       sphereMat.dispose();
     };
-  }, [subStep]);
+  }, [slide]);
 
+  // Update vector arrow when theta or collapse state changes
   useEffect(() => {
     if (!vectorArrowRef.current) return;
     let targetTheta = theta;
@@ -181,6 +209,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
     );
   }, [theta, isSuperposition, collapsedState]);
 
+  // Measurement action
   const handleMeasure = () => {
     playLaserScan();
     setTimeout(() => playQuantumCollapse(), 150);
@@ -195,8 +224,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
     setIsSuperposition(false);
     setCollapsedState(outcome);
-    setHasMeasuredAtLeastOnce(true);
-    setMeasureCount((prev) => prev + 1);
+    setHasMeasured(true);
 
     updateStoredMetrics((prev) => ({
       ...prev,
@@ -213,9 +241,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
     setCollapsedState(null);
   };
 
-  const handleDeductionSelect = (choice: string) => {
-    setUserDeduction(choice);
-    setShowDeductionFeedback(true);
+  const handleChoice = (choice: string) => {
+    setUserChoice(choice);
+    setShowFeedback(true);
     if (choice === 'collapse') {
       playChimeSuccess();
       saveCompletedMission(0);
@@ -225,241 +253,221 @@ export default function Mission1Superposition({ onComplete }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col justify-between min-h-[620px] w-full max-w-4xl mx-auto py-2">
       {/* ========================================================================= */}
-      {/* SUB-PASO 1: INTRODUCCIÓN INTERACTIVA (BIT CLÁSICO VS. QUBIT)              */}
+      {/* TOP SLIDE STEPPER INDICATOR                                               */}
       {/* ========================================================================= */}
-      {subStep === 'intro' && (
-        <div className="flex flex-col gap-8 py-2 animate-in fade-in duration-300">
+      <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan px-2.5 py-1 rounded bg-cyan/10 border border-cyan/30">
+            Tarea 1
+          </span>
+          <span className="text-xs font-mono text-slate-400">
+            Diapositiva {slide + 1} de {totalSlides}
+          </span>
+        </div>
+
+        {/* Stepper Dots */}
+        <div className="flex items-center gap-2">
+          {Array.from({ length: totalSlides }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                playButtonClick();
+                setSlide(i);
+              }}
+              className={`h-2 rounded-full transition-all ${
+                slide === i ? 'w-8 bg-cyan' : i < slide ? 'w-3 bg-emerald-500' : 'w-2 bg-slate-800'
+              }`}
+              title={`Ir a diapositiva ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* SLIDE 0: EL BIT CLÁSICO (GRANDE Y ENFOCADO)                               */}
+      {/* ========================================================================= */}
+      {slide === 0 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
-            <div className="text-cyan font-mono text-xs uppercase tracking-wider mb-1">
-              Tarea 1 • Introducción Conceptual
+            <div className="text-sm font-mono text-slate-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+              <Layers className="w-4 h-4 text-cyan" /> Fundamento Clásico
             </div>
-            <h2 className="text-2xl sm:text-3xl font-orbitron font-bold text-white">
-              ¿Qué es un Qubit y qué es la Superposición?
+            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
+              El Bit Clásico
             </h2>
-            <p className="text-base text-slate-300 mt-2 max-w-3xl leading-relaxed">
-              En la informática cotidiana usamos <strong>bits</strong>. En la computación cuántica usamos <strong>qubits</strong>. Interactúa con el siguiente ejemplo interactivo para ver la diferencia fundamental:
+            <p className="text-base sm:text-lg text-slate-300 mt-4 max-w-2xl mx-auto leading-relaxed">
+              En toda la informática tradicional, la información es binaria y rígida: un bit solo puede existir en uno de dos estados posibles, <strong className="text-white">estrictamente 0 o estrictamente 1</strong>.
             </p>
           </div>
 
-          {/* Interactive Side-by-Side Comparison */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left: Classic Bit */}
-            <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-6 flex flex-col justify-between gap-6">
-              <div>
-                <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
-                  Computación Clásica
-                </span>
-                <h3 className="text-lg font-bold text-white mt-1">El Bit Clásico</h3>
-                <p className="text-sm text-slate-300 mt-2 leading-relaxed">
-                  Solo puede existir en uno de dos estados posibles: estrictamente <strong>0</strong> o estrictamente <strong>1</strong>.
-                </p>
-              </div>
-
-              {/* Interactive Toggle */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 flex flex-col items-center justify-center gap-3 text-center">
-                <button
-                  onClick={() => {
-                    playButtonClick();
-                    setClassicBit((prev) => (prev === 0 ? 1 : 0));
-                  }}
-                  className="flex items-center gap-3 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-mono text-sm transition-all"
-                >
-                  {classicBit === 1 ? (
-                    <ToggleRight className="w-7 h-7 text-cyan" />
-                  ) : (
-                    <ToggleLeft className="w-7 h-7 text-slate-500" />
-                  )}
-                  <span>Pulsar interruptor</span>
-                </button>
-
-                <div className="text-2xl font-orbitron font-bold text-white">
-                  Valor actual: <span className="text-cyan">{classicBit}</span>
-                </div>
-                <div className="text-xs font-mono text-slate-400">
-                  {classicBit === 0 ? 'Estado: 0 (Apagado)' : 'Estado: 1 (Encendido)'}
-                </div>
-              </div>
-
-              <div className="text-xs text-slate-400 font-mono">
-                Rígido: Nunca puede ser una combinación de ambos a la vez.
-              </div>
-            </div>
-
-            {/* Right: Quantum Qubit */}
-            <div className="bg-slate-900 border border-cyan/40 rounded-2xl p-6 flex flex-col justify-between gap-6 shadow-lg shadow-cyan/5">
-              <div>
-                <span className="text-xs font-mono uppercase tracking-wider text-cyan">
-                  Computación Cuántica
-                </span>
-                <h3 className="text-lg font-bold text-white mt-1">El Qubit (Bit Cuántico)</h3>
-                <p className="text-sm text-slate-300 mt-2 leading-relaxed">
-                  Es la unidad básica cuántica. Puede existir en una combinación o <strong className="text-cyan">superposición de los estados 0 y 1 al mismo tiempo</strong>.
-                </p>
-              </div>
-
-              {/* Dynamic Qubit Representation */}
-              <div className="bg-slate-950 border border-cyan/30 rounded-xl p-5 flex flex-col items-center justify-center gap-3 text-center">
-                <div className="w-14 h-14 rounded-full bg-cyan/10 border-2 border-cyan/60 flex items-center justify-center text-cyan shadow-lg shadow-cyan/20 animate-pulse">
-                  <Sparkles className="w-6 h-6" />
-                </div>
-                <div className="text-lg font-orbitron font-bold text-purple-300">
-                  |0⟩ y |1⟩ simultáneamente
-                </div>
-                <div className="text-xs font-mono text-slate-400">
-                  Analogía: Como una moneda girando en el aire antes de caer
-                </div>
-              </div>
-
-              <div className="text-xs text-cyan font-mono">
-                Flexible: Contiene ambos estados hasta el momento de ser medido.
-              </div>
-            </div>
-          </div>
-
-          {/* Action to proceed to Lab */}
-          <div className="flex justify-end pt-4 border-t border-slate-800">
+          {/* Huge Interactive Classical Switch */}
+          <div className="bg-slate-900/90 border border-slate-700 rounded-3xl p-8 sm:p-10 w-full max-w-md shadow-2xl flex flex-col items-center gap-6">
             <button
               onClick={() => {
                 playButtonClick();
-                setSubStep('lab');
+                setClassicBit((prev) => (prev === 0 ? 1 : 0));
               }}
-              className="py-3.5 px-6 rounded-xl bg-cyan hover:bg-cyan/90 text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-cyan/20 active:scale-95"
+              className="flex items-center gap-4 px-8 py-4 rounded-2xl bg-slate-950 hover:bg-slate-800 border-2 border-slate-700 hover:border-cyan text-white font-mono text-lg transition-all active:scale-95 shadow-lg"
             >
-              Abrir Laboratorio 3D y Medir el Qubit <ArrowRight className="w-4 h-4" />
+              {classicBit === 1 ? (
+                <ToggleRight className="w-10 h-10 text-cyan" />
+              ) : (
+                <ToggleLeft className="w-10 h-10 text-slate-500" />
+              )}
+              <span className="font-sans font-semibold">Tocar Interruptor</span>
             </button>
+
+            <div className="text-5xl sm:text-6xl font-orbitron font-bold text-white tracking-wider">
+              VALOR: <span className="text-cyan">{classicBit}</span>
+            </div>
+
+            <div className="text-sm font-mono text-slate-400 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+              {classicBit === 0 ? 'Estado: 0 (Apagado / Desactivado)' : 'Estado: 1 (Encendido / Activado)'}
+            </div>
+
+            <p className="text-xs text-slate-400 leading-normal">
+              No existe ningún punto intermedio. Nunca puede ser 0 y 1 al mismo tiempo.
+            </p>
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* SUB-PASO 2: LABORATORIO 3D CON GUÍA PASO A PASO                            */}
+      {/* SLIDE 1: EL QUBIT Y LA SUPERPOSICIÓN (GRANDE Y ENFOCADO)                  */}
       {/* ========================================================================= */}
-      {subStep === 'lab' && (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-          <div className="border-b border-slate-800 pb-3 flex justify-between items-start">
-            <div>
-              <div className="text-cyan font-mono text-xs uppercase tracking-wider">
-                Tarea 1 • Laboratorio 3D
-              </div>
-              <h2 className="text-xl sm:text-2xl font-orbitron font-bold text-white mt-1">
-                La Esfera de Bloch y el Colapso de Onda
-              </h2>
+      {slide === 1 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-sm font-mono text-cyan uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4 text-cyan" /> Fundamento Cuántico
             </div>
-            <button
-              onClick={() => {
-                playButtonClick();
-                setSubStep('intro');
-              }}
-              className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 py-1 px-2.5 rounded hover:bg-slate-900 transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Volver a la explicación
-            </button>
+            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
+              El Qubit Cuántico
+            </h2>
+            <p className="text-base sm:text-lg text-slate-300 mt-4 max-w-2xl mx-auto leading-relaxed">
+              A diferencia del bit clásico, la unidad básica de información cuántica puede existir en una <strong className="text-cyan">combinación o superposición de los estados 0 y 1 simultáneamente</strong>.
+            </p>
           </div>
 
-          {/* Main 3D Stage + Numbered Step Guide */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* 3D Viewport */}
-            <div className="lg:col-span-7 bg-[#080d1a] border border-slate-800 rounded-xl p-4 flex flex-col items-center relative">
-              <div className="w-full flex justify-between items-center text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-2 mb-2">
-                <span>Esfera de Bloch 3D</span>
-                <span>Mediciones: <strong className="text-cyan">{measureCount}</strong></span>
-              </div>
-
-              <div ref={containerRef} className="w-full cursor-grab active:cursor-grabbing" />
-
-              {/* Status Banner */}
-              <div className="w-full mt-3 bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs font-mono">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">Estado:</span>
-                  {isSuperposition ? (
-                    <span className="text-purple-300 font-bold bg-purple-950/60 border border-purple-500/40 px-2 py-0.5 rounded">
-                      Superposición (|0⟩ y |1⟩)
-                    </span>
-                  ) : (
-                    <span className="text-emerald-300 font-bold bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
-                      Colapsado a |{collapsedState}⟩
-                    </span>
-                  )}
-                </div>
-                <div className="text-slate-400">
-                  |0⟩: {Math.round(Math.cos(theta / 2) ** 2 * 100)}% | |1⟩:{' '}
-                  {Math.round(Math.sin(theta / 2) ** 2 * 100)}%
-                </div>
-              </div>
+          {/* Big Quantum Representation Card */}
+          <div className="bg-slate-900/90 border border-cyan/40 rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl shadow-cyan/10 flex flex-col items-center gap-6">
+            <div className="w-24 h-24 rounded-full bg-cyan/10 border-2 border-cyan flex items-center justify-center text-cyan shadow-xl shadow-cyan/30 animate-pulse">
+              <Sparkles className="w-12 h-12" />
             </div>
 
-            {/* Step-by-Step Instructions */}
-            <div className="lg:col-span-5 flex flex-col gap-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Instrucciones del Experimento
-                </div>
+            <div className="text-2xl sm:text-3xl font-orbitron font-bold text-purple-300">
+              |0⟩ y |1⟩ al mismo tiempo
+            </div>
 
-                {/* Step 1 */}
-                <div className="border-l-2 border-cyan pl-3 flex flex-col gap-1.5">
-                  <span className="text-xs font-bold text-white font-mono">Paso 1: Ajusta el ángulo</span>
-                  <p className="text-xs text-slate-400">
-                    Mueve el deslizador al centro para poner el qubit en superposición 50/50.
-                  </p>
-                  <input
-                    type="range"
-                    min="0.01"
-                    max={Math.PI - 0.01}
-                    step="0.01"
-                    value={theta}
-                    onChange={(e) => {
-                      setTheta(parseFloat(e.target.value));
-                      setIsSuperposition(true);
-                      setCollapsedState(null);
-                    }}
-                    className="w-full accent-cyan cursor-pointer mt-1"
-                  />
-                </div>
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-left text-sm text-slate-300 leading-relaxed">
+              <strong className="text-white block mb-1.5 font-sans font-semibold text-base">
+                La analogía cotidiana: La moneda girando en el aire
+              </strong>
+              Imagina una moneda apoyada en una mesa: es cara o cruz (un bit clásico rígido). Pero si la lanzas y gira en el aire... ¿qué es? Representa ambas caras simultáneamente (superposición) hasta que alguien la atrapa y la mide.
+            </div>
+          </div>
+        </div>
+      )}
 
-                {/* Step 2 */}
-                <div className="border-l-2 border-purple-500 pl-3 flex flex-col gap-2">
-                  <span className="text-xs font-bold text-white font-mono">Paso 2: Realiza la medición</span>
-                  <p className="text-xs text-slate-400">
-                    Pulsa el botón para disparar el detector y observa el comportamiento de la aguja.
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleMeasure}
-                      className="flex-1 py-3 px-4 rounded-lg bg-cyan text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyan/90 transition-all shadow-md shadow-cyan/20 active:scale-95"
-                    >
-                      <Scan className="w-4 h-4" /> Medir Qubit
-                    </button>
-                    <button
-                      onClick={handleReset}
-                      className="py-3 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono flex items-center justify-center transition-all border border-slate-700"
-                      title="Reiniciar a superposición"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+      {/* ========================================================================= */}
+      {/* SLIDE 2: LA ESFERA DE BLOCH (MANIPULACIÓN 3D ESPACIOSA)                   */}
+      {/* ========================================================================= */}
+      {slide === 2 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-2 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-sm font-mono text-cyan uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              <Activity className="w-4 h-4 text-cyan" /> Espacio de Hilbert
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
+              La Esfera de Bloch 3D
+            </h2>
+            <p className="text-sm sm:text-base text-slate-300 mt-2 max-w-xl mx-auto leading-relaxed">
+              En física cuántica, los estados de un qubit se representan como un vector tridimensional sobre una esfera.
+            </p>
+          </div>
 
-                {/* What happens readout */}
-                {hasMeasuredAtLeastOnce && (
-                  <div className="bg-emerald-950/30 border border-emerald-500/40 rounded-lg p-3 text-xs text-emerald-200 animate-in fade-in">
-                    <strong>Resultado observado:</strong> Al medir, el vector se detuvo en seco y colapsó a un único polo (|{collapsedState}⟩). La superposición desapareció.
-                  </div>
-                )}
+          {/* Generous 3D Canvas Box */}
+          <div className="w-full max-w-2xl bg-[#080d1a] border border-slate-800 rounded-2xl p-4 flex flex-col items-center relative shadow-2xl">
+            <div ref={containerRef} className="w-full cursor-grab active:cursor-grabbing" />
+
+            {/* Slider */}
+            <div className="w-full max-w-md mt-4 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-2">
+              <div className="flex justify-between text-xs font-mono text-slate-400">
+                <span>Polo Norte |0⟩</span>
+                <span className="text-cyan font-bold">Ecuador (Superposición 50/50)</span>
+                <span>Polo Sur |1⟩</span>
+              </div>
+              <input
+                type="range"
+                min="0.01"
+                max={Math.PI - 0.01}
+                step="0.01"
+                value={theta}
+                onChange={(e) => {
+                  setTheta(parseFloat(e.target.value));
+                  setIsSuperposition(true);
+                  setCollapsedState(null);
+                }}
+                className="w-full accent-cyan cursor-pointer"
+              />
+            </div>
+
+            <p className="text-xs font-mono text-slate-400 mt-2">
+              Mueve el deslizador para ver cómo el vector de estado recorre la esfera entre |0⟩ y |1⟩.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SLIDE 3: LA MEDICIÓN Y EL COLAPSO (ACCIÓN OBSERVABLE)                     */}
+      {/* ========================================================================= */}
+      {slide === 3 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-2 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-sm font-mono text-cyan uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              <Scan className="w-4 h-4 text-cyan" /> El Momento Decisivo
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
+              El Colapso de la Medición
+            </h2>
+            <p className="text-sm sm:text-base text-slate-300 mt-2 max-w-xl mx-auto leading-relaxed">
+              ¿Qué ocurre cuando intentamos observar o medir un qubit que se encuentra en superposición?
+            </p>
+          </div>
+
+          {/* 3D Canvas Box + Big Action Button */}
+          <div className="w-full max-w-2xl bg-[#080d1a] border border-slate-800 rounded-2xl p-4 flex flex-col items-center relative shadow-2xl">
+            <div ref={containerRef} className="w-full cursor-grab active:cursor-grabbing" />
+
+            <div className="w-full max-w-md mt-4 flex flex-col gap-3">
+              <div className="flex gap-3">
+                <button
+                  onClick={handleMeasure}
+                  className="flex-1 py-4 px-6 rounded-xl bg-cyan text-slate-950 font-orbitron font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyan/90 transition-all shadow-lg shadow-cyan/20 active:scale-95"
+                >
+                  <Scan className="w-5 h-5" /> Disparar Detector de Medida
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="py-4 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono flex items-center justify-center transition-all border border-slate-700"
+                  title="Reiniciar superposición"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
               </div>
 
-              {/* Button to proceed to Quiz */}
-              {hasMeasuredAtLeastOnce && (
-                <button
-                  onClick={() => {
-                    playButtonClick();
-                    setSubStep('quiz');
-                  }}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan to-emerald-400 text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan/20 active:scale-95"
-                >
-                  Continuar al Reto de Comprensión <ArrowRight className="w-4 h-4" />
-                </button>
+              {/* Instant Observable Result */}
+              {hasMeasured && (
+                <div className="bg-emerald-950/40 border border-emerald-500/60 rounded-xl p-4 text-sm text-emerald-200 text-left animate-in fade-in">
+                  <div className="font-bold flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    Colapso definitivo a |{collapsedState}⟩
+                  </div>
+                  La superposición ha desaparecido por completo. La aguja se fijó en un único polo clásico.
+                </div>
               )}
             </div>
           </div>
@@ -467,103 +475,120 @@ export default function Mission1Superposition({ onComplete }: Props) {
       )}
 
       {/* ========================================================================= */}
-      {/* SUB-PASO 3: RETO DE COMPRENSIÓN (DEDUCCIÓN FINAL)                          */}
+      {/* SLIDE 4: RETO DE COMPRENSIÓN (DEDUCCIÓN FINAL)                            */}
       {/* ========================================================================= */}
-      {subStep === 'quiz' && (
-        <div className="flex flex-col gap-6 py-2 animate-in fade-in duration-300">
-          <div className="border-b border-slate-800 pb-3 flex justify-between items-start">
-            <div>
-              <div className="text-cyan font-mono text-xs uppercase tracking-wider">
-                Tarea 1 • Reto de Comprensión
-              </div>
-              <h2 className="text-xl sm:text-2xl font-orbitron font-bold text-white mt-1">
-                Comprueba tu Deducción
-              </h2>
+      {slide === 4 && (
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-2 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-sm font-mono text-cyan uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              <HelpCircle className="w-4 h-4 text-cyan" /> Comprobación Final
             </div>
+            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
+              Reto de Comprensión
+            </h2>
+            <p className="text-base sm:text-lg text-slate-200 mt-3 font-semibold max-w-xl mx-auto">
+              ¿Qué ocurre cuando se mide un qubit que está en superposición?
+            </p>
+          </div>
+
+          <div className="w-full max-w-xl flex flex-col gap-3.5">
             <button
-              onClick={() => {
-                playButtonClick();
-                setSubStep('lab');
-              }}
-              className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 py-1 px-2.5 rounded hover:bg-slate-900 transition-colors"
+              onClick={() => handleChoice('duplicate')}
+              className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
+                userChoice === 'duplicate'
+                  ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+              }`}
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> Volver al laboratorio 3D
+              A) Se duplica en dos qubits independientes
+            </button>
+            <button
+              onClick={() => handleChoice('collapse')}
+              className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
+                userChoice === 'collapse'
+                  ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200 font-semibold'
+                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              B) Colapsa a uno de los estados posibles (0 o 1)
+            </button>
+            <button
+              onClick={() => handleChoice('infinite')}
+              className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
+                userChoice === 'infinite'
+                  ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
+                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              C) Permanece en superposición indefinidamente
             </button>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-3xl">
-            <div className="text-base font-semibold text-slate-100 mb-4 flex items-center gap-2.5">
-              <HelpCircle className="w-5 h-5 text-cyan shrink-0" />
-              ¿Qué ocurre cuando se mide un qubit que está en superposición?
-            </div>
-
-            <div className="grid grid-cols-1 gap-3.5">
-              <button
-                onClick={() => handleDeductionSelect('duplicate')}
-                className={`p-4 rounded-xl border text-left text-sm leading-normal transition-all ${
-                  userDeduction === 'duplicate'
-                    ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                }`}
-              >
-                A) Se duplica en dos qubits independientes
-              </button>
-              <button
-                onClick={() => handleDeductionSelect('collapse')}
-                className={`p-4 rounded-xl border text-left text-sm leading-normal transition-all ${
-                  userDeduction === 'collapse'
-                    ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200 font-medium'
-                    : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                }`}
-              >
-                B) Colapsa a uno de los estados posibles (0 o 1)
-              </button>
-              <button
-                onClick={() => handleDeductionSelect('infinite')}
-                className={`p-4 rounded-xl border text-left text-sm leading-normal transition-all ${
-                  userDeduction === 'infinite'
-                    ? 'bg-rose-950/40 border-rose-500/80 text-rose-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                }`}
-              >
-                C) Permanece en superposición indefinidamente
-              </button>
-            </div>
-
-            {showDeductionFeedback && (
-              <div
-                className={`mt-6 p-4 rounded-xl text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-                  userDeduction === 'collapse'
-                    ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
-                    : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {userDeduction === 'collapse' ? (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                  ) : (
-                    <Info className="w-5 h-5 text-rose-400 shrink-0" />
-                  )}
-                  <span>
-                    {userDeduction === 'collapse'
-                      ? '¡Correcto! Al interactuar con el aparato de medición, el estado cuántico colapsa a uno de los valores posibles.'
-                      : 'Pista: En el laboratorio 3D viste que al medir, la aguja no se quedó en el medio ni se dividió: cayó a uno de los polos.'}
-                  </span>
-                </div>
-
-                {userDeduction === 'collapse' && (
-                  <button
-                    onClick={onComplete}
-                    className="py-2.5 px-5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center gap-2 shrink-0 transition-all shadow-md shadow-emerald-500/20 active:scale-95"
-                  >
-                    Pasar a la Tarea 2 <ArrowRight className="w-4 h-4" />
-                  </button>
+          {showFeedback && (
+            <div
+              className={`w-full max-w-xl p-4 rounded-xl text-sm flex items-center justify-between gap-4 text-left ${
+                userChoice === 'collapse'
+                  ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
+                  : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {userChoice === 'collapse' ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                ) : (
+                  <Info className="w-5 h-5 text-rose-400 shrink-0" />
                 )}
+                <span>
+                  {userChoice === 'collapse'
+                    ? '¡Correcto! La medición rompe la superposición y fuerza el colapso a un único valor clásico.'
+                    : 'Pista: En el laboratorio viste que al disparar el detector, la aguja no se quedó en el medio ni se dividió: colapsó a un polo.'}
+                </span>
               </div>
-            )}
-          </div>
+
+              {userChoice === 'collapse' && (
+                <button
+                  onClick={onComplete}
+                  className="py-2.5 px-5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center gap-2 shrink-0 transition-all shadow-md shadow-emerald-500/20 active:scale-95"
+                >
+                  Pasar a Tarea 2 <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* BOTTOM SLIDE NAVIGATION (GRAND & CLEAN)                                   */}
+      {/* ========================================================================= */}
+      <div className="flex justify-between items-center border-t border-slate-800 pt-5 mt-6">
+        <button
+          onClick={goToPrevSlide}
+          disabled={slide === 0}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-all font-mono text-xs uppercase"
+        >
+          <ArrowLeft className="w-4 h-4" /> Anterior
+        </button>
+
+        <span className="text-xs font-mono text-slate-500 hidden sm:inline">
+          Tip: Puedes usar las flechas del teclado (← / →) para avanzar
+        </span>
+
+        {slide < totalSlides - 1 && (
+          <button
+            onClick={goToNextSlide}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-cyan text-slate-950 hover:bg-cyan/90 transition-all font-orbitron font-bold text-xs uppercase tracking-wider shadow-md shadow-cyan/20 active:scale-95"
+          >
+            Siguiente <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
+
+        {slide === totalSlides - 1 && userChoice !== 'collapse' && (
+          <span className="text-xs font-mono text-slate-400">
+            Responde la pregunta arriba para avanzar
+          </span>
+        )}
+      </div>
     </div>
   );
 }
