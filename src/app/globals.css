@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #070913;
+  --foreground: #f8fafc;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* Custom font utilities */
+.font-orbitron {
+  font-family: 'Orbitron', monospace;
+}
+
+.font-rajdhani {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #070913;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00f0ff;
+}
+
+/* Neon glow utility classes */
+.glow-cyan {
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+}
+
+.glow-purple {
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}
+
+.glow-text-purple {
+  text-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
+}
+
+/* Range input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  height: 6px;
+  border-radius: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 10px #00f0ff;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
