@@ -79,39 +79,36 @@ export default function Home() {
         />
       </div>
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-8 py-6 flex-1 flex flex-col gap-6">
-        {/* Step Navigation Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {tabs.map((tab, idx) => {
-            const isActive = activeTab === idx;
-            const isDone = completedMissions.includes(idx);
-            return (
-              <button
-                key={idx}
-                onClick={() => handleTabChange(idx)}
-                className={`p-3.5 rounded-2xl border text-left flex flex-col gap-1 transition-all ${
-                  isActive
-                    ? 'bg-slate-900/90 border-cyan text-white shadow-lg shadow-cyan/10 ring-1 ring-cyan/40'
-                    : isDone
-                    ? 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
-                    : 'bg-black/40 border-slate-900/80 text-slate-500 hover:text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs font-orbitron font-semibold">
-                  <span className={isActive ? 'text-cyan' : isDone ? 'text-emerald-400' : ''}>
-                    {tab.title}
-                  </span>
-                  {isDone && <Check className="w-3.5 h-3.5 text-emerald-400" />}
-                </div>
-                <div className="text-[11px] font-sans text-slate-400">{tab.desc}</div>
-              </button>
-            );
-          })}
+      {/* Main Content Area: Fluid Full Width, Zero Side Gutters */}
+      <main className="w-full px-3 sm:px-6 py-2 flex-1 flex flex-col gap-3">
+        {/* Sleek Floating Task Selector Dock */}
+        <div className="flex items-center justify-center">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 bg-slate-950/80 border border-slate-800/80 rounded-2xl sm:rounded-full backdrop-blur-md shadow-xl">
+            {tabs.map((tab, idx) => {
+              const isActive = activeTab === idx;
+              const isDone = completedMissions.includes(idx);
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleTabChange(idx)}
+                  className={`px-4 py-2 rounded-xl sm:rounded-full text-xs font-orbitron transition-all flex items-center gap-2 ${
+                    isActive
+                      ? 'bg-cyan text-slate-950 font-bold shadow-md shadow-cyan/25'
+                      : isDone
+                      ? 'text-emerald-400 hover:bg-slate-900/60 font-semibold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                  }`}
+                >
+                  <span>{tab.title}</span>
+                  {isDone && !isActive && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Active Mission Render */}
-        <div className="flex-1 bg-black/70 border border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-sm flex flex-col">
+        {/* Active Task Canvas Area: Full fluid container */}
+        <div className="flex-1 w-full flex flex-col">
           {activeTab === 0 && (
             <Mission1Superposition onComplete={() => handleMissionComplete(0)} />
           )}
