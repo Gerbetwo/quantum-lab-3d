@@ -253,7 +253,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
   };
 
   return (
-    <div className="flex flex-col justify-between min-h-[620px] w-full max-w-4xl mx-auto py-2">
+    <div className="flex flex-col justify-between min-h-[640px] w-full max-w-5xl mx-auto py-2">
       {/* ========================================================================= */}
       {/* TOP SLIDE STEPPER INDICATOR                                               */}
       {/* ========================================================================= */}

@@ -80,9 +80,9 @@ export default function Home() {
       </div>
 
       {/* Main Content Area */}
-      <main className="max-w-6xl w-full mx-auto p-4 sm:p-8 flex-1 flex flex-col gap-6">
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-8 py-6 flex-1 flex flex-col gap-6">
         {/* Step Navigation Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {tabs.map((tab, idx) => {
             const isActive = activeTab === idx;
             const isDone = completedMissions.includes(idx);
@@ -90,12 +90,12 @@ export default function Home() {
               <button
                 key={idx}
                 onClick={() => handleTabChange(idx)}
-                className={`p-3 rounded-xl border text-left flex flex-col gap-1 transition-all ${
+                className={`p-3.5 rounded-2xl border text-left flex flex-col gap-1 transition-all ${
                   isActive
-                    ? 'bg-slate-900 border-cyan text-white shadow-md shadow-cyan/10'
+                    ? 'bg-slate-900/90 border-cyan text-white shadow-lg shadow-cyan/10 ring-1 ring-cyan/40'
                     : isDone
-                    ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                    : 'bg-black/40 border-slate-900 text-slate-500 hover:text-slate-400'
+                    ? 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                    : 'bg-black/40 border-slate-900/80 text-slate-500 hover:text-slate-400'
                 }`}
               >
                 <div className="flex items-center justify-between text-xs font-orbitron font-semibold">
@@ -111,7 +111,7 @@ export default function Home() {
         </div>
 
         {/* Active Mission Render */}
-        <div className="flex-1 bg-slate-950/70 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xl">
+        <div className="flex-1 bg-black/70 border border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-sm flex flex-col">
           {activeTab === 0 && (
             <Mission1Superposition onComplete={() => handleMissionComplete(0)} />
           )}
