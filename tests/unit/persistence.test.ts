@@ -6,9 +6,13 @@ import {
   saveCompletedMission,
   getStoredMetrics,
   incrementActiveMissionTime,
+  getStoredActiveTab,
+  saveActiveTab,
+  deleteAllUserData,
   COOKIE_USER_ID,
   COOKIE_PROGRESS,
   COOKIE_METRICS,
+  COOKIE_ACTIVE_TAB,
   DEFAULT_METRICS,
 } from '@/lib/cookies';
 
@@ -126,5 +130,51 @@ describe('Phase 3 — Persistence & Metric Contracts (cookies.ts)', () => {
       expect(metrics.totalTimeSeconds).toBe(4);
       expect(metrics.missionTimes.applications).toBe(1);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 5 - Session persistence: active tab survives reload
+// ---------------------------------------------------------------------------
+describe('Phase 5 - Active tab persistence', () => {
+  beforeEach(() => {
+    Object.keys(Cookies.get()).forEach((name) => {
+      Cookies.remove(name);
+    });
+  });
+
+  it('saveActiveTab + getStoredActiveTab round-trip for every valid tab', () => {
+    for (const tab of [0, 1, 2, 3]) {
+      saveActiveTab(tab);
+      expect(getStoredActiveTab()).toBe(tab);
+    }
+  });
+
+  it('simulated reload recovers the last active tab from cookie', () => {
+    // User navigates to tab 2 and starts Mission 3.
+    saveActiveTab(2);
+
+    // Simulate a page reload: cookies persist, module state is fresh.
+    // getStoredActiveTab reads from cookie (js-cookie mock in jsdom).
+    const recoveredTab = getStoredActiveTab();
+    expect(recoveredTab).toBe(2);
+  });
+
+  it('rejects invalid tab values on save (out-of-range, NaN)', () => {
+    saveActiveTab(99);
+    expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeUndefined();
+
+    saveActiveTab(-1);
+    expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeUndefined();
+
+    saveActiveTab(Number.NaN);
+    expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeUndefined();
+  });
+
+  it('deleteAllUserData also removes the active tab cookie', () => {
+    saveActiveTab(1);
+    expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeDefined();
+    deleteAllUserData();
+    expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeUndefined();
   });
 });

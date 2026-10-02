@@ -14,6 +14,16 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      exclude: [
+        'tests/e2e/**',
+        'node_modules/**',
+        '.next/**',
+        'src/lib/three/**',
+      ],
+      thresholds: {
+        'src/domain/**': { statements: 95, branches: 90 },
+        'src/lib/**': { statements: 85, branches: 80 },
+      },
     },
   },
   resolve: {
