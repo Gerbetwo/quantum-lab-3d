@@ -6,6 +6,7 @@ import {
   playQuantumCollapse,
   playChimeSuccess,
   playDecoherenceAlert,
+  __markUserInteracted,
 } from '@/lib/sound';
 
 describe('Phase 5 - sound.ts full coverage', () => {
@@ -13,6 +14,7 @@ describe('Phase 5 - sound.ts full coverage', () => {
 
   beforeEach(() => {
     delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
+    __markUserInteracted();
     vi.useFakeTimers();
   });
 

@@ -3,12 +3,8 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
 
-// Shared state captured before vi.mock hoisting runs.
 const { cookieState, pushProgress } = vi.hoisted(() => {
-  const state = {
-    progress: [0] as number[],
-    saveCalls: [] as number[],
-  };
+  const state = { progress: [0] as number[], saveCalls: [] as number[] };
   const push = (i: number) => {
     state.saveCalls.push(i);
     state.progress = Array.from(new Set([...state.progress, i])).sort((a, b) => a - b);
@@ -22,10 +18,7 @@ vi.mock('@/lib/cookies', () => ({
   getStoredActiveTab: () => 0,
   saveActiveTab: vi.fn(),
   incrementActiveMissionTime: vi.fn(),
-  saveCompletedMission: (i: number) => {
-    pushProgress(i);
-    return cookieState.progress;
-  },
+  saveCompletedMission: (i: number) => { pushProgress(i); return cookieState.progress; },
   updateStoredMetrics: vi.fn(),
   createDefaultMetrics: () => ({
     totalTimeSeconds: 0,
@@ -59,45 +52,22 @@ vi.mock('@/components/CelebrationModal', () => ({
 
 vi.mock('@/components/missions/Mission1Superposition', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
-    <button
-      data-testid="mission-1"
-      onClick={() => { pushProgress(0); onComplete(); }}
-    >
-      Complete Mission 1
-    </button>
+    <button data-testid="mission-1" onClick={() => { pushProgress(0); onComplete(); }}>Complete Mission 1</button>
   ),
 }));
-
 vi.mock('@/components/missions/Mission2Entanglement', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
-    <button
-      data-testid="mission-2"
-      onClick={() => { pushProgress(1); onComplete(); }}
-    >
-      Complete Mission 2
-    </button>
+    <button data-testid="mission-2" onClick={() => { pushProgress(1); onComplete(); }}>Complete Mission 2</button>
   ),
 }));
-
 vi.mock('@/components/missions/Mission3Decoherence', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
-    <button
-      data-testid="mission-3"
-      onClick={() => { pushProgress(2); onComplete(); }}
-    >
-      Complete Mission 3
-    </button>
+    <button data-testid="mission-3" onClick={() => { pushProgress(2); onComplete(); }}>Complete Mission 3</button>
   ),
 }));
-
 vi.mock('@/components/missions/Mission4Applications', () => ({
   default: ({ onFinishAll }: { onFinishAll: () => void }) => (
-    <button
-      data-testid="mission-4"
-      onClick={() => { pushProgress(3); onFinishAll(); }}
-    >
-      Complete Mission 4
-    </button>
+    <button data-testid="mission-4" onClick={() => { pushProgress(3); onFinishAll(); }}>Complete Mission 4</button>
   ),
 }));
 
@@ -114,60 +84,52 @@ describe('Phase 5 - Home integration (mission flow + celebration)', () => {
     vi.useRealTimers();
   });
 
-  it('advances tabs as each mission completes', () => {
+  it('advances tabs as each mission completes', async () => {
     render(<Home />);
-
-    // Start the lab
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
-    expect(screen.getByTestId('mission-1')).toBeInTheDocument();
-
+    expect(await screen.findByTestId('mission-1')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('mission-1'));
-    expect(screen.getByTestId('mission-2')).toBeInTheDocument();
-
+    expect(await screen.findByTestId('mission-2')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('mission-2'));
-    expect(screen.getByTestId('mission-3')).toBeInTheDocument();
-
+    expect(await screen.findByTestId('mission-3')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('mission-3'));
-    expect(screen.getByTestId('mission-4')).toBeInTheDocument();
+    expect(await screen.findByTestId('mission-4')).toBeInTheDocument();
   });
 
-  it('records mission completions in order 0,1,2,3', () => {
+  it('records mission completions in order 0,1,2,3', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
-    fireEvent.click(screen.getByTestId('mission-1'));
-    fireEvent.click(screen.getByTestId('mission-2'));
-    fireEvent.click(screen.getByTestId('mission-3'));
-    fireEvent.click(screen.getByTestId('mission-4'));
+    fireEvent.click(await screen.findByTestId('mission-1'));
+    fireEvent.click(await screen.findByTestId('mission-2'));
+    fireEvent.click(await screen.findByTestId('mission-3'));
+    fireEvent.click(await screen.findByTestId('mission-4'));
 
     expect(cookieState.saveCalls).toEqual([0, 1, 2, 3]);
   });
 
-  it('shows CelebrationModal after completing all 4 missions', () => {
+  it('shows CelebrationModal after completing all 4 missions', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
     expect(screen.queryByTestId('celebration-modal')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('mission-1'));
-    fireEvent.click(screen.getByTestId('mission-2'));
-    fireEvent.click(screen.getByTestId('mission-3'));
-    fireEvent.click(screen.getByTestId('mission-4'));
+    fireEvent.click(await screen.findByTestId('mission-1'));
+    fireEvent.click(await screen.findByTestId('mission-2'));
+    fireEvent.click(await screen.findByTestId('mission-3'));
+    fireEvent.click(await screen.findByTestId('mission-4'));
 
-    expect(screen.getByTestId('celebration-modal')).toBeInTheDocument();
+    expect(await screen.findByTestId('celebration-modal')).toBeInTheDocument();
   });
 
-  it('timer decrements when lab is started', () => {
+  it('timer decrements when lab is started', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
+    await screen.findByTestId('mission-1');
 
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
+    act(() => { vi.advanceTimersByTime(3000); });
 
-    // Header is mocked, so we cannot read its display. Verify no crash and
-    // timer keeps running without re-rendering the tree endlessly.
     expect(screen.getByTestId('mission-1')).toBeInTheDocument();
   });
 });

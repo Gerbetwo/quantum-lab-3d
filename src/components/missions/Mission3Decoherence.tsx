@@ -21,7 +21,7 @@ import {
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { calculateCoherenceTime, isCriticalDecoherence } from '@/domain/quantum/decoherence';
 import { useThreeScene } from '@/hooks/useThreeScene';
-import { prefersReducedMotion } from '@/lib/three/createScene';
+import { prefersReducedMotion, cached } from '@/lib/three/createScene';
 
 interface Props {
   onComplete: () => void;
@@ -93,7 +93,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
       const ringRadii = [1.3, 0.95, 0.65];
       const ringHeights = [0.9, 0.45, 0.0];
       ringRadii.forEach((r, idx) => {
-        const ringGeo = new THREE.TorusGeometry(r, 0.025, 16, 48);
+        const ringGeo = cached('m3:torus:' + r, () => new THREE.TorusGeometry(r, 0.025, 16, 48));
         const ringMesh = new THREE.Mesh(
           ringGeo,
           new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true })
@@ -104,7 +104,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
       });
       handle.add(chandelier);
 
-      const coreGeo = new THREE.BoxGeometry(0.55, 0.3, 0.55);
+      const coreGeo = cached('m3:core', () => new THREE.BoxGeometry(0.55, 0.3, 0.55));
       const coreMesh = new THREE.Mesh(
         coreGeo,
         new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
@@ -278,7 +278,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
             </button>
 
             <div className="text-2xl font-orbitron font-bold text-white">
-              Perturbaciones: <span data-testid="photon-counter" className="text-rose-400">{photonHits}</span>
+              Perturbaciones: <span data-testid="photon-counter" aria-live="polite" className="text-rose-400">{photonHits}</span>
             </div>
 
             {photonHits > 0 && (
@@ -309,7 +309,9 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
           </div>
 
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Refrigerador criogénico de dilución interactivo" className="w-full" />
 
             <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
               <div className="flex justify-between items-center text-xs font-mono">
@@ -366,7 +368,9 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
           </div>
 
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Refrigerador criogénico de dilución interactivo" className="w-full" />
 
             <div className="w-full max-w-md mt-2 flex flex-col gap-3">
               <button

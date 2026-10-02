@@ -11,10 +11,15 @@ interface Props {
   onToggleTimer: () => void;
 }
 
+const timeCache = new Map<number, string>();
 function formatTime(seconds: number): string {
+  const cached = timeCache.get(seconds);
+  if (cached !== undefined) return cached;
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const out = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  timeCache.set(seconds, out);
+  return out;
 }
 
 const BrandSection = memo(function BrandSection() {

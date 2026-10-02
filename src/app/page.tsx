@@ -1,11 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import Header from "@/components/Header";
-import Mission1Superposition from "@/components/missions/Mission1Superposition";
-import Mission2Entanglement from "@/components/missions/Mission2Entanglement";
-import Mission3Decoherence from "@/components/missions/Mission3Decoherence";
-import Mission4Applications from "@/components/missions/Mission4Applications";
 import CelebrationModal from "@/components/CelebrationModal";
 import {
   getOrCreateUserId,
@@ -15,7 +11,26 @@ import {
   saveActiveTab,
 } from "@/lib/cookies";
 import { playButtonClick } from "@/lib/sound";
-import { Play, RotateCcw } from "lucide-react";
+import { Play, RotateCcw, Loader2 } from "lucide-react";
+
+const Mission1Superposition = lazy(() => import("@/components/missions/Mission1Superposition"));
+const Mission2Entanglement = lazy(() => import("@/components/missions/Mission2Entanglement"));
+const Mission3Decoherence = lazy(() => import("@/components/missions/Mission3Decoherence"));
+const Mission4Applications = lazy(() => import("@/components/missions/Mission4Applications"));
+
+function MissionLoading() {
+  return (
+    <div
+      data-testid="mission-loading"
+      className="flex-1 flex items-center justify-center py-16 text-slate-400"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <Loader2 className="w-6 h-6 animate-spin text-cyan" />
+      <span className="ml-3 text-sm font-mono">Cargando módulo…</span>
+    </div>
+  );
+}
 
 export default function Home() {
   const [userId, setUserId] = useState<string>("");
@@ -26,11 +41,8 @@ export default function Home() {
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
   const [celebrationDismissed, setCelebrationDismissed] = useState<boolean>(false);
 
-  // Mirror of timeLeft for use inside setInterval without stale closures.
   const timeLeftRef = useRef<number>(timeLeft);
-  useEffect(() => {
-    timeLeftRef.current = timeLeft;
-  }, [timeLeft]);
+  useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
 
   useEffect(() => {
     setUserId(getOrCreateUserId());
@@ -38,13 +50,10 @@ export default function Home() {
     setActiveTab(getStoredActiveTab());
   }, []);
 
-  useEffect(() => {
-    saveActiveTab(activeTab);
-  }, [activeTab]);
+  useEffect(() => { saveActiveTab(activeTab); }, [activeTab]);
 
   useEffect(() => {
     if (!isStarted || isTimeUp) return;
-
     const timer = setInterval(() => {
       const current = timeLeftRef.current;
       if (current <= 1) {
@@ -55,16 +64,13 @@ export default function Home() {
       setTimeLeft(current - 1);
       incrementActiveMissionTime(activeTab);
     }, 1000);
-
     return () => clearInterval(timer);
   }, [isStarted, isTimeUp, activeTab]);
 
   const handleMissionComplete = useCallback((missionIndex: number) => {
     const updatedProgress = getStoredProgress();
     setCompletedMissions(updatedProgress);
-    if (missionIndex < 3) {
-      setActiveTab(missionIndex + 1);
-    }
+    if (missionIndex < 3) setActiveTab(missionIndex + 1);
   }, []);
 
   const handleTabSelect = useCallback((tabIndex: number) => {
@@ -72,35 +78,21 @@ export default function Home() {
     setActiveTab(tabIndex);
   }, []);
 
-  const handleStartLab = useCallback(() => {
-    playButtonClick();
-    setIsStarted(true);
-  }, []);
-
+  const handleStartLab = useCallback(() => { playButtonClick(); setIsStarted(true); }, []);
   const handleRestartLab = useCallback(() => {
     playButtonClick();
     setTimeLeft(600);
     setIsTimeUp(false);
     setActiveTab(0);
   }, []);
-
-  const handleToggleTimer = useCallback(() => {
-    setIsStarted((prev) => !prev);
-  }, []);
-
-  const handleDismissCelebration = useCallback(() => {
-    setCelebrationDismissed(true);
-  }, []);
+  const handleToggleTimer = useCallback(() => { setIsStarted((prev) => !prev); }, []);
+  const handleDismissCelebration = useCallback(() => { setCelebrationDismissed(true); }, []);
 
   const showCelebration = completedMissions.includes(3) && !celebrationDismissed;
 
   return (
     <main className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-cyan selection:text-slate-950">
-      <Header
-        timeLeft={timeLeft}
-        isRunning={isStarted && !isTimeUp}
-        onToggleTimer={handleToggleTimer}
-      />
+      <Header timeLeft={timeLeft} isRunning={isStarted && !isTimeUp} onToggleTimer={handleToggleTimer} />
 
       {!isStarted ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12 max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-300">
@@ -108,17 +100,14 @@ export default function Home() {
             <span className="w-2 h-2 rounded-full bg-cyan animate-ping" />
             Masterclass de Computación Cuántica 3D
           </div>
-
           <h1 className="text-4xl sm:text-6xl font-orbitron font-bold tracking-tight text-white mb-6 leading-tight">
             LABORATORIO DE <span className="text-cyan">FÍSICA CUÁNTICA</span>
           </h1>
-
           <p className="text-slate-300 text-base sm:text-lg mb-8 leading-relaxed max-w-2xl">
             Bienvenido al simulador interactivo de mecánica cuántica. Explora la
             superposición, el entrelazamiento, la decoherencia y las
             aplicaciones reales mediante simulaciones en 3D en vivo.
           </p>
-
           <button
             onClick={handleStartLab}
             className="py-4 px-8 rounded-2xl bg-cyan text-slate-950 hover:bg-cyan/90 font-orbitron font-bold text-sm uppercase tracking-wider flex items-center gap-3 transition-all shadow-xl shadow-cyan/25 active:scale-95"
@@ -132,18 +121,13 @@ export default function Home() {
             <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 font-orbitron font-bold text-xl">
               10:00
             </div>
-
             <div>
-              <h2 className="text-2xl font-orbitron font-bold text-white mb-2">
-                ¡Tiempo Límite Agotado!
-              </h2>
+              <h2 className="text-2xl font-orbitron font-bold text-white mb-2">¡Tiempo Límite Agotado!</h2>
               <p className="text-slate-300 text-sm leading-relaxed">
                 Has alcanzado el tiempo límite de 10 minutos para esta sesión de
-                laboratorio. Puedes reiniciar el tiempo para continuar
-                explorando los módulos.
+                laboratorio. Puedes reiniciar el tiempo para continuar explorando los módulos.
               </p>
             </div>
-
             <button
               onClick={handleRestartLab}
               className="py-3.5 px-6 rounded-2xl bg-cyan text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyan/90 transition-all shadow-lg shadow-cyan/20 active:scale-95"
@@ -154,27 +138,27 @@ export default function Home() {
         </div>
       ) : (
         <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-6xl mx-auto w-full">
-          {activeTab === 0 && (
-            <Mission1Superposition onComplete={() => handleMissionComplete(0)} />
-          )}
-          {activeTab === 1 && (
-            <Mission2Entanglement
-              onComplete={() => handleMissionComplete(1)}
-              onBack={() => handleTabSelect(0)}
-            />
-          )}
-          {activeTab === 2 && (
-            <Mission3Decoherence
-              onComplete={() => handleMissionComplete(2)}
-              onBack={() => handleTabSelect(1)}
-            />
-          )}
-          {activeTab === 3 && (
-            <Mission4Applications
-              onFinishAll={() => handleMissionComplete(3)}
-              onBack={() => handleTabSelect(2)}
-            />
-          )}
+          <Suspense fallback={<MissionLoading />}>
+            {activeTab === 0 && <Mission1Superposition onComplete={() => handleMissionComplete(0)} />}
+            {activeTab === 1 && (
+              <Mission2Entanglement
+                onComplete={() => handleMissionComplete(1)}
+                onBack={() => handleTabSelect(0)}
+              />
+            )}
+            {activeTab === 2 && (
+              <Mission3Decoherence
+                onComplete={() => handleMissionComplete(2)}
+                onBack={() => handleTabSelect(1)}
+              />
+            )}
+            {activeTab === 3 && (
+              <Mission4Applications
+                onFinishAll={() => handleMissionComplete(3)}
+                onBack={() => handleTabSelect(2)}
+              />
+            )}
+          </Suspense>
         </div>
       )}
 

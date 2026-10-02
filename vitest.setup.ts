@@ -8,6 +8,7 @@ vi.mock('three', async () => {
   class MockWebGLRenderer {
     setSize = vi.fn();
     setPixelRatio = vi.fn();
+    setAnimationLoop = vi.fn();
     render = vi.fn();
     dispose = vi.fn();
     domElement = document.createElement('canvas');

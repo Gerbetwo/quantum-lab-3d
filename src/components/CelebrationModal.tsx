@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Award, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { getOrCreateUserId, updateStoredMetrics } from '@/lib/cookies';
@@ -13,16 +13,16 @@ interface Props {
   formUrl?: string;
 }
 
+const FOCUSABLE =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
+  const modalRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (!isOpen) return;
-
     playChimeSuccess();
-    updateStoredMetrics((prev) => ({
-      ...prev,
-      completedAt: new Date().toISOString(),
-    }));
-
+    updateStoredMetrics((prev) => ({ ...prev, completedAt: new Date().toISOString() }));
     if (!prefersReducedMotion()) {
       confetti({
         particleCount: 70,
@@ -31,40 +31,79 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
         colors: ['#00f0ff', '#a855f7', '#10b981', '#ffffff'],
       });
     }
-
     return () => {
-      try {
-        confetti.reset();
-      } catch {
-        /* ignore */
-      }
+      try { confetti.reset(); } catch {}
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const modal = modalRef.current;
+    if (!modal) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
 
+    const focusables = () => Array.from(modal.querySelectorAll<HTMLElement>(FOCUSABLE));
+    focusables()[0]?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const list = focusables();
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    modal.addEventListener('keydown', onKeyDown);
+    return () => {
+      modal.removeEventListener('keydown', onKeyDown);
+      previouslyFocused?.focus?.();
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
   const userId = getOrCreateUserId();
+  const titleId = 'celebration-modal-title';
 
   return (
-    <div data-testid="celebration-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div
+      ref={modalRef}
+      data-testid="celebration-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+    >
       <div className="relative max-w-lg w-full bg-[#0b0f1d] border border-slate-700 rounded-2xl p-6 sm:p-7 shadow-2xl text-center flex flex-col items-center">
-        {/* Badge Icon */}
         <div className="w-14 h-14 rounded-xl bg-cyan/10 border border-cyan/40 flex items-center justify-center text-cyan mb-3 shadow-lg shadow-cyan/15">
           <Award className="w-7 h-7 text-cyan" />
         </div>
 
-        <h3 className="font-orbitron font-bold text-xl text-white tracking-wide">
+        <h3 id={titleId} className="font-orbitron font-bold text-xl text-white tracking-wide">
           Entrenamiento Completado
         </h3>
         <p className="text-xs text-slate-300 mt-1 max-w-sm">
           Has interactuado con los 4 conceptos fundamentales de la computación cuántica.
         </p>
 
-        {/* Summary Card */}
         <div className="w-full my-4 bg-slate-950 border border-slate-800 rounded-xl p-4 text-left flex flex-col gap-2.5 text-xs">
           <div className="flex justify-between border-b border-slate-800 pb-2 font-mono">
             <span className="text-slate-400">ID de sesión registrado:</span>
-            <span data-testid="celebration-user-id" className="text-cyan font-bold">{userId}</span>
+            <span data-testid="celebration-user-id" className="text-cyan font-bold">
+              {userId}
+            </span>
           </div>
           <div className="flex flex-col gap-2 pt-1 text-slate-300">
             <div className="flex items-start gap-2">
@@ -86,7 +125,6 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
           </div>
         </div>
 
-        {/* Action Button */}
         <div className="w-full flex flex-col sm:flex-row gap-2.5">
           {formUrl ? (
             <a

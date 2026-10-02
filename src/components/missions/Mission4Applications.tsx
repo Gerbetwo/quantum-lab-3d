@@ -19,7 +19,7 @@ import { playButtonClick, playChimeSuccess, playLaserScan } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { formatShorResult, updateExploredApplications } from '@/domain/quantum/applications';
 import { useThreeScene } from '@/hooks/useThreeScene';
-import { prefersReducedMotion } from '@/lib/three/createScene';
+import { prefersReducedMotion, cached } from '@/lib/three/createScene';
 
 interface Props {
   onFinishAll: () => void;
@@ -78,7 +78,7 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
       moleculeGroupRef.current = moleculeGroup;
       handle.add(moleculeGroup);
 
-      const atomGeo = new THREE.SphereGeometry(0.2, 16, 16);
+      const atomGeo = cached('m4:atom', () => new THREE.SphereGeometry(0.2, 16, 16));
       const atomMatCyan = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
       const atomMatPurple = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
       const atomMatGreen = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true });
@@ -288,7 +288,9 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
           </div>
 
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Modelo molecular interactivo para simulación cuántica" className="w-full" />
 
             <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
               <div className="grid grid-cols-2 gap-2">

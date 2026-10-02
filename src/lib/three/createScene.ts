@@ -20,10 +20,27 @@ export interface SceneHandle {
   dispose(): void;
 }
 
+const SHARED_CACHE = new Map<string, unknown>();
+
+/**
+ * Returns a process-wide cached instance for the given key.
+ * The instance is marked with userData.__shared so that createScene.dispose()
+ * does NOT dispose it (reusable across scene lifecycles).
+ */
+export function cached<T extends { userData: Record<string, unknown> }>(
+  key: string,
+  factory: () => T
+): T {
+  const existing = SHARED_CACHE.get(key) as T | undefined;
+  if (existing) return existing;
+  const inst = factory();
+  inst.userData = { ...inst.userData, __shared: true };
+  SHARED_CACHE.set(key, inst);
+  return inst;
+}
+
 export function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
@@ -53,14 +70,13 @@ export function createScene(container: HTMLElement, config: SceneConfig): SceneH
   container.appendChild(renderer.domElement);
 
   const frameCallbacks = new Set<(elapsed: number, delta: number) => void>();
-  let rafId: number | null = null;
   let disposed = false;
   const startedAt = performance.now();
   let lastTime = startedAt;
 
   const loop = () => {
     if (disposed) return;
-    rafId = requestAnimationFrame(loop);
+    if (typeof document !== 'undefined' && document.hidden) return;
     const now = performance.now();
     const delta = (now - lastTime) / 1000;
     lastTime = now;
@@ -68,7 +84,7 @@ export function createScene(container: HTMLElement, config: SceneConfig): SceneH
     for (const cb of frameCallbacks) cb(elapsed, delta);
     renderer.render(scene, camera);
   };
-  rafId = requestAnimationFrame(loop);
+  renderer.setAnimationLoop(loop);
 
   const onResize = () => {
     if (disposed) return;
@@ -80,37 +96,37 @@ export function createScene(container: HTMLElement, config: SceneConfig): SceneH
   };
   window.addEventListener('resize', onResize);
 
+  const disposeResource = (obj: unknown) => {
+    if (!obj) return;
+    const anyObj = obj as { userData?: Record<string, unknown>; dispose?: () => void };
+    if (anyObj.userData?.__shared === true) return;
+    anyObj.dispose?.();
+  };
+
   const handle: SceneHandle = {
     scene,
     camera,
     renderer,
-    add(obj) {
-      scene.add(obj);
-    },
+    add(obj) { scene.add(obj); },
     onFrame(cb) {
       frameCallbacks.add(cb);
-      return () => {
-        frameCallbacks.delete(cb);
-      };
+      return () => { frameCallbacks.delete(cb); };
     },
     dispose() {
       if (disposed) return;
       disposed = true;
-      if (rafId !== null) cancelAnimationFrame(rafId);
+      renderer.setAnimationLoop(null);
       window.removeEventListener('resize', onResize);
       frameCallbacks.clear();
       scene.traverse((obj) => {
         const anyObj = obj as unknown as {
-          geometry?: { dispose?: () => void };
-          material?: { dispose?: () => void } | Array<{ dispose?: () => void }>;
+          geometry?: unknown;
+          material?: unknown;
         };
-        anyObj.geometry?.dispose?.();
+        disposeResource(anyObj.geometry);
         const mat = anyObj.material;
-        if (Array.isArray(mat)) {
-          mat.forEach((m) => m.dispose?.());
-        } else {
-          mat?.dispose?.();
-        }
+        if (Array.isArray(mat)) mat.forEach(disposeResource);
+        else disposeResource(mat);
       });
       renderer.dispose();
       if (renderer.domElement.parentNode === container) {

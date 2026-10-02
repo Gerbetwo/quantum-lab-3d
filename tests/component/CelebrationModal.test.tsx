@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
 import CelebrationModal from '@/components/CelebrationModal';
@@ -38,6 +38,20 @@ describe('Phase 4 - CelebrationModal cleanup', () => {
     expect(screen.getByTestId('celebration-modal')).toBeInTheDocument();
     expect(screen.getByTestId('celebration-user-id')).toHaveTextContent('QL-ABCD');
     expect(screen.getByRole('button', { name: /Cerrar y Revisar Módulos/i })).toBeInTheDocument();
+  });
+
+  it('autofocuses the first focusable element', () => {
+    render(<CelebrationModal isOpen={true} onClose={vi.fn()} />);
+    const close = screen.getByRole('button', { name: /Cerrar y Revisar Módulos/i });
+    expect(close).toHaveFocus();
+  });
+
+  it('calls onClose on Escape key', () => {
+    const onClose = vi.fn();
+    render(<CelebrationModal isOpen={true} onClose={onClose} />);
+    const close = screen.getByRole('button', { name: /Cerrar y Revisar Módulos/i });
+    fireEvent.keyDown(close, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('calls confetti.reset on unmount', () => {

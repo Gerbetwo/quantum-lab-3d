@@ -28,7 +28,7 @@ import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { calculateBlochProbabilities } from '@/domain/quantum/bloch';
 import { measureQubit } from '@/domain/quantum/measurement';
 import { useThreeScene } from '@/hooks/useThreeScene';
-import { prefersReducedMotion } from '@/lib/three/createScene';
+import { prefersReducedMotion, cached } from '@/lib/three/createScene';
 
 interface Props {
   onComplete: () => void;
@@ -118,7 +118,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
       sphereGroupRef.current = sphereGroup;
       handle.add(sphereGroup);
 
-      const sphereGeo = new THREE.SphereGeometry(1, 32, 24);
+      const sphereGeo = cached('m1:sphere', () => new THREE.SphereGeometry(1, 32, 24));
       const sphereMat = new THREE.MeshBasicMaterial({
         color: 0x00f0ff,
         wireframe: true,
@@ -127,7 +127,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
       });
       sphereGroup.add(new THREE.Mesh(sphereGeo, sphereMat));
 
-      const ringGeo = new THREE.RingGeometry(0.98, 1.02, 64);
+      const ringGeo = cached('m1:ring', () => new THREE.RingGeometry(0.98, 1.02, 64));
       const ringMat = new THREE.MeshBasicMaterial({
         color: 0xa855f7,
         side: THREE.DoubleSide,
@@ -153,7 +153,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
       axisLine.computeLineDistances();
       sphereGroup.add(axisLine);
 
-      const pole0Geo = new THREE.SphereGeometry(0.08, 16, 16);
+      const pole0Geo = cached('m1:pole', () => new THREE.SphereGeometry(0.08, 16, 16));
       const pole0 = new THREE.Mesh(pole0Geo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
       pole0.position.set(0, 1, 0);
       pole0MeshRef.current = pole0;
@@ -182,7 +182,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
       vectorArrowRef.current = arrow;
       sphereGroup.add(arrow);
 
-      const shockGeo = new THREE.RingGeometry(0.1, 0.22, 32);
+      const shockGeo = cached('m1:shock', () => new THREE.RingGeometry(0.1, 0.22, 32));
       const shockMat = new THREE.MeshBasicMaterial({
         color: 0x00f0ff,
         side: THREE.DoubleSide,
@@ -535,6 +535,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
             <div
               ref={containerRef}
+              role="img"
+              aria-label="Esfera de Bloch interactiva, usa el ratón para rotar"
               className="w-full cursor-grab active:cursor-grabbing touch-none select-none my-1"
               title="Arrastra con el ratón para rotar en 3D"
             />
@@ -604,6 +606,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
             <div
               ref={containerRef}
+              role="img"
+              aria-label="Esfera de Bloch interactiva, usa el ratón para rotar"
               className="w-full cursor-grab active:cursor-grabbing touch-none select-none my-1"
               title="Arrastra con el ratón para rotar en 3D"
             />

@@ -26,7 +26,7 @@ import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
 import { measureQubit } from '@/domain/quantum/measurement';
 import { useThreeScene } from '@/hooks/useThreeScene';
-import { prefersReducedMotion } from '@/lib/three/createScene';
+import { prefersReducedMotion, cached } from '@/lib/three/createScene';
 
 interface Props {
   onComplete: () => void;
@@ -89,7 +89,7 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
     cameraLookAt: [0, 0, 0],
     recreateOn: step === 1 ? 'm2-s1' : step === 2 ? 'm2-s2' : step === 3 ? 'm2-s3' : 'm2-hidden',
     onSetup: (handle) => {
-      const stationGeo = new THREE.IcosahedronGeometry(0.38, 1);
+      const stationGeo = cached('m2:station', () => new THREE.IcosahedronGeometry(0.38, 1));
       const aliceMesh = new THREE.Mesh(
         stationGeo,
         new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
@@ -326,7 +326,9 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
           </div>
 
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
 
             <div className="w-full max-w-md mt-2 flex flex-col gap-3">
               <button
@@ -367,7 +369,9 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
           </div>
 
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
 
             <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
               <div className="flex justify-between items-center text-xs font-mono">
@@ -408,7 +412,9 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
           </div>
 
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
 
             <div className="w-full max-w-md mt-2 flex flex-col gap-3">
               <div className="grid grid-cols-2 gap-3">
