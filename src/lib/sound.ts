@@ -9,11 +9,31 @@ if (typeof window !== 'undefined') {
   window.addEventListener('keydown', setInteracted, { once: true, passive: true });
 }
 
+let runtimeAudioEnabled: boolean | null = null;
+
 export function isAudioEnabled(): boolean {
+  if (runtimeAudioEnabled !== null) return runtimeAudioEnabled;
   const v = process.env.NEXT_PUBLIC_ENABLE_AUDIO;
   if (v === undefined) return true;
   if (v === 'false' || v === '0') return false;
   return true;
+}
+
+/** Runtime override for session-scoped audio toggling. */
+export function setAudioEnabled(enabled: boolean): void {
+  runtimeAudioEnabled = enabled;
+}
+
+/** Flips the runtime override and returns the new state. */
+export function toggleAudio(): boolean {
+  const next = !isAudioEnabled();
+  runtimeAudioEnabled = next;
+  return next;
+}
+
+/** Test-only: clear the runtime override so env vars take precedence again. */
+export function __resetAudioOverride(): void {
+  runtimeAudioEnabled = null;
 }
 
 /** Test-only: mark the user as having interacted so getAudioContext can proceed. */
