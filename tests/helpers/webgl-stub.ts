@@ -26,7 +26,7 @@ export function createMockWebGLContext(): Partial<WebGLRenderingContext> {
     enable: () => {},
     disable: () => {},
     viewport: () => {},
-  } as Partial<WebGLRenderingContext>;
+  } as unknown as Partial<WebGLRenderingContext>;
 }
 
 function createMock2DContext(): Partial<CanvasRenderingContext2D> {
@@ -52,10 +52,8 @@ function createMock2DContext(): Partial<CanvasRenderingContext2D> {
     rotate: noop,
     scale: noop,
     drawImage: noop,
-    createImageData: () =>
-      ({ data: new Uint8ClampedArray(4), width: 1, height: 1 } as ImageData),
-    getImageData: () =>
-      ({ data: new Uint8ClampedArray(4), width: 1, height: 1 } as ImageData),
+    createImageData: () => ({ data: new Uint8ClampedArray(4), width: 1, height: 1 } as ImageData),
+    getImageData: () => ({ data: new Uint8ClampedArray(4), width: 1, height: 1 } as ImageData),
     putImageData: noop,
     fillStyle: '#000',
     strokeStyle: '#000',
@@ -71,17 +69,9 @@ class MockAudioContext {
   state: 'suspended' | 'running' | 'closed' = 'suspended';
   currentTime = 0;
   destination = { connect: () => {}, disconnect: () => {} };
-
-  async resume(): Promise<void> {
-    this.state = 'running';
-  }
-  async suspend(): Promise<void> {
-    this.state = 'suspended';
-  }
-  async close(): Promise<void> {
-    this.state = 'closed';
-  }
-
+  async resume(): Promise<void> { this.state = 'running'; }
+  async suspend(): Promise<void> { this.state = 'suspended'; }
+  async close(): Promise<void> { this.state = 'closed'; }
   createOscillator() {
     return {
       type: 'sine' as OscillatorType,
@@ -98,7 +88,6 @@ class MockAudioContext {
       onended: null,
     };
   }
-
   createGain() {
     return {
       gain: {
@@ -114,7 +103,7 @@ class MockAudioContext {
 }
 
 /**
- * Instala todos los stubs de browser APIs que jsdom no provee.
+ * Instala stubs de browser APIs que jsdom no provee.
  * Llamado una vez desde vitest.setup.ts (no como side-effect de import).
  */
 export function installWebStubs(): void {
@@ -126,11 +115,7 @@ export function installWebStubs(): void {
     contextId: string,
     ..._args: unknown[]
   ): RenderingContext | null {
-    if (
-      contextId === 'webgl' ||
-      contextId === 'webgl2' ||
-      contextId === 'experimental-webgl'
-    ) {
+    if (contextId === 'webgl' || contextId === 'webgl2' || contextId === 'experimental-webgl') {
       return createMockWebGLContext() as unknown as WebGLRenderingContext;
     }
     if (contextId === '2d') {
@@ -139,31 +124,25 @@ export function installWebStubs(): void {
     return null;
   } as typeof HTMLCanvasElement.prototype.getContext;
 
-  // 2. Web Audio API (constructor required; smoke.test asserts state='suspended')
+  // 2. Web Audio API
   if (typeof (window as unknown as { AudioContext?: unknown }).AudioContext === 'undefined') {
-    (window as unknown as { AudioContext: typeof MockAudioContext }).AudioContext =
-      MockAudioContext;
+    (window as unknown as { AudioContext: typeof MockAudioContext }).AudioContext = MockAudioContext;
   }
-  if (
-    typeof (window as unknown as { webkitAudioContext?: unknown }).webkitAudioContext ===
-    'undefined'
-  ) {
-    (window as unknown as { webkitAudioContext: typeof MockAudioContext }).webkitAudioContext =
-      MockAudioContext;
+  if (typeof (window as unknown as { webkitAudioContext?: unknown }).webkitAudioContext === 'undefined') {
+    (window as unknown as { webkitAudioContext: typeof MockAudioContext }).webkitAudioContext = MockAudioContext;
   }
 
-  // 3. ResizeObserver (used by createScene's responsive sizing)
+  // 3. ResizeObserver
   if (typeof (window as unknown as { ResizeObserver?: unknown }).ResizeObserver === 'undefined') {
     class MockResizeObserver {
       observe(): void {}
       unobserve(): void {}
       disconnect(): void {}
     }
-    (window as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
-      MockResizeObserver;
+    (window as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
   }
 
-  // 4. matchMedia (used by prefersReducedMotion + useBreakpoint)
+  // 4. matchMedia
   if (typeof window.matchMedia !== 'function') {
     window.matchMedia = ((query: string) => ({
       matches: false,
