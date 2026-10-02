@@ -1,10 +1,16 @@
 /**
  * Synthesized Web Audio engine with env gate + runtime override.
+ * Delegates procedural synthesis to @/lib/audio/synth.
  *
- * Public API is consumed by page.tsx, Header.tsx and the missions.
- * Test hooks (__markUserInteracted, __resetAudioOverride) are used by
- * tests/unit/sound.test.ts to make the module deterministic.
+ * Public API: legacy functions (playLaserScan, playQuantumCollapse, playChimeSuccess,
+ * playDecoherenceAlert, playButtonClick, playSound, IS_AUDIO_ENABLED, isAudioEnabled,
+ * setAudioEnabled, toggleAudio, __markUserInteracted, __resetAudioOverride) preserved
+ * verbatim. Phase 3 adds: playGatePlaced, playStepAdvance, playGateForQubit, playHover,
+ * playMeasurementCollapse.
  */
+
+import { qubitToFrequency, gateDurationMs, adsrEnvelope } from '@/domain/quantum/scales';
+import { playNote, playSweep } from '@/lib/audio/synth';
 
 let audioOverride: boolean | null = null;
 let userInteracted = false;
@@ -42,7 +48,6 @@ export function __markUserInteracted(): void {
   userInteracted = true;
 }
 
-/** True once any user gesture has fired or the test helper was called. */
 function hasUserInteracted(): boolean {
   return userInteracted;
 }
@@ -75,6 +80,10 @@ function getAudioContext(): AudioContext | null {
   return cachedCtx;
 }
 
+// ---------------------------------------------------------------------------
+// Legacy API (unchanged behaviour)
+// ---------------------------------------------------------------------------
+
 export function playLaserScan(): void {
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -88,7 +97,8 @@ export function playLaserScan(): void {
     gain.gain.setValueAtTime(0.0001, t);
     gain.gain.exponentialRampToValueAtTime(0.15, t + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
-    osc.connect(gain).connect(ctx.destination);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     osc.start(t);
     osc.stop(t + 0.32);
   } catch { /* no-op */ }
@@ -106,7 +116,8 @@ export function playQuantumCollapse(): void {
     osc.frequency.exponentialRampToValueAtTime(80, t + 0.25);
     gain.gain.setValueAtTime(0.2, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
-    osc.connect(gain).connect(ctx.destination);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     osc.start(t);
     osc.stop(t + 0.4);
   } catch { /* no-op */ }
@@ -127,7 +138,8 @@ export function playChimeSuccess(): void {
         gain.gain.setValueAtTime(0.0001, t);
         gain.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
         osc.start(t);
         osc.stop(t + 0.32);
       } catch { /* no-op */ }
@@ -147,7 +159,8 @@ export function playDecoherenceAlert(): void {
       osc.frequency.setValueAtTime(180, t);
       gain.gain.setValueAtTime(0.12, t);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
-      osc.connect(gain).connect(ctx.destination);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
       osc.start(t);
       osc.stop(t + 0.09);
     }
@@ -165,21 +178,12 @@ export function playButtonClick(): void {
     osc.frequency.setValueAtTime(1200, t);
     gain.gain.setValueAtTime(0.08, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
-    osc.connect(gain).connect(ctx.destination);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     osc.start(t);
     osc.stop(t + 0.07);
   } catch { /* no-op */ }
 }
-
-/** Legacy API kept for backward compatibility (older callers). */
-export const playSound = (soundName: string): void => {
-  if (!isAudioEnabled()) return;
-  void soundName;
-};
-
-/** Static snapshot at import time. Prefer isAudioEnabled() at runtime. */
-export const IS_AUDIO_ENABLED: boolean = isAudioEnabled();
-
 
 export function playGatePlaced(): void {
   const ctx = getAudioContext();
@@ -192,7 +196,8 @@ export function playGatePlaced(): void {
     osc.frequency.setValueAtTime(900, t);
     gain.gain.setValueAtTime(0.06, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
-    osc.connect(gain).connect(ctx.destination);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     osc.start(t);
     osc.stop(t + 0.1);
   } catch { /* no-op */ }
@@ -210,8 +215,56 @@ export function playStepAdvance(): void {
     osc.frequency.exponentialRampToValueAtTime(900, t + 0.1);
     gain.gain.setValueAtTime(0.08, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
-    osc.connect(gain).connect(ctx.destination);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     osc.start(t);
     osc.stop(t + 0.13);
+  } catch { /* no-op */ }
+}
+
+export const playSound = (soundName: string): void => {
+  if (!isAudioEnabled()) return;
+  void soundName;
+};
+
+export const IS_AUDIO_ENABLED: boolean = isAudioEnabled();
+
+// ---------------------------------------------------------------------------
+// Phase 3 - qubit-indexed procedural synthesis
+// ---------------------------------------------------------------------------
+
+export function playGateForQubit(qubit: number, gateType: string): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const freq = qubitToFrequency(qubit, 220, 'pentatonic-major');
+    const dur = gateDurationMs(gateType);
+    const env = adsrEnvelope(gateType.length > 2 ? 'pad' : 'pluck');
+    const waveform: OscillatorType = gateType.length > 2 ? 'triangle' : 'sine';
+    playNote({ ctx, destination: ctx.destination, gain: 0.09 }, freq, dur, env, waveform);
+  } catch { /* no-op */ }
+}
+
+export function playHover(): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    playNote(
+      { ctx, destination: ctx.destination, gain: 0.03 },
+      1600,
+      40,
+      { attack: 0.001, decay: 0.02, sustain: 0.01, release: 0.02 },
+      'sine'
+    );
+  } catch { /* no-op */ }
+}
+
+export function playMeasurementCollapse(qubit: number = 0): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const fromHz = qubitToFrequency(qubit, 220, 'pentatonic-major') * 4;
+    const toHz = Math.max(60, qubitToFrequency(qubit, 220, 'pentatonic-major') / 2);
+    playSweep({ ctx, destination: ctx.destination, gain: 0.16 }, fromHz, toHz, 320, 'sawtooth');
   } catch { /* no-op */ }
 }

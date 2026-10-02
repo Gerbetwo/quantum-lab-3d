@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import LeanLabLayout from '@/components/LeanLabLayout';
 import GatePalette from '@/components/circuit/GatePalette';
 import CircuitGrid from '@/components/circuit/CircuitGrid';
@@ -16,7 +16,13 @@ import {
 import { ghz6Circuit, teleportation3Circuit, qft3Circuit } from '@/domain/quantum/presets';
 import {
   playButtonClick, playChimeSuccess, playGatePlaced, playStepAdvance,
+  playMeasurementCollapse,
 } from '@/lib/sound';
+import { useThreeScene } from '@/hooks/useThreeScene';
+import { useMeasurementBurst } from '@/hooks/useMeasurementBurst';
+import MeasurementParticles, {
+  type MeasurementParticlesHandle,
+} from '@/components/canvas/MeasurementParticles';
 
 type Preset = 'ghz6' | 'teleportation3' | 'qft3';
 
@@ -34,6 +40,24 @@ export default function LabPage() {
   const [playhead, setPlayhead] = useState<number>(0);
   const [viewMode, setViewMode] = useState<ViewMode>('histogram');
   const [paletteOpen, setPaletteOpen] = useState<boolean>(false);
+
+  // Invisible overlay for particle bursts (own mini renderer, sized to grid area)
+  const particleContainerRef = useRef<HTMLDivElement>(null);
+  const particleSceneHandleRef = useRef<ReturnType<typeof useThreeScene> | null>(null);
+  const measurementRef = useRef<MeasurementParticlesHandle | null>(null);
+
+  // Minimal scene just for particles (its own lifecycle, independent of missions)
+  const particleScene = useThreeScene(particleContainerRef, {
+    width: 400,
+    height: 200,
+    cameraPos: [0, 0, 3],
+    cameraLookAt: [0, 0, 0],
+    viewportRelative: true,
+    aspect: 2,
+  });
+  particleSceneHandleRef.current = particleScene;
+
+  const { burst } = useMeasurementBurst(particleScene);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -61,7 +85,7 @@ export default function LabPage() {
         } else if (activeGate === 'SWAP') {
           const target2 = ((qubit + 1) % n) as QubitIndex;
           if (qubit === target2) return;
-          setCircuit((c) => placeGate(c, { type: 'SWAP', step, targets: [qubit, target2] }));
+          setCircuit((c) => placeGate(c, { type: activeGate, step, targets: [qubit, target2] }));
         } else {
           setCircuit((c) => placeGate(c, { type: activeGate, step, targets: [qubit] }));
         }
@@ -84,7 +108,9 @@ export default function LabPage() {
   const handleRun = useCallback(() => {
     setPlayhead(circuit.depth);
     playChimeSuccess();
-  }, [circuit.depth]);
+    playMeasurementCollapse(0);
+    burst([0, 0, 0], 0x00f0ff);
+  }, [circuit.depth, burst]);
 
   const handleStepNext = useCallback(() => {
     setPlayhead((p) => Math.min(p + 1, circuit.depth));
@@ -123,7 +149,7 @@ export default function LabPage() {
             </aside>
             <div className="flex-1 flex flex-col min-w-0">
               <ViewModeSwitcher mode={viewMode} onChange={setViewMode} />
-              <div className="rounded-2xl overflow-hidden bg-surface-1 border border-edge">
+              <div className="rounded-2xl overflow-hidden bg-surface-1 border border-edge relative">
                 {viewMode === 'bloch' && circuit.nQubits <= 2 && (
                   <BlochPairView state={state} nQubits={circuit.nQubits} />
                 )}
@@ -134,6 +160,18 @@ export default function LabPage() {
                 )}
                 {viewMode === 'histogram' && <HistogramView state={state} />}
                 {viewMode === 'phase-disk' && <PhaseDiskView state={state} />}
+                {/* Particle overlay (absolute, pointer-events-none) */}
+                <div
+                  ref={particleContainerRef}
+                  aria-hidden="true"
+                  data-testid="measurement-particles-overlay"
+                  className="absolute inset-0 pointer-events-none"
+                />
+                <MeasurementParticles
+                  ref={measurementRef}
+                  sceneRef={particleScene}
+                  maxInstances={1000}
+                />
               </div>
             </div>
           </div>
