@@ -28,6 +28,7 @@ import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { calculateBlochProbabilities } from '@/domain/quantum/bloch';
 import { measureQubit } from '@/domain/quantum/measurement';
 import { useThreeScene } from '@/hooks/useThreeScene';
+import { createOrbitControls } from '@/hooks/useOrbitControls';
 import { prefersReducedMotion, cached } from '@/lib/three/createScene';
 
 interface Props {
@@ -110,9 +111,11 @@ export default function Mission1Superposition({ onComplete }: Props) {
   useThreeScene(containerRef, {
     width: 600,
     height: 400,
+    viewportRelative: true,
+    aspect: 16 / 10,
     cameraPos: [0, 0.9, 3.4],
     cameraLookAt: [0, 0, 0],
-    recreateOn: step === 2 ? 'm1-s2' : step === 3 ? 'm1-s3' : 'm1-hidden',
+    recreateOn: step === 2 || step === 3 ? 'm1-visible' : 'm1-hidden',
     onSetup: (handle) => {
       const sphereGroup = new THREE.Group();
       sphereGroupRef.current = sphereGroup;
@@ -208,35 +211,23 @@ export default function Mission1Superposition({ onComplete }: Props) {
       );
       handle.add(particles);
 
-      let isDragging = false;
-      let prevPointer = { x: 0, y: 0 };
-      const container = containerRef.current;
-      if (!container) return;
-      const onPointerDown = (e: PointerEvent) => {
-        isDragging = true;
-        prevPointer = { x: e.clientX, y: e.clientY };
-      };
-      const onPointerMove = (e: PointerEvent) => {
-        if (!isDragging || !sphereGroupRef.current) return;
-        const dx = e.clientX - prevPointer.x;
-        const dy = e.clientY - prevPointer.y;
-        sphereGroupRef.current.rotation.y += dx * 0.007;
-        sphereGroupRef.current.rotation.x += dy * 0.007;
-        prevPointer = { x: e.clientX, y: e.clientY };
-      };
-      const onPointerUp = () => {
-        isDragging = false;
-      };
-      container.addEventListener('pointerdown', onPointerDown);
-      window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerup', onPointerUp);
+      const controls = createOrbitControls(handle.camera, handle.renderer.domElement, {
+        enablePan: false,
+        enableZoom: true,
+        enableRotate: true,
+        minDistance: 2.0,
+        maxDistance: 8.0,
+        autoRotate: !prefersReducedMotion(),
+        autoRotateSpeed: 0.35,
+        enableDamping: true,
+        dampingFactor: 0.12,
+        target: [0, 0, 0],
+      });
 
       let shockScale = 0;
       const reduced = prefersReducedMotion();
-      handle.onFrame(() => {
-        if (!isDragging && sphereGroupRef.current && !reduced) {
-          sphereGroupRef.current.rotation.y += 0.0018;
-        }
+      handle.onFrame((_t, dt) => {
+        controls.update(dt);
         if (!reduced) particles.rotation.y -= 0.0006;
 
         if (shockMat.opacity > 0) {
@@ -247,9 +238,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
       });
 
       return () => {
-        container.removeEventListener('pointerdown', onPointerDown);
-        window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
+        controls.dispose();
         sphereGroupRef.current = null;
         vectorArrowRef.current = null;
         shockwaveRef.current = null;
@@ -483,55 +472,61 @@ export default function Mission1Superposition({ onComplete }: Props) {
         </div>
       )}
 
-      {step === 2 && (
+      {(step === 2 || step === 3) && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
             <div className="text-xs font-mono text-cyan uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
-              <Activity className="w-4 h-4 text-cyan" /> Espacio de Estados
+              {step === 2 && <Activity className="w-4 h-4 text-cyan" />}
+              {step === 3 && <Scan className="w-4 h-4 text-cyan" />}
+              {step === 2 ? 'Espacio de Estados' : 'El Momento Decisivo'}
             </div>
             <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              La Esfera de Bloch
+              {step === 2 ? 'La Esfera de Bloch' : 'El Colapso de la Medición'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              Arrastra con el ratón sobre la esfera para girarla 360°. Ajusta el deslizador para ver cómo la aguja cambia las probabilidades en vivo.
+              {step === 2
+                ? 'Arrastra con el ratón sobre la esfera para girarla 360°. Ajusta el deslizador para ver cómo la aguja cambia las probabilidades en vivo.'
+                : 'Mientras no se mida, la aguja permanece en superposición. Dispara el detector para observar cómo la observación destruye la superposición.'}
             </p>
           </div>
 
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div className="w-full flex justify-between items-center z-10 px-2 py-1">
-              <button
-                onClick={() => handleSetPreset(0.001)}
-                className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
-                  theta < 0.2
-                    ? 'bg-cyan text-slate-950 border-cyan ring-4 ring-cyan/30 shadow-md shadow-cyan/40 scale-105'
-                    : 'bg-cyan/15 text-cyan border-cyan/40 hover:bg-cyan/25'
-                }`}
-              >
-                POLO NORTE: |0⟩
-              </button>
+            {step === 2 && (
+              <div className="w-full flex justify-between items-center z-10 px-2 py-1">
+                <button
+                  onClick={() => handleSetPreset(0.001)}
+                  className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
+                    theta < 0.2
+                      ? 'bg-cyan text-slate-950 border-cyan ring-4 ring-cyan/30 shadow-md shadow-cyan/40 scale-105'
+                      : 'bg-cyan/15 text-cyan border-cyan/40 hover:bg-cyan/25'
+                  }`}
+                >
+                  POLO NORTE: |0⟩
+                </button>
 
-              <button
-                onClick={() => handleSetPreset(Math.PI / 2)}
-                className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
-                  Math.abs(theta - Math.PI / 2) < 0.1
-                    ? 'bg-purple-600 text-white border-purple-400 ring-4 ring-purple-500/30 shadow-md shadow-purple-600/40 scale-105'
-                    : 'bg-purple-500/15 text-purple-300 border-purple-500/40 hover:bg-purple-500/25'
-                }`}
-              >
-                ECUADOR: |+⟩ 50/50
-              </button>
+                <button
+                  onClick={() => handleSetPreset(Math.PI / 2)}
+                  className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
+                    Math.abs(theta - Math.PI / 2) < 0.1
+                      ? 'bg-purple-600 text-white border-purple-400 ring-4 ring-purple-500/30 shadow-md shadow-purple-600/40 scale-105'
+                      : 'bg-purple-500/15 text-purple-300 border-purple-500/40 hover:bg-purple-500/25'
+                  }`}
+                >
+                  ECUADOR: |+⟩ 50/50
+                </button>
 
-              <button
-                onClick={() => handleSetPreset(Math.PI - 0.001)}
-                className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
-                  theta > Math.PI - 0.2
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 ring-4 ring-emerald-500/30 shadow-md shadow-emerald-500/40 scale-105'
-                    : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25'
-                }`}
-              >
-                POLO SUR: |1⟩
-              </button>
-            </div>
+                <button
+                  onClick={() => handleSetPreset(Math.PI - 0.001)}
+                  className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
+                    theta > Math.PI - 0.2
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 ring-4 ring-emerald-500/30 shadow-md shadow-emerald-500/40 scale-105'
+                      : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25'
+                  }`}
+                >
+                  POLO SUR: |1⟩
+                </button>
+              </div>
+            )}
 
             <div
               ref={containerRef}
@@ -541,110 +536,88 @@ export default function Mission1Superposition({ onComplete }: Props) {
               title="Arrastra con el ratón para rotar en 3D"
             />
 
-            <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
-              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
-                <span>Inclinación de la aguja:</span>
-                <span className="font-orbitron font-bold text-white text-xs">
-                  |ψ⟩ = <span className="text-cyan">{alpha.toFixed(2)}</span>|0⟩ + <span className="text-emerald-400">{beta.toFixed(2)}</span>|1⟩
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min="0.001"
-                max={Math.PI - 0.001}
-                step="0.01"
-                value={theta}
-                onChange={(e) => {
-                  setTheta(parseFloat(e.target.value));
-                  setIsSuperposition(true);
-                  setCollapsedState(null);
-                }}
-                className="w-full accent-cyan cursor-pointer"
-              />
-
-              <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-800/80">
-                <div className="flex flex-col gap-1 text-left">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-cyan font-bold">P(|0⟩):</span>
-                    <span className="text-white font-bold">{prob0}%</span>
-                  </div>
-                  <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                    <div className="h-full bg-cyan transition-all duration-100" style={{ width: `${prob0}%` }} />
-                  </div>
+            {step === 2 && (
+              <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+                <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                  <span>Inclinación de la aguja:</span>
+                  <span className="font-orbitron font-bold text-white text-xs">
+                    |ψ⟩ = <span className="text-cyan">{alpha.toFixed(2)}</span>|0⟩ + <span className="text-emerald-400">{beta.toFixed(2)}</span>|1⟩
+                  </span>
                 </div>
 
-                <div className="flex flex-col gap-1 text-left">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-emerald-400 font-bold">P(|1⟩):</span>
-                    <span className="text-white font-bold">{prob1}%</span>
+                <input
+                  type="range"
+                  min="0.001"
+                  max={Math.PI - 0.001}
+                  step="0.01"
+                  value={theta}
+                  onChange={(e) => {
+                    setTheta(parseFloat(e.target.value));
+                    setIsSuperposition(true);
+                    setCollapsedState(null);
+                  }}
+                  className="w-full accent-cyan cursor-pointer"
+                />
+
+                <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-800/80">
+                  <div className="flex flex-col gap-1 text-left">
+                    <div className="flex justify-between text-xs font-mono">
+                      <span className="text-cyan font-bold">P(|0⟩):</span>
+                      <span className="text-white font-bold">{prob0}%</span>
+                    </div>
+                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                      <div className="h-full bg-cyan transition-all duration-100" style={{ width: `${prob0}%` }} />
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                    <div className="h-full bg-emerald-500 transition-all duration-100" style={{ width: `${prob1}%` }} />
+
+                  <div className="flex flex-col gap-1 text-left">
+                    <div className="flex justify-between text-xs font-mono">
+                      <span className="text-emerald-400 font-bold">P(|1⟩):</span>
+                      <span className="text-white font-bold">{prob1}%</span>
+                    </div>
+                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                      <div className="h-full bg-emerald-500 transition-all duration-100" style={{ width: `${prob1}%` }} />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            )}
 
-      {step === 3 && (
-        <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
-          <div>
-            <div className="text-xs font-mono text-cyan uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
-              <Scan className="w-4 h-4 text-cyan" /> El Momento Decisivo
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              El Colapso de la Medición
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              Mientras no se mida, la aguja permanece en superposición. Dispara el detector para observar cómo la observación destruye la superposición.
-            </p>
-          </div>
-
-          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div
-              ref={containerRef}
-              role="img"
-              aria-label="Esfera de Bloch interactiva, usa el ratón para rotar"
-              className="w-full cursor-grab active:cursor-grabbing touch-none select-none my-1"
-              title="Arrastra con el ratón para rotar en 3D"
-            />
-
-            <div className="w-full max-w-md mt-2 flex flex-col gap-3">
-              <div className="flex gap-3">
-                <button
-                  onClick={handleMeasure}
-                  className="flex-1 py-4 px-6 rounded-2xl bg-cyan text-slate-950 font-orbitron font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyan/90 transition-all shadow-xl shadow-cyan/25 active:scale-95"
-                >
-                  Disparar Detector Láser
-                </button>
-                <button
-                  onClick={handleResetSuperposition}
-                  className="py-4 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono flex items-center justify-center gap-1.5 transition-all border border-slate-800"
-                  title="Restaurar superposición y probar de nuevo"
-                >
-                  <RotateCcw className="w-4 h-4" /> Probar de nuevo
-                </button>
-              </div>
-
-              {hasMeasured && collapsedState !== null && (
-                <div data-testid="collapse-result" className={`p-4 rounded-2xl border text-sm text-left animate-in fade-in zoom-in-95 duration-200 ${
-                  collapsedState === 0
-                    ? 'bg-cyan/10 border-cyan/50 text-cyan'
-                    : 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200'
-                }`}>
-                  <div className="font-bold font-orbitron flex items-center gap-2 mb-1 text-base">
-                    <CheckCircle2 className="w-5 h-5" />
-                    ¡Colapso Observado en el Polo |{collapsedState}⟩!
-                  </div>
-                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                    Al interactuar con el qubit, la aguja fue forzada a fijarse en un único polo. La superposición desapareció: pasó de 50/50 a <strong className="text-white">100% de certeza clásica en |{collapsedState}⟩</strong>.
-                  </p>
+            {step === 3 && (
+              <div className="w-full max-w-md mt-2 flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleMeasure}
+                    className="flex-1 py-4 px-6 rounded-2xl bg-cyan text-slate-950 font-orbitron font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyan/90 transition-all shadow-xl shadow-cyan/25 active:scale-95"
+                  >
+                    Disparar Detector Láser
+                  </button>
+                  <button
+                    onClick={handleResetSuperposition}
+                    className="py-4 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono flex items-center justify-center gap-1.5 transition-all border border-slate-800"
+                    title="Restaurar superposición y probar de nuevo"
+                  >
+                    <RotateCcw className="w-4 h-4" /> Probar de nuevo
+                  </button>
                 </div>
-              )}
-            </div>
+
+                {hasMeasured && collapsedState !== null && (
+                  <div data-testid="collapse-result" className={`p-4 rounded-2xl border text-sm text-left animate-in fade-in zoom-in-95 duration-200 ${
+                    collapsedState === 0
+                      ? 'bg-cyan/10 border-cyan/50 text-cyan'
+                      : 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200'
+                  }`}>
+                    <div className="font-bold font-orbitron flex items-center gap-2 mb-1 text-base">
+                      <CheckCircle2 className="w-5 h-5" />
+                      ¡Colapso Observado en el Polo |{collapsedState}⟩!
+                    </div>
+                    <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                      Al interactuar con el qubit, la aguja fue forzada a fijarse en un único polo. La superposición desapareció: pasó de 50/50 a <strong className="text-white">100% de certeza clásica en |{collapsedState}⟩</strong>.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

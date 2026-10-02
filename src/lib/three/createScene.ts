@@ -9,13 +9,19 @@ export interface SceneConfig {
   near?: number;
   far?: number;
   pixelRatioCap?: number;
+  /** When true, the canvas follows the container width and derives height from `aspect`. */
+  viewportRelative?: boolean;
+  /** width / height ratio used with viewportRelative. Default 16/10. */
+  aspect?: number;
 }
 
 export interface SceneHandle {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
-  add(obj: THREE.Object3D): void;
+  add(obj: THREE.Object3D, id?: string): void;
+  /** Toggle visibility of a group registered via add(obj, id). */
+  setVisible(id: string, visible: boolean): void;
   onFrame(cb: (elapsed: number, delta: number) => void): () => void;
   dispose(): void;
 }
@@ -54,17 +60,28 @@ export function createScene(container: HTMLElement, config: SceneConfig): SceneH
     near = 0.1,
     far = 100,
     pixelRatioCap = 2,
+    viewportRelative = false,
+    aspect = 16 / 10,
   } = config;
 
-  const width = initialWidth || container.clientWidth || 600;
+  const computeSize = (): { w: number; h: number } => {
+    if (viewportRelative) {
+      const w = container.clientWidth || initialWidth || 600;
+      return { w, h: w / aspect };
+    }
+    const w = initialWidth || container.clientWidth || 600;
+    return { w, h: height };
+  };
+
+  let { w: vpWidth, h: vpHeight } = computeSize();
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(fov, width / height, near, far);
+  const camera = new THREE.PerspectiveCamera(fov, vpWidth / vpHeight, near, far);
   camera.position.set(cameraPos[0], cameraPos[1], cameraPos[2]);
   camera.lookAt(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(width, height);
+  renderer.setSize(vpWidth, vpHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioCap));
   container.innerHTML = '';
   container.appendChild(renderer.domElement);
@@ -86,15 +103,32 @@ export function createScene(container: HTMLElement, config: SceneConfig): SceneH
   };
   renderer.setAnimationLoop(loop);
 
-  const onResize = () => {
+  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const applyResize = () => {
     if (disposed) return;
-    const w = container.clientWidth;
-    if (w === 0) return;
-    camera.aspect = w / height;
+    const { w, h } = computeSize();
+    if (w === 0 || h === 0) return;
+    vpWidth = w;
+    vpHeight = h;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(w, height);
+    renderer.setSize(w, h);
   };
-  window.addEventListener('resize', onResize);
+
+  const onResize = () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(applyResize, 120);
+  };
+
+  const resizeObserver = viewportRelative && typeof ResizeObserver !== 'undefined'
+    ? new ResizeObserver(onResize)
+    : null;
+  if (resizeObserver) {
+    resizeObserver.observe(container);
+  } else {
+    window.addEventListener('resize', onResize);
+  }
 
   const disposeResource = (obj: unknown) => {
     if (!obj) return;
@@ -103,11 +137,20 @@ export function createScene(container: HTMLElement, config: SceneConfig): SceneH
     anyObj.dispose?.();
   };
 
+  const groups = new Map<string, THREE.Object3D>();
+
   const handle: SceneHandle = {
     scene,
     camera,
     renderer,
-    add(obj) { scene.add(obj); },
+    add(obj, id) {
+      scene.add(obj);
+      if (id) groups.set(id, obj);
+    },
+    setVisible(id, visible) {
+      const g = groups.get(id);
+      if (g) g.visible = visible;
+    },
     onFrame(cb) {
       frameCallbacks.add(cb);
       return () => { frameCallbacks.delete(cb); };
@@ -116,7 +159,10 @@ export function createScene(container: HTMLElement, config: SceneConfig): SceneH
       if (disposed) return;
       disposed = true;
       renderer.setAnimationLoop(null);
-      window.removeEventListener('resize', onResize);
+      if (resizeObserver) resizeObserver.disconnect();
+      else window.removeEventListener('resize', onResize);
+      if (resizeTimer) clearTimeout(resizeTimer);
+      groups.clear();
       frameCallbacks.clear();
       scene.traverse((obj) => {
         const anyObj = obj as unknown as {
