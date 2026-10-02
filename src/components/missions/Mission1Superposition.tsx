@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import * as THREE from 'three';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import * as THREE from "three";
 import {
   Scan,
   RotateCcw,
@@ -19,36 +19,44 @@ import {
   Coins,
   Check,
   Zap,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   playButtonClick,
   playChimeSuccess,
   playLaserScan,
   playQuantumCollapse,
-} from '@/lib/sound';
-import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+} from "@/lib/sound";
+import { saveCompletedMission, updateStoredMetrics } from "@/lib/cookies";
 
 interface Props {
   onComplete: () => void;
 }
 
 // 3D Text Sprite Creator for Three.js
-function createTextSprite(text: string, color: string = '#00f0ff', fontSize: number = 44) {
-  const canvas = document.createElement('canvas');
+function createTextSprite(
+  text: string,
+  color: string = "#00f0ff",
+  fontSize: number = 44,
+) {
+  const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 128;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   if (ctx) {
     ctx.font = `bold ${fontSize}px "Orbitron", sans-serif, system-ui`;
     ctx.fillStyle = color;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.shadowColor = color;
     ctx.shadowBlur = 10;
     ctx.fillText(text, 128, 64);
   }
   const texture = new THREE.CanvasTexture(canvas);
-  const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  const spriteMat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+  });
   const sprite = new THREE.Sprite(spriteMat);
   sprite.scale.set(0.9, 0.45, 1);
   return sprite;
@@ -89,7 +97,11 @@ export default function Mission1Superposition({ onComplete }: Props) {
   // Live Probabilities
   const alpha = Math.cos(theta / 2);
   const beta = Math.sin(theta / 2);
-  const prob0 = isSuperposition ? Math.round(alpha ** 2 * 100) : collapsedState === 0 ? 100 : 0;
+  const prob0 = isSuperposition
+    ? Math.round(alpha ** 2 * 100)
+    : collapsedState === 0
+      ? 100
+      : 0;
   const prob1 = 100 - prob0;
 
   // Navigation handlers
@@ -106,14 +118,14 @@ export default function Mission1Superposition({ onComplete }: Props) {
   // Keyboard navigation (Arrow keys)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' && step < totalSteps - 1) {
+      if (e.key === "ArrowRight" && step < totalSteps - 1) {
         goToNextStep();
-      } else if (e.key === 'ArrowLeft' && step > 0) {
+      } else if (e.key === "ArrowLeft" && step > 0) {
         goToPrevStep();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
   // Three.js Scene Setup (Mounts on Step 2 and Step 3)
@@ -134,7 +146,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     rendererRef.current = renderer;
-    container.innerHTML = '';
+    container.innerHTML = "";
     container.appendChild(renderer.domElement);
 
     // Group for free 3D rotation
@@ -183,34 +195,51 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
     // North Pole (|0⟩)
     const pole0Geo = new THREE.SphereGeometry(0.08, 16, 16);
-    const pole0 = new THREE.Mesh(pole0Geo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+    const pole0 = new THREE.Mesh(
+      pole0Geo,
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff }),
+    );
     pole0.position.set(0, 1, 0);
     pole0MeshRef.current = pole0;
     sphereGroup.add(pole0);
 
-    const sprite0 = createTextSprite('|0⟩ Norte', '#00f0ff', 44);
+    const sprite0 = createTextSprite("|0⟩ Norte", "#00f0ff", 44);
     sprite0.position.set(0.65, 1.1, 0);
     sphereGroup.add(sprite0);
 
     // South Pole (|1⟩)
     const pole1Geo = new THREE.SphereGeometry(0.08, 16, 16);
-    const pole1 = new THREE.Mesh(pole1Geo, new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+    const pole1 = new THREE.Mesh(
+      pole1Geo,
+      new THREE.MeshBasicMaterial({ color: 0x10b981 }),
+    );
     pole1.position.set(0, -1, 0);
     pole1MeshRef.current = pole1;
     sphereGroup.add(pole1);
 
-    const sprite1 = createTextSprite('|1⟩ Sur', '#10b981', 44);
+    const sprite1 = createTextSprite("|1⟩ Sur", "#10b981", 44);
     sprite1.position.set(0.65, -1.1, 0);
     sphereGroup.add(sprite1);
 
     // Equator Sprite
-    const spritePlus = createTextSprite('|+⟩ 50/50', '#c084fc', 38);
+    const spritePlus = createTextSprite("|+⟩ 50/50", "#c084fc", 38);
     spritePlus.position.set(1.4, 0, 0);
     sphereGroup.add(spritePlus);
 
     // State Vector (|ψ⟩)
-    const dir = new THREE.Vector3(Math.sin(theta), Math.cos(theta), 0).normalize();
-    const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0, 0, 0), 1, 0x00f0ff, 0.24, 0.14);
+    const dir = new THREE.Vector3(
+      Math.sin(theta),
+      Math.cos(theta),
+      0,
+    ).normalize();
+    const arrow = new THREE.ArrowHelper(
+      dir,
+      new THREE.Vector3(0, 0, 0),
+      1,
+      0x00f0ff,
+      0.24,
+      0.14,
+    );
     vectorArrowRef.current = arrow;
     sphereGroup.add(arrow);
 
@@ -235,10 +264,15 @@ export default function Mission1Superposition({ onComplete }: Props) {
       pPos[i + 1] = (Math.random() - 0.5) * 3.5;
       pPos[i + 2] = (Math.random() - 0.5) * 3.5;
     }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
     const particles = new THREE.Points(
       pGeo,
-      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.035, transparent: true, opacity: 0.35 })
+      new THREE.PointsMaterial({
+        color: 0x00f0ff,
+        size: 0.035,
+        transparent: true,
+        opacity: 0.35,
+      }),
     );
     scene.add(particles);
 
@@ -264,9 +298,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
       isDragging = false;
     };
 
-    container.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
+    container.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
 
     // Animation Loop
     let shockScale = 0;
@@ -295,13 +329,13 @@ export default function Mission1Superposition({ onComplete }: Props) {
       camera.updateProjectionMatrix();
       rendererRef.current.setSize(w, height);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      container.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('resize', handleResize);
+      container.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("resize", handleResize);
       if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
       renderer.dispose();
       sphereGeo.dispose();
@@ -310,6 +344,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
       ringMat.dispose();
       pGeo.dispose();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   // Update Vector Arrow & Pole Highlights when theta or collapse state changes
@@ -319,20 +354,36 @@ export default function Mission1Superposition({ onComplete }: Props) {
     if (!isSuperposition && collapsedState !== null) {
       targetTheta = collapsedState === 0 ? 0.001 : Math.PI - 0.001;
     }
-    const newDir = new THREE.Vector3(Math.sin(targetTheta), Math.cos(targetTheta), 0).normalize();
+    const newDir = new THREE.Vector3(
+      Math.sin(targetTheta),
+      Math.cos(targetTheta),
+      0,
+    ).normalize();
     vectorArrowRef.current.setDirection(newDir);
 
-    const arrowColor = isSuperposition ? 0x00f0ff : collapsedState === 0 ? 0x00f0ff : 0x10b981;
+    const arrowColor = isSuperposition
+      ? 0x00f0ff
+      : collapsedState === 0
+        ? 0x00f0ff
+        : 0x10b981;
     vectorArrowRef.current.setColor(arrowColor);
 
     if (pole0MeshRef.current) {
       pole0MeshRef.current.scale.setScalar(
-        collapsedState === 0 ? 2.2 : isSuperposition && theta < Math.PI / 4 ? 1.4 : 1.0
+        collapsedState === 0
+          ? 2.2
+          : isSuperposition && theta < Math.PI / 4
+            ? 1.4
+            : 1.0,
       );
     }
     if (pole1MeshRef.current) {
       pole1MeshRef.current.scale.setScalar(
-        collapsedState === 1 ? 2.2 : isSuperposition && theta > (3 * Math.PI) / 4 ? 1.4 : 1.0
+        collapsedState === 1
+          ? 2.2
+          : isSuperposition && theta > (3 * Math.PI) / 4
+            ? 1.4
+            : 1.0,
       );
     }
   }, [theta, isSuperposition, collapsedState]);
@@ -381,7 +432,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
   const handleQuizChoice = (choice: string) => {
     setUserChoice(choice);
     setShowFeedback(true);
-    if (choice === 'collapse') {
+    if (choice === "collapse") {
       playChimeSuccess();
       saveCompletedMission(0);
     } else {
@@ -415,10 +466,10 @@ export default function Mission1Superposition({ onComplete }: Props) {
               }}
               className={`h-2 rounded-full transition-all ${
                 step === i
-                  ? 'w-8 bg-cyan shadow-sm shadow-cyan/50'
+                  ? "w-8 bg-cyan shadow-sm shadow-cyan/50"
                   : i < step
-                  ? 'w-3 bg-emerald-500'
-                  : 'w-2 bg-slate-800 hover:bg-slate-700'
+                    ? "w-3 bg-emerald-500"
+                    : "w-2 bg-slate-800 hover:bg-slate-700"
               }`}
               title={`Ir al paso ${i + 1}`}
             />
@@ -439,7 +490,12 @@ export default function Mission1Superposition({ onComplete }: Props) {
               El Bit Clásico
             </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
-              En la informática tradicional, un bit solo puede existir en uno de dos estados posibles, <strong className="text-white">estrictamente 0 o estrictamente 1</strong>.
+              En la informática tradicional, un bit solo puede existir en uno de
+              dos estados posibles,{" "}
+              <strong className="text-white">
+                estrictamente 0 o estrictamente 1
+              </strong>
+              .
             </p>
           </div>
 
@@ -458,12 +514,18 @@ export default function Mission1Superposition({ onComplete }: Props) {
                 ) : (
                   <ToggleLeft className="w-10 h-10 text-slate-500 group-hover:text-slate-300" />
                 )}
-                <span className="font-sans font-semibold text-base">Tocar Interruptor</span>
+                <span className="font-sans font-semibold text-base">
+                  Tocar Interruptor
+                </span>
               </div>
-              <span className={`text-xs font-mono px-2.5 py-1 rounded ${
-                classicBit === 1 ? 'bg-cyan/20 text-cyan border border-cyan/40 font-bold' : 'bg-slate-800 text-slate-400'
-              }`}>
-                {classicBit === 1 ? '5V (ALTO)' : '0V (BAJO)'}
+              <span
+                className={`text-xs font-mono px-2.5 py-1 rounded ${
+                  classicBit === 1
+                    ? "bg-cyan/20 text-cyan border border-cyan/40 font-bold"
+                    : "bg-slate-800 text-slate-400"
+                }`}
+              >
+                {classicBit === 1 ? "5V (ALTO)" : "0V (BAJO)"}
               </span>
             </button>
 
@@ -472,7 +534,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
             </div>
 
             <p className="text-xs text-slate-400 leading-normal max-w-xs">
-              No existe ningún estado intermedio. Un bit clásico jamás puede ser 0 y 1 al mismo tiempo.
+              No existe ningún estado intermedio. Un bit clásico jamás puede ser
+              0 y 1 al mismo tiempo.
             </p>
           </div>
         </div>
@@ -491,7 +554,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
               El Qubit y su Notación
             </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-2 max-w-xl mx-auto leading-relaxed">
-              La unidad cuántica no es un simple dígito binario. Puede existir en una <strong className="text-cyan">superposición</strong> de ambos estados a la vez.
+              La unidad cuántica no es un simple dígito binario. Puede existir
+              en una <strong className="text-cyan">superposición</strong> de
+              ambos estados a la vez.
             </p>
           </div>
 
@@ -503,12 +568,21 @@ export default function Mission1Superposition({ onComplete }: Props) {
                   <Atom className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-orbitron font-bold text-white text-sm">¿Por qué se escribe |0⟩ y |1⟩?</h3>
-                  <span className="text-[11px] font-mono text-cyan">Notación Ket (Dirac)</span>
+                  <h3 className="font-orbitron font-bold text-white text-sm">
+                    ¿Por qué se escribe |0⟩ y |1⟩?
+                  </h3>
+                  <span className="text-[11px] font-mono text-cyan">
+                    Notación Ket (Dirac)
+                  </span>
                 </div>
               </div>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                El número se encierra entre una barra y un ángulo para indicar que no es un dígito matemático, sino un <strong className="text-white">estado físico fundamental</strong> (como el Polo Norte o Sur).
+                El número se encierra entre una barra y un ángulo para indicar
+                que no es un dígito matemático, sino un{" "}
+                <strong className="text-white">
+                  estado físico fundamental
+                </strong>{" "}
+                (como el Polo Norte o Sur).
               </p>
             </div>
 
@@ -519,12 +593,18 @@ export default function Mission1Superposition({ onComplete }: Props) {
                   <Compass className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-orbitron font-bold text-white text-sm">¿Qué representa la aguja?</h3>
-                  <span className="text-[11px] font-mono text-purple-400">Vector de Estado |ψ⟩</span>
+                  <h3 className="font-orbitron font-bold text-white text-sm">
+                    ¿Qué representa la aguja?
+                  </h3>
+                  <span className="text-[11px] font-mono text-purple-400">
+                    Vector de Estado |ψ⟩
+                  </span>
                 </div>
               </div>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                La flecha que nace del centro indica la probabilidad actual. Si está inclinada hacia el medio, el qubit tiene probabilidad simultánea de dar 0 y 1.
+                La flecha que nace del centro indica la probabilidad actual. Si
+                está inclinada hacia el medio, el qubit tiene probabilidad
+                simultánea de dar 0 y 1.
               </p>
             </div>
           </div>
@@ -532,10 +612,16 @@ export default function Mission1Superposition({ onComplete }: Props) {
           {/* Interactive Coin Analogy */}
           <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/60 border border-slate-800 w-full max-w-3xl flex items-center justify-between gap-4 text-left">
             <div className="flex items-start gap-3">
-              <Coins className={`w-6 h-6 shrink-0 mt-0.5 ${isCoinSpinning ? 'text-cyan animate-spin' : 'text-slate-400'}`} />
+              <Coins
+                className={`w-6 h-6 shrink-0 mt-0.5 ${isCoinSpinning ? "text-cyan animate-spin" : "text-slate-400"}`}
+              />
               <div className="text-xs sm:text-sm text-slate-300">
-                <strong className="text-white block font-sans mb-0.5">La analogía de la moneda:</strong>
-                Una moneda en reposo es cara o cruz (bit clásico). Mientras gira en el aire, contiene ambas caras a la vez (superposición cuántica) hasta que cae en la mano.
+                <strong className="text-white block font-sans mb-0.5">
+                  La analogía de la moneda:
+                </strong>
+                Una moneda en reposo es cara o cruz (bit clásico). Mientras gira
+                en el aire, contiene ambas caras a la vez (superposición
+                cuántica) hasta que cae en la mano.
               </div>
             </div>
             <button
@@ -545,7 +631,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
               }}
               className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-cyan hover:bg-slate-850 shrink-0"
             >
-              {isCoinSpinning ? 'Atrapar Moneda' : 'Lanzar al Aire'}
+              {isCoinSpinning ? "Atrapar Moneda" : "Lanzar al Aire"}
             </button>
           </div>
         </div>
@@ -564,7 +650,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
               La Esfera de Bloch
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              Arrastra con el ratón sobre la esfera para girarla 360°. Ajusta el deslizador para ver cómo la aguja cambia las probabilidades en vivo.
+              Arrastra con el ratón sobre la esfera para girarla 360°. Ajusta el
+              deslizador para ver cómo la aguja cambia las probabilidades en
+              vivo.
             </p>
           </div>
 
@@ -576,8 +664,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
                 onClick={() => handleSetPreset(0.001)}
                 className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
                   theta < 0.2
-                    ? 'bg-cyan text-slate-950 border-cyan ring-4 ring-cyan/30 shadow-md shadow-cyan/40 scale-105'
-                    : 'bg-cyan/15 text-cyan border-cyan/40 hover:bg-cyan/25'
+                    ? "bg-cyan text-slate-950 border-cyan ring-4 ring-cyan/30 shadow-md shadow-cyan/40 scale-105"
+                    : "bg-cyan/15 text-cyan border-cyan/40 hover:bg-cyan/25"
                 }`}
               >
                 POLO NORTE: |0⟩
@@ -587,8 +675,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
                 onClick={() => handleSetPreset(Math.PI / 2)}
                 className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
                   Math.abs(theta - Math.PI / 2) < 0.1
-                    ? 'bg-purple-600 text-white border-purple-400 ring-4 ring-purple-500/30 shadow-md shadow-purple-600/40 scale-105'
-                    : 'bg-purple-500/15 text-purple-300 border-purple-500/40 hover:bg-purple-500/25'
+                    ? "bg-purple-600 text-white border-purple-400 ring-4 ring-purple-500/30 shadow-md shadow-purple-600/40 scale-105"
+                    : "bg-purple-500/15 text-purple-300 border-purple-500/40 hover:bg-purple-500/25"
                 }`}
               >
                 ECUADOR: |+⟩ 50/50
@@ -598,8 +686,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
                 onClick={() => handleSetPreset(Math.PI - 0.001)}
                 className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition-all border ${
                   theta > Math.PI - 0.2
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 ring-4 ring-emerald-500/30 shadow-md shadow-emerald-500/40 scale-105'
-                    : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25'
+                    ? "bg-emerald-500 text-slate-950 border-emerald-400 ring-4 ring-emerald-500/30 shadow-md shadow-emerald-500/40 scale-105"
+                    : "bg-emerald-500/15 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
                 }`}
               >
                 POLO SUR: |1⟩
@@ -618,7 +706,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
               <div className="flex justify-between items-center text-xs font-mono text-slate-400">
                 <span>Inclinación de la aguja:</span>
                 <span className="font-orbitron font-bold text-white text-xs">
-                  |ψ⟩ = <span className="text-cyan">{alpha.toFixed(2)}</span>|0⟩ + <span className="text-emerald-400">{beta.toFixed(2)}</span>|1⟩
+                  |ψ⟩ = <span className="text-cyan">{alpha.toFixed(2)}</span>|0⟩
+                  + <span className="text-emerald-400">{beta.toFixed(2)}</span>
+                  |1⟩
                 </span>
               </div>
 
@@ -643,7 +733,10 @@ export default function Mission1Superposition({ onComplete }: Props) {
                     <span className="text-white font-bold">{prob0}%</span>
                   </div>
                   <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                    <div className="h-full bg-cyan transition-all duration-100" style={{ width: `${prob0}%` }} />
+                    <div
+                      className="h-full bg-cyan transition-all duration-100"
+                      style={{ width: `${prob0}%` }}
+                    />
                   </div>
                 </div>
 
@@ -653,7 +746,10 @@ export default function Mission1Superposition({ onComplete }: Props) {
                     <span className="text-white font-bold">{prob1}%</span>
                   </div>
                   <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                    <div className="h-full bg-emerald-500 transition-all duration-100" style={{ width: `${prob1}%` }} />
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-100"
+                      style={{ width: `${prob1}%` }}
+                    />
                   </div>
                 </div>
               </div>
@@ -675,7 +771,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
               El Colapso de la Medición
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              Mientras no se mida, la aguja permanece en superposición. Dispara el detector para observar cómo la observación destruye la superposición.
+              Mientras no se mida, la aguja permanece en superposición. Dispara
+              el detector para observar cómo la observación destruye la
+              superposición.
             </p>
           </div>
 
@@ -707,17 +805,25 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
               {/* Observable Result Card */}
               {hasMeasured && collapsedState !== null && (
-                <div className={`p-4 rounded-2xl border text-sm text-left animate-in fade-in zoom-in-95 duration-200 ${
-                  collapsedState === 0
-                    ? 'bg-cyan/10 border-cyan/50 text-cyan'
-                    : 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200'
-                }`}>
+                <div
+                  className={`p-4 rounded-2xl border text-sm text-left animate-in fade-in zoom-in-95 duration-200 ${
+                    collapsedState === 0
+                      ? "bg-cyan/10 border-cyan/50 text-cyan"
+                      : "bg-emerald-950/40 border-emerald-500/60 text-emerald-200"
+                  }`}
+                >
                   <div className="font-bold font-orbitron flex items-center gap-2 mb-1 text-base">
                     <CheckCircle2 className="w-5 h-5" />
                     ¡Colapso Observado en el Polo |{collapsedState}⟩!
                   </div>
                   <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                    Al interactuar con el qubit, la aguja fue forzada a fijarse en un único polo. La superposición desapareció: pasó de 50/50 a <strong className="text-white">100% de certeza clásica en |{collapsedState}⟩</strong>.
+                    Al interactuar con el qubit, la aguja fue forzada a fijarse
+                    en un único polo. La superposición desapareció: pasó de
+                    50/50 a{" "}
+                    <strong className="text-white">
+                      100% de certeza clásica en |{collapsedState}⟩
+                    </strong>
+                    .
                   </p>
                 </div>
               )}
@@ -745,31 +851,32 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
           <div className="w-full max-w-xl flex flex-col gap-3.5">
             <button
-              onClick={() => handleQuizChoice('duplicate')}
+              onClick={() => handleQuizChoice("duplicate")}
               className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
-                userChoice === 'duplicate'
-                  ? 'bg-rose-950/40 border-rose-500 text-rose-200'
-                  : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                userChoice === "duplicate"
+                  ? "bg-rose-950/40 border-rose-500 text-rose-200"
+                  : "bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700"
               }`}
             >
               A) Se duplica en dos qubits independientes
             </button>
             <button
-              onClick={() => handleQuizChoice('collapse')}
+              onClick={() => handleQuizChoice("collapse")}
               className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
-                userChoice === 'collapse'
-                  ? 'bg-emerald-950/60 border-emerald-500 text-emerald-200 font-semibold shadow-xl shadow-emerald-500/20 ring-2 ring-emerald-500/40'
-                  : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                userChoice === "collapse"
+                  ? "bg-emerald-950/60 border-emerald-500 text-emerald-200 font-semibold shadow-xl shadow-emerald-500/20 ring-2 ring-emerald-500/40"
+                  : "bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700"
               }`}
             >
-              B) Colapsa forzosamente a uno de los dos estados posibles (|0⟩ o |1⟩)
+              B) Colapsa forzosamente a uno de los dos estados posibles (|0⟩ o
+              |1⟩)
             </button>
             <button
-              onClick={() => handleQuizChoice('infinite')}
+              onClick={() => handleQuizChoice("infinite")}
               className={`p-5 rounded-2xl border text-left text-sm leading-normal transition-all ${
-                userChoice === 'infinite'
-                  ? 'bg-rose-950/40 border-rose-500 text-rose-200'
-                  : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                userChoice === "infinite"
+                  ? "bg-rose-950/40 border-rose-500 text-rose-200"
+                  : "bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700"
               }`}
             >
               C) Permanece en superposición indefinidamente
@@ -779,25 +886,25 @@ export default function Mission1Superposition({ onComplete }: Props) {
           {showFeedback && (
             <div
               className={`w-full max-w-xl p-4 rounded-2xl text-sm flex items-center justify-between gap-4 text-left ${
-                userChoice === 'collapse'
-                  ? 'bg-emerald-950/30 border border-emerald-500/40 text-emerald-200'
-                  : 'bg-rose-950/30 border border-rose-500/40 text-rose-200'
+                userChoice === "collapse"
+                  ? "bg-emerald-950/30 border border-emerald-500/40 text-emerald-200"
+                  : "bg-rose-950/30 border border-rose-500/40 text-rose-200"
               }`}
             >
               <div className="flex items-center gap-3">
-                {userChoice === 'collapse' ? (
+                {userChoice === "collapse" ? (
                   <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
                 ) : (
                   <HelpCircle className="w-6 h-6 text-rose-400 shrink-0" />
                 )}
                 <span>
-                  {userChoice === 'collapse'
-                    ? '¡Correcto! La medición destruye la superposición forzando el colapso hacia uno de los polos base (|0⟩ o |1⟩).'
-                    : 'Pista: En el laboratorio viste que al disparar el detector, la aguja no se quedó en el medio ni se dividió: saltó a un único polo.'}
+                  {userChoice === "collapse"
+                    ? "¡Correcto! La medición destruye la superposición forzando el colapso hacia uno de los polos base (|0⟩ o |1⟩)."
+                    : "Pista: En el laboratorio viste que al disparar el detector, la aguja no se quedó en el medio ni se dividió: saltó a un único polo."}
                 </span>
               </div>
 
-              {userChoice === 'collapse' && (
+              {userChoice === "collapse" && (
                 <button
                   onClick={onComplete}
                   className="py-2.5 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center gap-2 shrink-0 transition-all shadow-md shadow-emerald-500/20 active:scale-95"
@@ -835,7 +942,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
           </button>
         )}
 
-        {step === totalSteps - 1 && userChoice !== 'collapse' && (
+        {step === totalSteps - 1 && userChoice !== "collapse" && (
           <span className="text-xs font-mono text-slate-400">
             Responde la pregunta arriba para continuar
           </span>
