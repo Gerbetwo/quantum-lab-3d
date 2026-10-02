@@ -27,6 +27,7 @@ import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
 import { measureQubit } from '@/domain/quantum/measurement';
 import { useThreeScene } from '@/hooks/useThreeScene';
 import { prefersReducedMotion, cached } from '@/lib/three/createScene';
+import { createOrbitControls } from '@/hooks/useOrbitControls';
 
 interface Props {
   onComplete: () => void;
@@ -85,9 +86,11 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
   useThreeScene(containerRef, {
     width: 600,
     height: 360,
+    viewportRelative: true,
+    aspect: 16 / 10,
     cameraPos: [0, 0.5, 4.8],
     cameraLookAt: [0, 0, 0],
-    recreateOn: step === 1 ? 'm2-s1' : step === 2 ? 'm2-s2' : step === 3 ? 'm2-s3' : 'm2-hidden',
+    recreateOn: step >= 1 && step <= 3 ? 'm2-visible' : 'm2-hidden',
     onSetup: (handle) => {
       const stationGeo = cached('m2:station', () => new THREE.IcosahedronGeometry(0.38, 1));
       const aliceMesh = new THREE.Mesh(
@@ -136,8 +139,22 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
       );
       handle.add(stars);
 
+      const controls = createOrbitControls(handle.camera, handle.renderer.domElement, {
+        enablePan: false,
+        enableZoom: true,
+        enableRotate: true,
+        minDistance: 2.5,
+        maxDistance: 10.0,
+        autoRotate: !prefersReducedMotion(),
+        autoRotateSpeed: 0.3,
+        enableDamping: true,
+        dampingFactor: 0.12,
+        target: [0, 0, 0],
+      });
+
       const reduced = prefersReducedMotion();
-      handle.onFrame(() => {
+      handle.onFrame((_t, dt) => {
+        controls.update(dt);
         if (!reduced) {
           aliceMesh.rotation.y += 0.01;
           aliceMesh.rotation.x += 0.005;
@@ -148,6 +165,7 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
       });
 
       return () => {
+        controls.dispose();
         aliceMeshRef.current = null;
         bobMeshRef.current = null;
         beamLineRef.current = null;
@@ -311,60 +329,26 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
         </div>
       )}
 
-      {step === 1 && (
-        <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-2 animate-in fade-in zoom-in-95 duration-300">
-          <div>
-            <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400" /> Correlación Cuántica
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Creación del Par de Bell
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              Al hacer interactuar dos qubits en el laboratorio, sus estados se entrelazan formando una única función de onda compartida.
-            </p>
-          </div>
-
-          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef}
-              role="img"
-              aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
-
-            <div className="w-full max-w-md mt-2 flex flex-col gap-3">
-              <button
-                onClick={handleGenerateEntanglement}
-                className={`w-full py-3.5 px-6 rounded-2xl font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 ${
-                  isEntangled
-                    ? 'bg-purple-600 text-white shadow-purple-600/30 ring-2 ring-purple-400'
-                    : 'bg-cyan text-slate-950 shadow-cyan/25 hover:bg-cyan/90'
-                }`}
-              >
-                <LinkIcon className="w-4 h-4" />
-                {isEntangled ? '¡Enlace Cuántico Activo (|00⟩ + |11⟩)!' : 'Generar Entrelazamiento Láser'}
-              </button>
-
-              {isEntangled && (
-                <div className="p-3 rounded-2xl bg-purple-950/40 border border-purple-500/50 text-purple-200 text-xs text-left animate-in fade-in">
-                  <strong className="block text-white mb-1">Estado de Bell creado:</strong>
-                  Ambos qubits han dejado de tener identidades separadas. Ahora describen un único sistema cuántico indivisible.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
+      {(step === 1 || step === 2 || step === 3) && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
             <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
-              <Radio className="w-4 h-4 text-purple-400" /> No-Localidad
+              {step === 1 && <Sparkles className="w-4 h-4 text-purple-400" />}
+              {step === 2 && <Radio className="w-4 h-4 text-purple-400" />}
+              {step === 3 && <Zap className="w-4 h-4 text-purple-400" />}
+              {step === 1 && 'Correlación Cuántica'}
+              {step === 2 && 'No-Localidad'}
+              {step === 3 && 'Colapso Correlacionado'}
             </div>
             <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Separación a Distancia
+              {step === 1 && 'Creación del Par de Bell'}
+              {step === 2 && 'Separación a Distancia'}
+              {step === 3 && 'Medición Instantánea'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              ¿Qué ocurre si separamos a Alice y Bob a cientos de miles de kilómetros de distancia?
+              {step === 1 && 'Al hacer interactuar dos qubits en el laboratorio, sus estados se entrelazan formando una única función de onda compartida.'}
+              {step === 2 && '¿Qué ocurre si separamos a Alice y Bob a cientos de miles de kilómetros de distancia?'}
+              {step === 3 && 'Alice mide su qubit. Observa cómo el resultado determina en el acto el estado de Bob, sin retardo de tiempo.'}
             </p>
           </div>
 
@@ -373,92 +357,97 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
               role="img"
               aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
 
-            <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
-              <div className="flex justify-between items-center text-xs font-mono">
-                <span className="text-slate-400">Distancia entre Alice y Bob:</span>
-                <span className="text-purple-400 font-bold">{distanceKm.toLocaleString()} km</span>
-              </div>
-
-              <input
-                type="range"
-                min="1000"
-                max="400000"
-                step="1000"
-                value={distanceKm}
-                onChange={(e) => setDistanceKm(parseInt(e.target.value))}
-                className="w-full accent-purple-500 cursor-pointer"
-              />
-
-              <p className="text-xs text-slate-300 text-left leading-normal border-t border-slate-800/80 pt-2">
-                A pesar de la separación física en el espacio, la correlación cuántica <strong className="text-white">no se atenúa ni se desgasta</strong> por la distancia.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
-          <div>
-            <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
-              <Zap className="w-4 h-4 text-purple-400" /> Colapso Correlacionado
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Medición Instantánea
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              Alice mide su qubit. Observa cómo el resultado determina en el acto el estado de Bob, sin retardo de tiempo.
-            </p>
-          </div>
-
-          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef}
-              role="img"
-              aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
-
-            <div className="w-full max-w-md mt-2 flex flex-col gap-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-2xl bg-cyan/10 border border-cyan/40 text-center">
-                  <div className="text-[10px] font-mono text-slate-400">Alice (Tierra)</div>
-                  <div data-testid="alice-state" className="text-2xl font-orbitron font-bold text-cyan mt-1">
-                    {aliceMeasured !== null ? `|${aliceMeasured}⟩` : 'Superposición'}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-center">
-                  <div className="text-[10px] font-mono text-slate-400">Bob (Luna)</div>
-                  <div data-testid="bob-state" className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">
-                    {bobMeasured !== null ? `|${bobMeasured}⟩` : 'Superposición'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2.5">
+            {step === 1 && (
+              <div className="w-full max-w-md mt-2 flex flex-col gap-3">
                 <button
-                  onClick={handleMeasureAlice}
-                  className="flex-1 py-3.5 px-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-600/30 active:scale-95"
+                  onClick={handleGenerateEntanglement}
+                  className={`w-full py-3.5 px-6 rounded-2xl font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 ${
+                    isEntangled
+                      ? 'bg-purple-600 text-white shadow-purple-600/30 ring-2 ring-purple-400'
+                      : 'bg-cyan text-slate-950 shadow-cyan/25 hover:bg-cyan/90'
+                  }`}
                 >
-                  <Zap className="w-4 h-4" /> Medir en Laboratorio de Alice
+                  <LinkIcon className="w-4 h-4" />
+                  {isEntangled ? '¡Enlace Cuántico Activo (|00⟩ + |11⟩)!' : 'Generar Entrelazamiento Láser'}
                 </button>
-                <button
-                  onClick={handleResetMeasurement}
-                  className="py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-xs flex items-center justify-center transition-all border border-slate-800"
-                  title="Reiniciar y medir de nuevo"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-              </div>
 
-              {hasTriggeredMeasurement && (
-                <div data-testid="correlation-result" className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left animate-in fade-in">
-                  <div className="font-bold flex items-center gap-1.5 mb-1 text-sm font-orbitron">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    ¡Correlación Perfecta Instantánea!
+                {isEntangled && (
+                  <div className="p-3 rounded-2xl bg-purple-950/40 border border-purple-500/50 text-purple-200 text-xs text-left animate-in fade-in">
+                    <strong className="block text-white mb-1">Estado de Bell creado:</strong>
+                    Ambos qubits han dejado de tener identidades separadas. Ahora describen un único sistema cuántico indivisible.
                   </div>
-                  Cuando Alice midió y obtuvo <strong className="text-white font-mono">|{aliceMeasured}⟩</strong>, el qubit de Bob colapsó simultáneamente en <strong className="text-white font-mono">|{bobMeasured}⟩</strong> a pesar de estar a miles de kilómetros.
+                )}
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+                <div className="flex justify-between items-center text-xs font-mono">
+                  <span className="text-slate-400">Distancia entre Alice y Bob:</span>
+                  <span className="text-purple-400 font-bold">{distanceKm.toLocaleString()} km</span>
                 </div>
-              )}
-            </div>
+
+                <input
+                  type="range"
+                  min="1000"
+                  max="400000"
+                  step="1000"
+                  value={distanceKm}
+                  onChange={(e) => setDistanceKm(parseInt(e.target.value))}
+                  className="w-full accent-purple-500 cursor-pointer"
+                />
+
+                <p className="text-xs text-slate-300 text-left leading-normal border-t border-slate-800/80 pt-2">
+                  A pesar de la separación física en el espacio, la correlación cuántica <strong className="text-white">no se atenúa ni se desgasta</strong> por la distancia.
+                </p>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="w-full max-w-md mt-2 flex flex-col gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-2xl bg-cyan/10 border border-cyan/40 text-center">
+                    <div className="text-[10px] font-mono text-slate-400">Alice (Tierra)</div>
+                    <div data-testid="alice-state" className="text-2xl font-orbitron font-bold text-cyan mt-1">
+                      {aliceMeasured !== null ? `|${aliceMeasured}⟩` : 'Superposición'}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-center">
+                    <div className="text-[10px] font-mono text-slate-400">Bob (Luna)</div>
+                    <div data-testid="bob-state" className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">
+                      {bobMeasured !== null ? `|${bobMeasured}⟩` : 'Superposición'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={handleMeasureAlice}
+                    className="flex-1 py-3.5 px-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-600/30 active:scale-95"
+                  >
+                    <Zap className="w-4 h-4" /> Medir en Laboratorio de Alice
+                  </button>
+                  <button
+                    onClick={handleResetMeasurement}
+                    className="py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-xs flex items-center justify-center transition-all border border-slate-800"
+                    title="Reiniciar y medir de nuevo"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {hasTriggeredMeasurement && (
+                  <div data-testid="correlation-result" className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left animate-in fade-in">
+                    <div className="font-bold flex items-center gap-1.5 mb-1 text-sm font-orbitron">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ¡Correlación Perfecta Instantánea!
+                    </div>
+                    Cuando Alice midió y obtuvo <strong className="text-white font-mono">|{aliceMeasured}⟩</strong>, el qubit de Bob colapsó simultáneamente en <strong className="text-white font-mono">|{bobMeasured}⟩</strong> a pesar de estar a miles de kilómetros.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
