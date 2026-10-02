@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import {
-  Layers,
   CheckCircle2,
   HelpCircle,
   FlaskConical,
@@ -15,11 +14,10 @@ import {
   Cpu,
   Lock,
   KeyRound,
-  Zap,
-  Check,
 } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playLaserScan } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { formatShorResult, updateExploredApplications } from '@/domain/quantum/applications';
 
 interface Props {
   onFinishAll: () => void;
@@ -27,32 +25,24 @@ interface Props {
 }
 
 export default function Mission4Applications({ onFinishAll, onBack }: Props) {
-  // Step index: 0 = Mitos vs Realidad, 1 = Simulación Molecular, 2 = Criptografía y Shor, 3 = Reto Final
   const [step, setStep] = useState<number>(0);
   const totalSteps = 4;
 
-  // Step 0 states (Mitos)
   const [inspectedMyth, setInspectedMyth] = useState<string>('gaming');
-
-  // Step 1 states (Molecular Simulation)
   const [simulationMode, setSimulationMode] = useState<'classical' | 'quantum'>('quantum');
 
-  // Step 2 states (Cryptography / Shor)
   const [isCracking, setIsCracking] = useState<boolean>(false);
   const [crackSpeed, setCrackSpeed] = useState<string>('En espera');
 
-  // Step 3 states (Quiz)
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
-  // Three.js Scene References
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const moleculeGroupRef = useRef<THREE.Group | null>(null);
   const animFrameId = useRef<number | null>(null);
 
-  // Navigation handlers
   const goToNextStep = useCallback(() => {
     playButtonClick();
     setStep((prev) => Math.min(prev + 1, totalSteps - 1));
@@ -63,7 +53,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     setStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' && step < totalSteps - 1) {
@@ -76,7 +65,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  // Three.js Molecule Scene Setup (Mounts on Step 1)
   useEffect(() => {
     if (step !== 1 || !containerRef.current) return;
     const container = containerRef.current;
@@ -101,7 +89,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     moleculeGroupRef.current = moleculeGroup;
     scene.add(moleculeGroup);
 
-    // Build molecular atoms & bonds
     const atomGeo = new THREE.SphereGeometry(0.2, 16, 16);
     const atomMatCyan = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
     const atomMatPurple = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
@@ -123,7 +110,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
       moleculeGroup.add(atom);
     });
 
-    // Molecular Bonds (Lines)
     const bondGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(0.8, 0.6, 0.1),
@@ -140,7 +126,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     const bonds = new THREE.LineSegments(bondGeo, bondMat);
     moleculeGroup.add(bonds);
 
-    // Ambient Particles
     const pGeo = new THREE.BufferGeometry();
     const pPos = new Float32Array(50 * 3);
     for (let i = 0; i < 50 * 3; i += 3) {
@@ -155,7 +140,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     );
     scene.add(particles);
 
-    // Animation Loop
     const animate = () => {
       animFrameId.current = requestAnimationFrame(animate);
       moleculeGroup.rotation.y += 0.008;
@@ -183,7 +167,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     };
   }, [step]);
 
-  // Step 2 Shor algorithm simulation action
   const handleSimulateShor = () => {
     playLaserScan();
     setIsCracking(true);
@@ -192,20 +175,21 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     setTimeout(() => {
       playChimeSuccess();
       setIsCracking(false);
-      setCrackSpeed('¡Clave RSA factorizada en 0.42 segundos! (Algoritmo de Shor)');
+      // Extracted domain rule calls
+      setCrackSpeed(formatShorResult(0.42));
       updateStoredMetrics((prev) => ({
         ...prev,
         actions: {
           ...prev.actions,
-          applicationsExplored: Array.from(
-            new Set([...prev.actions.applicationsExplored, 'molecular_simulation', 'cryptography_shor'])
+          applicationsExplored: updateExploredApplications(
+            prev.actions.applicationsExplored,
+            ['molecular_simulation', 'cryptography_shor']
           ),
         },
       }));
     }, 1200);
   };
 
-  // Step 3 Quiz Choice Handler
   const handleQuizChoice = (choice: string) => {
     setUserChoice(choice);
     setShowFeedback(true);
@@ -219,9 +203,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
 
   return (
     <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
-      {/* ========================================================================= */}
-      {/* TOP CLEAN PROGRESS BAR                                                    */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30">
@@ -232,7 +213,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
           </span>
         </div>
 
-        {/* Progress Pills */}
         <div className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
@@ -254,9 +234,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* PASO 1: DESMITIFICACIÓN (¿PARA QUÉ NO SIRVE?)                             */}
-      {/* ========================================================================= */}
       {step === 0 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-7 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -271,9 +248,7 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             </p>
           </div>
 
-          {/* Interactive Myth Selector */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl text-left">
-            {/* Myth 1: Videojuegos y Navegación */}
             <div
               onClick={() => {
                 playButtonClick();
@@ -299,7 +274,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
               </p>
             </div>
 
-            {/* Reality 1: Simulación y Factorización */}
             <div
               onClick={() => {
                 playButtonClick();
@@ -328,9 +302,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 2: SIMULACIÓN MOLECULAR Y QUÍMICA CUÁNTICA                           */}
-      {/* ========================================================================= */}
       {step === 1 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -345,11 +316,9 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Molecular Canvas Box */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
             <div ref={containerRef} className="w-full" />
 
-            {/* Comparison Controls */}
             <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -398,9 +367,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 3: CRIPTOGRAFÍA Y EL ALGORITMO DE SHOR                              */}
-      {/* ========================================================================= */}
       {step === 2 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -415,7 +381,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             </p>
           </div>
 
-          {/* Interactive Shor Simulator Widget */}
           <div className="p-8 rounded-3xl bg-slate-950/80 border border-slate-800/90 backdrop-blur-md shadow-2xl flex flex-col items-center gap-5 w-full max-w-xl">
             <div className="flex items-center gap-4 text-xs font-mono">
               <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-2 text-slate-300">
@@ -451,9 +416,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 4: RETO DE COMPRENSIÓN FINAL Y CIERRE                               */}
-      {/* ========================================================================= */}
       {step === 3 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -535,9 +497,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* BOTTOM NAVIGATION                                                         */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-4">
         <button
           onClick={step === 0 ? onBack : goToPrevStep}

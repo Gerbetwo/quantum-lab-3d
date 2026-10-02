@@ -10,11 +10,7 @@ import {
   CheckCircle2,
   HelpCircle,
   Shield,
-  Activity,
   Zap,
-  RotateCcw,
-  Sparkles,
-  Flame,
 } from 'lucide-react';
 import {
   playButtonClick,
@@ -23,6 +19,7 @@ import {
   playLaserScan,
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { calculateCoherenceTime, isCriticalDecoherence } from '@/domain/quantum/decoherence';
 
 interface Props {
   onComplete: () => void;
@@ -30,25 +27,21 @@ interface Props {
 }
 
 export default function Mission3Decoherence({ onComplete, onBack }: Props) {
-  // Step index: 0 = Fragilidad, 1 = Simulador Térmico, 2 = Criogenia de Dilución, 3 = Reto Final
   const [step, setStep] = useState<number>(0);
   const totalSteps = 4;
 
-  // Step 0 states
   const [photonHits, setPhotonHits] = useState<number>(0);
 
-  // Step 1 states (Thermal Slider)
-  const [temperatureMilliKelvin, setTemperatureMilliKelvin] = useState<number>(15); // 15 mK to 300,000 mK (300K)
-  const isCriticalDecoherence = temperatureMilliKelvin > 1200; // > 1.2K
+  const [temperatureMilliKelvin, setTemperatureMilliKelvin] = useState<number>(15);
+  // Extracted domain rule calls
+  const isCritical = isCriticalDecoherence(temperatureMilliKelvin);
+  const coherenceTimeUs = calculateCoherenceTime(temperatureMilliKelvin);
 
-  // Step 2 states (Dilution Refrigerator)
   const [isCryoShieldActive, setIsCryoShieldActive] = useState<boolean>(false);
 
-  // Step 3 states (Quiz)
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
-  // Three.js Scene References
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -58,13 +51,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
   const particleVelocitiesRef = useRef<Float32Array | null>(null);
   const animFrameId = useRef<number | null>(null);
 
-  // Coherence Time T2 approximation in microseconds
-  const coherenceTimeUs = Math.max(
-    0.1,
-    Math.round(250 * Math.exp(-temperatureMilliKelvin / 800) * 10) / 10
-  );
-
-  // Navigation handlers
   const goToNextStep = useCallback(() => {
     playButtonClick();
     setStep((prev) => Math.min(prev + 1, totalSteps - 1));
@@ -75,7 +61,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     setStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' && step < totalSteps - 1) {
@@ -88,7 +73,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  // Three.js Scene Setup (Mounts on Steps 1 and 2)
   useEffect(() => {
     if ((step !== 1 && step !== 2) || !containerRef.current) return;
     const container = containerRef.current;
@@ -109,7 +93,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // Chandelier Rings (Dilution fridge plates)
     const chandelier = new THREE.Group();
     chandelierGroupRef.current = chandelier;
 
@@ -127,7 +110,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     });
     scene.add(chandelier);
 
-    // Quantum Core (Processor Box)
     const coreGeo = new THREE.BoxGeometry(0.55, 0.3, 0.55);
     const coreMesh = new THREE.Mesh(
       coreGeo,
@@ -137,7 +119,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     coreMeshRef.current = coreMesh;
     scene.add(coreMesh);
 
-    // Thermal Noise Particles
     const pCount = 90;
     const pGeo = new THREE.BufferGeometry();
     const pPos = new Float32Array(pCount * 3);
@@ -156,7 +137,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     const particles = new THREE.Points(
       pGeo,
       new THREE.PointsMaterial({
-        color: isCriticalDecoherence ? 0xf43f5e : 0x00f0ff,
+        color: isCritical ? 0xf43f5e : 0x00f0ff,
         size: 0.04,
         transparent: true,
         opacity: 0.65,
@@ -165,14 +146,12 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     particlesRef.current = particles;
     scene.add(particles);
 
-    // Animation Loop
     const animate = () => {
       animFrameId.current = requestAnimationFrame(animate);
       chandelier.rotation.y += 0.004;
 
       if (coreMeshRef.current) {
         if (temperatureMilliKelvin > 1200) {
-          // Jitter violently from thermal noise
           coreMeshRef.current.position.x = (Math.random() - 0.5) * 0.05;
           coreMeshRef.current.position.z = (Math.random() - 0.5) * 0.05;
           (coreMeshRef.current.material as THREE.MeshBasicMaterial).color.setHex(0xf43f5e);
@@ -183,7 +162,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
         }
       }
 
-      // Move thermal particles with temperature-dependent speed
       if (particlesRef.current && particleVelocitiesRef.current) {
         const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
         const vels = particleVelocitiesRef.current;
@@ -221,15 +199,13 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
       coreGeo.dispose();
       pGeo.dispose();
     };
-  }, [step, isCriticalDecoherence, temperatureMilliKelvin]);
+  }, [step, isCritical, temperatureMilliKelvin]);
 
-  // Photon Hit Action (Step 0)
   const handleSimulatePhotonHit = () => {
     playDecoherenceAlert();
     setPhotonHits((prev) => prev + 1);
   };
 
-  // Temperature Change Handler (Step 1)
   const handleTemperatureChange = (val: number) => {
     setTemperatureMilliKelvin(val);
     if (val > 1200) {
@@ -244,15 +220,13 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     }));
   };
 
-  // Cryo Shield Activation (Step 2)
   const handleToggleCryoShield = () => {
     playLaserScan();
     setTimeout(() => playChimeSuccess(), 250);
     setIsCryoShieldActive(true);
-    setTemperatureMilliKelvin(15); // Drop to 15 mK
+    setTemperatureMilliKelvin(15);
   };
 
-  // Quiz Choice Handler
   const handleQuizChoice = (choice: string) => {
     setUserChoice(choice);
     setShowFeedback(true);
@@ -266,9 +240,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
 
   return (
     <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
-      {/* ========================================================================= */}
-      {/* TOP CLEAN PROGRESS BAR                                                    */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30">
@@ -279,7 +250,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
           </span>
         </div>
 
-        {/* Progress Pills */}
         <div className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
@@ -301,9 +271,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* PASO 1: LA FRAGILIDAD CUÁNTICA (EL RUIDO TÉRMICO)                         */}
-      {/* ========================================================================= */}
       {step === 0 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -318,7 +285,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* Interactive Photon Hit Widget */}
           <div className="p-8 sm:p-10 rounded-3xl bg-slate-950/80 border border-slate-800/80 backdrop-blur-md shadow-2xl flex flex-col items-center gap-6 w-full max-w-md">
             <button
               onClick={handleSimulatePhotonHit}
@@ -345,9 +311,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 2: LABORATORIO TÉRMICO INTERACTIVO                                   */}
-      {/* ========================================================================= */}
       {step === 1 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -362,15 +325,13 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Slider Controls */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
             <div ref={containerRef} className="w-full" />
 
-            {/* Slider & Real-time Gauges */}
             <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
               <div className="flex justify-between items-center text-xs font-mono">
                 <span className="text-slate-400">Temperatura del Procesador:</span>
-                <span className={`font-bold text-sm ${isCriticalDecoherence ? 'text-rose-400 animate-pulse' : 'text-cyan'}`}>
+                <span className={`font-bold text-sm ${isCritical ? 'text-rose-400 animate-pulse' : 'text-cyan'}`}>
                   {temperatureMilliKelvin >= 1000
                     ? `${(temperatureMilliKelvin / 1000).toFixed(1)} K (${Math.round((temperatureMilliKelvin / 1000) - 273.15)}°C)`
                     : `${temperatureMilliKelvin} mK (0.015 K)`}
@@ -397,8 +358,8 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
 
                 <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-left">
                   <div className="text-[10px] font-mono text-slate-400">Estado Cuántico:</div>
-                  <div className={`text-xs font-orbitron font-bold mt-1 ${isCriticalDecoherence ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {isCriticalDecoherence ? 'Decoherencia Crítica' : 'Coherente y Estable'}
+                  <div className={`text-xs font-orbitron font-bold mt-1 ${isCritical ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {isCritical ? 'Decoherencia Crítica' : 'Coherente y Estable'}
                   </div>
                 </div>
               </div>
@@ -407,9 +368,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 3: EL REFRIGERADOR DE DILUCIÓN (CANDELABRO DORADO)                   */}
-      {/* ========================================================================= */}
       {step === 2 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -424,7 +382,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Shield Activation */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
             <div ref={containerRef} className="w-full" />
 
@@ -455,9 +412,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 4: RETO DE COMPRENSIÓN                                               */}
-      {/* ========================================================================= */}
       {step === 3 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -539,9 +493,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* BOTTOM NAVIGATION                                                         */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-4">
         <button
           onClick={step === 0 ? onBack : goToPrevStep}

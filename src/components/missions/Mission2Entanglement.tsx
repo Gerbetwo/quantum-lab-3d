@@ -15,7 +15,6 @@ import {
   Sparkles,
   Link as LinkIcon,
   RotateCcw,
-  Check,
 } from 'lucide-react';
 import {
   playButtonClick,
@@ -24,6 +23,7 @@ import {
   playQuantumCollapse,
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
 
 interface Props {
   onComplete: () => void;
@@ -31,30 +31,22 @@ interface Props {
 }
 
 export default function Mission2Entanglement({ onComplete, onBack }: Props) {
-  // Step index: 0 = Independientes, 1 = Creación del Enlace, 2 = Separación Espacial, 3 = Medición Instantánea, 4 = Reto Final
   const [step, setStep] = useState<number>(0);
   const totalSteps = 5;
 
-  // Step 0 states (Independent qubits)
   const [aliceIndependentVal, setAliceIndependentVal] = useState<number>(0);
   const [bobIndependentVal, setBobIndependentVal] = useState<number>(0);
 
-  // Step 1 states (Bell state generation)
   const [isEntangled, setIsEntangled] = useState<boolean>(false);
+  const [distanceKm, setDistanceKm] = useState<number>(384400);
 
-  // Step 2 states (Distance slider)
-  const [distanceKm, setDistanceKm] = useState<number>(384400); // Earth to Moon ~384,400 km
-
-  // Step 3 states (Measurement correlation)
   const [aliceMeasured, setAliceMeasured] = useState<number | null>(null);
   const [bobMeasured, setBobMeasured] = useState<number | null>(null);
   const [hasTriggeredMeasurement, setHasTriggeredMeasurement] = useState<boolean>(false);
 
-  // Step 4 states (Quiz)
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
-  // Three.js References
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -63,7 +55,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
   const beamLineRef = useRef<THREE.Line | null>(null);
   const animFrameId = useRef<number | null>(null);
 
-  // Navigation handlers
   const goToNextStep = useCallback(() => {
     playButtonClick();
     setStep((prev) => Math.min(prev + 1, totalSteps - 1));
@@ -74,7 +65,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     setStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' && step < totalSteps - 1) {
@@ -87,7 +77,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  // Three.js Scene Setup (Mounts on Steps 1, 2, and 3)
   useEffect(() => {
     if ((step !== 1 && step !== 2 && step !== 3) || !containerRef.current) return;
     const container = containerRef.current;
@@ -108,7 +97,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // Alice Node (Left)
     const stationGeo = new THREE.IcosahedronGeometry(0.38, 1);
     const aliceMesh = new THREE.Mesh(
       stationGeo,
@@ -118,7 +106,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     aliceMeshRef.current = aliceMesh;
     scene.add(aliceMesh);
 
-    // Bob Node (Right)
     const bobMesh = new THREE.Mesh(
       stationGeo,
       new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true })
@@ -127,7 +114,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     bobMeshRef.current = bobMesh;
     scene.add(bobMesh);
 
-    // Entanglement Quantum Beam
     const lineGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-1.8, 0, 0),
       new THREE.Vector3(1.8, 0, 0),
@@ -144,7 +130,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     beamLineRef.current = beam;
     scene.add(beam);
 
-    // Background Stars
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(80 * 3);
     for (let i = 0; i < 80 * 3; i += 3) {
@@ -159,7 +144,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     );
     scene.add(stars);
 
-    // Animation Loop
     const animate = () => {
       animFrameId.current = requestAnimationFrame(animate);
       aliceMesh.rotation.y += 0.01;
@@ -195,10 +179,9 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     };
   }, [step]);
 
-  // Adjust node positions on distance slider (Step 2)
   useEffect(() => {
     if (step !== 2 || !aliceMeshRef.current || !bobMeshRef.current || !beamLineRef.current) return;
-    const factor = (distanceKm / 400000) * 0.5 + 1.4; // 1.4 to 1.9
+    const factor = (distanceKm / 400000) * 0.5 + 1.4;
     aliceMeshRef.current.position.x = -factor;
     bobMeshRef.current.position.x = factor;
 
@@ -207,7 +190,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     beamLineRef.current.computeLineDistances();
   }, [distanceKm, step]);
 
-  // Entangle action (Step 1)
   const handleGenerateEntanglement = () => {
     playLaserScan();
     setTimeout(() => playChimeSuccess(), 200);
@@ -221,17 +203,16 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     }));
   };
 
-  // Alice Measure Action (Step 3)
   const handleMeasureAlice = () => {
     playLaserScan();
     setTimeout(() => playQuantumCollapse(), 150);
 
-    // Random outcome for Alice: 0 or 1
-    const outcome = Math.random() < 0.5 ? 0 : 1;
+    const outcome = (Math.random() < 0.5 ? 0 : 1) as 0 | 1;
+    // Extracted domain rule call
+    const correlated = correlateEntangledMeasurement(outcome);
 
-    setAliceMeasured(outcome);
-    // Instantaneous correlation: Bob collapses to the exact same correlated state!
-    setBobMeasured(outcome);
+    setAliceMeasured(correlated.alice);
+    setBobMeasured(correlated.bob);
     setHasTriggeredMeasurement(true);
 
     updateStoredMetrics((prev) => ({
@@ -263,9 +244,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
 
   return (
     <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
-      {/* ========================================================================= */}
-      {/* TOP PROGRESS STEPPER                                                      */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-400 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30">
@@ -276,7 +254,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
           </span>
         </div>
 
-        {/* Progress Pills */}
         <div className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
@@ -298,9 +275,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* PASO 1: DOS QUBITS INDEPENDIENTES (SIN CONEXIÓN)                          */}
-      {/* ========================================================================= */}
       {step === 0 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -315,9 +289,7 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* Interactive Independent Stations */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-            {/* Alice Box */}
             <div className="p-6 rounded-3xl bg-slate-950/80 border border-cyan/40 backdrop-blur-md shadow-xl flex flex-col items-center gap-4">
               <div className="flex items-center gap-2 text-cyan font-orbitron font-bold text-sm">
                 <Globe className="w-4 h-4" /> Qubit de Alice (Tierra)
@@ -336,7 +308,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
               </button>
             </div>
 
-            {/* Bob Box */}
             <div className="p-6 rounded-3xl bg-slate-950/80 border border-emerald-500/40 backdrop-blur-md shadow-xl flex flex-col items-center gap-4">
               <div className="flex items-center gap-2 text-emerald-400 font-orbitron font-bold text-sm">
                 <Satellite className="w-4 h-4" /> Qubit de Bob (Luna)
@@ -362,9 +333,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 2: CREACIÓN DEL PAR ENTRELAZADO (ESTADO DE BELL)                     */}
-      {/* ========================================================================= */}
       {step === 1 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -379,7 +347,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Entangle Action */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
             <div ref={containerRef} className="w-full" />
 
@@ -407,9 +374,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 3: SEPARACIÓN A DISTANCIA CÓSMICA                                    */}
-      {/* ========================================================================= */}
       {step === 2 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -424,7 +388,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Distance Slider */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
             <div ref={containerRef} className="w-full" />
 
@@ -452,9 +415,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 4: MEDICIÓN CORRELACIONADA INSTANTÁNEA                               */}
-      {/* ========================================================================= */}
       {step === 3 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -469,11 +429,9 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Measurement Control */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
             <div ref={containerRef} className="w-full" />
 
-            {/* Readouts */}
             <div className="w-full max-w-md mt-2 flex flex-col gap-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-2xl bg-cyan/10 border border-cyan/40 text-center">
@@ -521,9 +479,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 5: RETO DE COMPRENSIÓN                                               */}
-      {/* ========================================================================= */}
       {step === 4 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -605,9 +560,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* BOTTOM NAVIGATION                                                         */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-4">
         <button
           onClick={step === 0 ? onBack : goToPrevStep}
