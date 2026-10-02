@@ -9,6 +9,10 @@ test.describe('Phase 1: E2E Baseline Smoke Flow', () => {
     const brandHeading = page.locator('header').getByText(/QUANTUMLAB/i);
     await expect(brandHeading).toBeVisible();
 
-    await expect(page.getByRole('button', { name: /Tarea 1: Superposición/i })).toBeVisible();
+    // Entrar al laboratorio desde la pantalla de bienvenida
+    await page.getByRole('button', { name: /Iniciar Experimentos/i }).click();
+
+    // Validar que se cargó la Tarea 1 verificando su título en pantalla
+    await expect(page.getByText(/El Bit Clásico/i)).toBeVisible();
   });
 });

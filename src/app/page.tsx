@@ -1,116 +1,142 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Mission1Superposition from '@/components/missions/Mission1Superposition';
 import Mission2Entanglement from '@/components/missions/Mission2Entanglement';
 import Mission3Decoherence from '@/components/missions/Mission3Decoherence';
 import Mission4Applications from '@/components/missions/Mission4Applications';
 import CelebrationModal from '@/components/CelebrationModal';
-import { getStoredProgress, updateStoredMetrics } from '@/lib/cookies';
+import {
+  getOrCreateUserId,
+  getStoredProgress,
+  incrementActiveMissionTime,
+} from '@/lib/cookies';
 import { playButtonClick } from '@/lib/sound';
-import { Check } from 'lucide-react';
+import { Play, RotateCcw } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<number>(0);
+  const [userId, setUserId] = useState<string>('');
   const [completedMissions, setCompletedMissions] = useState<number[]>([0]);
-  const [timeLeft, setTimeLeft] = useState<number>(600); // 10 minutes
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(true);
-  const [isCelebrationOpen, setIsCelebrationOpen] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<number>(0);
+  const [isStarted, setIsStarted] = useState<boolean>(false);
+  const [timeLeft, setTimeLeft] = useState<number>(600);
+  const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
+  const [showCelebration, setShowCelebration] = useState<boolean>(false);
 
   useEffect(() => {
-    setCompletedMissions(getStoredProgress());
+    const id = getOrCreateUserId();
+    setUserId(id);
+    const progress = getStoredProgress();
+    setCompletedMissions(progress);
   }, []);
 
-  // 10-Minute Countdown Timer
   useEffect(() => {
-    if (!isTimerRunning) return;
-    const interval = setInterval(() => {
+    if (!isStarted || isTimeUp) return;
+
+    const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          clearInterval(interval);
+          setIsTimeUp(true);
           return 0;
         }
         return prev - 1;
       });
 
-      updateStoredMetrics((prev) => ({
-        ...prev,
-        totalTimeSeconds: prev.totalTimeSeconds + 1,
-      }));
+      incrementActiveMissionTime(activeTab);
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isTimerRunning]);
+    return () => clearInterval(timer);
+  }, [isStarted, isTimeUp, activeTab]);
 
-  const handleTabChange = (index: number) => {
-    playButtonClick();
-    setActiveTab(index);
-  };
+  const handleMissionComplete = (missionIndex: number) => {
+    const updatedProgress = getStoredProgress();
+    setCompletedMissions(updatedProgress);
 
-  const handleMissionComplete = (fromIndex: number) => {
-    if (!completedMissions.includes(fromIndex + 1)) {
-      setCompletedMissions((prev) => [...prev, fromIndex + 1]);
+    if (missionIndex < 3) {
+      setActiveTab(missionIndex + 1);
+    } else {
+      setShowCelebration(true);
     }
-    setActiveTab(fromIndex + 1);
   };
 
-  const tabs = [
-    { title: 'Tarea 1: Superposición', desc: 'Bit vs. Qubit y Colapso' },
-    { title: 'Tarea 2: Entrelazamiento', desc: 'Alice & Bob a Distancia' },
-    { title: 'Tarea 3: Cero Absoluto', desc: 'Criogenia y Decoherencia' },
-    { title: 'Tarea 4: Aplicaciones', desc: 'Moléculas y Criptografía' },
-  ];
+  const handleTabSelect = (tabIndex: number) => {
+    playButtonClick();
+    setActiveTab(tabIndex);
+  };
+
+  const handleStartLab = () => {
+    playButtonClick();
+    setIsStarted(true);
+  };
+
+  const handleRestartLab = () => {
+    playButtonClick();
+    setTimeLeft(600);
+    setIsTimeUp(false);
+    setActiveTab(0);
+  };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#070913] text-slate-100 min-h-screen">
-      {/* Top Header */}
+    <main className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-cyan selection:text-slate-950">
       <Header
         timeLeft={timeLeft}
-        isRunning={isTimerRunning}
-        onToggleTimer={() => setIsTimerRunning(!isTimerRunning)}
+        isRunning={isStarted && !isTimeUp}
+        onToggleTimer={() => setIsStarted((prev) => !prev)}
       />
 
-      {/* Progress Track */}
-      <div className="w-full bg-slate-900 h-1">
-        <div
-          className="h-full bg-cyan transition-all duration-300 shadow-sm shadow-cyan/50"
-          style={{ width: `${((activeTab + 1) / tabs.length) * 100}%` }}
-        />
-      </div>
+      {!isStarted ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12 max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-300">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan/10 border border-cyan/30 text-cyan text-xs font-mono mb-6">
+            <span className="w-2 h-2 rounded-full bg-cyan animate-ping" />
+            Masterclass de Computación Cuántica 3D
+          </div>
 
-      {/* Main Content Area: Fluid Full Width, Zero Side Gutters */}
-      <main className="w-full px-3 sm:px-6 py-2 flex-1 flex flex-col gap-3">
-        {/* Sleek Floating Task Selector Dock */}
-        <div className="flex items-center justify-center">
-          <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 bg-slate-950/80 border border-slate-800/80 rounded-2xl sm:rounded-full backdrop-blur-md shadow-xl">
-            {tabs.map((tab, idx) => {
-              const isActive = activeTab === idx;
-              const isDone = completedMissions.includes(idx);
-              return (
-                <button
-                  key={idx}
-                  onClick={() => handleTabChange(idx)}
-                  className={`px-4 py-2 rounded-xl sm:rounded-full text-xs font-orbitron transition-all flex items-center gap-2 ${
-                    isActive
-                      ? 'bg-cyan text-slate-950 font-bold shadow-md shadow-cyan/25'
-                      : isDone
-                      ? 'text-emerald-400 hover:bg-slate-900/60 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-                  }`}
-                >
-                  <span>{tab.title}</span>
-                  {isDone && !isActive && <Check className="w-3.5 h-3.5 text-emerald-400" />}
-                </button>
-              );
-            })}
+          <h1 className="text-4xl sm:text-6xl font-orbitron font-bold tracking-tight text-white mb-6 leading-tight">
+            LABORATORIO DE <span className="text-cyan">FÍSICA CUÁNTICA</span>
+          </h1>
+
+          <p className="text-slate-300 text-base sm:text-lg mb-8 leading-relaxed max-w-2xl">
+            Bienvenido al simulador interactivo de mecánica cuántica. Explora la superposición, el entrelazamiento, la decoherencia y las aplicaciones reales mediante simulaciones en 3D en vivo.
+          </p>
+
+          <button
+            onClick={handleStartLab}
+            className="py-4 px-8 rounded-2xl bg-cyan text-slate-950 hover:bg-cyan/90 font-orbitron font-bold text-sm uppercase tracking-wider flex items-center gap-3 transition-all shadow-xl shadow-cyan/25 active:scale-95"
+          >
+            <Play className="w-5 h-5 fill-slate-950" /> Iniciar Experimentos
+          </button>
+        </div>
+      ) : isTimeUp ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12 max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
+          <div className="p-8 rounded-3xl bg-slate-950 border border-rose-500/40 shadow-2xl flex flex-col items-center gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 font-orbitron font-bold text-xl">
+              10:00
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-orbitron font-bold text-white mb-2">
+                ¡Tiempo Límite Agotado!
+              </h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Has alcanzado el tiempo límite de 10 minutos para esta sesión de laboratorio. Puedes reiniciar el tiempo para continuar explorando los módulos.
+              </p>
+            </div>
+
+            <button
+              onClick={handleRestartLab}
+              className="py-3.5 px-6 rounded-2xl bg-cyan text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyan/90 transition-all shadow-lg shadow-cyan/20 active:scale-95"
+            >
+              <RotateCcw className="w-4 h-4" /> Reiniciar Temporizador
+            </button>
           </div>
         </div>
-
-        {/* Active Task Canvas Area: Full fluid container */}
-        <div className="flex-1 w-full flex flex-col">
+      ) : (
+        <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-6xl mx-auto w-full">
           {activeTab === 0 && (
-            <Mission1Superposition onComplete={() => handleMissionComplete(0)} />
+            <Mission1Superposition
+              onComplete={() => handleMissionComplete(0)}
+            />
           )}
           {activeTab === 1 && (
             <Mission2Entanglement
@@ -126,18 +152,19 @@ export default function Home() {
           )}
           {activeTab === 3 && (
             <Mission4Applications
-              onFinishAll={() => setIsCelebrationOpen(true)}
+              onFinishAll={() => handleMissionComplete(3)}
               onBack={() => setActiveTab(2)}
             />
           )}
         </div>
-      </main>
+      )}
 
-      {/* Completion Modal */}
-      <CelebrationModal
-        isOpen={isCelebrationOpen}
-        onClose={() => setIsCelebrationOpen(false)}
-      />
-    </div>
+      {showCelebration && (
+        <CelebrationModal
+          onClose={() => setShowCelebration(false)}
+          isOpen={false}
+        />
+      )}
+    </main>
   );
 }
