@@ -1,6 +1,6 @@
 # Backlog Priorizado - QuantumLab 3D
 
-## Estado General: COMPLETADO (v0.2.0-maintenance)
+## Estado General: COMPLETADO (v0.3.0-maintenance)
 
 Todas las HUs originales estan implementadas y el ciclo de mantenimiento v0.2.0 (Fases 0-8) ha cerrado con los gates de calidad en verde.
 
@@ -46,7 +46,7 @@ Cada fase se ejecuto con el protocolo `script-per-phase` (backup, pasos numerado
 | HU-M-15 | `React.lazy` + `Suspense` para las 4 misiones | 7 | OK |
 | HU-M-16 | Guard clauses en helpers que aceptan `unknown` | 7 | OK |
 | HU-M-17 | Documentacion consolidada (AGENTS, BACKLOG, README, maintenance log) | 8 | OK |
-| HU-M-18 | Tag `v0.2.0-maintenance` | 8 | OK |
+| HU-M-18 | Tag `v0.3.0-maintenance` | 8 | OK |
 
 ---
 
@@ -113,3 +113,8 @@ Thresholds de coverage (declarados en `vite.config.ts`):
 Scripts adicionales:
 - `npm run test:visual` - visual regression (requiere baselines).
 - `npm run test:visual:update` - regenera baselines.
+
+
+## Sincronización v0.3.0
+- [x] Alineación documental con README.md (Misiones 0 a 3 integradas).
+- [x] Pruebas de cobertura y accesibilidad WCAG 2.1 AA alineadas con auditorías en CI/CD.

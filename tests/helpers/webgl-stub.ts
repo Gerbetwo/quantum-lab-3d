@@ -1,149 +1,179 @@
-import { vi } from 'vitest';
+// Mock completo de WebGL / 2D / Web Audio / browser APIs para JSDOM + Vitest
 
-export class MockAudioContext {
-  state: AudioContextState = 'suspended';
+export function createMockWebGLContext(): Partial<WebGLRenderingContext> {
+  return {
+    canvas: {} as HTMLCanvasElement,
+    drawingBufferWidth: 800,
+    drawingBufferHeight: 600,
+    getExtension: (name: string) => {
+      if (name === 'OES_texture_float') return {};
+      if (name === 'WEBGL_lose_context') {
+        return { loseContext: () => {}, restoreContext: () => {} };
+      }
+      return null;
+    },
+    getParameter: () => 16,
+    getShaderPrecisionFormat: () => ({ rangeMin: 1, rangeMax: 1, precision: 23 }),
+    createBuffer: () => ({}),
+    createTexture: () => ({}),
+    createProgram: () => ({}),
+    createShader: () => ({}),
+    bindBuffer: () => {},
+    bindTexture: () => {},
+    useProgram: () => {},
+    clearColor: () => {},
+    clear: () => {},
+    enable: () => {},
+    disable: () => {},
+    viewport: () => {},
+  } as Partial<WebGLRenderingContext>;
+}
+
+function createMock2DContext(): Partial<CanvasRenderingContext2D> {
+  const noop = () => {};
+  return {
+    canvas: document.createElement('canvas'),
+    fillRect: noop,
+    clearRect: noop,
+    strokeRect: noop,
+    fillText: noop,
+    strokeText: noop,
+    measureText: () => ({ width: 0 } as TextMetrics),
+    beginPath: noop,
+    closePath: noop,
+    moveTo: noop,
+    lineTo: noop,
+    arc: noop,
+    stroke: noop,
+    fill: noop,
+    save: noop,
+    restore: noop,
+    translate: noop,
+    rotate: noop,
+    scale: noop,
+    drawImage: noop,
+    createImageData: () =>
+      ({ data: new Uint8ClampedArray(4), width: 1, height: 1 } as ImageData),
+    getImageData: () =>
+      ({ data: new Uint8ClampedArray(4), width: 1, height: 1 } as ImageData),
+    putImageData: noop,
+    fillStyle: '#000',
+    strokeStyle: '#000',
+    font: '10px sans-serif',
+    textAlign: 'left',
+    textBaseline: 'top',
+    shadowColor: 'transparent',
+    shadowBlur: 0,
+  } as unknown as Partial<CanvasRenderingContext2D>;
+}
+
+class MockAudioContext {
+  state: 'suspended' | 'running' | 'closed' = 'suspended';
   currentTime = 0;
-  destination = {};
+  destination = { connect: () => {}, disconnect: () => {} };
 
-  resume() {
+  async resume(): Promise<void> {
     this.state = 'running';
-    return Promise.resolve();
+  }
+  async suspend(): Promise<void> {
+    this.state = 'suspended';
+  }
+  async close(): Promise<void> {
+    this.state = 'closed';
   }
 
   createOscillator() {
     return {
-      type: 'sine',
+      type: 'sine' as OscillatorType,
       frequency: {
-        setValueAtTime: vi.fn(),
-        exponentialRampToValueAtTime: vi.fn(),
-        linearRampToValueAtTime: vi.fn(),
+        value: 440,
+        setValueAtTime: () => {},
+        exponentialRampToValueAtTime: () => {},
+        linearRampToValueAtTime: () => {},
       },
-      connect: vi.fn(),
-      start: vi.fn(),
-      stop: vi.fn(),
+      connect: () => {},
+      disconnect: () => {},
+      start: () => {},
+      stop: () => {},
+      onended: null,
     };
   }
 
   createGain() {
     return {
       gain: {
-        setValueAtTime: vi.fn(),
-        exponentialRampToValueAtTime: vi.fn(),
-        linearRampToValueAtTime: vi.fn(),
+        value: 0,
+        setValueAtTime: () => {},
+        exponentialRampToValueAtTime: () => {},
+        linearRampToValueAtTime: () => {},
       },
-      connect: vi.fn(),
+      connect: () => {},
+      disconnect: () => {},
     };
   }
 }
 
-function makeWebGLContext(canvas: HTMLCanvasElement): WebGLRenderingContext {
-  return {
-    canvas,
-    getExtension: vi.fn(),
-    getParameter: vi.fn((param: number) => {
-      if (param === 7938) return 'WebGL 2.0';
-      if (param === 35724) return 'WebGL GLSL ES 3.00';
-      if (param === 7936) return 'WebKit';
-      if (param === 7937) return 'WebKit WebGL';
-      return 16;
-    }),
-    getShaderPrecisionFormat: vi.fn(() => ({ rangeMin: 1, rangeMax: 1, precision: 1 })),
-    createTexture: vi.fn(),
-    bindTexture: vi.fn(),
-    texParameteri: vi.fn(),
-    createBuffer: vi.fn(),
-    bindBuffer: vi.fn(),
-    bufferData: vi.fn(),
-    createProgram: vi.fn(),
-    createShader: vi.fn(),
-    shaderSource: vi.fn(),
-    compileShader: vi.fn(),
-    getShaderParameter: vi.fn(() => true),
-    attachShader: vi.fn(),
-    linkProgram: vi.fn(),
-    getProgramParameter: vi.fn(() => true),
-    useProgram: vi.fn(),
-    getAttribLocation: vi.fn(() => 0),
-    getUniformLocation: vi.fn(() => ({})),
-    enableVertexAttribArray: vi.fn(),
-    vertexAttribPointer: vi.fn(),
-    drawArrays: vi.fn(),
-    clear: vi.fn(),
-    clearColor: vi.fn(),
-    viewport: vi.fn(),
-    enable: vi.fn(),
-    disable: vi.fn(),
-    depthFunc: vi.fn(),
-    pixelStorei: vi.fn(),
-  } as unknown as WebGLRenderingContext;
-}
-
-function make2DContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
-  return {
-    canvas,
-    fillRect: vi.fn(),
-    clearRect: vi.fn(),
-    getImageData: vi.fn(() => ({ data: new Uint8ClampedArray(0) })),
-    putImageData: vi.fn(),
-    createImageData: vi.fn(() => []),
-    setTransform: vi.fn(),
-    drawImage: vi.fn(),
-    save: vi.fn(),
-    fillText: vi.fn(),
-    restore: vi.fn(),
-    beginPath: vi.fn(),
-    moveTo: vi.fn(),
-    lineTo: vi.fn(),
-    closePath: vi.fn(),
-    stroke: vi.fn(),
-    translate: vi.fn(),
-    scale: vi.fn(),
-    rotate: vi.fn(),
-    arc: vi.fn(),
-    fill: vi.fn(),
-    measureText: vi.fn(() => ({ width: 0 })),
-    transform: vi.fn(),
-    rect: vi.fn(),
-    clip: vi.fn(),
-  } as unknown as CanvasRenderingContext2D;
-}
-
+/**
+ * Instala todos los stubs de browser APIs que jsdom no provee.
+ * Llamado una vez desde vitest.setup.ts (no como side-effect de import).
+ */
 export function installWebStubs(): void {
-  Object.defineProperty(window, 'AudioContext', {
-    configurable: true,
-    writable: true,
-    value: MockAudioContext,
-  });
+  if (typeof window === 'undefined') return;
 
-  Object.defineProperty(window, 'webkitAudioContext', {
-    configurable: true,
-    writable: true,
-    value: MockAudioContext,
-  });
-
-  Object.defineProperty(globalThis, 'ResizeObserver', {
-    writable: true,
-    value: class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  });
-
-  HTMLCanvasElement.prototype.getContext = vi.fn(function (
+  // 1. Canvas 2D + WebGL contexts
+  HTMLCanvasElement.prototype.getContext = function (
     this: HTMLCanvasElement,
-    contextId: string
-  ) {
+    contextId: string,
+    ..._args: unknown[]
+  ): RenderingContext | null {
     if (
       contextId === 'webgl' ||
       contextId === 'webgl2' ||
       contextId === 'experimental-webgl'
     ) {
-      return makeWebGLContext(this);
+      return createMockWebGLContext() as unknown as WebGLRenderingContext;
     }
     if (contextId === '2d') {
-      return make2DContext(this);
+      return createMock2DContext() as unknown as CanvasRenderingContext2D;
     }
     return null;
-  }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+  } as typeof HTMLCanvasElement.prototype.getContext;
+
+  // 2. Web Audio API (constructor required; smoke.test asserts state='suspended')
+  if (typeof (window as unknown as { AudioContext?: unknown }).AudioContext === 'undefined') {
+    (window as unknown as { AudioContext: typeof MockAudioContext }).AudioContext =
+      MockAudioContext;
+  }
+  if (
+    typeof (window as unknown as { webkitAudioContext?: unknown }).webkitAudioContext ===
+    'undefined'
+  ) {
+    (window as unknown as { webkitAudioContext: typeof MockAudioContext }).webkitAudioContext =
+      MockAudioContext;
+  }
+
+  // 3. ResizeObserver (used by createScene's responsive sizing)
+  if (typeof (window as unknown as { ResizeObserver?: unknown }).ResizeObserver === 'undefined') {
+    class MockResizeObserver {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    }
+    (window as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+      MockResizeObserver;
+  }
+
+  // 4. matchMedia (used by prefersReducedMotion + useBreakpoint)
+  if (typeof window.matchMedia !== 'function') {
+    window.matchMedia = ((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+  }
 }
