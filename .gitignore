@@ -35,3 +35,9 @@ next-env.d.ts
 
 code*.txt
 script*.ts
+
+playwright-report/
+test-results/
+
+.backup*/
+docs/

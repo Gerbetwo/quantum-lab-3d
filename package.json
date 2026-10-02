@@ -10,9 +10,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run",
+    "test:all": "npm run typecheck && npm run lint && npm run test:unit && npm run test:e2e && npm run test:console",
+    "validate": "npm run test:all && npm run build",
+    "test:console": "playwright test tests/e2e/console-audit.spec.ts"
   },
   "dependencies": {
+    "@vitest/coverage-v8": "^5.0.3",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "js-cookie": "^3.0.5",
