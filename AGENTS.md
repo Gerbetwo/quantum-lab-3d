@@ -653,3 +653,72 @@ Siguiente HU
 ```
 
 **Nunca empezar por “mejorar” el código sin una especificación o test que justifique el cambio.**
+
+---
+
+# 24. Politica de Page Objects para E2E
+
+Toda spec de Playwright debe consumir al menos un Page Object. Los POMs viven en `tests/e2e/pages/` y **no llevan sufijo `.spec.ts` ni `.test.ts`** (Playwright los tomaria como specs ejecutables).
+
+## Jerarquia
+
+```text
+BasePage (abstract)
+  +-- MissionPage (abstract, agrega goToStep/selectAnswer/advanceToNextTask)
+  |     +-- Task1Page
+  |     +-- Task2Page
+  |     +-- Task3Page
+  |     +-- Task4Page
+  |
+  +-- LandingPage
+  +-- CelebrationPage
+```
+
+## Reglas
+
+1. `BasePage` solo almacena `page: Page`. Cero locators, cero metodos.
+2. Cada subclase declara sus locators como `readonly` properties (evaluados una vez).
+3. Los metodos exponen **intencion**, no pasos: `await task1.complete()`, no `await page.click(...)`.
+4. `index.ts` re-exporta solo lo que las specs consumen. `BasePage` no se re-exporta.
+5. Los POM no contienen asserts ocultos. Los `expect(...)` viven en el spec o en metodos `expectXxx()` claramente nombrados.
+6. Ninguna spec debe contener `page.getByRole(...)` inline (excepto en aserciones puntuales de valores).
+7. Regla de tamano: `critical-flow.spec.ts` debe permanecer por debajo de **40 lineas no vacias**.
+
+---
+
+# 25. Politica de data-testid
+
+## Regla de oro
+
+> Preferir **roles y nombres accesibles** antes que `data-testid`.
+
+Orden de preferencia (de mejor a peor):
+
+1. `getByRole('button', { name: /Iniciar/i })`
+2. `getByLabelText(...)`, `getByPlaceholderText(...)`, `getByAltText(...)`
+3. `getByTestId('collapse-result')` <-- ultimo recurso
+
+## Cuando se permite un `data-testid`
+
+- El elemento **no tiene semantica ARIA** disponible (un `div` con un banner de resultado).
+- El texto visible es volatil (numeros que cambian por RNG, cuentas, timestamps).
+- El elemento necesita ser **mascado** en visual regression (ej. `user-id-value`).
+
+## Cuando NO
+
+- El elemento tiene un `<button>` con label -> usar `getByRole`.
+- El elemento es un heading con texto estable -> usar `getByRole('heading', { name })`.
+- El elemento es un link con texto -> usar `getByRole('link', { name })`.
+
+## Convencion de nombres
+
+- `kebab-case`.
+- Prefijo por dominio: `mission1-*`, `celebration-*`, `header-*`.
+- Sufijo por tipo de dato: `-value`, `-counter`, `-banner`, `-skeleton`, `-modal`.
+- **Nunca** referenciar CSS classes (`bg-cyan`, `rounded-xl`) en el nombre.
+
+## Prohibiciones
+
+- No usar `getByTitle` para localizar elementos. `title` es para tooltips, no para test hooks.
+- No usar `querySelector` con clases CSS.
+- No anadir `data-testid` a elementos que ya tienen un `id` estable.

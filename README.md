@@ -61,3 +61,99 @@ The application is optimized for zero-configuration deployment on **Vercel**:
 ```bash
 npx vercel
 ```
+
+---
+
+## Testing Strategy
+
+La plataforma se apoya en **cinco capas** de tests.
+
+### 1. Unit (`tests/unit/`)
+- **Que:** reglas de dominio cuantico puras (`bloch`, `measurement`, `entanglement`, `decoherence`, `applications`) y utilidades de persistencia.
+- **Runner:** Vitest + jsdom.
+- **Convencion:** RNG inyectable, sin tocar `Math.random()` real.
+- **Cobertura:** 100% en `src/domain/quantum/**`.
+
+### 2. Component (`tests/component/`)
+- **Que:** render y comportamiento de las 4 misiones, `Header`, `CelebrationModal`.
+- **Queries:** roles y nombres accesibles por defecto; `data-testid` solo cuando no hay alternativa semantica (ver `AGENTS.md` seccion 25).
+- **Mocks:** Web Audio y WebGL stubbeados en `tests/helpers/webgl-stub.ts`.
+
+### 3. Integration (`tests/integration/`)
+- **Que:** `page.tsx` orquestando las 4 misiones mockeadas con `React.lazy` resuelto.
+- **Verifica:** orden de `saveCompletedMission(0..3)`, transicion de tabs, aparicion del modal final.
+
+### 4. E2E (`tests/e2e/`)
+- **Runner:** Playwright (Chromium).
+- **Page Object Model** (`tests/e2e/pages/`): specs sin locators inline.
+- **Specs:**
+  - `smoke.spec.ts` - landing + arranque.
+  - `critical-flow.spec.ts` - jornada completa (< 40 lineas).
+  - `console-audit.spec.ts` - errores + warnings + 404s.
+  - `visual-regression.spec.ts` - env-gated (`RUN_VISUAL=1`).
+
+### 5. Visual Regression (`npm run test:visual`)
+- Opt-in: sin baselines versionadas aun (ver DT-05 en `BACKLOG.md`).
+- Al activarse: usa `mask` para elementos volatiles (userId, timer) y `animations: 'disabled'`.
+
+### Coverage Thresholds
+Declarados en `vite.config.ts`. `npm run test:coverage` falla si bajan:
+- `src/domain/**`: **95%** statements / **90%** branches.
+- `src/lib/**`: **85%** statements / **80%** branches.
+- `src/lib/three/**`: excluido (infra WebGL, validado por E2E).
+
+### Reglas de test
+1. Red-Green-Refactor para HUs nuevas (ver `AGENTS.md` secciones 5-7).
+2. Nunca `Math.random()` directo - inyectar `random: () => number`.
+3. Nunca `getByTitle` - usar `getByRole` o `data-testid` (ver `AGENTS.md` seccion 25).
+4. Un `data-testid` por concepto, no por clase CSS.
+
+---
+
+## Architecture
+
+```text
+src/
+|-- app/                       # Next.js App Router
+|   |-- layout.tsx
+|   |-- page.tsx               # Orquestador: timer, tabs, misiones lazy, celebration
+|   \-- globals.css
+|
+|-- components/
+|   |-- Header.tsx             # Memoizado por seccion (Brand/UserBadge/TimerDisplay)
+|   |-- CelebrationModal.tsx   # Focus trap + role=dialog + prefers-reduced-motion
+|   \-- missions/              # 4 misiones, cada una consume useThreeScene
+|
+|-- domain/quantum/            # <- PURO, sin React, sin Three.js
+|   |-- bloch.ts               # |0> / |1> amplitudes y probabilidades
+|   |-- measurement.ts         # measureQubit(theta, random) inyectable
+|   |-- entanglement.ts        # correlateEntangledMeasurement(outcome)
+|   |-- decoherence.ts         # calculateCoherenceTime(T), isCriticalDecoherence
+|   \-- applications.ts        # formatShorResult, updateExploredApplications
+|
+|-- hooks/
+|   \-- useThreeScene.ts       # React wrapper del ciclo de vida WebGL
+|
+\-- lib/
+    |-- cookies.ts             # Persistencia: userID, progreso, metricas, activeTab
+    |-- sound.ts               # Web Audio sintetizado + gate por gesto + env
+    \-- three/
+        \-- createScene.ts     # Infra Three.js: setAnimationLoop, culling, cached()
+```
+
+### Fronteras
+
+| Capa | Puede importar de | NO puede importar de |
+| :--- | :--- | :--- |
+| `domain/quantum/**` | (nada) | React, Three.js, `lib/` |
+| `hooks/**` | `lib/three/**` | `components/**`, `domain/**` |
+| `components/**` | `domain/**`, `hooks/**`, `lib/**` | (nada prohibido) |
+| `lib/**` | `lib/**` | `components/**`, `hooks/**` |
+
+### Convenciones clave
+
+- **Domain purity:** ninguna funcion en `domain/quantum/**` toca `window`, `Math.random()`, ni `Date.now()`. Todo es determinista con inputs explicitos.
+- **RNG inyectable:** `measureQubit(theta, random = Math.random)` - los tests pasan `() => 0.2`.
+- **Scene lifecycle:** toda escena WebGL pasa por `useThreeScene`. Nunca se instancia `WebGLRenderer` fuera de `createScene`.
+- **Shared geometries:** `cached('key', () => new Geometry())` para geometrias reutilizables. `dispose()` las respeta via `userData.__shared`.
+- **Cookie writes:** siempre via `updateStoredMetrics` o `saveCompletedMission` - nunca `Cookies.set` directo en componentes.
