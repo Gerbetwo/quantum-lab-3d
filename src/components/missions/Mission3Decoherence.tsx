@@ -22,6 +22,7 @@ import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { calculateCoherenceTime, isCriticalDecoherence } from '@/domain/quantum/decoherence';
 import { useThreeScene } from '@/hooks/useThreeScene';
 import { prefersReducedMotion, cached } from '@/lib/three/createScene';
+import { createOrbitControls } from '@/hooks/useOrbitControls';
 
 interface Props {
   onComplete: () => void;
@@ -83,9 +84,11 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
   useThreeScene(containerRef, {
     width: 600,
     height: 360,
+    viewportRelative: true,
+    aspect: 16 / 10,
     cameraPos: [0, 0.2, 4.2],
     cameraLookAt: [0, 0, 0],
-    recreateOn: step === 1 ? 'm3-s1' : step === 2 ? 'm3-s2' : 'm3-hidden',
+    recreateOn: step === 1 || step === 2 ? 'm3-visible' : 'm3-hidden',
     onSetup: (handle) => {
       const chandelier = new THREE.Group();
       chandelierGroupRef.current = chandelier;
@@ -140,8 +143,22 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
       particlesRef.current = particles;
       handle.add(particles);
 
+      const controls = createOrbitControls(handle.camera, handle.renderer.domElement, {
+        enablePan: false,
+        enableZoom: true,
+        enableRotate: true,
+        minDistance: 2.5,
+        maxDistance: 8.0,
+        autoRotate: !prefersReducedMotion(),
+        autoRotateSpeed: 0.3,
+        enableDamping: true,
+        dampingFactor: 0.12,
+        target: [0, 0, 0],
+      });
+
       const reduced = prefersReducedMotion();
-      handle.onFrame(() => {
+      handle.onFrame((_t, dt) => {
+        controls.update(dt);
         if (!reduced) chandelier.rotation.y += 0.004;
 
         const currentTemp = temperatureRef.current;
@@ -174,6 +191,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
       });
 
       return () => {
+        controls.dispose();
         chandelierGroupRef.current = null;
         coreMeshRef.current = null;
         particlesRef.current = null;
@@ -294,17 +312,22 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {step === 1 && (
+      {(step === 1 || step === 2) && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
             <div className="text-xs font-mono text-amber-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
-              <ThermometerSnowflake className="w-4 h-4 text-amber-400" /> Temperatura vs Estabilidad
+              {step === 1 && <ThermometerSnowflake className="w-4 h-4 text-amber-400" />}
+              {step === 2 && <Shield className="w-4 h-4 text-amber-400" />}
+              {step === 1 && 'Temperatura vs Estabilidad'}
+              {step === 2 && 'Aislamiento Extremo'}
             </div>
             <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Simulador Térmico Criogénico
+              {step === 1 && 'Simulador Térmico Criogénico'}
+              {step === 2 && 'El Refrigerador de Dilución'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              Mueve el deslizador térmico. Observa cómo al subir la temperatura, el calor bombardea el procesador y destruye el tiempo de coherencia.
+              {step === 1 && 'Mueve el deslizador térmico. Observa cómo al subir la temperatura, el calor bombardea el procesador y destruye el tiempo de coherencia.'}
+              {step === 2 && 'Ese icónico &quot;candelabro dorado&quot; contiene etapas concéntricas de enfriamiento criogénico con isótopos de helio al vacío absoluto.'}
             </p>
           </div>
 
@@ -313,88 +336,70 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
               role="img"
               aria-label="Refrigerador criogénico de dilución interactivo" className="w-full" />
 
-            <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
-              <div className="flex justify-between items-center text-xs font-mono">
-                <span className="text-slate-400">Temperatura del Procesador:</span>
-                <span className={`font-bold text-sm ${isCritical ? 'text-rose-400 animate-pulse' : 'text-cyan'}`}>
-                  {temperatureMilliKelvin >= 1000
-                    ? `${(temperatureMilliKelvin / 1000).toFixed(1)} K (${Math.round((temperatureMilliKelvin / 1000) - 273.15)}°C)`
-                    : `${temperatureMilliKelvin} mK (0.015 K)`}
-                </span>
+            {step === 1 && (
+              <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+                <div className="flex justify-between items-center text-xs font-mono">
+                  <span className="text-slate-400">Temperatura del Procesador:</span>
+                  <span className={`font-bold text-sm ${isCritical ? 'text-rose-400 animate-pulse' : 'text-cyan'}`}>
+                    {temperatureMilliKelvin >= 1000
+                      ? `${(temperatureMilliKelvin / 1000).toFixed(1)} K (${Math.round((temperatureMilliKelvin / 1000) - 273.15)}°C)`
+                      : `${temperatureMilliKelvin} mK (0.015 K)`}
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min="15"
+                  max="5000"
+                  step="25"
+                  value={temperatureMilliKelvin}
+                  onChange={(e) => handleTemperatureChange(parseInt(e.target.value))}
+                  className="w-full accent-amber-400 cursor-pointer"
+                />
+
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
+                  <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-left">
+                    <div className="text-[10px] font-mono text-slate-400">Tiempo de Coherencia T₂:</div>
+                    <div data-testid="coherence-time" className={`text-base font-orbitron font-bold mt-0.5 ${coherenceTimeUs < 10 ? 'text-rose-400' : 'text-cyan'}`}>
+                      {coherenceTimeUs} μs
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-left">
+                    <div className="text-[10px] font-mono text-slate-400">Estado Cuántico:</div>
+                    <div className={`text-xs font-orbitron font-bold mt-1 ${isCritical ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      {isCritical ? 'Decoherencia Crítica' : 'Coherente y Estable'}
+                    </div>
+                  </div>
+                </div>
               </div>
+            )}
 
-              <input
-                type="range"
-                min="15"
-                max="5000"
-                step="25"
-                value={temperatureMilliKelvin}
-                onChange={(e) => handleTemperatureChange(parseInt(e.target.value))}
-                className="w-full accent-amber-400 cursor-pointer"
-              />
+            {step === 2 && (
+              <div className="w-full max-w-md mt-2 flex flex-col gap-3">
+                <button
+                  onClick={handleToggleCryoShield}
+                  className={`w-full py-3.5 px-6 rounded-2xl font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 ${
+                    isCryoShieldActive
+                      ? 'bg-cyan text-slate-950 shadow-cyan/30 ring-2 ring-cyan/40'
+                      : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/25'
+                  }`}
+                >
+                  <ThermometerSnowflake className="w-4 h-4" />
+                  {isCryoShieldActive ? '¡Enfriamiento Cuántico a 15 mK Activo!' : 'Activar Bombas Criogénicas de Dilución'}
+                </button>
 
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
-                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-left">
-                  <div className="text-[10px] font-mono text-slate-400">Tiempo de Coherencia T₂:</div>
-                  <div data-testid="coherence-time" className={`text-base font-orbitron font-bold mt-0.5 ${coherenceTimeUs < 10 ? 'text-rose-400' : 'text-cyan'}`}>
-                    {coherenceTimeUs} μs
+                {isCryoShieldActive && (
+                  <div data-testid="cryo-active-banner" className="p-3.5 rounded-2xl bg-cyan/10 border border-cyan/40 text-cyan text-xs text-left animate-in fade-in">
+                    <div className="font-bold flex items-center gap-1.5 mb-1 text-sm font-orbitron text-white">
+                      <CheckCircle2 className="w-4 h-4 text-cyan" />
+                      Temperatura: 15 mK (-273.135 °C)
+                    </div>
+                    Las vibraciones térmicas se han detenido casi por completo. El chip superconductor puede operar con cálculos cuánticos de alta fidelidad.
                   </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-left">
-                  <div className="text-[10px] font-mono text-slate-400">Estado Cuántico:</div>
-                  <div className={`text-xs font-orbitron font-bold mt-1 ${isCritical ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {isCritical ? 'Decoherencia Crítica' : 'Coherente y Estable'}
-                  </div>
-                </div>
+                )}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
-          <div>
-            <div className="text-xs font-mono text-amber-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
-              <Shield className="w-4 h-4 text-amber-400" /> Aislamiento Extremo
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              El Refrigerador de Dilución
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-              Ese icónico &quot;candelabro dorado&quot; contiene etapas concéntricas de enfriamiento criogénico con isótopos de helio al vacío absoluto.
-            </p>
-          </div>
-
-          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef}
-              role="img"
-              aria-label="Refrigerador criogénico de dilución interactivo" className="w-full" />
-
-            <div className="w-full max-w-md mt-2 flex flex-col gap-3">
-              <button
-                onClick={handleToggleCryoShield}
-                className={`w-full py-3.5 px-6 rounded-2xl font-orbitron font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 ${
-                  isCryoShieldActive
-                    ? 'bg-cyan text-slate-950 shadow-cyan/30 ring-2 ring-cyan/40'
-                    : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/25'
-                }`}
-              >
-                <ThermometerSnowflake className="w-4 h-4" />
-                {isCryoShieldActive ? '¡Enfriamiento Cuántico a 15 mK Activo!' : 'Activar Bombas Criogénicas de Dilución'}
-              </button>
-
-              {isCryoShieldActive && (
-                <div data-testid="cryo-active-banner" className="p-3.5 rounded-2xl bg-cyan/10 border border-cyan/40 text-cyan text-xs text-left animate-in fade-in">
-                  <div className="font-bold flex items-center gap-1.5 mb-1 text-sm font-orbitron text-white">
-                    <CheckCircle2 className="w-4 h-4 text-cyan" />
-                    Temperatura: 15 mK (-273.135 °C)
-                  </div>
-                  Las vibraciones térmicas se han detenido casi por completo. El chip superconductor puede operar con cálculos cuánticos de alta fidelidad.
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       )}
