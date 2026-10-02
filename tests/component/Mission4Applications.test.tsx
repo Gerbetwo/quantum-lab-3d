@@ -3,6 +3,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
 import Mission4Applications from '@/components/missions/Mission4Applications';
+import { goToStep } from '../helpers/queries';
 
 vi.mock('@/lib/sound', () => ({
   playButtonClick: vi.fn(),
@@ -15,7 +16,7 @@ vi.mock('@/lib/cookies', () => ({
   updateStoredMetrics: vi.fn(),
 }));
 
-describe('HU-18..HU-21 — Mission 4 Applications Component', () => {
+describe('HU-18..HU-21 - Mission 4 Applications Component', () => {
   const onFinishAll = vi.fn();
   const onBack = vi.fn();
 
@@ -28,48 +29,37 @@ describe('HU-18..HU-21 — Mission 4 Applications Component', () => {
     vi.useRealTimers();
   });
 
-  it('HU-18: myth cards inspection', () => {
+  it('HU-18: myth cards inspection toggles state', () => {
     render(<Mission4Applications onFinishAll={onFinishAll} onBack={onBack} />);
-    expect(screen.getByText('¿Para qué NO sirve un Computador Cuántico?')).toBeInTheDocument();
+    expect(screen.getByText(/Para qué NO sirve un Computador Cuántico/i)).toBeInTheDocument();
 
-    const mythCard = screen.getByText('Videojuegos, Navegar o YouTube');
-    fireEvent.click(mythCard);
+    fireEvent.click(screen.getByText('Videojuegos, Navegar o YouTube'));
     expect(screen.getByText('Uso Inadecuado')).toBeInTheDocument();
   });
 
-  it('HU-20: Shor algorithm simulation using fake timers', async () => {
+  it('HU-20: Shor algorithm simulation using fake timers', () => {
     render(<Mission4Applications onFinishAll={onFinishAll} onBack={onBack} />);
 
-    // Step 3: Shor Cryptography
-    const step3Btn = screen.getByTitle('Ir al paso 3');
-    fireEvent.click(step3Btn);
+    fireEvent.click(goToStep(3));
+    fireEvent.click(screen.getByRole('button', { name: /Probar Algoritmo de Shor Cuántico/i }));
 
-    const shorBtn = screen.getByRole('button', { name: /Probar Algoritmo de Shor Cuántico/i });
-    fireEvent.click(shorBtn);
-
-    expect(screen.getByText(/Procesando estados cuánticos en superposición/i)).toBeInTheDocument();
+    expect(screen.getByTestId('shor-status')).toHaveTextContent(/Procesando estados cuánticos/i);
 
     act(() => {
       vi.advanceTimersByTime(1200);
     });
 
-    expect(screen.getByText(/¡Clave RSA factorizada en 0.42 segundos!/i)).toBeInTheDocument();
+    expect(screen.getByTestId('shor-status')).toHaveTextContent(/Clave RSA factorizada en 0.42 segundos/i);
   });
 
-  it('HU-21: quiz choice B triggers completion modal handler', () => {
+  it('HU-21: quiz choice B triggers completion handler', () => {
     render(<Mission4Applications onFinishAll={onFinishAll} onBack={onBack} />);
 
-    // Step 4: Quiz
-    const step4Btn = screen.getByTitle('Ir al paso 4');
-    fireEvent.click(step4Btn);
+    fireEvent.click(goToStep(4));
+    fireEvent.click(screen.getByRole('button', { name: /Simular moléculas complejas/i }));
+    expect(screen.getByText(/Excelente deducción/i)).toBeInTheDocument();
 
-    const optionB = screen.getByRole('button', { name: /Simular moléculas complejas/i });
-    fireEvent.click(optionB);
-
-    expect(screen.getByText(/¡Excelente deducción! La computación cuántica/i)).toBeInTheDocument();
-
-    const finishBtn = screen.getByRole('button', { name: /Finalizar Laboratorio/i });
-    fireEvent.click(finishBtn);
+    fireEvent.click(screen.getByRole('button', { name: /Finalizar Laboratorio/i }));
     expect(onFinishAll).toHaveBeenCalledTimes(1);
   });
 });

@@ -250,7 +250,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div role="tablist" aria-label="Pasos de la misión" className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
               key={i}
@@ -265,7 +265,9 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
                   ? 'w-3 bg-emerald-500'
                   : 'w-2 bg-slate-800 hover:bg-slate-700'
               }`}
-              title={`Ir al paso ${i + 1}`}
+              role="tab"
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-selected={step === i}
             />
           ))}
         </div>
@@ -295,7 +297,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
             </button>
 
             <div className="text-2xl font-orbitron font-bold text-white">
-              Perturbaciones: <span className="text-rose-400">{photonHits}</span>
+              Perturbaciones: <span data-testid="photon-counter" className="text-rose-400">{photonHits}</span>
             </div>
 
             {photonHits > 0 && (
@@ -351,7 +353,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
                 <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-left">
                   <div className="text-[10px] font-mono text-slate-400">Tiempo de Coherencia T₂:</div>
-                  <div className={`text-base font-orbitron font-bold mt-0.5 ${coherenceTimeUs < 10 ? 'text-rose-400' : 'text-cyan'}`}>
+                  <div data-testid="coherence-time" className={`text-base font-orbitron font-bold mt-0.5 ${coherenceTimeUs < 10 ? 'text-rose-400' : 'text-cyan'}`}>
                     {coherenceTimeUs} μs
                   </div>
                 </div>
@@ -399,7 +401,7 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
               </button>
 
               {isCryoShieldActive && (
-                <div className="p-3.5 rounded-2xl bg-cyan/10 border border-cyan/40 text-cyan text-xs text-left animate-in fade-in">
+                <div data-testid="cryo-active-banner" className="p-3.5 rounded-2xl bg-cyan/10 border border-cyan/40 text-cyan text-xs text-left animate-in fade-in">
                   <div className="font-bold flex items-center gap-1.5 mb-1 text-sm font-orbitron text-white">
                     <CheckCircle2 className="w-4 h-4 text-cyan" />
                     Temperatura: 15 mK (-273.135 °C)

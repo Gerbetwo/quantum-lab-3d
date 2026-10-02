@@ -375,7 +375,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div role="tablist" aria-label="Pasos de la misión" className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
               key={i}
@@ -390,7 +390,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
                   ? 'w-3 bg-emerald-500'
                   : 'w-2 bg-slate-800 hover:bg-slate-700'
               }`}
-              title={`Ir al paso ${i + 1}`}
+              role="tab"
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-selected={step === i}
             />
           ))}
         </div>
@@ -434,7 +436,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
             </button>
 
             <div className="text-5xl sm:text-6xl font-orbitron font-bold text-white tracking-wider">
-              VALOR: <span className="text-cyan">{classicBit}</span>
+              VALOR: <span data-testid="classic-bit-value" className="text-cyan">{classicBit}</span>
             </div>
 
             <p className="text-xs text-slate-400 leading-normal max-w-xs">
@@ -654,7 +656,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
               </div>
 
               {hasMeasured && collapsedState !== null && (
-                <div className={`p-4 rounded-2xl border text-sm text-left animate-in fade-in zoom-in-95 duration-200 ${
+                <div data-testid="collapse-result" className={`p-4 rounded-2xl border text-sm text-left animate-in fade-in zoom-in-95 duration-200 ${
                   collapsedState === 0
                     ? 'bg-cyan/10 border-cyan/50 text-cyan'
                     : 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200'

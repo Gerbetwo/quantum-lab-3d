@@ -56,6 +56,7 @@ export default function Header({ timeLeft, isRunning, onToggleTimer }: Props) {
             <Clock className="w-3.5 h-3.5 text-cyan" />
             <span className="text-xs text-slate-400 hidden sm:inline font-sans">Tiempo:</span>
             <span
+              data-testid="timer-display"
               className={`font-mono font-bold text-sm tracking-wide ${
                 timeLeft <= 60 ? 'text-rose-400 animate-pulse' : 'text-cyan'
               }`}

@@ -213,7 +213,7 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div role="tablist" aria-label="Pasos de la misión" className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
               key={i}
@@ -228,7 +228,9 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
                   ? 'w-3 bg-cyan'
                   : 'w-2 bg-slate-800 hover:bg-slate-700'
               }`}
-              title={`Ir al paso ${i + 1}`}
+              role="tab"
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-selected={step === i}
             />
           ))}
         </div>
@@ -405,7 +407,7 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
               </div>
               <div className="text-slate-400 flex justify-between border-t border-slate-800/80 pt-1.5">
                 <span>Computador Cuántico (Shor):</span>
-                <span className="text-emerald-400 font-bold">{crackSpeed}</span>
+                <span data-testid="shor-status" className="text-emerald-400 font-bold">{crackSpeed}</span>
               </div>
             </div>
 

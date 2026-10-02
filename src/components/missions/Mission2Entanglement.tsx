@@ -24,13 +24,16 @@ import {
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
+import { measureQubit } from '@/domain/quantum/measurement';
 
 interface Props {
   onComplete: () => void;
   onBack: () => void;
+  /** Test-only RNG override. Not for production use. */
+  __testRandom?: () => number;
 }
 
-export default function Mission2Entanglement({ onComplete, onBack }: Props) {
+export default function Mission2Entanglement({ onComplete, onBack, __testRandom }: Props) {
   const [step, setStep] = useState<number>(0);
   const totalSteps = 5;
 
@@ -207,8 +210,8 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     playLaserScan();
     setTimeout(() => playQuantumCollapse(), 150);
 
-    const outcome = (Math.random() < 0.5 ? 0 : 1) as 0 | 1;
-    // Extracted domain rule call
+    const rng = __testRandom ?? Math.random;
+    const outcome = measureQubit(Math.PI / 2, rng);
     const correlated = correlateEntangledMeasurement(outcome);
 
     setAliceMeasured(correlated.alice);
@@ -254,7 +257,7 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div role="tablist" aria-label="Pasos de la misión" className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
               key={i}
@@ -269,7 +272,9 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
                   ? 'w-3 bg-emerald-500'
                   : 'w-2 bg-slate-800 hover:bg-slate-700'
               }`}
-              title={`Ir al paso ${i + 1}`}
+              role="tab"
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-selected={step === i}
             />
           ))}
         </div>
@@ -436,14 +441,14 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-2xl bg-cyan/10 border border-cyan/40 text-center">
                   <div className="text-[10px] font-mono text-slate-400">Alice (Tierra)</div>
-                  <div className="text-2xl font-orbitron font-bold text-cyan mt-1">
+                  <div data-testid="alice-state" className="text-2xl font-orbitron font-bold text-cyan mt-1">
                     {aliceMeasured !== null ? `|${aliceMeasured}⟩` : 'Superposición'}
                   </div>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-center">
                   <div className="text-[10px] font-mono text-slate-400">Bob (Luna)</div>
-                  <div className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">
+                  <div data-testid="bob-state" className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">
                     {bobMeasured !== null ? `|${bobMeasured}⟩` : 'Superposición'}
                   </div>
                 </div>
@@ -466,7 +471,7 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
               </div>
 
               {hasTriggeredMeasurement && (
-                <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left animate-in fade-in">
+                <div data-testid="correlation-result" className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left animate-in fade-in">
                   <div className="font-bold flex items-center gap-1.5 mb-1 text-sm font-orbitron">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     ¡Correlación Perfecta Instantánea!
