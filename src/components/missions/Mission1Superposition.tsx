@@ -27,6 +27,8 @@ import {
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { calculateBlochProbabilities } from '@/domain/quantum/bloch';
 import { measureQubit } from '@/domain/quantum/measurement';
+import { useThreeScene } from '@/hooks/useThreeScene';
+import { prefersReducedMotion } from '@/lib/three/createScene';
 
 interface Props {
   onComplete: () => void;
@@ -105,189 +107,157 @@ export default function Mission1Superposition({ onComplete }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  useEffect(() => {
-    if ((step !== 2 && step !== 3) || !containerRef.current) return;
-    const container = containerRef.current;
-    const width = container.clientWidth || 600;
-    const height = 400;
+  useThreeScene(containerRef, {
+    width: 600,
+    height: 400,
+    cameraPos: [0, 0.9, 3.4],
+    cameraLookAt: [0, 0, 0],
+    recreateOn: step === 2 ? 'm1-s2' : step === 3 ? 'm1-s3' : 'm1-hidden',
+    onSetup: (handle) => {
+      const sphereGroup = new THREE.Group();
+      sphereGroupRef.current = sphereGroup;
+      handle.add(sphereGroup);
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+      const sphereGeo = new THREE.SphereGeometry(1, 32, 24);
+      const sphereMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.18,
+      });
+      sphereGroup.add(new THREE.Mesh(sphereGeo, sphereMat));
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0.9, 3.4);
-    camera.lookAt(0, 0, 0);
+      const ringGeo = new THREE.RingGeometry(0.98, 1.02, 64);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xa855f7,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.55,
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      sphereGroup.add(ring);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    rendererRef.current = renderer;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
+      const axisGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 1.15, 0),
+        new THREE.Vector3(0, -1.15, 0),
+      ]);
+      const axisMat = new THREE.LineDashedMaterial({
+        color: 0x64748b,
+        dashSize: 0.05,
+        gapSize: 0.03,
+        transparent: true,
+        opacity: 0.6,
+      });
+      const axisLine = new THREE.Line(axisGeo, axisMat);
+      axisLine.computeLineDistances();
+      sphereGroup.add(axisLine);
 
-    const sphereGroup = new THREE.Group();
-    sphereGroupRef.current = sphereGroup;
-    scene.add(sphereGroup);
+      const pole0Geo = new THREE.SphereGeometry(0.08, 16, 16);
+      const pole0 = new THREE.Mesh(pole0Geo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+      pole0.position.set(0, 1, 0);
+      pole0MeshRef.current = pole0;
+      sphereGroup.add(pole0);
 
-    const sphereGeo = new THREE.SphereGeometry(1, 32, 24);
-    const sphereMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.18,
-    });
-    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-    sphereGroup.add(sphere);
+      const sprite0 = createTextSprite('|0⟩ Norte', '#00f0ff', 44);
+      sprite0.position.set(0.65, 1.1, 0);
+      sphereGroup.add(sprite0);
 
-    const ringGeo = new THREE.RingGeometry(0.98, 1.02, 64);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0xa855f7,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.55,
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2;
-    sphereGroup.add(ring);
+      const pole1Geo = new THREE.SphereGeometry(0.08, 16, 16);
+      const pole1 = new THREE.Mesh(pole1Geo, new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+      pole1.position.set(0, -1, 0);
+      pole1MeshRef.current = pole1;
+      sphereGroup.add(pole1);
 
-    const axisGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 1.15, 0),
-      new THREE.Vector3(0, -1.15, 0),
-    ]);
-    const axisMat = new THREE.LineDashedMaterial({
-      color: 0x64748b,
-      dashSize: 0.05,
-      gapSize: 0.03,
-      transparent: true,
-      opacity: 0.6,
-    });
-    const axisLine = new THREE.Line(axisGeo, axisMat);
-    axisLine.computeLineDistances();
-    sphereGroup.add(axisLine);
+      const sprite1 = createTextSprite('|1⟩ Sur', '#10b981', 44);
+      sprite1.position.set(0.65, -1.1, 0);
+      sphereGroup.add(sprite1);
 
-    const pole0Geo = new THREE.SphereGeometry(0.08, 16, 16);
-    const pole0 = new THREE.Mesh(pole0Geo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
-    pole0.position.set(0, 1, 0);
-    pole0MeshRef.current = pole0;
-    sphereGroup.add(pole0);
+      const spritePlus = createTextSprite('|+⟩ 50/50', '#c084fc', 38);
+      spritePlus.position.set(1.4, 0, 0);
+      sphereGroup.add(spritePlus);
 
-    const sprite0 = createTextSprite('|0⟩ Norte', '#00f0ff', 44);
-    sprite0.position.set(0.65, 1.1, 0);
-    sphereGroup.add(sprite0);
+      const dir = new THREE.Vector3(Math.sin(theta), Math.cos(theta), 0).normalize();
+      const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0, 0, 0), 1, 0x00f0ff, 0.24, 0.14);
+      vectorArrowRef.current = arrow;
+      sphereGroup.add(arrow);
 
-    const pole1Geo = new THREE.SphereGeometry(0.08, 16, 16);
-    const pole1 = new THREE.Mesh(pole1Geo, new THREE.MeshBasicMaterial({ color: 0x10b981 }));
-    pole1.position.set(0, -1, 0);
-    pole1MeshRef.current = pole1;
-    sphereGroup.add(pole1);
+      const shockGeo = new THREE.RingGeometry(0.1, 0.22, 32);
+      const shockMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0,
+      });
+      const shock = new THREE.Mesh(shockGeo, shockMat);
+      shock.rotation.x = Math.PI / 2;
+      shockwaveRef.current = shock;
+      sphereGroup.add(shock);
 
-    const sprite1 = createTextSprite('|1⟩ Sur', '#10b981', 44);
-    sprite1.position.set(0.65, -1.1, 0);
-    sphereGroup.add(sprite1);
-
-    const spritePlus = createTextSprite('|+⟩ 50/50', '#c084fc', 38);
-    spritePlus.position.set(1.4, 0, 0);
-    sphereGroup.add(spritePlus);
-
-    const dir = new THREE.Vector3(Math.sin(theta), Math.cos(theta), 0).normalize();
-    const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0, 0, 0), 1, 0x00f0ff, 0.24, 0.14);
-    vectorArrowRef.current = arrow;
-    sphereGroup.add(arrow);
-
-    const shockGeo = new THREE.RingGeometry(0.1, 0.22, 32);
-    const shockMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0,
-    });
-    const shock = new THREE.Mesh(shockGeo, shockMat);
-    shock.rotation.x = Math.PI / 2;
-    shockwaveRef.current = shock;
-    sphereGroup.add(shock);
-
-    const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(60 * 3);
-    for (let i = 0; i < 60 * 3; i += 3) {
-      pPos[i] = (Math.random() - 0.5) * 3.5;
-      pPos[i + 1] = (Math.random() - 0.5) * 3.5;
-      pPos[i + 2] = (Math.random() - 0.5) * 3.5;
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    const particles = new THREE.Points(
-      pGeo,
-      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.035, transparent: true, opacity: 0.35 })
-    );
-    scene.add(particles);
-
-    let isDragging = false;
-    let prevPointer = { x: 0, y: 0 };
-
-    const onPointerDown = (e: PointerEvent) => {
-      isDragging = true;
-      prevPointer = { x: e.clientX, y: e.clientY };
-    };
-
-    const onPointerMove = (e: PointerEvent) => {
-      if (!isDragging || !sphereGroupRef.current) return;
-      const dx = e.clientX - prevPointer.x;
-      const dy = e.clientY - prevPointer.y;
-      sphereGroupRef.current.rotation.y += dx * 0.007;
-      sphereGroupRef.current.rotation.x += dy * 0.007;
-      prevPointer = { x: e.clientX, y: e.clientY };
-    };
-
-    const onPointerUp = () => {
-      isDragging = false;
-    };
-
-    container.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-
-    let shockScale = 0;
-    const animate = () => {
-      animFrameId.current = requestAnimationFrame(animate);
-
-      if (!isDragging && sphereGroup) {
-        sphereGroup.rotation.y += 0.0018;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(60 * 3);
+      for (let i = 0; i < 60 * 3; i += 3) {
+        pPos[i] = (Math.random() - 0.5) * 3.5;
+        pPos[i + 1] = (Math.random() - 0.5) * 3.5;
+        pPos[i + 2] = (Math.random() - 0.5) * 3.5;
       }
-      particles.rotation.y -= 0.0006;
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      const particles = new THREE.Points(
+        pGeo,
+        new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.035, transparent: true, opacity: 0.35 })
+      );
+      handle.add(particles);
 
-      if (shockMat.opacity > 0) {
-        shockScale += 0.09;
-        shock.scale.set(shockScale, shockScale, shockScale);
-        shockMat.opacity -= 0.035;
-      }
+      let isDragging = false;
+      let prevPointer = { x: 0, y: 0 };
+      const container = containerRef.current;
+      if (!container) return;
+      const onPointerDown = (e: PointerEvent) => {
+        isDragging = true;
+        prevPointer = { x: e.clientX, y: e.clientY };
+      };
+      const onPointerMove = (e: PointerEvent) => {
+        if (!isDragging || !sphereGroupRef.current) return;
+        const dx = e.clientX - prevPointer.x;
+        const dy = e.clientY - prevPointer.y;
+        sphereGroupRef.current.rotation.y += dx * 0.007;
+        sphereGroupRef.current.rotation.x += dy * 0.007;
+        prevPointer = { x: e.clientX, y: e.clientY };
+      };
+      const onPointerUp = () => {
+        isDragging = false;
+      };
+      container.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
 
-      renderer.render(scene, camera);
-    };
-    animate();
+      let shockScale = 0;
+      const reduced = prefersReducedMotion();
+      handle.onFrame(() => {
+        if (!isDragging && sphereGroupRef.current && !reduced) {
+          sphereGroupRef.current.rotation.y += 0.0018;
+        }
+        if (!reduced) particles.rotation.y -= 0.0006;
 
-    const handleResize = () => {
-      if (!container || !rendererRef.current) return;
-      const w = container.clientWidth;
-      camera.aspect = w / height;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(w, height);
-    };
-    window.addEventListener('resize', handleResize);
+        if (shockMat.opacity > 0) {
+          shockScale += 0.09;
+          shock.scale.set(shockScale, shockScale, shockScale);
+          shockMat.opacity -= 0.035;
+        }
+      });
 
-    return () => {
-      container.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('resize', handleResize);
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      renderer.dispose();
-      sphereGeo.dispose();
-      sphereMat.dispose();
-      ringGeo.dispose();
-      ringMat.dispose();
-      pGeo.dispose();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+      return () => {
+        container.removeEventListener('pointerdown', onPointerDown);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        sphereGroupRef.current = null;
+        vectorArrowRef.current = null;
+        shockwaveRef.current = null;
+        pole0MeshRef.current = null;
+        pole1MeshRef.current = null;
+      };
+    },
+  });
 
   useEffect(() => {
     if (!vectorArrowRef.current) return;

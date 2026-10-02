@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import { Award, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { getOrCreateUserId, updateStoredMetrics } from '@/lib/cookies';
 import { playChimeSuccess } from '@/lib/sound';
+import { prefersReducedMotion } from '@/lib/three/createScene';
 
 interface Props {
   isOpen: boolean;
@@ -21,12 +22,14 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
         completedAt: new Date().toISOString(),
       }));
 
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: ['#00f0ff', '#a855f7', '#10b981', '#ffffff'],
-      });
+      if (!prefersReducedMotion()) {
+        confetti({
+          particleCount: 70,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ['#00f0ff', '#a855f7', '#10b981', '#ffffff'],
+        });
+      }
     }
   }, [isOpen]);
 

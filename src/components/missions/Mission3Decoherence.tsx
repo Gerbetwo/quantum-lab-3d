@@ -20,6 +20,8 @@ import {
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { calculateCoherenceTime, isCriticalDecoherence } from '@/domain/quantum/decoherence';
+import { useThreeScene } from '@/hooks/useThreeScene';
+import { prefersReducedMotion } from '@/lib/three/createScene';
 
 interface Props {
   onComplete: () => void;
@@ -73,133 +75,112 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
+  const temperatureRef = useRef(temperatureMilliKelvin);
   useEffect(() => {
-    if ((step !== 1 && step !== 2) || !containerRef.current) return;
-    const container = containerRef.current;
-    const width = container.clientWidth || 600;
-    const height = 360;
+    temperatureRef.current = temperatureMilliKelvin;
+  }, [temperatureMilliKelvin]);
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+  useThreeScene(containerRef, {
+    width: 600,
+    height: 360,
+    cameraPos: [0, 0.2, 4.2],
+    cameraLookAt: [0, 0, 0],
+    recreateOn: step === 1 ? 'm3-s1' : step === 2 ? 'm3-s2' : 'm3-hidden',
+    onSetup: (handle) => {
+      const chandelier = new THREE.Group();
+      chandelierGroupRef.current = chandelier;
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0.2, 4.2);
-    camera.lookAt(0, 0, 0);
+      const ringRadii = [1.3, 0.95, 0.65];
+      const ringHeights = [0.9, 0.45, 0.0];
+      ringRadii.forEach((r, idx) => {
+        const ringGeo = new THREE.TorusGeometry(r, 0.025, 16, 48);
+        const ringMesh = new THREE.Mesh(
+          ringGeo,
+          new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true })
+        );
+        ringMesh.rotation.x = Math.PI / 2;
+        ringMesh.position.y = ringHeights[idx];
+        chandelier.add(ringMesh);
+      });
+      handle.add(chandelier);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    rendererRef.current = renderer;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
-
-    const chandelier = new THREE.Group();
-    chandelierGroupRef.current = chandelier;
-
-    const ringRadii = [1.3, 0.95, 0.65];
-    const ringHeights = [0.9, 0.45, 0.0];
-    ringRadii.forEach((r, idx) => {
-      const ringGeo = new THREE.TorusGeometry(r, 0.025, 16, 48);
-      const ringMesh = new THREE.Mesh(
-        ringGeo,
-        new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true })
+      const coreGeo = new THREE.BoxGeometry(0.55, 0.3, 0.55);
+      const coreMesh = new THREE.Mesh(
+        coreGeo,
+        new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
       );
-      ringMesh.rotation.x = Math.PI / 2;
-      ringMesh.position.y = ringHeights[idx];
-      chandelier.add(ringMesh);
-    });
-    scene.add(chandelier);
+      coreMesh.position.y = -0.4;
+      coreMeshRef.current = coreMesh;
+      handle.add(coreMesh);
 
-    const coreGeo = new THREE.BoxGeometry(0.55, 0.3, 0.55);
-    const coreMesh = new THREE.Mesh(
-      coreGeo,
-      new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
-    );
-    coreMesh.position.y = -0.4;
-    coreMeshRef.current = coreMesh;
-    scene.add(coreMesh);
-
-    const pCount = 90;
-    const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(pCount * 3);
-    const pVel = new Float32Array(pCount * 3);
-    for (let i = 0; i < pCount * 3; i += 3) {
-      pPos[i] = (Math.random() - 0.5) * 3.5;
-      pPos[i + 1] = (Math.random() - 0.5) * 2.5;
-      pPos[i + 2] = (Math.random() - 0.5) * 2.5;
-      pVel[i] = (Math.random() - 0.5) * 0.01;
-      pVel[i + 1] = (Math.random() - 0.5) * 0.01;
-      pVel[i + 2] = (Math.random() - 0.5) * 0.01;
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    particleVelocitiesRef.current = pVel;
-
-    const particles = new THREE.Points(
-      pGeo,
-      new THREE.PointsMaterial({
-        color: isCritical ? 0xf43f5e : 0x00f0ff,
-        size: 0.04,
-        transparent: true,
-        opacity: 0.65,
-      })
-    );
-    particlesRef.current = particles;
-    scene.add(particles);
-
-    const animate = () => {
-      animFrameId.current = requestAnimationFrame(animate);
-      chandelier.rotation.y += 0.004;
-
-      if (coreMeshRef.current) {
-        if (temperatureMilliKelvin > 1200) {
-          coreMeshRef.current.position.x = (Math.random() - 0.5) * 0.05;
-          coreMeshRef.current.position.z = (Math.random() - 0.5) * 0.05;
-          (coreMeshRef.current.material as THREE.MeshBasicMaterial).color.setHex(0xf43f5e);
-        } else {
-          coreMeshRef.current.position.x = 0;
-          coreMeshRef.current.position.z = 0;
-          (coreMeshRef.current.material as THREE.MeshBasicMaterial).color.setHex(0x00f0ff);
-        }
+      const pCount = 90;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(pCount * 3);
+      const pVel = new Float32Array(pCount * 3);
+      for (let i = 0; i < pCount * 3; i += 3) {
+        pPos[i] = (Math.random() - 0.5) * 3.5;
+        pPos[i + 1] = (Math.random() - 0.5) * 2.5;
+        pPos[i + 2] = (Math.random() - 0.5) * 2.5;
+        pVel[i] = (Math.random() - 0.5) * 0.01;
+        pVel[i + 1] = (Math.random() - 0.5) * 0.01;
+        pVel[i + 2] = (Math.random() - 0.5) * 0.01;
       }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      particleVelocitiesRef.current = pVel;
 
-      if (particlesRef.current && particleVelocitiesRef.current) {
-        const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-        const vels = particleVelocitiesRef.current;
-        const speedMultiplier = Math.max(0.2, temperatureMilliKelvin / 300);
+      const particles = new THREE.Points(
+        pGeo,
+        new THREE.PointsMaterial({
+          color: 0x00f0ff,
+          size: 0.04,
+          transparent: true,
+          opacity: 0.65,
+        })
+      );
+      particlesRef.current = particles;
+      handle.add(particles);
 
-        for (let i = 0; i < positions.length; i += 3) {
-          positions[i] += vels[i] * speedMultiplier;
-          positions[i + 1] += vels[i + 1] * speedMultiplier;
-          positions[i + 2] += vels[i + 2] * speedMultiplier;
+      const reduced = prefersReducedMotion();
+      handle.onFrame(() => {
+        if (!reduced) chandelier.rotation.y += 0.004;
 
-          if (Math.abs(positions[i]) > 2) positions[i] *= -0.9;
-          if (Math.abs(positions[i + 1]) > 1.5) positions[i + 1] *= -0.9;
-          if (Math.abs(positions[i + 2]) > 1.5) positions[i + 2] *= -0.9;
+        const currentTemp = temperatureRef.current;
+        if (coreMeshRef.current) {
+          if (currentTemp > 1200) {
+            coreMeshRef.current.position.x = (Math.random() - 0.5) * 0.05;
+            coreMeshRef.current.position.z = (Math.random() - 0.5) * 0.05;
+            (coreMeshRef.current.material as THREE.MeshBasicMaterial).color.setHex(0xf43f5e);
+          } else {
+            coreMeshRef.current.position.x = 0;
+            coreMeshRef.current.position.z = 0;
+            (coreMeshRef.current.material as THREE.MeshBasicMaterial).color.setHex(0x00f0ff);
+          }
         }
-        particlesRef.current.geometry.attributes.position.needsUpdate = true;
-      }
 
-      renderer.render(scene, camera);
-    };
-    animate();
+        if (particlesRef.current && particleVelocitiesRef.current) {
+          const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+          const vels = particleVelocitiesRef.current;
+          const speedMultiplier = Math.max(0.2, currentTemp / 300);
+          for (let i = 0; i < positions.length; i += 3) {
+            positions[i] += vels[i] * speedMultiplier;
+            positions[i + 1] += vels[i + 1] * speedMultiplier;
+            positions[i + 2] += vels[i + 2] * speedMultiplier;
+            if (Math.abs(positions[i]) > 2) positions[i] *= -0.9;
+            if (Math.abs(positions[i + 1]) > 1.5) positions[i + 1] *= -0.9;
+            if (Math.abs(positions[i + 2]) > 1.5) positions[i + 2] *= -0.9;
+          }
+          particlesRef.current.geometry.attributes.position.needsUpdate = true;
+        }
+      });
 
-    const handleResize = () => {
-      if (!container || !rendererRef.current) return;
-      const w = container.clientWidth;
-      camera.aspect = w / height;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(w, height);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      renderer.dispose();
-      coreGeo.dispose();
-      pGeo.dispose();
-    };
-  }, [step, isCritical, temperatureMilliKelvin]);
+      return () => {
+        chandelierGroupRef.current = null;
+        coreMeshRef.current = null;
+        particlesRef.current = null;
+        particleVelocitiesRef.current = null;
+      };
+    },
+  });
 
   const handleSimulatePhotonHit = () => {
     playDecoherenceAlert();

@@ -25,6 +25,8 @@ import {
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
 import { measureQubit } from '@/domain/quantum/measurement';
+import { useThreeScene } from '@/hooks/useThreeScene';
+import { prefersReducedMotion } from '@/lib/three/createScene';
 
 interface Props {
   onComplete: () => void;
@@ -80,107 +82,78 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  useEffect(() => {
-    if ((step !== 1 && step !== 2 && step !== 3) || !containerRef.current) return;
-    const container = containerRef.current;
-    const width = container.clientWidth || 600;
-    const height = 360;
+  useThreeScene(containerRef, {
+    width: 600,
+    height: 360,
+    cameraPos: [0, 0.5, 4.8],
+    cameraLookAt: [0, 0, 0],
+    recreateOn: step === 1 ? 'm2-s1' : step === 2 ? 'm2-s2' : step === 3 ? 'm2-s3' : 'm2-hidden',
+    onSetup: (handle) => {
+      const stationGeo = new THREE.IcosahedronGeometry(0.38, 1);
+      const aliceMesh = new THREE.Mesh(
+        stationGeo,
+        new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
+      );
+      aliceMesh.position.set(-1.8, 0, 0);
+      aliceMeshRef.current = aliceMesh;
+      handle.add(aliceMesh);
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+      const bobMesh = new THREE.Mesh(
+        stationGeo,
+        new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true })
+      );
+      bobMesh.position.set(1.8, 0, 0);
+      bobMeshRef.current = bobMesh;
+      handle.add(bobMesh);
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0.5, 4.8);
-    camera.lookAt(0, 0, 0);
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-1.8, 0, 0),
+        new THREE.Vector3(1.8, 0, 0),
+      ]);
+      const lineMat = new THREE.LineDashedMaterial({
+        color: 0xa855f7,
+        dashSize: 0.12,
+        gapSize: 0.06,
+        transparent: true,
+        opacity: step >= 1 ? 0.8 : 0.1,
+      });
+      const beam = new THREE.Line(lineGeo, lineMat);
+      beam.computeLineDistances();
+      beamLineRef.current = beam;
+      handle.add(beam);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    rendererRef.current = renderer;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
-
-    const stationGeo = new THREE.IcosahedronGeometry(0.38, 1);
-    const aliceMesh = new THREE.Mesh(
-      stationGeo,
-      new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
-    );
-    aliceMesh.position.set(-1.8, 0, 0);
-    aliceMeshRef.current = aliceMesh;
-    scene.add(aliceMesh);
-
-    const bobMesh = new THREE.Mesh(
-      stationGeo,
-      new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true })
-    );
-    bobMesh.position.set(1.8, 0, 0);
-    bobMeshRef.current = bobMesh;
-    scene.add(bobMesh);
-
-    const lineGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-1.8, 0, 0),
-      new THREE.Vector3(1.8, 0, 0),
-    ]);
-    const lineMat = new THREE.LineDashedMaterial({
-      color: 0xa855f7,
-      dashSize: 0.12,
-      gapSize: 0.06,
-      transparent: true,
-      opacity: step >= 1 ? 0.8 : 0.1,
-    });
-    const beam = new THREE.Line(lineGeo, lineMat);
-    beam.computeLineDistances();
-    beamLineRef.current = beam;
-    scene.add(beam);
-
-    const starGeo = new THREE.BufferGeometry();
-    const starPos = new Float32Array(80 * 3);
-    for (let i = 0; i < 80 * 3; i += 3) {
-      starPos[i] = (Math.random() - 0.5) * 8;
-      starPos[i + 1] = (Math.random() - 0.5) * 5;
-      starPos[i + 2] = (Math.random() - 0.5) * 4;
-    }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    const stars = new THREE.Points(
-      starGeo,
-      new THREE.PointsMaterial({ color: 0xffffff, size: 0.025, transparent: true, opacity: 0.4 })
-    );
-    scene.add(stars);
-
-    const animate = () => {
-      animFrameId.current = requestAnimationFrame(animate);
-      aliceMesh.rotation.y += 0.01;
-      aliceMesh.rotation.x += 0.005;
-      bobMesh.rotation.y -= 0.01;
-      bobMesh.rotation.x -= 0.005;
-
-      if (lineMat && step >= 1) {
-        lineMat.opacity = 0.5 + Math.sin(Date.now() * 0.005) * 0.35;
+      const starGeo = new THREE.BufferGeometry();
+      const starPos = new Float32Array(80 * 3);
+      for (let i = 0; i < 80 * 3; i += 3) {
+        starPos[i] = (Math.random() - 0.5) * 8;
+        starPos[i + 1] = (Math.random() - 0.5) * 5;
+        starPos[i + 2] = (Math.random() - 0.5) * 4;
       }
+      starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+      const stars = new THREE.Points(
+        starGeo,
+        new THREE.PointsMaterial({ color: 0xffffff, size: 0.025, transparent: true, opacity: 0.4 })
+      );
+      handle.add(stars);
 
-      renderer.render(scene, camera);
-    };
-    animate();
+      const reduced = prefersReducedMotion();
+      handle.onFrame(() => {
+        if (!reduced) {
+          aliceMesh.rotation.y += 0.01;
+          aliceMesh.rotation.x += 0.005;
+          bobMesh.rotation.y -= 0.01;
+          bobMesh.rotation.x -= 0.005;
+          lineMat.opacity = 0.5 + Math.sin(Date.now() * 0.005) * 0.35;
+        }
+      });
 
-    const handleResize = () => {
-      if (!container || !rendererRef.current) return;
-      const w = container.clientWidth;
-      camera.aspect = w / height;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(w, height);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      renderer.dispose();
-      stationGeo.dispose();
-      lineGeo.dispose();
-      lineMat.dispose();
-      starGeo.dispose();
-    };
-  }, [step]);
+      return () => {
+        aliceMeshRef.current = null;
+        bobMeshRef.current = null;
+        beamLineRef.current = null;
+      };
+    },
+  });
 
   useEffect(() => {
     if (step !== 2 || !aliceMeshRef.current || !bobMeshRef.current || !beamLineRef.current) return;

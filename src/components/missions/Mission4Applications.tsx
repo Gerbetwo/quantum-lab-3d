@@ -18,6 +18,8 @@ import {
 import { playButtonClick, playChimeSuccess, playLaserScan } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { formatShorResult, updateExploredApplications } from '@/domain/quantum/applications';
+import { useThreeScene } from '@/hooks/useThreeScene';
+import { prefersReducedMotion } from '@/lib/three/createScene';
 
 interface Props {
   onFinishAll: () => void;
@@ -65,107 +67,74 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  useEffect(() => {
-    if (step !== 1 || !containerRef.current) return;
-    const container = containerRef.current;
-    const width = container.clientWidth || 600;
-    const height = 360;
+  useThreeScene(containerRef, {
+    width: 600,
+    height: 360,
+    cameraPos: [0, 0, 3.8],
+    cameraLookAt: [0, 0, 0],
+    recreateOn: step === 1 ? 'm4-visible' : 'm4-hidden',
+    onSetup: (handle) => {
+      const moleculeGroup = new THREE.Group();
+      moleculeGroupRef.current = moleculeGroup;
+      handle.add(moleculeGroup);
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+      const atomGeo = new THREE.SphereGeometry(0.2, 16, 16);
+      const atomMatCyan = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
+      const atomMatPurple = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
+      const atomMatGreen = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true });
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0, 3.8);
-    camera.lookAt(0, 0, 0);
+      const atomPositions: Array<[number, number, number]> = [
+        [0, 0, 0],
+        [0.8, 0.6, 0.1],
+        [-0.8, 0.5, -0.1],
+        [0.1, -0.9, 0.4],
+        [-0.6, -0.7, -0.5],
+        [0.9, -0.4, 0.6],
+      ];
+      const materials = [atomMatCyan, atomMatPurple, atomMatGreen, atomMatCyan, atomMatPurple, atomMatGreen];
+      atomPositions.forEach((pos, idx) => {
+        const atom = new THREE.Mesh(atomGeo, materials[idx]);
+        atom.position.set(pos[0], pos[1], pos[2]);
+        moleculeGroup.add(atom);
+      });
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    rendererRef.current = renderer;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
+      const bondGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.8, 0.6, 0.1),
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(-0.8, 0.5, -0.1),
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.1, -0.9, 0.4),
+        new THREE.Vector3(0.1, -0.9, 0.4), new THREE.Vector3(-0.6, -0.7, -0.5),
+        new THREE.Vector3(0.8, 0.6, 0.1), new THREE.Vector3(0.9, -0.4, 0.6),
+      ]);
+      const bondMat = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.7 });
+      moleculeGroup.add(new THREE.LineSegments(bondGeo, bondMat));
 
-    const moleculeGroup = new THREE.Group();
-    moleculeGroupRef.current = moleculeGroup;
-    scene.add(moleculeGroup);
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(50 * 3);
+      for (let i = 0; i < 50 * 3; i += 3) {
+        pPos[i] = (Math.random() - 0.5) * 4;
+        pPos[i + 1] = (Math.random() - 0.5) * 3;
+        pPos[i + 2] = (Math.random() - 0.5) * 3;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      const particles = new THREE.Points(
+        pGeo,
+        new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.025, transparent: true, opacity: 0.3 })
+      );
+      handle.add(particles);
 
-    const atomGeo = new THREE.SphereGeometry(0.2, 16, 16);
-    const atomMatCyan = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
-    const atomMatPurple = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
-    const atomMatGreen = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true });
+      const reduced = prefersReducedMotion();
+      handle.onFrame(() => {
+        if (!reduced) {
+          moleculeGroup.rotation.y += 0.008;
+          moleculeGroup.rotation.x += 0.003;
+        }
+      });
 
-    const atomPositions = [
-      [0, 0, 0],
-      [0.8, 0.6, 0.1],
-      [-0.8, 0.5, -0.1],
-      [0.1, -0.9, 0.4],
-      [-0.6, -0.7, -0.5],
-      [0.9, -0.4, 0.6],
-    ];
-
-    const materials = [atomMatCyan, atomMatPurple, atomMatGreen, atomMatCyan, atomMatPurple, atomMatGreen];
-    atomPositions.forEach((pos, idx) => {
-      const atom = new THREE.Mesh(atomGeo, materials[idx]);
-      atom.position.set(pos[0], pos[1], pos[2]);
-      moleculeGroup.add(atom);
-    });
-
-    const bondGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0.8, 0.6, 0.1),
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(-0.8, 0.5, -0.1),
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0.1, -0.9, 0.4),
-      new THREE.Vector3(0.1, -0.9, 0.4),
-      new THREE.Vector3(-0.6, -0.7, -0.5),
-      new THREE.Vector3(0.8, 0.6, 0.1),
-      new THREE.Vector3(0.9, -0.4, 0.6),
-    ]);
-    const bondMat = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.7 });
-    const bonds = new THREE.LineSegments(bondGeo, bondMat);
-    moleculeGroup.add(bonds);
-
-    const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(50 * 3);
-    for (let i = 0; i < 50 * 3; i += 3) {
-      pPos[i] = (Math.random() - 0.5) * 4;
-      pPos[i + 1] = (Math.random() - 0.5) * 3;
-      pPos[i + 2] = (Math.random() - 0.5) * 3;
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    const particles = new THREE.Points(
-      pGeo,
-      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.025, transparent: true, opacity: 0.3 })
-    );
-    scene.add(particles);
-
-    const animate = () => {
-      animFrameId.current = requestAnimationFrame(animate);
-      moleculeGroup.rotation.y += 0.008;
-      moleculeGroup.rotation.x += 0.003;
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      if (!container || !rendererRef.current) return;
-      const w = container.clientWidth;
-      camera.aspect = w / height;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(w, height);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      renderer.dispose();
-      atomGeo.dispose();
-      bondGeo.dispose();
-      bondMat.dispose();
-    };
-  }, [step]);
+      return () => {
+        moleculeGroupRef.current = null;
+      };
+    },
+  });
 
   const handleSimulateShor = () => {
     playLaserScan();
