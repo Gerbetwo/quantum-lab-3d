@@ -21,8 +21,11 @@ export const X: GateMatrix = { m: [c(0), c(1), c(1), c(0)] };
 // Pauli-Y = [[0, -i], [i, 0]]
 export const Y: GateMatrix = { m: [c(0), c(0, -1), c(0, 1), c(0)] };
 export const Z: GateMatrix = { m: [c(1), c(0), c(0), c(-1)] };
-const S = Math.SQRT1_2;
-export const H: GateMatrix = { m: [c(S), c(S), c(S), c(-S)] };
+const _SQRT_HALF = Math.SQRT1_2;
+export const H: GateMatrix = { m: [c(_SQRT_HALF), c(_SQRT_HALF), c(_SQRT_HALF), c(-_SQRT_HALF)] };
+
+export const S: GateMatrix = { m: [c(1), c(0), c(0), c(0, 1)] };
+export const T: GateMatrix = { m: [c(1), c(0), c(0), c(Math.SQRT1_2, Math.SQRT1_2)] };
 
 function assertIndex(q: number, n: number): void {
   if (!Number.isInteger(q) || q < 0 || q >= n) {
@@ -118,6 +121,34 @@ export function applySWAP_N(
     const bOn = (i & bBit) !== 0;
     if (aOn === bOn) { out[i] = state[i]; continue; }
     out[i] = state[i ^ aBit ^ bBit];
+  }
+  return out;
+}
+
+
+export function applyControlledPhaseN(
+  state: StateVector,
+  control: number,
+  target: number,
+  phase: number,
+  nQubits: number,
+): StateVector {
+  assertDistinct(control, target, nQubits);
+  assertDim(state, nQubits);
+  const dim = 1 << nQubits;
+  const cBit = 1 << (nQubits - 1 - control);
+  const tBit = 1 << (nQubits - 1 - target);
+  const cosP = Math.cos(phase);
+  const sinP = Math.sin(phase);
+  const out: StateVector = new Array(dim);
+  for (let i = 0; i < dim; i++) {
+    const both = (i & cBit) !== 0 && (i & tBit) !== 0;
+    if (both) {
+      const a = state[i];
+      out[i] = { re: a.re * cosP - a.im * sinP, im: a.re * sinP + a.im * cosP };
+    } else {
+      out[i] = state[i];
+    }
   }
   return out;
 }

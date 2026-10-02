@@ -45,3 +45,40 @@ export function wState(nQubits: number): StateVector {
   }
   return s;
 }
+
+
+import { createEmptyCircuit, placeGate, type QuantumCircuit } from './circuit';
+
+export function ghz6Circuit(): QuantumCircuit {
+  let c = createEmptyCircuit(6, 16);
+  c = placeGate(c, { type: 'H', step: 0, targets: [0] });
+  c = placeGate(c, { type: 'CNOT', step: 1, targets: [1], controls: [0] });
+  c = placeGate(c, { type: 'CNOT', step: 2, targets: [2], controls: [1] });
+  c = placeGate(c, { type: 'CNOT', step: 3, targets: [3], controls: [2] });
+  c = placeGate(c, { type: 'CNOT', step: 4, targets: [4], controls: [3] });
+  c = placeGate(c, { type: 'CNOT', step: 5, targets: [5], controls: [4] });
+  return c;
+}
+
+export function teleportation3Circuit(): QuantumCircuit {
+  let c = createEmptyCircuit(3, 16);
+  c = placeGate(c, { type: 'H', step: 0, targets: [1] });
+  c = placeGate(c, { type: 'CNOT', step: 1, targets: [2], controls: [1] });
+  c = placeGate(c, { type: 'CNOT', step: 2, targets: [1], controls: [0] });
+  c = placeGate(c, { type: 'H', step: 3, targets: [0] });
+  c = placeGate(c, { type: 'CNOT', step: 4, targets: [2], controls: [1] });
+  c = placeGate(c, { type: 'CZ', step: 5, targets: [2], controls: [0] });
+  return c;
+}
+
+export function qft3Circuit(): QuantumCircuit {
+  let c = createEmptyCircuit(3, 16);
+  c = placeGate(c, { type: 'H', step: 0, targets: [0] });
+  c = placeGate(c, { type: 'CS', step: 1, targets: [1], controls: [0] });
+  c = placeGate(c, { type: 'CT', step: 2, targets: [2], controls: [0] });
+  c = placeGate(c, { type: 'H', step: 3, targets: [1] });
+  c = placeGate(c, { type: 'CS', step: 4, targets: [2], controls: [1] });
+  c = placeGate(c, { type: 'H', step: 5, targets: [2] });
+  c = placeGate(c, { type: 'SWAP', step: 6, targets: [0, 2] });
+  return c;
+}

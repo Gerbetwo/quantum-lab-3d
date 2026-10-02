@@ -179,3 +179,39 @@ export const playSound = (soundName: string): void => {
 
 /** Static snapshot at import time. Prefer isAudioEnabled() at runtime. */
 export const IS_AUDIO_ENABLED: boolean = isAudioEnabled();
+
+
+export function playGatePlaced(): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    const t = ctx.currentTime;
+    osc.frequency.setValueAtTime(900, t);
+    gain.gain.setValueAtTime(0.06, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  } catch { /* no-op */ }
+}
+
+export function playStepAdvance(): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    const t = ctx.currentTime;
+    osc.frequency.setValueAtTime(600, t);
+    osc.frequency.exponentialRampToValueAtTime(900, t + 0.1);
+    gain.gain.setValueAtTime(0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.13);
+  } catch { /* no-op */ }
+}
