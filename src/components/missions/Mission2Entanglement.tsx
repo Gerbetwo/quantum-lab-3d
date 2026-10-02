@@ -15,7 +15,6 @@ import {
   Sparkles,
   Link as LinkIcon,
   RotateCcw,
-  Check,
 } from 'lucide-react';
 import {
   playButtonClick,
@@ -24,37 +23,35 @@ import {
   playQuantumCollapse,
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
+import { measureQubit } from '@/domain/quantum/measurement';
+import { useThreeScene } from '@/hooks/useThreeScene';
+import { prefersReducedMotion, cached } from '@/lib/three/createScene';
 
 interface Props {
   onComplete: () => void;
   onBack: () => void;
+  /** Test-only RNG override. Not for production use. */
+  __testRandom?: () => number;
 }
 
-export default function Mission2Entanglement({ onComplete, onBack }: Props) {
-  // Step index: 0 = Independientes, 1 = Creación del Enlace, 2 = Separación Espacial, 3 = Medición Instantánea, 4 = Reto Final
+export default function Mission2Entanglement({ onComplete, onBack, __testRandom }: Props) {
   const [step, setStep] = useState<number>(0);
   const totalSteps = 5;
 
-  // Step 0 states (Independent qubits)
   const [aliceIndependentVal, setAliceIndependentVal] = useState<number>(0);
   const [bobIndependentVal, setBobIndependentVal] = useState<number>(0);
 
-  // Step 1 states (Bell state generation)
   const [isEntangled, setIsEntangled] = useState<boolean>(false);
+  const [distanceKm, setDistanceKm] = useState<number>(384400);
 
-  // Step 2 states (Distance slider)
-  const [distanceKm, setDistanceKm] = useState<number>(384400); // Earth to Moon ~384,400 km
-
-  // Step 3 states (Measurement correlation)
   const [aliceMeasured, setAliceMeasured] = useState<number | null>(null);
   const [bobMeasured, setBobMeasured] = useState<number | null>(null);
   const [hasTriggeredMeasurement, setHasTriggeredMeasurement] = useState<boolean>(false);
 
-  // Step 4 states (Quiz)
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
-  // Three.js References
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -63,7 +60,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
   const beamLineRef = useRef<THREE.Line | null>(null);
   const animFrameId = useRef<number | null>(null);
 
-  // Navigation handlers
   const goToNextStep = useCallback(() => {
     playButtonClick();
     setStep((prev) => Math.min(prev + 1, totalSteps - 1));
@@ -74,7 +70,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     setStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' && step < totalSteps - 1) {
@@ -87,118 +82,82 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  // Three.js Scene Setup (Mounts on Steps 1, 2, and 3)
-  useEffect(() => {
-    if ((step !== 1 && step !== 2 && step !== 3) || !containerRef.current) return;
-    const container = containerRef.current;
-    const width = container.clientWidth || 600;
-    const height = 360;
+  useThreeScene(containerRef, {
+    width: 600,
+    height: 360,
+    cameraPos: [0, 0.5, 4.8],
+    cameraLookAt: [0, 0, 0],
+    recreateOn: step === 1 ? 'm2-s1' : step === 2 ? 'm2-s2' : step === 3 ? 'm2-s3' : 'm2-hidden',
+    onSetup: (handle) => {
+      const stationGeo = cached('m2:station', () => new THREE.IcosahedronGeometry(0.38, 1));
+      const aliceMesh = new THREE.Mesh(
+        stationGeo,
+        new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
+      );
+      aliceMesh.position.set(-1.8, 0, 0);
+      aliceMeshRef.current = aliceMesh;
+      handle.add(aliceMesh);
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+      const bobMesh = new THREE.Mesh(
+        stationGeo,
+        new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true })
+      );
+      bobMesh.position.set(1.8, 0, 0);
+      bobMeshRef.current = bobMesh;
+      handle.add(bobMesh);
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0.5, 4.8);
-    camera.lookAt(0, 0, 0);
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-1.8, 0, 0),
+        new THREE.Vector3(1.8, 0, 0),
+      ]);
+      const lineMat = new THREE.LineDashedMaterial({
+        color: 0xa855f7,
+        dashSize: 0.12,
+        gapSize: 0.06,
+        transparent: true,
+        opacity: step >= 1 ? 0.8 : 0.1,
+      });
+      const beam = new THREE.Line(lineGeo, lineMat);
+      beam.computeLineDistances();
+      beamLineRef.current = beam;
+      handle.add(beam);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    rendererRef.current = renderer;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
-
-    // Alice Node (Left)
-    const stationGeo = new THREE.IcosahedronGeometry(0.38, 1);
-    const aliceMesh = new THREE.Mesh(
-      stationGeo,
-      new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
-    );
-    aliceMesh.position.set(-1.8, 0, 0);
-    aliceMeshRef.current = aliceMesh;
-    scene.add(aliceMesh);
-
-    // Bob Node (Right)
-    const bobMesh = new THREE.Mesh(
-      stationGeo,
-      new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true })
-    );
-    bobMesh.position.set(1.8, 0, 0);
-    bobMeshRef.current = bobMesh;
-    scene.add(bobMesh);
-
-    // Entanglement Quantum Beam
-    const lineGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-1.8, 0, 0),
-      new THREE.Vector3(1.8, 0, 0),
-    ]);
-    const lineMat = new THREE.LineDashedMaterial({
-      color: 0xa855f7,
-      dashSize: 0.12,
-      gapSize: 0.06,
-      transparent: true,
-      opacity: step >= 1 ? 0.8 : 0.1,
-    });
-    const beam = new THREE.Line(lineGeo, lineMat);
-    beam.computeLineDistances();
-    beamLineRef.current = beam;
-    scene.add(beam);
-
-    // Background Stars
-    const starGeo = new THREE.BufferGeometry();
-    const starPos = new Float32Array(80 * 3);
-    for (let i = 0; i < 80 * 3; i += 3) {
-      starPos[i] = (Math.random() - 0.5) * 8;
-      starPos[i + 1] = (Math.random() - 0.5) * 5;
-      starPos[i + 2] = (Math.random() - 0.5) * 4;
-    }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    const stars = new THREE.Points(
-      starGeo,
-      new THREE.PointsMaterial({ color: 0xffffff, size: 0.025, transparent: true, opacity: 0.4 })
-    );
-    scene.add(stars);
-
-    // Animation Loop
-    const animate = () => {
-      animFrameId.current = requestAnimationFrame(animate);
-      aliceMesh.rotation.y += 0.01;
-      aliceMesh.rotation.x += 0.005;
-      bobMesh.rotation.y -= 0.01;
-      bobMesh.rotation.x -= 0.005;
-
-      if (lineMat && step >= 1) {
-        lineMat.opacity = 0.5 + Math.sin(Date.now() * 0.005) * 0.35;
+      const starGeo = new THREE.BufferGeometry();
+      const starPos = new Float32Array(80 * 3);
+      for (let i = 0; i < 80 * 3; i += 3) {
+        starPos[i] = (Math.random() - 0.5) * 8;
+        starPos[i + 1] = (Math.random() - 0.5) * 5;
+        starPos[i + 2] = (Math.random() - 0.5) * 4;
       }
+      starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+      const stars = new THREE.Points(
+        starGeo,
+        new THREE.PointsMaterial({ color: 0xffffff, size: 0.025, transparent: true, opacity: 0.4 })
+      );
+      handle.add(stars);
 
-      renderer.render(scene, camera);
-    };
-    animate();
+      const reduced = prefersReducedMotion();
+      handle.onFrame(() => {
+        if (!reduced) {
+          aliceMesh.rotation.y += 0.01;
+          aliceMesh.rotation.x += 0.005;
+          bobMesh.rotation.y -= 0.01;
+          bobMesh.rotation.x -= 0.005;
+          lineMat.opacity = 0.5 + Math.sin(Date.now() * 0.005) * 0.35;
+        }
+      });
 
-    const handleResize = () => {
-      if (!container || !rendererRef.current) return;
-      const w = container.clientWidth;
-      camera.aspect = w / height;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(w, height);
-    };
-    window.addEventListener('resize', handleResize);
+      return () => {
+        aliceMeshRef.current = null;
+        bobMeshRef.current = null;
+        beamLineRef.current = null;
+      };
+    },
+  });
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      renderer.dispose();
-      stationGeo.dispose();
-      lineGeo.dispose();
-      lineMat.dispose();
-      starGeo.dispose();
-    };
-  }, [step]);
-
-  // Adjust node positions on distance slider (Step 2)
   useEffect(() => {
     if (step !== 2 || !aliceMeshRef.current || !bobMeshRef.current || !beamLineRef.current) return;
-    const factor = (distanceKm / 400000) * 0.5 + 1.4; // 1.4 to 1.9
+    const factor = (distanceKm / 400000) * 0.5 + 1.4;
     aliceMeshRef.current.position.x = -factor;
     bobMeshRef.current.position.x = factor;
 
@@ -207,7 +166,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     beamLineRef.current.computeLineDistances();
   }, [distanceKm, step]);
 
-  // Entangle action (Step 1)
   const handleGenerateEntanglement = () => {
     playLaserScan();
     setTimeout(() => playChimeSuccess(), 200);
@@ -221,17 +179,16 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
     }));
   };
 
-  // Alice Measure Action (Step 3)
   const handleMeasureAlice = () => {
     playLaserScan();
     setTimeout(() => playQuantumCollapse(), 150);
 
-    // Random outcome for Alice: 0 or 1
-    const outcome = Math.random() < 0.5 ? 0 : 1;
+    const rng = __testRandom ?? Math.random;
+    const outcome = measureQubit(Math.PI / 2, rng);
+    const correlated = correlateEntangledMeasurement(outcome);
 
-    setAliceMeasured(outcome);
-    // Instantaneous correlation: Bob collapses to the exact same correlated state!
-    setBobMeasured(outcome);
+    setAliceMeasured(correlated.alice);
+    setBobMeasured(correlated.bob);
     setHasTriggeredMeasurement(true);
 
     updateStoredMetrics((prev) => ({
@@ -263,9 +220,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
 
   return (
     <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
-      {/* ========================================================================= */}
-      {/* TOP PROGRESS STEPPER                                                      */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-400 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30">
@@ -276,8 +230,7 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
           </span>
         </div>
 
-        {/* Progress Pills */}
-        <div className="flex items-center gap-1.5">
+        <div role="tablist" aria-label="Pasos de la misión" className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
               key={i}
@@ -292,15 +245,14 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
                   ? 'w-3 bg-emerald-500'
                   : 'w-2 bg-slate-800 hover:bg-slate-700'
               }`}
-              title={`Ir al paso ${i + 1}`}
+              role="tab"
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-selected={step === i}
             />
           ))}
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* PASO 1: DOS QUBITS INDEPENDIENTES (SIN CONEXIÓN)                          */}
-      {/* ========================================================================= */}
       {step === 0 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -315,9 +267,7 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* Interactive Independent Stations */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-            {/* Alice Box */}
             <div className="p-6 rounded-3xl bg-slate-950/80 border border-cyan/40 backdrop-blur-md shadow-xl flex flex-col items-center gap-4">
               <div className="flex items-center gap-2 text-cyan font-orbitron font-bold text-sm">
                 <Globe className="w-4 h-4" /> Qubit de Alice (Tierra)
@@ -336,7 +286,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
               </button>
             </div>
 
-            {/* Bob Box */}
             <div className="p-6 rounded-3xl bg-slate-950/80 border border-emerald-500/40 backdrop-blur-md shadow-xl flex flex-col items-center gap-4">
               <div className="flex items-center gap-2 text-emerald-400 font-orbitron font-bold text-sm">
                 <Satellite className="w-4 h-4" /> Qubit de Bob (Luna)
@@ -362,9 +311,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 2: CREACIÓN DEL PAR ENTRELAZADO (ESTADO DE BELL)                     */}
-      {/* ========================================================================= */}
       {step === 1 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -379,9 +325,10 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Entangle Action */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
 
             <div className="w-full max-w-md mt-2 flex flex-col gap-3">
               <button
@@ -407,9 +354,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 3: SEPARACIÓN A DISTANCIA CÓSMICA                                    */}
-      {/* ========================================================================= */}
       {step === 2 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -424,9 +368,10 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Distance Slider */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
 
             <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
               <div className="flex justify-between items-center text-xs font-mono">
@@ -452,9 +397,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 4: MEDICIÓN CORRELACIONADA INSTANTÁNEA                               */}
-      {/* ========================================================================= */}
       {step === 3 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -469,23 +411,23 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Measurement Control */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Estaciones Alice y Bob entrelazadas en el espacio" className="w-full" />
 
-            {/* Readouts */}
             <div className="w-full max-w-md mt-2 flex flex-col gap-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-2xl bg-cyan/10 border border-cyan/40 text-center">
                   <div className="text-[10px] font-mono text-slate-400">Alice (Tierra)</div>
-                  <div className="text-2xl font-orbitron font-bold text-cyan mt-1">
+                  <div data-testid="alice-state" className="text-2xl font-orbitron font-bold text-cyan mt-1">
                     {aliceMeasured !== null ? `|${aliceMeasured}⟩` : 'Superposición'}
                   </div>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-center">
                   <div className="text-[10px] font-mono text-slate-400">Bob (Luna)</div>
-                  <div className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">
+                  <div data-testid="bob-state" className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">
                     {bobMeasured !== null ? `|${bobMeasured}⟩` : 'Superposición'}
                   </div>
                 </div>
@@ -508,7 +450,7 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
               </div>
 
               {hasTriggeredMeasurement && (
-                <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left animate-in fade-in">
+                <div data-testid="correlation-result" className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left animate-in fade-in">
                   <div className="font-bold flex items-center gap-1.5 mb-1 text-sm font-orbitron">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     ¡Correlación Perfecta Instantánea!
@@ -521,9 +463,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 5: RETO DE COMPRENSIÓN                                               */}
-      {/* ========================================================================= */}
       {step === 4 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -605,9 +544,6 @@ export default function Mission2Entanglement({ onComplete, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* BOTTOM NAVIGATION                                                         */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-4">
         <button
           onClick={step === 0 ? onBack : goToPrevStep}

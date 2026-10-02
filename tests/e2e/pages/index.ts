@@ -1,0 +1,8 @@
+export { BasePage } from './BasePage';
+export { LandingPage } from './LandingPage';
+export { MissionPage } from './MissionPage';
+export { Task1Page } from './Task1Page';
+export { Task2Page } from './Task2Page';
+export { Task3Page } from './Task3Page';
+export { Task4Page } from './Task4Page';
+export { CelebrationPage } from './CelebrationPage';

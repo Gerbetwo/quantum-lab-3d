@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import {
-  Layers,
   CheckCircle2,
   HelpCircle,
   FlaskConical,
@@ -15,11 +14,12 @@ import {
   Cpu,
   Lock,
   KeyRound,
-  Zap,
-  Check,
 } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playLaserScan } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { formatShorResult, updateExploredApplications } from '@/domain/quantum/applications';
+import { useThreeScene } from '@/hooks/useThreeScene';
+import { prefersReducedMotion, cached } from '@/lib/three/createScene';
 
 interface Props {
   onFinishAll: () => void;
@@ -27,32 +27,24 @@ interface Props {
 }
 
 export default function Mission4Applications({ onFinishAll, onBack }: Props) {
-  // Step index: 0 = Mitos vs Realidad, 1 = Simulación Molecular, 2 = Criptografía y Shor, 3 = Reto Final
   const [step, setStep] = useState<number>(0);
   const totalSteps = 4;
 
-  // Step 0 states (Mitos)
   const [inspectedMyth, setInspectedMyth] = useState<string>('gaming');
-
-  // Step 1 states (Molecular Simulation)
   const [simulationMode, setSimulationMode] = useState<'classical' | 'quantum'>('quantum');
 
-  // Step 2 states (Cryptography / Shor)
   const [isCracking, setIsCracking] = useState<boolean>(false);
   const [crackSpeed, setCrackSpeed] = useState<string>('En espera');
 
-  // Step 3 states (Quiz)
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
-  // Three.js Scene References
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const moleculeGroupRef = useRef<THREE.Group | null>(null);
   const animFrameId = useRef<number | null>(null);
 
-  // Navigation handlers
   const goToNextStep = useCallback(() => {
     playButtonClick();
     setStep((prev) => Math.min(prev + 1, totalSteps - 1));
@@ -63,7 +55,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     setStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' && step < totalSteps - 1) {
@@ -76,114 +67,75 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  // Three.js Molecule Scene Setup (Mounts on Step 1)
-  useEffect(() => {
-    if (step !== 1 || !containerRef.current) return;
-    const container = containerRef.current;
-    const width = container.clientWidth || 600;
-    const height = 360;
+  useThreeScene(containerRef, {
+    width: 600,
+    height: 360,
+    cameraPos: [0, 0, 3.8],
+    cameraLookAt: [0, 0, 0],
+    recreateOn: step === 1 ? 'm4-visible' : 'm4-hidden',
+    onSetup: (handle) => {
+      const moleculeGroup = new THREE.Group();
+      moleculeGroupRef.current = moleculeGroup;
+      handle.add(moleculeGroup);
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+      const atomGeo = cached('m4:atom', () => new THREE.SphereGeometry(0.2, 16, 16));
+      const atomMatCyan = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
+      const atomMatPurple = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
+      const atomMatGreen = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true });
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0, 3.8);
-    camera.lookAt(0, 0, 0);
+      const atomPositions: Array<[number, number, number]> = [
+        [0, 0, 0],
+        [0.8, 0.6, 0.1],
+        [-0.8, 0.5, -0.1],
+        [0.1, -0.9, 0.4],
+        [-0.6, -0.7, -0.5],
+        [0.9, -0.4, 0.6],
+      ];
+      const materials = [atomMatCyan, atomMatPurple, atomMatGreen, atomMatCyan, atomMatPurple, atomMatGreen];
+      atomPositions.forEach((pos, idx) => {
+        const atom = new THREE.Mesh(atomGeo, materials[idx]);
+        atom.position.set(pos[0], pos[1], pos[2]);
+        moleculeGroup.add(atom);
+      });
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    rendererRef.current = renderer;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
+      const bondGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.8, 0.6, 0.1),
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(-0.8, 0.5, -0.1),
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.1, -0.9, 0.4),
+        new THREE.Vector3(0.1, -0.9, 0.4), new THREE.Vector3(-0.6, -0.7, -0.5),
+        new THREE.Vector3(0.8, 0.6, 0.1), new THREE.Vector3(0.9, -0.4, 0.6),
+      ]);
+      const bondMat = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.7 });
+      moleculeGroup.add(new THREE.LineSegments(bondGeo, bondMat));
 
-    const moleculeGroup = new THREE.Group();
-    moleculeGroupRef.current = moleculeGroup;
-    scene.add(moleculeGroup);
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(50 * 3);
+      for (let i = 0; i < 50 * 3; i += 3) {
+        pPos[i] = (Math.random() - 0.5) * 4;
+        pPos[i + 1] = (Math.random() - 0.5) * 3;
+        pPos[i + 2] = (Math.random() - 0.5) * 3;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      const particles = new THREE.Points(
+        pGeo,
+        new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.025, transparent: true, opacity: 0.3 })
+      );
+      handle.add(particles);
 
-    // Build molecular atoms & bonds
-    const atomGeo = new THREE.SphereGeometry(0.2, 16, 16);
-    const atomMatCyan = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
-    const atomMatPurple = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
-    const atomMatGreen = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true });
+      const reduced = prefersReducedMotion();
+      handle.onFrame(() => {
+        if (!reduced) {
+          moleculeGroup.rotation.y += 0.008;
+          moleculeGroup.rotation.x += 0.003;
+        }
+      });
 
-    const atomPositions = [
-      [0, 0, 0],
-      [0.8, 0.6, 0.1],
-      [-0.8, 0.5, -0.1],
-      [0.1, -0.9, 0.4],
-      [-0.6, -0.7, -0.5],
-      [0.9, -0.4, 0.6],
-    ];
+      return () => {
+        moleculeGroupRef.current = null;
+      };
+    },
+  });
 
-    const materials = [atomMatCyan, atomMatPurple, atomMatGreen, atomMatCyan, atomMatPurple, atomMatGreen];
-    atomPositions.forEach((pos, idx) => {
-      const atom = new THREE.Mesh(atomGeo, materials[idx]);
-      atom.position.set(pos[0], pos[1], pos[2]);
-      moleculeGroup.add(atom);
-    });
-
-    // Molecular Bonds (Lines)
-    const bondGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0.8, 0.6, 0.1),
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(-0.8, 0.5, -0.1),
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0.1, -0.9, 0.4),
-      new THREE.Vector3(0.1, -0.9, 0.4),
-      new THREE.Vector3(-0.6, -0.7, -0.5),
-      new THREE.Vector3(0.8, 0.6, 0.1),
-      new THREE.Vector3(0.9, -0.4, 0.6),
-    ]);
-    const bondMat = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.7 });
-    const bonds = new THREE.LineSegments(bondGeo, bondMat);
-    moleculeGroup.add(bonds);
-
-    // Ambient Particles
-    const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(50 * 3);
-    for (let i = 0; i < 50 * 3; i += 3) {
-      pPos[i] = (Math.random() - 0.5) * 4;
-      pPos[i + 1] = (Math.random() - 0.5) * 3;
-      pPos[i + 2] = (Math.random() - 0.5) * 3;
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    const particles = new THREE.Points(
-      pGeo,
-      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.025, transparent: true, opacity: 0.3 })
-    );
-    scene.add(particles);
-
-    // Animation Loop
-    const animate = () => {
-      animFrameId.current = requestAnimationFrame(animate);
-      moleculeGroup.rotation.y += 0.008;
-      moleculeGroup.rotation.x += 0.003;
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      if (!container || !rendererRef.current) return;
-      const w = container.clientWidth;
-      camera.aspect = w / height;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(w, height);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      renderer.dispose();
-      atomGeo.dispose();
-      bondGeo.dispose();
-      bondMat.dispose();
-    };
-  }, [step]);
-
-  // Step 2 Shor algorithm simulation action
   const handleSimulateShor = () => {
     playLaserScan();
     setIsCracking(true);
@@ -192,20 +144,21 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     setTimeout(() => {
       playChimeSuccess();
       setIsCracking(false);
-      setCrackSpeed('¡Clave RSA factorizada en 0.42 segundos! (Algoritmo de Shor)');
+      // Extracted domain rule calls
+      setCrackSpeed(formatShorResult(0.42));
       updateStoredMetrics((prev) => ({
         ...prev,
         actions: {
           ...prev.actions,
-          applicationsExplored: Array.from(
-            new Set([...prev.actions.applicationsExplored, 'molecular_simulation', 'cryptography_shor'])
+          applicationsExplored: updateExploredApplications(
+            prev.actions.applicationsExplored,
+            ['molecular_simulation', 'cryptography_shor']
           ),
         },
       }));
     }, 1200);
   };
 
-  // Step 3 Quiz Choice Handler
   const handleQuizChoice = (choice: string) => {
     setUserChoice(choice);
     setShowFeedback(true);
@@ -219,9 +172,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
 
   return (
     <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
-      {/* ========================================================================= */}
-      {/* TOP CLEAN PROGRESS BAR                                                    */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30">
@@ -232,8 +182,7 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
           </span>
         </div>
 
-        {/* Progress Pills */}
-        <div className="flex items-center gap-1.5">
+        <div role="tablist" aria-label="Pasos de la misión" className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
               key={i}
@@ -248,15 +197,14 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
                   ? 'w-3 bg-cyan'
                   : 'w-2 bg-slate-800 hover:bg-slate-700'
               }`}
-              title={`Ir al paso ${i + 1}`}
+              role="tab"
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-selected={step === i}
             />
           ))}
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* PASO 1: DESMITIFICACIÓN (¿PARA QUÉ NO SIRVE?)                             */}
-      {/* ========================================================================= */}
       {step === 0 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-7 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -271,9 +219,7 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             </p>
           </div>
 
-          {/* Interactive Myth Selector */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl text-left">
-            {/* Myth 1: Videojuegos y Navegación */}
             <div
               onClick={() => {
                 playButtonClick();
@@ -299,7 +245,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
               </p>
             </div>
 
-            {/* Reality 1: Simulación y Factorización */}
             <div
               onClick={() => {
                 playButtonClick();
@@ -328,9 +273,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 2: SIMULACIÓN MOLECULAR Y QUÍMICA CUÁNTICA                           */}
-      {/* ========================================================================= */}
       {step === 1 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -345,11 +287,11 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             </p>
           </div>
 
-          {/* 3D Molecular Canvas Box */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            <div ref={containerRef} className="w-full" />
+            <div ref={containerRef}
+              role="img"
+              aria-label="Modelo molecular interactivo para simulación cuántica" className="w-full" />
 
-            {/* Comparison Controls */}
             <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -398,9 +340,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 3: CRIPTOGRAFÍA Y EL ALGORITMO DE SHOR                              */}
-      {/* ========================================================================= */}
       {step === 2 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -415,7 +354,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             </p>
           </div>
 
-          {/* Interactive Shor Simulator Widget */}
           <div className="p-8 rounded-3xl bg-slate-950/80 border border-slate-800/90 backdrop-blur-md shadow-2xl flex flex-col items-center gap-5 w-full max-w-xl">
             <div className="flex items-center gap-4 text-xs font-mono">
               <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-2 text-slate-300">
@@ -440,7 +378,7 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
               </div>
               <div className="text-slate-400 flex justify-between border-t border-slate-800/80 pt-1.5">
                 <span>Computador Cuántico (Shor):</span>
-                <span className="text-emerald-400 font-bold">{crackSpeed}</span>
+                <span data-testid="shor-status" className="text-emerald-400 font-bold">{crackSpeed}</span>
               </div>
             </div>
 
@@ -451,9 +389,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 4: RETO DE COMPRENSIÓN FINAL Y CIERRE                               */}
-      {/* ========================================================================= */}
       {step === 3 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -535,9 +470,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* BOTTOM NAVIGATION                                                         */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-4">
         <button
           onClick={step === 0 ? onBack : goToPrevStep}

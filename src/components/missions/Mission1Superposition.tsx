@@ -17,8 +17,6 @@ import {
   Compass,
   Atom,
   Coins,
-  Check,
-  Zap,
 } from 'lucide-react';
 import {
   playButtonClick,
@@ -27,12 +25,15 @@ import {
   playQuantumCollapse,
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { calculateBlochProbabilities } from '@/domain/quantum/bloch';
+import { measureQubit } from '@/domain/quantum/measurement';
+import { useThreeScene } from '@/hooks/useThreeScene';
+import { prefersReducedMotion, cached } from '@/lib/three/createScene';
 
 interface Props {
   onComplete: () => void;
 }
 
-// 3D Text Sprite Creator for Three.js
 function createTextSprite(text: string, color: string = '#00f0ff', fontSize: number = 44) {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -55,28 +56,21 @@ function createTextSprite(text: string, color: string = '#00f0ff', fontSize: num
 }
 
 export default function Mission1Superposition({ onComplete }: Props) {
-  // Step index: 0 = Bit Clásico, 1 = Qubit y Dirac, 2 = Esfera 3D, 3 = Medición y Colapso, 4 = Reto Final
   const [step, setStep] = useState<number>(0);
   const totalSteps = 5;
 
-  // Step 0: Classical Bit
   const [classicBit, setClassicBit] = useState<0 | 1>(0);
-
-  // Step 1: Coin Analogy
   const [isCoinSpinning, setIsCoinSpinning] = useState(true);
 
-  // Step 2 & 3: 3D Bloch Lab
   const containerRef = useRef<HTMLDivElement>(null);
-  const [theta, setTheta] = useState(Math.PI / 2); // Initial: Equator (Superposition 50/50)
+  const [theta, setTheta] = useState(Math.PI / 2);
   const [isSuperposition, setIsSuperposition] = useState(true);
   const [collapsedState, setCollapsedState] = useState<number | null>(null);
   const [hasMeasured, setHasMeasured] = useState(false);
 
-  // Step 4: Quiz
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
-  // Three.js References
   const sceneRef = useRef<THREE.Scene | null>(null);
   const sphereGroupRef = useRef<THREE.Group | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -86,13 +80,11 @@ export default function Mission1Superposition({ onComplete }: Props) {
   const pole1MeshRef = useRef<THREE.Mesh | null>(null);
   const animFrameId = useRef<number | null>(null);
 
-  // Live Probabilities
-  const alpha = Math.cos(theta / 2);
-  const beta = Math.sin(theta / 2);
-  const prob0 = isSuperposition ? Math.round(alpha ** 2 * 100) : collapsedState === 0 ? 100 : 0;
+  // Extracted domain rule call
+  const { alpha, beta, prob0: domainProb0 } = calculateBlochProbabilities(theta);
+  const prob0 = isSuperposition ? domainProb0 : collapsedState === 0 ? 100 : 0;
   const prob1 = 100 - prob0;
 
-  // Navigation handlers
   const goToNextStep = useCallback(() => {
     playButtonClick();
     setStep((prev) => Math.min(prev + 1, totalSteps - 1));
@@ -103,7 +95,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
     setStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  // Keyboard navigation (Arrow keys)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' && step < totalSteps - 1) {
@@ -116,203 +107,158 @@ export default function Mission1Superposition({ onComplete }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, totalSteps, goToNextStep, goToPrevStep]);
 
-  // Three.js Scene Setup (Mounts on Step 2 and Step 3)
-  useEffect(() => {
-    if ((step !== 2 && step !== 3) || !containerRef.current) return;
-    const container = containerRef.current;
-    const width = container.clientWidth || 600;
-    const height = 400;
+  useThreeScene(containerRef, {
+    width: 600,
+    height: 400,
+    cameraPos: [0, 0.9, 3.4],
+    cameraLookAt: [0, 0, 0],
+    recreateOn: step === 2 ? 'm1-s2' : step === 3 ? 'm1-s3' : 'm1-hidden',
+    onSetup: (handle) => {
+      const sphereGroup = new THREE.Group();
+      sphereGroupRef.current = sphereGroup;
+      handle.add(sphereGroup);
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+      const sphereGeo = cached('m1:sphere', () => new THREE.SphereGeometry(1, 32, 24));
+      const sphereMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.18,
+      });
+      sphereGroup.add(new THREE.Mesh(sphereGeo, sphereMat));
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0.9, 3.4);
-    camera.lookAt(0, 0, 0);
+      const ringGeo = cached('m1:ring', () => new THREE.RingGeometry(0.98, 1.02, 64));
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xa855f7,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.55,
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      sphereGroup.add(ring);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    rendererRef.current = renderer;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
+      const axisGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 1.15, 0),
+        new THREE.Vector3(0, -1.15, 0),
+      ]);
+      const axisMat = new THREE.LineDashedMaterial({
+        color: 0x64748b,
+        dashSize: 0.05,
+        gapSize: 0.03,
+        transparent: true,
+        opacity: 0.6,
+      });
+      const axisLine = new THREE.Line(axisGeo, axisMat);
+      axisLine.computeLineDistances();
+      sphereGroup.add(axisLine);
 
-    // Group for free 3D rotation
-    const sphereGroup = new THREE.Group();
-    sphereGroupRef.current = sphereGroup;
-    scene.add(sphereGroup);
+      const pole0Geo = cached('m1:pole', () => new THREE.SphereGeometry(0.08, 16, 16));
+      const pole0 = new THREE.Mesh(pole0Geo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+      pole0.position.set(0, 1, 0);
+      pole0MeshRef.current = pole0;
+      sphereGroup.add(pole0);
 
-    // Wireframe Bloch Sphere
-    const sphereGeo = new THREE.SphereGeometry(1, 32, 24);
-    const sphereMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.18,
-    });
-    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-    sphereGroup.add(sphere);
+      const sprite0 = createTextSprite('|0⟩ Norte', '#00f0ff', 44);
+      sprite0.position.set(0.65, 1.1, 0);
+      sphereGroup.add(sprite0);
 
-    // Equator Ring
-    const ringGeo = new THREE.RingGeometry(0.98, 1.02, 64);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0xa855f7,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.55,
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2;
-    sphereGroup.add(ring);
+      const pole1Geo = new THREE.SphereGeometry(0.08, 16, 16);
+      const pole1 = new THREE.Mesh(pole1Geo, new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+      pole1.position.set(0, -1, 0);
+      pole1MeshRef.current = pole1;
+      sphereGroup.add(pole1);
 
-    // Dashed Axis
-    const axisGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 1.15, 0),
-      new THREE.Vector3(0, -1.15, 0),
-    ]);
-    const axisMat = new THREE.LineDashedMaterial({
-      color: 0x64748b,
-      dashSize: 0.05,
-      gapSize: 0.03,
-      transparent: true,
-      opacity: 0.6,
-    });
-    const axisLine = new THREE.Line(axisGeo, axisMat);
-    axisLine.computeLineDistances();
-    sphereGroup.add(axisLine);
+      const sprite1 = createTextSprite('|1⟩ Sur', '#10b981', 44);
+      sprite1.position.set(0.65, -1.1, 0);
+      sphereGroup.add(sprite1);
 
-    // North Pole (|0⟩)
-    const pole0Geo = new THREE.SphereGeometry(0.08, 16, 16);
-    const pole0 = new THREE.Mesh(pole0Geo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
-    pole0.position.set(0, 1, 0);
-    pole0MeshRef.current = pole0;
-    sphereGroup.add(pole0);
+      const spritePlus = createTextSprite('|+⟩ 50/50', '#c084fc', 38);
+      spritePlus.position.set(1.4, 0, 0);
+      sphereGroup.add(spritePlus);
 
-    const sprite0 = createTextSprite('|0⟩ Norte', '#00f0ff', 44);
-    sprite0.position.set(0.65, 1.1, 0);
-    sphereGroup.add(sprite0);
+      const dir = new THREE.Vector3(Math.sin(theta), Math.cos(theta), 0).normalize();
+      const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0, 0, 0), 1, 0x00f0ff, 0.24, 0.14);
+      vectorArrowRef.current = arrow;
+      sphereGroup.add(arrow);
 
-    // South Pole (|1⟩)
-    const pole1Geo = new THREE.SphereGeometry(0.08, 16, 16);
-    const pole1 = new THREE.Mesh(pole1Geo, new THREE.MeshBasicMaterial({ color: 0x10b981 }));
-    pole1.position.set(0, -1, 0);
-    pole1MeshRef.current = pole1;
-    sphereGroup.add(pole1);
+      const shockGeo = cached('m1:shock', () => new THREE.RingGeometry(0.1, 0.22, 32));
+      const shockMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0,
+      });
+      const shock = new THREE.Mesh(shockGeo, shockMat);
+      shock.rotation.x = Math.PI / 2;
+      shockwaveRef.current = shock;
+      sphereGroup.add(shock);
 
-    const sprite1 = createTextSprite('|1⟩ Sur', '#10b981', 44);
-    sprite1.position.set(0.65, -1.1, 0);
-    sphereGroup.add(sprite1);
-
-    // Equator Sprite
-    const spritePlus = createTextSprite('|+⟩ 50/50', '#c084fc', 38);
-    spritePlus.position.set(1.4, 0, 0);
-    sphereGroup.add(spritePlus);
-
-    // State Vector (|ψ⟩)
-    const dir = new THREE.Vector3(Math.sin(theta), Math.cos(theta), 0).normalize();
-    const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0, 0, 0), 1, 0x00f0ff, 0.24, 0.14);
-    vectorArrowRef.current = arrow;
-    sphereGroup.add(arrow);
-
-    // Shockwave
-    const shockGeo = new THREE.RingGeometry(0.1, 0.22, 32);
-    const shockMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0,
-    });
-    const shock = new THREE.Mesh(shockGeo, shockMat);
-    shock.rotation.x = Math.PI / 2;
-    shockwaveRef.current = shock;
-    sphereGroup.add(shock);
-
-    // Quantum Particles
-    const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(60 * 3);
-    for (let i = 0; i < 60 * 3; i += 3) {
-      pPos[i] = (Math.random() - 0.5) * 3.5;
-      pPos[i + 1] = (Math.random() - 0.5) * 3.5;
-      pPos[i + 2] = (Math.random() - 0.5) * 3.5;
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    const particles = new THREE.Points(
-      pGeo,
-      new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.035, transparent: true, opacity: 0.35 })
-    );
-    scene.add(particles);
-
-    // Free Mouse Drag Orbit Rotation
-    let isDragging = false;
-    let prevPointer = { x: 0, y: 0 };
-
-    const onPointerDown = (e: PointerEvent) => {
-      isDragging = true;
-      prevPointer = { x: e.clientX, y: e.clientY };
-    };
-
-    const onPointerMove = (e: PointerEvent) => {
-      if (!isDragging || !sphereGroupRef.current) return;
-      const dx = e.clientX - prevPointer.x;
-      const dy = e.clientY - prevPointer.y;
-      sphereGroupRef.current.rotation.y += dx * 0.007;
-      sphereGroupRef.current.rotation.x += dy * 0.007;
-      prevPointer = { x: e.clientX, y: e.clientY };
-    };
-
-    const onPointerUp = () => {
-      isDragging = false;
-    };
-
-    container.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-
-    // Animation Loop
-    let shockScale = 0;
-    const animate = () => {
-      animFrameId.current = requestAnimationFrame(animate);
-
-      if (!isDragging && sphereGroup) {
-        sphereGroup.rotation.y += 0.0018;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(60 * 3);
+      for (let i = 0; i < 60 * 3; i += 3) {
+        pPos[i] = (Math.random() - 0.5) * 3.5;
+        pPos[i + 1] = (Math.random() - 0.5) * 3.5;
+        pPos[i + 2] = (Math.random() - 0.5) * 3.5;
       }
-      particles.rotation.y -= 0.0006;
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      const particles = new THREE.Points(
+        pGeo,
+        new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.035, transparent: true, opacity: 0.35 })
+      );
+      handle.add(particles);
 
-      if (shockMat.opacity > 0) {
-        shockScale += 0.09;
-        shock.scale.set(shockScale, shockScale, shockScale);
-        shockMat.opacity -= 0.035;
-      }
+      let isDragging = false;
+      let prevPointer = { x: 0, y: 0 };
+      const container = containerRef.current;
+      if (!container) return;
+      const onPointerDown = (e: PointerEvent) => {
+        isDragging = true;
+        prevPointer = { x: e.clientX, y: e.clientY };
+      };
+      const onPointerMove = (e: PointerEvent) => {
+        if (!isDragging || !sphereGroupRef.current) return;
+        const dx = e.clientX - prevPointer.x;
+        const dy = e.clientY - prevPointer.y;
+        sphereGroupRef.current.rotation.y += dx * 0.007;
+        sphereGroupRef.current.rotation.x += dy * 0.007;
+        prevPointer = { x: e.clientX, y: e.clientY };
+      };
+      const onPointerUp = () => {
+        isDragging = false;
+      };
+      container.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
 
-      renderer.render(scene, camera);
-    };
-    animate();
+      let shockScale = 0;
+      const reduced = prefersReducedMotion();
+      handle.onFrame(() => {
+        if (!isDragging && sphereGroupRef.current && !reduced) {
+          sphereGroupRef.current.rotation.y += 0.0018;
+        }
+        if (!reduced) particles.rotation.y -= 0.0006;
 
-    const handleResize = () => {
-      if (!container || !rendererRef.current) return;
-      const w = container.clientWidth;
-      camera.aspect = w / height;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(w, height);
-    };
-    window.addEventListener('resize', handleResize);
+        if (shockMat.opacity > 0) {
+          shockScale += 0.09;
+          shock.scale.set(shockScale, shockScale, shockScale);
+          shockMat.opacity -= 0.035;
+        }
+      });
 
-    return () => {
-      container.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('resize', handleResize);
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      renderer.dispose();
-      sphereGeo.dispose();
-      sphereMat.dispose();
-      ringGeo.dispose();
-      ringMat.dispose();
-      pGeo.dispose();
-    };
-  }, [step]);
+      return () => {
+        container.removeEventListener('pointerdown', onPointerDown);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        sphereGroupRef.current = null;
+        vectorArrowRef.current = null;
+        shockwaveRef.current = null;
+        pole0MeshRef.current = null;
+        pole1MeshRef.current = null;
+      };
+    },
+  });
 
-  // Update Vector Arrow & Pole Highlights when theta or collapse state changes
   useEffect(() => {
     if (!vectorArrowRef.current) return;
     let targetTheta = theta;
@@ -337,7 +283,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
     }
   }, [theta, isSuperposition, collapsedState]);
 
-  // Preset Handlers
   const handleSetPreset = (targetTheta: number) => {
     playButtonClick();
     setIsSuperposition(true);
@@ -345,7 +290,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
     setTheta(targetTheta);
   };
 
-  // Measurement Action
   const handleMeasure = () => {
     playLaserScan();
     setTimeout(() => playQuantumCollapse(), 150);
@@ -355,8 +299,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
       (shockwaveRef.current.material as THREE.MeshBasicMaterial).opacity = 0.95;
     }
 
-    const currentProb0 = Math.cos(theta / 2) ** 2;
-    const outcome = Math.random() < currentProb0 ? 0 : 1;
+    // Extracted deterministic domain rule call
+    const outcome = measureQubit(theta);
 
     setIsSuperposition(false);
     setCollapsedState(outcome);
@@ -391,9 +335,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
 
   return (
     <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
-      {/* ========================================================================= */}
-      {/* TOP CLEAN PROGRESS HEADER                                                 */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan px-2.5 py-1 rounded-md bg-cyan/10 border border-cyan/30">
@@ -404,8 +345,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
           </span>
         </div>
 
-        {/* Progress Pills */}
-        <div className="flex items-center gap-1.5">
+        <div role="tablist" aria-label="Pasos de la misión" className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <button
               key={i}
@@ -420,15 +360,14 @@ export default function Mission1Superposition({ onComplete }: Props) {
                   ? 'w-3 bg-emerald-500'
                   : 'w-2 bg-slate-800 hover:bg-slate-700'
               }`}
-              title={`Ir al paso ${i + 1}`}
+              role="tab"
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-selected={step === i}
             />
           ))}
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* PASO 1: EL BIT CLÁSICO (ÚNICO FOCO: INTERRUPTOR BINARIO TÁCTIL)           */}
-      {/* ========================================================================= */}
       {step === 0 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -439,11 +378,10 @@ export default function Mission1Superposition({ onComplete }: Props) {
               El Bit Clásico
             </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
-              En la informática tradicional, un bit solo puede existir en uno de dos estados posibles, <strong className="text-white">estrictamente 0 o estrictamente 1</strong>.
+              En la informática tradicional, un bit solo puede existir en uno de dos estados posibles, <strong className="text-white">estrictamente 0 o strictly 1</strong>.
             </p>
           </div>
 
-          {/* Interactive Mechanical Switch Widget */}
           <div className="p-8 sm:p-10 rounded-3xl bg-slate-950/80 border border-slate-800/80 backdrop-blur-md shadow-2xl flex flex-col items-center gap-6 w-full max-w-md">
             <button
               onClick={() => {
@@ -468,7 +406,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
             </button>
 
             <div className="text-5xl sm:text-6xl font-orbitron font-bold text-white tracking-wider">
-              VALOR: <span className="text-cyan">{classicBit}</span>
+              VALOR: <span data-testid="classic-bit-value" className="text-cyan">{classicBit}</span>
             </div>
 
             <p className="text-xs text-slate-400 leading-normal max-w-xs">
@@ -478,9 +416,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 2: EL QUBIT Y LA NOTACIÓN DIRAC (ÚNICO FOCO: KET Y VECTOR)           */}
-      {/* ========================================================================= */}
       {step === 1 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-7 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -496,7 +431,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl text-left">
-            {/* Notación Ket Card */}
             <div className="p-6 rounded-3xl bg-slate-950/80 border border-cyan/40 backdrop-blur-md shadow-xl flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-cyan/10 border border-cyan/40 flex items-center justify-center text-cyan">
@@ -508,11 +442,10 @@ export default function Mission1Superposition({ onComplete }: Props) {
                 </div>
               </div>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                El número se encierra entre una barra y un ángulo para indicar que no es un dígito matemático, sino un <strong className="text-white">estado físico fundamental</strong> (como el Polo Norte o Sur).
+                El número se encierra entre una barra y un ángulo para indicar que no es un dígito matemático, sino un <strong className="text-white">estado físico fundamental</strong>.
               </p>
             </div>
 
-            {/* Vector Card */}
             <div className="p-6 rounded-3xl bg-slate-950/80 border border-purple-500/40 backdrop-blur-md shadow-xl flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/40 flex items-center justify-center text-purple-400">
@@ -529,13 +462,12 @@ export default function Mission1Superposition({ onComplete }: Props) {
             </div>
           </div>
 
-          {/* Interactive Coin Analogy */}
           <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/60 border border-slate-800 w-full max-w-3xl flex items-center justify-between gap-4 text-left">
             <div className="flex items-start gap-3">
               <Coins className={`w-6 h-6 shrink-0 mt-0.5 ${isCoinSpinning ? 'text-cyan animate-spin' : 'text-slate-400'}`} />
               <div className="text-xs sm:text-sm text-slate-300">
                 <strong className="text-white block font-sans mb-0.5">La analogía de la moneda:</strong>
-                Una moneda en reposo es cara o cruz (bit clásico). Mientras gira en el aire, contiene ambas caras a la vez (superposición cuántica) hasta que cae en la mano.
+                Una moneda en reposo es cara o cruz (bit clásico). Mientras gira en el aire, contiene ambas caras a la vez hasta que cae en la mano.
               </div>
             </div>
             <button
@@ -551,9 +483,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 3: LA ESFERA DE BLOCH 3D (ÚNICO FOCO: MANIPULACIÓN 3D Y PROBABILIDAD) */}
-      {/* ========================================================================= */}
       {step === 2 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -568,9 +497,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            {/* Top Pole Indicators Bar */}
             <div className="w-full flex justify-between items-center z-10 px-2 py-1">
               <button
                 onClick={() => handleSetPreset(0.001)}
@@ -606,14 +533,14 @@ export default function Mission1Superposition({ onComplete }: Props) {
               </button>
             </div>
 
-            {/* Canvas */}
             <div
               ref={containerRef}
+              role="img"
+              aria-label="Esfera de Bloch interactiva, usa el ratón para rotar"
               className="w-full cursor-grab active:cursor-grabbing touch-none select-none my-1"
               title="Arrastra con el ratón para rotar en 3D"
             />
 
-            {/* Slider & Real-time Probabilities */}
             <div className="w-full max-w-lg mt-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
               <div className="flex justify-between items-center text-xs font-mono text-slate-400">
                 <span>Inclinación de la aguja:</span>
@@ -662,9 +589,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 4: EL COLAPSO DE LA MEDICIÓN (ÚNICO FOCO: ACCIÓN LÁSER Y COLAPSO)    */}
-      {/* ========================================================================= */}
       {step === 3 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -679,11 +603,11 @@ export default function Mission1Superposition({ onComplete }: Props) {
             </p>
           </div>
 
-          {/* 3D Canvas Box + Big Focused Action Button */}
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
-            {/* Canvas */}
             <div
               ref={containerRef}
+              role="img"
+              aria-label="Esfera de Bloch interactiva, usa el ratón para rotar"
               className="w-full cursor-grab active:cursor-grabbing touch-none select-none my-1"
               title="Arrastra con el ratón para rotar en 3D"
             />
@@ -694,7 +618,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
                   onClick={handleMeasure}
                   className="flex-1 py-4 px-6 rounded-2xl bg-cyan text-slate-950 font-orbitron font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyan/90 transition-all shadow-xl shadow-cyan/25 active:scale-95"
                 >
-                  <Zap className="w-5 h-5" /> Disparar Detector Láser
+                  Disparar Detector Láser
                 </button>
                 <button
                   onClick={handleResetSuperposition}
@@ -705,9 +629,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
                 </button>
               </div>
 
-              {/* Observable Result Card */}
               {hasMeasured && collapsedState !== null && (
-                <div className={`p-4 rounded-2xl border text-sm text-left animate-in fade-in zoom-in-95 duration-200 ${
+                <div data-testid="collapse-result" className={`p-4 rounded-2xl border text-sm text-left animate-in fade-in zoom-in-95 duration-200 ${
                   collapsedState === 0
                     ? 'bg-cyan/10 border-cyan/50 text-cyan'
                     : 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200'
@@ -726,9 +649,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* PASO 5: RETO DE COMPRENSIÓN (ÚNICO FOCO: PREGUNTA DIRECTA Y VALIDACIÓN)   */}
-      {/* ========================================================================= */}
       {step === 4 && (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
@@ -793,7 +713,7 @@ export default function Mission1Superposition({ onComplete }: Props) {
                 <span>
                   {userChoice === 'collapse'
                     ? '¡Correcto! La medición destruye la superposición forzando el colapso hacia uno de los polos base (|0⟩ o |1⟩).'
-                    : 'Pista: En el laboratorio viste que al disparar el detector, la aguja no se quedó en el medio ni se dividió: saltó a un único polo.'}
+                    : 'Pista: En el laboratorio viste que al disparar el detector, la aguja saltó a un único polo.'}
                 </span>
               </div>
 
@@ -810,9 +730,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* BOTTOM NAVIGATION                                                         */}
-      {/* ========================================================================= */}
       <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-4">
         <button
           onClick={goToPrevStep}

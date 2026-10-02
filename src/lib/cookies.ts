@@ -1,13 +1,19 @@
 import Cookies from 'js-cookie';
 
-const USER_ID_KEY = 'quantum_user_id';
-const PROGRESS_KEY = 'quantum_lab_progress';
-const METRICS_KEY = 'quantum_lab_metrics';
+export const COOKIE_USER_ID = 'quantum_user_id';
+export const COOKIE_PROGRESS = 'quantum_lab_progress';
+export const COOKIE_METRICS = 'quantum_lab_metrics';
+export const COOKIE_ACTIVE_TAB = 'quantum_lab_active_tab';
+
+export const DEFAULT_COOKIE_OPTIONS: Cookies.CookieAttributes = {
+  expires: 30,
+  sameSite: 'lax',
+};
+
+/** Cookies are capped at ~4 KB. Keep a safe margin. */
+export const MAX_COOKIE_SIZE_BYTES = 3072;
 
 export interface UserMetrics {
-  userId: string;
-  startedAt: string;
-  completedAt?: string;
   totalTimeSeconds: number;
   missionTimes: {
     superposition: number;
@@ -23,64 +29,162 @@ export interface UserMetrics {
   };
 }
 
+/** Frozen template. Never return it directly; use createDefaultMetrics(). */
+export const DEFAULT_METRICS: Readonly<UserMetrics> = Object.freeze({
+  totalTimeSeconds: 0,
+  missionTimes: Object.freeze({
+    superposition: 0,
+    entanglement: 0,
+    decoherence: 0,
+    applications: 0,
+  }),
+  actions: Object.freeze({
+    superpositionMeasurements: 0,
+    entanglementMeasurements: 0,
+    decoherenceTested: false,
+    applicationsExplored: Object.freeze([]) as unknown as string[],
+  }),
+}) as Readonly<UserMetrics>;
+
+/** Returns a fresh, mutable default metrics object. */
+export function createDefaultMetrics(): UserMetrics {
+  return {
+    totalTimeSeconds: DEFAULT_METRICS.totalTimeSeconds,
+    missionTimes: { ...DEFAULT_METRICS.missionTimes },
+    actions: {
+      ...DEFAULT_METRICS.actions,
+      applicationsExplored: [...DEFAULT_METRICS.actions.applicationsExplored],
+    },
+  };
+}
+
 export function getOrCreateUserId(): string {
-  let userId = Cookies.get(USER_ID_KEY);
+  let userId = Cookies.get(COOKIE_USER_ID);
   if (!userId) {
-    userId = 'QL-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-    Cookies.set(USER_ID_KEY, userId, { expires: 30, sameSite: 'lax' });
+    const randomHex = Math.floor(Math.random() * 0xffff)
+      .toString(16)
+      .padStart(4, '0')
+      .toUpperCase();
+    userId = `QL-${randomHex}`;
+    Cookies.set(COOKIE_USER_ID, userId, DEFAULT_COOKIE_OPTIONS);
   }
   return userId;
 }
 
+/**
+ * Returns the set of completed mission indices (0-3), sorted ascending.
+ * It is a SET, not a sequence: e.g. re-completing mission 1 does not change
+ * the array order, and duplicates are impossible by construction.
+ */
 export function getStoredProgress(): number[] {
-  const data = Cookies.get(PROGRESS_KEY);
-  if (!data) return [0]; // Mission 0 active by default
+  const stored = Cookies.get(COOKIE_PROGRESS);
+  if (!stored) return [0];
   try {
-    return JSON.parse(data);
+    const parsed = JSON.parse(stored);
+    if (Array.isArray(parsed) && parsed.every((n) => typeof n === 'number')) {
+      return parsed.length > 0 ? Array.from(new Set(parsed)).sort((a, b) => a - b) : [0];
+    }
+    return [0];
   } catch {
     return [0];
   }
 }
 
-export function saveCompletedMission(missionIndex: number) {
-  const current = getStoredProgress();
-  if (!current.includes(missionIndex)) {
-    const updated = [...current, missionIndex];
-    Cookies.set(PROGRESS_KEY, JSON.stringify(updated), { expires: 30, sameSite: 'lax' });
-  }
+export function saveCompletedMission(missionIndex: number): number[] {
+  const currentProgress = getStoredProgress();
+  const updated = Array.from(new Set([...currentProgress, missionIndex])).sort((a, b) => a - b);
+  Cookies.set(COOKIE_PROGRESS, JSON.stringify(updated), DEFAULT_COOKIE_OPTIONS);
+  return updated;
 }
 
 export function getStoredMetrics(): UserMetrics {
-  const data = Cookies.get(METRICS_KEY);
-  if (data) {
-    try {
-      return JSON.parse(data);
-    } catch {}
+  const stored = Cookies.get(COOKIE_METRICS);
+  if (!stored) return createDefaultMetrics();
+  try {
+    const parsed = JSON.parse(stored);
+    return {
+      totalTimeSeconds: typeof parsed.totalTimeSeconds === 'number' ? parsed.totalTimeSeconds : 0,
+      missionTimes: {
+        superposition: parsed.missionTimes?.superposition ?? 0,
+        entanglement: parsed.missionTimes?.entanglement ?? 0,
+        decoherence: parsed.missionTimes?.decoherence ?? 0,
+        applications: parsed.missionTimes?.applications ?? 0,
+      },
+      actions: {
+        superpositionMeasurements: parsed.actions?.superpositionMeasurements ?? 0,
+        entanglementMeasurements: parsed.actions?.entanglementMeasurements ?? 0,
+        decoherenceTested: Boolean(parsed.actions?.decoherenceTested),
+        applicationsExplored: Array.isArray(parsed.actions?.applicationsExplored)
+          ? parsed.actions.applicationsExplored
+          : [],
+      },
+    };
+  } catch {
+    return createDefaultMetrics();
   }
-
-  const initial: UserMetrics = {
-    userId: getOrCreateUserId(),
-    startedAt: new Date().toISOString(),
-    totalTimeSeconds: 0,
-    missionTimes: {
-      superposition: 0,
-      entanglement: 0,
-      decoherence: 0,
-      applications: 0,
-    },
-    actions: {
-      superpositionMeasurements: 0,
-      entanglementMeasurements: 0,
-      decoherenceTested: false,
-      applicationsExplored: [],
-    },
-  };
-  Cookies.set(METRICS_KEY, JSON.stringify(initial), { expires: 30, sameSite: 'lax' });
-  return initial;
 }
 
-export function updateStoredMetrics(updater: (prev: UserMetrics) => UserMetrics) {
-  const prev = getStoredMetrics();
-  const next = updater(prev);
-  Cookies.set(METRICS_KEY, JSON.stringify(next), { expires: 30, sameSite: 'lax' });
+export function updateStoredMetrics(
+  updater: (prev: UserMetrics) => UserMetrics
+): UserMetrics {
+  const current = getStoredMetrics();
+  const updated = updater(current);
+  const json = JSON.stringify(updated);
+  if (json.length > MAX_COOKIE_SIZE_BYTES) {
+    if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+      console.warn(
+        `[cookies] metrics payload (${json.length} bytes) exceeds limit (${MAX_COOKIE_SIZE_BYTES}); skipping write`
+      );
+    }
+    return updated;
+  }
+  Cookies.set(COOKIE_METRICS, json, DEFAULT_COOKIE_OPTIONS);
+  return updated;
+}
+
+export function incrementActiveMissionTime(missionIndex: number): UserMetrics {
+  const missionKeys: Array<keyof UserMetrics['missionTimes']> = [
+    'superposition',
+    'entanglement',
+    'decoherence',
+    'applications',
+  ];
+  const key = missionKeys[missionIndex] || 'superposition';
+
+  return updateStoredMetrics((prev) => ({
+    ...prev,
+    totalTimeSeconds: prev.totalTimeSeconds + 1,
+    missionTimes: {
+      ...prev.missionTimes,
+      [key]: (prev.missionTimes[key] || 0) + 1,
+    },
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Active tab persistence
+// ---------------------------------------------------------------------------
+
+export function getStoredActiveTab(): number {
+  const stored = Cookies.get(COOKIE_ACTIVE_TAB);
+  if (!stored) return 0;
+  const n = parseInt(stored, 10);
+  if (!Number.isFinite(n) || n < 0 || n > 3) return 0;
+  return n;
+}
+
+export function saveActiveTab(tab: number): void {
+  if (!Number.isFinite(tab) || tab < 0 || tab > 3) return;
+  Cookies.set(COOKIE_ACTIVE_TAB, String(tab), DEFAULT_COOKIE_OPTIONS);
+}
+
+// ---------------------------------------------------------------------------
+// GDPR / right to erasure
+// ---------------------------------------------------------------------------
+
+export function deleteAllUserData(): void {
+  Cookies.remove(COOKIE_USER_ID);
+  Cookies.remove(COOKIE_PROGRESS);
+  Cookies.remove(COOKIE_METRICS);
+  Cookies.remove(COOKIE_ACTIVE_TAB);
 }

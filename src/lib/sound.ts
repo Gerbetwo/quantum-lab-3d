@@ -1,11 +1,34 @@
 // High performance synthesized quantum sound engine via Web Audio API
 
 let audioCtx: AudioContext | null = null;
+let userInteracted = false;
+
+if (typeof window !== 'undefined') {
+  const setInteracted = () => { userInteracted = true; };
+  window.addEventListener('pointerdown', setInteracted, { once: true, passive: true });
+  window.addEventListener('keydown', setInteracted, { once: true, passive: true });
+}
+
+export function isAudioEnabled(): boolean {
+  const v = process.env.NEXT_PUBLIC_ENABLE_AUDIO;
+  if (v === undefined) return true;
+  if (v === 'false' || v === '0') return false;
+  return true;
+}
+
+/** Test-only: mark the user as having interacted so getAudioContext can proceed. */
+export function __markUserInteracted(): void {
+  userInteracted = true;
+}
 
 function getAudioContext(): AudioContext | null {
+  if (!isAudioEnabled()) return null;
   if (typeof window === 'undefined') return null;
+  if (!userInteracted) return null;
   if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AudioContextClass) {
       audioCtx = new AudioContextClass();
     }
@@ -25,10 +48,8 @@ export function playLaserScan() {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(800, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.25);
-
     gain.gain.setValueAtTime(0.08, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
@@ -40,26 +61,20 @@ export function playQuantumCollapse() {
   const ctx = getAudioContext();
   if (!ctx) return;
   try {
-    // Low sub hit + resonating sine
     const osc1 = ctx.createOscillator();
     const osc2 = ctx.createOscillator();
     const gain = ctx.createGain();
-
     osc1.type = 'triangle';
     osc1.frequency.setValueAtTime(130, ctx.currentTime);
     osc1.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.4);
-
     osc2.type = 'sine';
     osc2.frequency.setValueAtTime(520, ctx.currentTime);
     osc2.frequency.exponentialRampToValueAtTime(260, ctx.currentTime + 0.3);
-
     gain.gain.setValueAtTime(0.12, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-
     osc1.connect(gain);
     osc2.connect(gain);
     gain.connect(ctx.destination);
-
     osc1.start();
     osc2.start();
     osc1.stop(ctx.currentTime + 0.4);
@@ -71,7 +86,7 @@ export function playChimeSuccess() {
   const ctx = getAudioContext();
   if (!ctx) return;
   try {
-    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+    const notes = [523.25, 659.25, 783.99, 1046.5];
     notes.forEach((freq, idx) => {
       setTimeout(() => {
         if (!ctx) return;
@@ -99,10 +114,8 @@ export function playDecoherenceAlert() {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(180, ctx.currentTime);
     osc.frequency.linearRampToValueAtTime(140, ctx.currentTime + 0.2);
-
     gain.gain.setValueAtTime(0.08, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();

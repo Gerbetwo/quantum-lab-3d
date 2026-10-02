@@ -1,34 +1,66 @@
-# dependencies
+# === Dependencies ===
 /node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
 
-# testing
-/coverage
-
-# next.js
+# === Next.js ===
 /.next/
 /out/
+next-env.d.ts
+*.tsbuildinfo
 
-# production
+# === Build outputs ===
 /build
 
-# misc
-.DS_Store
-*.pem
+# === Test artifacts ===
+/coverage
+/playwright-report/
+/test-results/
+.vitest/
 
-# debug
+# === Phase backups (script-per-phase protocol) ===
+.backup_*/
+.backup-*/
+
+# === Environment variables ===
+.env
+.env.*.local
+!.env.example
+
+# === Logs ===
+*.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# === OS metadata ===
+.DS_Store
+Thumbs.db
 
-# vercel
+# === Editors / IDEs ===
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+.history/
+
+# === Secrets / certs ===
+*.pem
+*.key
+
+# === Deployment ===
 .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# === Cache / bundler ===
+.swc/
+.turbo/
+
+# === Ephemeral phase automation (repo root only) ===
+/script.ts
+/script-*.ts
+
+code*.txt
