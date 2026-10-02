@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Header from '@/components/Header';
-import Mission1Superposition from '@/components/missions/Mission1Superposition';
-import Mission2Entanglement from '@/components/missions/Mission2Entanglement';
-import Mission3Decoherence from '@/components/missions/Mission3Decoherence';
-import Mission4Applications from '@/components/missions/Mission4Applications';
-import CelebrationModal from '@/components/CelebrationModal';
+import React, { useState, useEffect } from "react";
+import Header from "@/components/Header";
+import Mission1Superposition from "@/components/missions/Mission1Superposition";
+import Mission2Entanglement from "@/components/missions/Mission2Entanglement";
+import Mission3Decoherence from "@/components/missions/Mission3Decoherence";
+import Mission4Applications from "@/components/missions/Mission4Applications";
+import CelebrationModal from "@/components/CelebrationModal";
 import {
   getOrCreateUserId,
   getStoredProgress,
   incrementActiveMissionTime,
-} from '@/lib/cookies';
-import { playButtonClick } from '@/lib/sound';
-import { Play, RotateCcw } from 'lucide-react';
+} from "@/lib/cookies";
+import { playButtonClick } from "@/lib/sound";
+import { Play, RotateCcw } from "lucide-react";
 
 export default function Home() {
-  const [userId, setUserId] = useState<string>('');
+  const [userId, setUserId] = useState<string>("");
   const [completedMissions, setCompletedMissions] = useState<number[]>([0]);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [isStarted, setIsStarted] = useState<boolean>(false);
@@ -97,7 +97,9 @@ export default function Home() {
           </h1>
 
           <p className="text-slate-300 text-base sm:text-lg mb-8 leading-relaxed max-w-2xl">
-            Bienvenido al simulador interactivo de mecánica cuántica. Explora la superposición, el entrelazamiento, la decoherencia y las aplicaciones reales mediante simulaciones en 3D en vivo.
+            Bienvenido al simulador interactivo de mecánica cuántica. Explora la
+            superposición, el entrelazamiento, la decoherencia y las
+            aplicaciones reales mediante simulaciones en 3D en vivo.
           </p>
 
           <button
@@ -119,7 +121,9 @@ export default function Home() {
                 ¡Tiempo Límite Agotado!
               </h2>
               <p className="text-slate-300 text-sm leading-relaxed">
-                Has alcanzado el tiempo límite de 10 minutos para esta sesión de laboratorio. Puedes reiniciar el tiempo para continuar explorando los módulos.
+                Has alcanzado el tiempo límite de 10 minutos para esta sesión de
+                laboratorio. Puedes reiniciar el tiempo para continuar
+                explorando los módulos.
               </p>
             </div>
 
@@ -162,7 +166,7 @@ export default function Home() {
       {showCelebration && (
         <CelebrationModal
           onClose={() => setShowCelebration(false)}
-          isOpen={false}
+          isOpen={showCelebration}
         />
       )}
     </main>
