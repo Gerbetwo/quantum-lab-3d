@@ -65,3 +65,6 @@ Thumbs.db
 /script.py
 /script-*.py
 code*.txt
+# Source dump files
+code.txt
+code*.txt

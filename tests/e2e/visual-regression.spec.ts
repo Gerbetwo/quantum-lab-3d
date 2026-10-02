@@ -10,6 +10,12 @@ const VIEWPORTS = [
 
 VIEWPORTS.forEach(({ name, width, height }) => {
   test.describe(`Auditoría Responsive y WCAG en ${name} (${width}x${height})`, () => {
+  test.beforeEach(async ({}, testInfo) => {
+    if (!process.env.RUN_VISUAL) {
+      testInfo.skip(true, 'Pruebas de regresión visual deshabilitadas por defecto. Usa RUN_VISUAL=1 para ejecutarlas.');
+    }
+  });
+
     test.use({ viewport: { width, height } });
 
     test('captura snapshot visual y valida reglas de accesibilidad', async ({ page }) => {

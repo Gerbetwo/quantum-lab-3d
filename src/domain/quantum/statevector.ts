@@ -68,3 +68,17 @@ export function innerProduct(a: StateVector, b: StateVector): Complex {
   }
   return { re, im };
 }
+
+
+export function normalizeStateVector(amplitudes: { re: number; im: number }[]): { re: number; im: number }[] {
+  let normSq = 0;
+  for (const amp of amplitudes) {
+    normSq += amp.re * amp.re + amp.im * amp.im;
+  }
+  if (normSq === 0) return amplitudes;
+  const norm = Math.sqrt(normSq);
+  return amplitudes.map(amp => ({
+    re: Math.abs(amp.re / norm) < 1e-12 ? 0 : amp.re / norm,
+    im: Math.abs(amp.im / norm) < 1e-12 ? 0 : amp.im / norm,
+  }));
+}

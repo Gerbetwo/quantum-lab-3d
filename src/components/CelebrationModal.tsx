@@ -82,7 +82,7 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
     <div
       ref={modalRef}
       data-testid="celebration-modal"
-      role="dialog"
+      role="dialog" aria-live="polite"
       aria-modal="true"
       aria-labelledby={titleId}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
