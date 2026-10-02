@@ -20,6 +20,7 @@ import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { formatShorResult, updateExploredApplications } from '@/domain/quantum/applications';
 import { useThreeScene } from '@/hooks/useThreeScene';
 import { prefersReducedMotion, cached } from '@/lib/three/createScene';
+import { createOrbitControls } from '@/hooks/useOrbitControls';
 
 interface Props {
   onFinishAll: () => void;
@@ -70,6 +71,8 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
   useThreeScene(containerRef, {
     width: 600,
     height: 360,
+    viewportRelative: true,
+    aspect: 16 / 10,
     cameraPos: [0, 0, 3.8],
     cameraLookAt: [0, 0, 0],
     recreateOn: step === 1 ? 'm4-visible' : 'm4-hidden',
@@ -122,8 +125,22 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
       );
       handle.add(particles);
 
+      const controls = createOrbitControls(handle.camera, handle.renderer.domElement, {
+        enablePan: false,
+        enableZoom: true,
+        enableRotate: true,
+        minDistance: 2.5,
+        maxDistance: 8.0,
+        autoRotate: !prefersReducedMotion(),
+        autoRotateSpeed: 0.3,
+        enableDamping: true,
+        dampingFactor: 0.12,
+        target: [0, 0, 0],
+      });
+
       const reduced = prefersReducedMotion();
-      handle.onFrame(() => {
+      handle.onFrame((_t, dt) => {
+        controls.update(dt);
         if (!reduced) {
           moleculeGroup.rotation.y += 0.008;
           moleculeGroup.rotation.x += 0.003;
@@ -131,6 +148,7 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
       });
 
       return () => {
+        controls.dispose();
         moleculeGroupRef.current = null;
       };
     },
