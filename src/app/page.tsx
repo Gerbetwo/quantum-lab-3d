@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Header from "@/components/Header";
 import Mission1Superposition from "@/components/missions/Mission1Superposition";
 import Mission2Entanglement from "@/components/missions/Mission2Entanglement";
@@ -11,6 +11,8 @@ import {
   getOrCreateUserId,
   getStoredProgress,
   incrementActiveMissionTime,
+  getStoredActiveTab,
+  saveActiveTab,
 } from "@/lib/cookies";
 import { playButtonClick } from "@/lib/sound";
 import { Play, RotateCcw } from "lucide-react";
@@ -22,67 +24,82 @@ export default function Home() {
   const [isStarted, setIsStarted] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(600);
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
-  const [showCelebration, setShowCelebration] = useState<boolean>(false);
+  const [celebrationDismissed, setCelebrationDismissed] = useState<boolean>(false);
+
+  // Mirror of timeLeft for use inside setInterval without stale closures.
+  const timeLeftRef = useRef<number>(timeLeft);
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
 
   useEffect(() => {
-    const id = getOrCreateUserId();
-    setUserId(id);
-    const progress = getStoredProgress();
-    setCompletedMissions(progress);
+    setUserId(getOrCreateUserId());
+    setCompletedMissions(getStoredProgress());
+    setActiveTab(getStoredActiveTab());
   }, []);
+
+  useEffect(() => {
+    saveActiveTab(activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!isStarted || isTimeUp) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          setIsTimeUp(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-
+      const current = timeLeftRef.current;
+      if (current <= 1) {
+        setIsTimeUp(true);
+        setTimeLeft(0);
+        return;
+      }
+      setTimeLeft(current - 1);
       incrementActiveMissionTime(activeTab);
     }, 1000);
 
     return () => clearInterval(timer);
   }, [isStarted, isTimeUp, activeTab]);
 
-  const handleMissionComplete = (missionIndex: number) => {
+  const handleMissionComplete = useCallback((missionIndex: number) => {
     const updatedProgress = getStoredProgress();
     setCompletedMissions(updatedProgress);
-
     if (missionIndex < 3) {
       setActiveTab(missionIndex + 1);
-    } else {
-      setShowCelebration(true);
     }
-  };
+  }, []);
 
-  const handleTabSelect = (tabIndex: number) => {
+  const handleTabSelect = useCallback((tabIndex: number) => {
     playButtonClick();
     setActiveTab(tabIndex);
-  };
+  }, []);
 
-  const handleStartLab = () => {
+  const handleStartLab = useCallback(() => {
     playButtonClick();
     setIsStarted(true);
-  };
+  }, []);
 
-  const handleRestartLab = () => {
+  const handleRestartLab = useCallback(() => {
     playButtonClick();
     setTimeLeft(600);
     setIsTimeUp(false);
     setActiveTab(0);
-  };
+  }, []);
+
+  const handleToggleTimer = useCallback(() => {
+    setIsStarted((prev) => !prev);
+  }, []);
+
+  const handleDismissCelebration = useCallback(() => {
+    setCelebrationDismissed(true);
+  }, []);
+
+  const showCelebration = completedMissions.includes(3) && !celebrationDismissed;
 
   return (
     <main className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-cyan selection:text-slate-950">
       <Header
         timeLeft={timeLeft}
         isRunning={isStarted && !isTimeUp}
-        onToggleTimer={() => setIsStarted((prev) => !prev)}
+        onToggleTimer={handleToggleTimer}
       />
 
       {!isStarted ? (
@@ -138,36 +155,31 @@ export default function Home() {
       ) : (
         <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-6xl mx-auto w-full">
           {activeTab === 0 && (
-            <Mission1Superposition
-              onComplete={() => handleMissionComplete(0)}
-            />
+            <Mission1Superposition onComplete={() => handleMissionComplete(0)} />
           )}
           {activeTab === 1 && (
             <Mission2Entanglement
               onComplete={() => handleMissionComplete(1)}
-              onBack={() => setActiveTab(0)}
+              onBack={() => handleTabSelect(0)}
             />
           )}
           {activeTab === 2 && (
             <Mission3Decoherence
               onComplete={() => handleMissionComplete(2)}
-              onBack={() => setActiveTab(1)}
+              onBack={() => handleTabSelect(1)}
             />
           )}
           {activeTab === 3 && (
             <Mission4Applications
               onFinishAll={() => handleMissionComplete(3)}
-              onBack={() => setActiveTab(2)}
+              onBack={() => handleTabSelect(2)}
             />
           )}
         </div>
       )}
 
       {showCelebration && (
-        <CelebrationModal
-          onClose={() => setShowCelebration(false)}
-          isOpen={showCelebration}
-        />
+        <CelebrationModal onClose={handleDismissCelebration} isOpen={showCelebration} />
       )}
     </main>
   );

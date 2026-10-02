@@ -15,22 +15,30 @@ interface Props {
 
 export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
   useEffect(() => {
-    if (isOpen) {
-      playChimeSuccess();
-      updateStoredMetrics((prev) => ({
-        ...prev,
-        completedAt: new Date().toISOString(),
-      }));
+    if (!isOpen) return;
 
-      if (!prefersReducedMotion()) {
-        confetti({
-          particleCount: 70,
-          spread: 60,
-          origin: { y: 0.6 },
-          colors: ['#00f0ff', '#a855f7', '#10b981', '#ffffff'],
-        });
-      }
+    playChimeSuccess();
+    updateStoredMetrics((prev) => ({
+      ...prev,
+      completedAt: new Date().toISOString(),
+    }));
+
+    if (!prefersReducedMotion()) {
+      confetti({
+        particleCount: 70,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#00f0ff', '#a855f7', '#10b981', '#ffffff'],
+      });
     }
+
+    return () => {
+      try {
+        confetti.reset();
+      } catch {
+        /* ignore */
+      }
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;

@@ -110,11 +110,13 @@ function make2DContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
 
 export function installWebStubs(): void {
   Object.defineProperty(window, 'AudioContext', {
+    configurable: true,
     writable: true,
     value: MockAudioContext,
   });
 
   Object.defineProperty(window, 'webkitAudioContext', {
+    configurable: true,
     writable: true,
     value: MockAudioContext,
   });

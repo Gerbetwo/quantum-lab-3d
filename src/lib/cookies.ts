@@ -3,11 +3,15 @@ import Cookies from 'js-cookie';
 export const COOKIE_USER_ID = 'quantum_user_id';
 export const COOKIE_PROGRESS = 'quantum_lab_progress';
 export const COOKIE_METRICS = 'quantum_lab_metrics';
+export const COOKIE_ACTIVE_TAB = 'quantum_lab_active_tab';
 
 export const DEFAULT_COOKIE_OPTIONS: Cookies.CookieAttributes = {
   expires: 30,
   sameSite: 'lax',
 };
+
+/** Cookies are capped at ~4 KB. Keep a safe margin. */
+export const MAX_COOKIE_SIZE_BYTES = 3072;
 
 export interface UserMetrics {
   totalTimeSeconds: number;
@@ -25,21 +29,34 @@ export interface UserMetrics {
   };
 }
 
-export const DEFAULT_METRICS: UserMetrics = {
+/** Frozen template. Never return it directly; use createDefaultMetrics(). */
+export const DEFAULT_METRICS: Readonly<UserMetrics> = Object.freeze({
   totalTimeSeconds: 0,
-  missionTimes: {
+  missionTimes: Object.freeze({
     superposition: 0,
     entanglement: 0,
     decoherence: 0,
     applications: 0,
-  },
-  actions: {
+  }),
+  actions: Object.freeze({
     superpositionMeasurements: 0,
     entanglementMeasurements: 0,
     decoherenceTested: false,
-    applicationsExplored: [],
-  },
-};
+    applicationsExplored: Object.freeze([]) as unknown as string[],
+  }),
+}) as Readonly<UserMetrics>;
+
+/** Returns a fresh, mutable default metrics object. */
+export function createDefaultMetrics(): UserMetrics {
+  return {
+    totalTimeSeconds: DEFAULT_METRICS.totalTimeSeconds,
+    missionTimes: { ...DEFAULT_METRICS.missionTimes },
+    actions: {
+      ...DEFAULT_METRICS.actions,
+      applicationsExplored: [...DEFAULT_METRICS.actions.applicationsExplored],
+    },
+  };
+}
 
 export function getOrCreateUserId(): string {
   let userId = Cookies.get(COOKIE_USER_ID);
@@ -54,6 +71,11 @@ export function getOrCreateUserId(): string {
   return userId;
 }
 
+/**
+ * Returns the set of completed mission indices (0-3), sorted ascending.
+ * It is a SET, not a sequence: e.g. re-completing mission 1 does not change
+ * the array order, and duplicates are impossible by construction.
+ */
 export function getStoredProgress(): number[] {
   const stored = Cookies.get(COOKIE_PROGRESS);
   if (!stored) return [0];
@@ -77,7 +99,7 @@ export function saveCompletedMission(missionIndex: number): number[] {
 
 export function getStoredMetrics(): UserMetrics {
   const stored = Cookies.get(COOKIE_METRICS);
-  if (!stored) return DEFAULT_METRICS;
+  if (!stored) return createDefaultMetrics();
   try {
     const parsed = JSON.parse(stored);
     return {
@@ -98,7 +120,7 @@ export function getStoredMetrics(): UserMetrics {
       },
     };
   } catch {
-    return DEFAULT_METRICS;
+    return createDefaultMetrics();
   }
 }
 
@@ -107,7 +129,16 @@ export function updateStoredMetrics(
 ): UserMetrics {
   const current = getStoredMetrics();
   const updated = updater(current);
-  Cookies.set(COOKIE_METRICS, JSON.stringify(updated), DEFAULT_COOKIE_OPTIONS);
+  const json = JSON.stringify(updated);
+  if (json.length > MAX_COOKIE_SIZE_BYTES) {
+    if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+      console.warn(
+        `[cookies] metrics payload (${json.length} bytes) exceeds limit (${MAX_COOKIE_SIZE_BYTES}); skipping write`
+      );
+    }
+    return updated;
+  }
+  Cookies.set(COOKIE_METRICS, json, DEFAULT_COOKIE_OPTIONS);
   return updated;
 }
 
@@ -128,4 +159,32 @@ export function incrementActiveMissionTime(missionIndex: number): UserMetrics {
       [key]: (prev.missionTimes[key] || 0) + 1,
     },
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Active tab persistence
+// ---------------------------------------------------------------------------
+
+export function getStoredActiveTab(): number {
+  const stored = Cookies.get(COOKIE_ACTIVE_TAB);
+  if (!stored) return 0;
+  const n = parseInt(stored, 10);
+  if (!Number.isFinite(n) || n < 0 || n > 3) return 0;
+  return n;
+}
+
+export function saveActiveTab(tab: number): void {
+  if (!Number.isFinite(tab) || tab < 0 || tab > 3) return;
+  Cookies.set(COOKIE_ACTIVE_TAB, String(tab), DEFAULT_COOKIE_OPTIONS);
+}
+
+// ---------------------------------------------------------------------------
+// GDPR / right to erasure
+// ---------------------------------------------------------------------------
+
+export function deleteAllUserData(): void {
+  Cookies.remove(COOKIE_USER_ID);
+  Cookies.remove(COOKIE_PROGRESS);
+  Cookies.remove(COOKIE_METRICS);
+  Cookies.remove(COOKIE_ACTIVE_TAB);
 }

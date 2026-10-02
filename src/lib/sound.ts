@@ -2,10 +2,25 @@
 
 let audioCtx: AudioContext | null = null;
 
+/**
+ * Reads NEXT_PUBLIC_ENABLE_AUDIO env var.
+ * Defaults to true when undefined (backward compatible).
+ * Accepts: "true" | "false" | "0" | "1"
+ */
+export function isAudioEnabled(): boolean {
+  const v = process.env.NEXT_PUBLIC_ENABLE_AUDIO;
+  if (v === undefined) return true;
+  if (v === 'false' || v === '0') return false;
+  return true;
+}
+
 function getAudioContext(): AudioContext | null {
+  if (!isAudioEnabled()) return null;
   if (typeof window === 'undefined') return null;
   if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AudioContextClass) {
       audioCtx = new AudioContextClass();
     }
@@ -40,7 +55,6 @@ export function playQuantumCollapse() {
   const ctx = getAudioContext();
   if (!ctx) return;
   try {
-    // Low sub hit + resonating sine
     const osc1 = ctx.createOscillator();
     const osc2 = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -71,7 +85,7 @@ export function playChimeSuccess() {
   const ctx = getAudioContext();
   if (!ctx) return;
   try {
-    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+    const notes = [523.25, 659.25, 783.99, 1046.5];
     notes.forEach((freq, idx) => {
       setTimeout(() => {
         if (!ctx) return;
