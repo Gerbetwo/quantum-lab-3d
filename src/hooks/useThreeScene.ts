@@ -8,6 +8,10 @@ import {
 } from '@/lib/three/createScene';
 
 export interface UseThreeSceneOptions extends SceneConfig {
+  /**
+   * @deprecated Since v0.3.0. Prefer stable group visibility via handle.setVisible
+   * or direct .visible toggling on refs. Kept for backward compatibility.
+   */
   recreateOn?: unknown;
   onSetup?: (handle: SceneHandle) => void | (() => void);
 }
@@ -36,6 +40,8 @@ export function useThreeScene(
       near: opts.near,
       far: opts.far,
       pixelRatioCap: opts.pixelRatioCap,
+      viewportRelative: opts.viewportRelative,
+      aspect: opts.aspect,
     });
 
     handleRef.current = handle;
