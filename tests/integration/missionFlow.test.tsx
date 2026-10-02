@@ -89,10 +89,15 @@ vi.mock('@/components/missions/Mission5Gates', () => ({
     <button data-testid="mission-5" onClick={() => { pushProgress(4); onComplete(); }}>Complete Mission 5</button>
   ),
 }));
+vi.mock('@/components/missions/Mission6Grover', () => ({
+  default: ({ onComplete }: { onComplete: () => void }) => (
+    <button data-testid="mission-6" onClick={() => { pushProgress(5); onComplete(); }}>Complete Mission 6</button>
+  ),
+}));
 
 import Home from '@/app/page';
 
-describe('Phase 4 - Home integration (5 missions + celebration)', () => {
+describe('Phase 5 - Home integration (6 missions + celebration)', () => {
   beforeEach(() => {
     cookieState.progress = [0];
     cookieState.saveCalls = [];
@@ -116,9 +121,11 @@ describe('Phase 4 - Home integration (5 missions + celebration)', () => {
     expect(await screen.findByTestId('mission-4')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('mission-4'));
     expect(await screen.findByTestId('mission-5')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('mission-5'));
+    expect(await screen.findByTestId('mission-6')).toBeInTheDocument();
   });
 
-  it('records mission completions in order 0,1,2,3,4', async () => {
+  it('records mission completions in order 0..5', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
@@ -127,11 +134,12 @@ describe('Phase 4 - Home integration (5 missions + celebration)', () => {
     fireEvent.click(await screen.findByTestId('mission-3'));
     fireEvent.click(await screen.findByTestId('mission-4'));
     fireEvent.click(await screen.findByTestId('mission-5'));
+    fireEvent.click(await screen.findByTestId('mission-6'));
 
-    expect(cookieState.saveCalls).toEqual([0, 1, 2, 3, 4]);
+    expect(cookieState.saveCalls).toEqual([0, 1, 2, 3, 4, 5]);
   });
 
-  it('shows CelebrationModal only after completing all 5 missions', async () => {
+  it('shows CelebrationModal only after completing all 6 missions', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
@@ -141,10 +149,11 @@ describe('Phase 4 - Home integration (5 missions + celebration)', () => {
     fireEvent.click(await screen.findByTestId('mission-2'));
     fireEvent.click(await screen.findByTestId('mission-3'));
     fireEvent.click(await screen.findByTestId('mission-4'));
-    // Mission 4 does NOT trigger the celebration anymore
+    fireEvent.click(await screen.findByTestId('mission-5'));
+    // Mission 5 completion no longer triggers celebration
     expect(screen.queryByTestId('celebration-modal')).not.toBeInTheDocument();
 
-    fireEvent.click(await screen.findByTestId('mission-5'));
+    fireEvent.click(await screen.findByTestId('mission-6'));
     expect(await screen.findByTestId('celebration-modal')).toBeInTheDocument();
   });
 

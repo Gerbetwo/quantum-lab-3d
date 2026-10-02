@@ -10,6 +10,7 @@ const Mission2Entanglement = lazy(() => import('@/components/missions/Mission2En
 const Mission3Decoherence = lazy(() => import('@/components/missions/Mission3Decoherence'));
 const Mission4Applications = lazy(() => import('@/components/missions/Mission4Applications'));
 const Mission5Gates = lazy(() => import('@/components/missions/Mission5Gates'));
+const Mission6Grover = lazy(() => import('@/components/missions/Mission6Grover'));
 
 interface MissionEntry {
   id: number;
@@ -24,6 +25,7 @@ const MISSIONS: MissionEntry[] = [
   { id: 2, label: 'Tarea 3', short: 'Decoherencia' },
   { id: 3, label: 'Tarea 4', short: 'Aplicaciones' },
   { id: 4, label: 'Tarea 5', short: 'Compuertas' },
+  { id: 5, label: 'Tarea 6', short: 'Grover' },
 ];
 
 function Loading() {
@@ -98,6 +100,7 @@ export default function SandboxPage() {
           {activeIndex === 2 && <Mission3Decoherence onComplete={goNext} onBack={goPrev} />}
           {activeIndex === 3 && <Mission4Applications onFinishAll={goNext} onBack={goPrev} />}
           {activeIndex === 4 && <Mission5Gates onComplete={goNext} onBack={goPrev} />}
+          {activeIndex === 5 && <Mission6Grover onComplete={goNext} onBack={goPrev} />}
         </Suspense>
       </div>
     </main>
