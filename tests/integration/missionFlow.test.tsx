@@ -94,10 +94,15 @@ vi.mock('@/components/missions/Mission6Grover', () => ({
     <button data-testid="mission-6" onClick={() => { pushProgress(5); onComplete(); }}>Complete Mission 6</button>
   ),
 }));
+vi.mock('@/components/missions/Mission7ErrorCorrection', () => ({
+  default: ({ onComplete }: { onComplete: () => void }) => (
+    <button data-testid="mission-7" onClick={() => { pushProgress(6); onComplete(); }}>Complete Mission 7</button>
+  ),
+}));
 
 import Home from '@/app/page';
 
-describe('Phase 5 - Home integration (6 missions + celebration)', () => {
+describe('Phase 6 - Home integration (7 missions + celebration)', () => {
   beforeEach(() => {
     cookieState.progress = [0];
     cookieState.saveCalls = [];
@@ -108,7 +113,7 @@ describe('Phase 5 - Home integration (6 missions + celebration)', () => {
     vi.useRealTimers();
   });
 
-  it('advances tabs as each mission completes', async () => {
+  it('advances tabs through all 7 missions', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
@@ -123,37 +128,33 @@ describe('Phase 5 - Home integration (6 missions + celebration)', () => {
     expect(await screen.findByTestId('mission-5')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('mission-5'));
     expect(await screen.findByTestId('mission-6')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('mission-6'));
+    expect(await screen.findByTestId('mission-7')).toBeInTheDocument();
   });
 
-  it('records mission completions in order 0..5', async () => {
+  it('records mission completions in order 0..6', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
-    fireEvent.click(await screen.findByTestId('mission-1'));
-    fireEvent.click(await screen.findByTestId('mission-2'));
-    fireEvent.click(await screen.findByTestId('mission-3'));
-    fireEvent.click(await screen.findByTestId('mission-4'));
-    fireEvent.click(await screen.findByTestId('mission-5'));
-    fireEvent.click(await screen.findByTestId('mission-6'));
+    for (let i = 1; i <= 7; i++) {
+      fireEvent.click(await screen.findByTestId('mission-' + i));
+    }
 
-    expect(cookieState.saveCalls).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(cookieState.saveCalls).toEqual([0, 1, 2, 3, 4, 5, 6]);
   });
 
-  it('shows CelebrationModal only after completing all 6 missions', async () => {
+  it('shows CelebrationModal only after completing all 7 missions', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
     expect(screen.queryByTestId('celebration-modal')).not.toBeInTheDocument();
 
-    fireEvent.click(await screen.findByTestId('mission-1'));
-    fireEvent.click(await screen.findByTestId('mission-2'));
-    fireEvent.click(await screen.findByTestId('mission-3'));
-    fireEvent.click(await screen.findByTestId('mission-4'));
-    fireEvent.click(await screen.findByTestId('mission-5'));
-    // Mission 5 completion no longer triggers celebration
+    for (let i = 1; i <= 6; i++) {
+      fireEvent.click(await screen.findByTestId('mission-' + i));
+    }
     expect(screen.queryByTestId('celebration-modal')).not.toBeInTheDocument();
 
-    fireEvent.click(await screen.findByTestId('mission-6'));
+    fireEvent.click(await screen.findByTestId('mission-7'));
     expect(await screen.findByTestId('celebration-modal')).toBeInTheDocument();
   });
 

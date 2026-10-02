@@ -22,6 +22,7 @@ const Mission3Decoherence = lazy(() => import("@/components/missions/Mission3Dec
 const Mission4Applications = lazy(() => import("@/components/missions/Mission4Applications"));
 const Mission5Gates = lazy(() => import("@/components/missions/Mission5Gates"));
 const Mission6Grover = lazy(() => import("@/components/missions/Mission6Grover"));
+const Mission7ErrorCorrection = lazy(() => import("@/components/missions/Mission7ErrorCorrection"));
 
 function MissionLoading() {
   return (
@@ -92,7 +93,7 @@ export default function Home() {
   const handleMissionComplete = useCallback((missionIndex: number) => {
     const updatedProgress = getStoredProgress();
     setCompletedMissions(updatedProgress);
-    if (missionIndex < 5) setActiveTab(missionIndex + 1);
+    if (missionIndex < 6) setActiveTab(missionIndex + 1);
   }, []);
 
   const handleTabSelect = useCallback((tabIndex: number) => {
@@ -110,7 +111,7 @@ export default function Home() {
   const handleToggleTimer = useCallback(() => { setIsStarted((prev) => !prev); }, []);
   const handleDismissCelebration = useCallback(() => { setCelebrationDismissed(true); }, []);
 
-  const showCelebration = completedMissions.includes(5) && !celebrationDismissed;
+  const showCelebration = completedMissions.includes(6) && !celebrationDismissed;
 
   const handleToggleAudio = useCallback(() => {
     const next = !isAudioEnabled();
@@ -119,7 +120,7 @@ export default function Home() {
   }, []);
 
   const commands: Command[] = React.useMemo(() => {
-    const missionNames = ['Superposicion', 'Entrelazamiento', 'Decoherencia', 'Aplicaciones', 'Compuertas Cuanticas', 'Busqueda de Grover'];
+    const missionNames = ['Superposicion', 'Entrelazamiento', 'Decoherencia', 'Aplicaciones', 'Compuertas Cuanticas', 'Busqueda de Grover', 'Correccion de Errores'];
     const cmds: Command[] = missionNames.map((name, i) => ({
       id: 'goto-mission-' + i,
       label: 'Ir a Tarea ' + (i + 1) + ': ' + name,
@@ -242,6 +243,12 @@ export default function Home() {
               <Mission6Grover
                 onComplete={() => handleMissionComplete(5)}
                 onBack={() => handleTabSelect(4)}
+              />
+            )}
+            {activeTab === 6 && (
+              <Mission7ErrorCorrection
+                onComplete={() => handleMissionComplete(6)}
+                onBack={() => handleTabSelect(5)}
               />
             )}
           </Suspense>
