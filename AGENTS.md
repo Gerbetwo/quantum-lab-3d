@@ -722,3 +722,16 @@ Orden de preferencia (de mejor a peor):
 - No usar `getByTitle` para localizar elementos. `title` es para tooltips, no para test hooks.
 - No usar `querySelector` con clases CSS.
 - No anadir `data-testid` a elementos que ya tienen un `id` estable.
+
+
+## §26 useOrbitControls
+El hook `useOrbitControls` encapsula los controles de cámara 3D utilizando Three.js y React Three Fiber. Garantiza rotación fluida, límites de zoom acotados y amortiguación (damping) para preservar el rendimiento.
+
+## §27 Command Palette Contract
+La paleta de comandos (`CommandPalette.tsx`) expone atajos globales (teclas `Cmd+K` / `Ctrl+K`). Contrato obligatorio:
+- Nombres de comando declarativos y descriptivos.
+- Teclas de acceso directo unificadas sin conflicto con la escena 3D.
+- Ejecución directa de callbacks sin mutación directa del DOM.
+
+## §28 Sandbox Routing
+El enrutamiento del laboratorio cuántico interactivo abstrae la selección de misiones y modos libres (`/sandbox`). Sincroniza estados mediante cookies para persistir pestañas activas y simulaciones sin provocar re-renders innecesarios.

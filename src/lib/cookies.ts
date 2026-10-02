@@ -187,4 +187,60 @@ export function deleteAllUserData(): void {
   Cookies.remove(COOKIE_PROGRESS);
   Cookies.remove(COOKIE_METRICS);
   Cookies.remove(COOKIE_ACTIVE_TAB);
+  Cookies.remove(COOKIE_MISSION_STATE);
+}
+
+export const COOKIE_MISSION_STATE = 'quantum_mission_state';
+
+export interface MissionStateMap {
+  0: Record<string, unknown>;
+  1: Record<string, unknown>;
+  2: Record<string, unknown>;
+  3: Record<string, unknown>;
+  [key: number]: Record<string, unknown>;
+}
+
+export function getAllMissionStates(): Record<string, Record<string, unknown>> {
+  if (typeof window === 'undefined') return {};
+  const raw = Cookies.get(COOKIE_MISSION_STATE);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getMissionState<K extends keyof MissionStateMap>(mission: K): MissionStateMap[K] | null {
+  const allStates = getAllMissionStates();
+  const state = allStates[String(mission)];
+  return (state as MissionStateMap[K]) ?? null;
+}
+
+export function saveMissionState<K extends keyof MissionStateMap>(
+  mission: K,
+  state: MissionStateMap[K]
+): void {
+  if (typeof window === 'undefined') return;
+  const currentStates = getAllMissionStates();
+  const updatedStates = {
+    ...currentStates,
+    [String(mission)]: state,
+  };
+
+  const serialized = JSON.stringify(updatedStates);
+  const sizeBytes = new Blob([serialized]).size;
+
+  if (sizeBytes > MAX_COOKIE_SIZE_BYTES) {
+    console.warn(
+      `[saveMissionState] Límite de tamaño de cookie excedido: ${sizeBytes} bytes > ${MAX_COOKIE_SIZE_BYTES} bytes`
+    );
+    return;
+  }
+
+  Cookies.set(COOKIE_MISSION_STATE, serialized, {
+    expires: 365,
+    sameSite: 'lax',
+  });
 }

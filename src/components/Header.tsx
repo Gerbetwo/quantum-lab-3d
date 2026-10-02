@@ -1,5 +1,6 @@
 'use client';
 
+import { downloadSessionJSON } from '@/lib/export';
 import React, { useEffect, useState, memo } from 'react';
 import { Atom, Play, Pause, User, Clock, Maximize2, Minimize2 } from 'lucide-react';
 import { getOrCreateUserId } from '@/lib/cookies';
@@ -207,6 +208,19 @@ export default function Header({
           )}
         </div>
       </div>
-    </header>
+      
+        <button
+          onClick={downloadSessionJSON}
+          className="px-3 py-1.5 text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/30 rounded-lg transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          title="Exportar estado de sesión en JSON"
+          aria-label="Exportar sesión"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Exportar
+        </button>
+      
+</header>
   );
 }

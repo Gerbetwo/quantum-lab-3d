@@ -1,5 +1,6 @@
 'use client';
 
+import { downloadSessionJSON } from '@/lib/export';
 import React, { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Award, ExternalLink, CheckCircle2 } from 'lucide-react';
@@ -143,6 +144,18 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
               Cerrar y Revisar Módulos
             </button>
           )}
+          
+            <button
+              onClick={downloadSessionJSON}
+              className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-semibold rounded-xl border border-cyan-500/30 transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              aria-label="Exportar sesión completa"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Exportar sesión (JSON)
+            </button>
+      
         </div>
       </div>
     </div>

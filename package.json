@@ -1,6 +1,6 @@
 {
   "name": "quantum-lab-3d",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -32,6 +32,8 @@
     "three": "^0.171.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@next/bundle-analyzer": "^14.2.35",
     "@playwright/test": "^1.51.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",

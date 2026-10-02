@@ -1,4 +1,6 @@
+import withBundleAnalyzer from '@next/bundle-analyzer';
 import type { NextConfig } from 'next';
+
 
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -23,6 +25,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  turbopack: {},
   reactStrictMode: true,
   output: 'standalone',
   poweredByHeader: false,
@@ -42,4 +45,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const bundleAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
+export default bundleAnalyzer(nextConfig);
