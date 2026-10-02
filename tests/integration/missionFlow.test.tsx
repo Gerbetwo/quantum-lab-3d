@@ -39,6 +39,16 @@ vi.mock('@/lib/sound', () => ({
   playQuantumCollapse: vi.fn(),
   playDecoherenceAlert: vi.fn(),
   isAudioEnabled: () => false,
+  setAudioEnabled: vi.fn(),
+  toggleAudio: vi.fn(),
+}));
+
+vi.mock('@/hooks/useFullscreen', () => ({
+  useFullscreen: () => ({ isFullscreen: false, enter: vi.fn(), exit: vi.fn(), toggle: vi.fn() }),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
 vi.mock('@/components/Header', () => ({
@@ -48,6 +58,10 @@ vi.mock('@/components/Header', () => ({
 vi.mock('@/components/CelebrationModal', () => ({
   default: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="celebration-modal">Complete!</div> : null,
+}));
+
+vi.mock('@/components/CommandPalette', () => ({
+  default: () => null,
 }));
 
 vi.mock('@/components/missions/Mission1Superposition', () => ({
@@ -70,10 +84,15 @@ vi.mock('@/components/missions/Mission4Applications', () => ({
     <button data-testid="mission-4" onClick={() => { pushProgress(3); onFinishAll(); }}>Complete Mission 4</button>
   ),
 }));
+vi.mock('@/components/missions/Mission5Gates', () => ({
+  default: ({ onComplete }: { onComplete: () => void }) => (
+    <button data-testid="mission-5" onClick={() => { pushProgress(4); onComplete(); }}>Complete Mission 5</button>
+  ),
+}));
 
 import Home from '@/app/page';
 
-describe('Phase 5 - Home integration (mission flow + celebration)', () => {
+describe('Phase 4 - Home integration (5 missions + celebration)', () => {
   beforeEach(() => {
     cookieState.progress = [0];
     cookieState.saveCalls = [];
@@ -95,9 +114,11 @@ describe('Phase 5 - Home integration (mission flow + celebration)', () => {
     expect(await screen.findByTestId('mission-3')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('mission-3'));
     expect(await screen.findByTestId('mission-4')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('mission-4'));
+    expect(await screen.findByTestId('mission-5')).toBeInTheDocument();
   });
 
-  it('records mission completions in order 0,1,2,3', async () => {
+  it('records mission completions in order 0,1,2,3,4', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
@@ -105,11 +126,12 @@ describe('Phase 5 - Home integration (mission flow + celebration)', () => {
     fireEvent.click(await screen.findByTestId('mission-2'));
     fireEvent.click(await screen.findByTestId('mission-3'));
     fireEvent.click(await screen.findByTestId('mission-4'));
+    fireEvent.click(await screen.findByTestId('mission-5'));
 
-    expect(cookieState.saveCalls).toEqual([0, 1, 2, 3]);
+    expect(cookieState.saveCalls).toEqual([0, 1, 2, 3, 4]);
   });
 
-  it('shows CelebrationModal after completing all 4 missions', async () => {
+  it('shows CelebrationModal only after completing all 5 missions', async () => {
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
 
@@ -119,7 +141,10 @@ describe('Phase 5 - Home integration (mission flow + celebration)', () => {
     fireEvent.click(await screen.findByTestId('mission-2'));
     fireEvent.click(await screen.findByTestId('mission-3'));
     fireEvent.click(await screen.findByTestId('mission-4'));
+    // Mission 4 does NOT trigger the celebration anymore
+    expect(screen.queryByTestId('celebration-modal')).not.toBeInTheDocument();
 
+    fireEvent.click(await screen.findByTestId('mission-5'));
     expect(await screen.findByTestId('celebration-modal')).toBeInTheDocument();
   });
 

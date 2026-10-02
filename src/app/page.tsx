@@ -20,6 +20,7 @@ const Mission1Superposition = lazy(() => import("@/components/missions/Mission1S
 const Mission2Entanglement = lazy(() => import("@/components/missions/Mission2Entanglement"));
 const Mission3Decoherence = lazy(() => import("@/components/missions/Mission3Decoherence"));
 const Mission4Applications = lazy(() => import("@/components/missions/Mission4Applications"));
+const Mission5Gates = lazy(() => import("@/components/missions/Mission5Gates"));
 
 function MissionLoading() {
   return (
@@ -90,7 +91,7 @@ export default function Home() {
   const handleMissionComplete = useCallback((missionIndex: number) => {
     const updatedProgress = getStoredProgress();
     setCompletedMissions(updatedProgress);
-    if (missionIndex < 3) setActiveTab(missionIndex + 1);
+    if (missionIndex < 4) setActiveTab(missionIndex + 1);
   }, []);
 
   const handleTabSelect = useCallback((tabIndex: number) => {
@@ -108,7 +109,7 @@ export default function Home() {
   const handleToggleTimer = useCallback(() => { setIsStarted((prev) => !prev); }, []);
   const handleDismissCelebration = useCallback(() => { setCelebrationDismissed(true); }, []);
 
-  const showCelebration = completedMissions.includes(3) && !celebrationDismissed;
+  const showCelebration = completedMissions.includes(4) && !celebrationDismissed;
 
   const handleToggleAudio = useCallback(() => {
     const next = !isAudioEnabled();
@@ -117,7 +118,7 @@ export default function Home() {
   }, []);
 
   const commands: Command[] = React.useMemo(() => {
-    const missionNames = ['Superposicion', 'Entrelazamiento', 'Decoherencia', 'Aplicaciones'];
+    const missionNames = ['Superposicion', 'Entrelazamiento', 'Decoherencia', 'Aplicaciones', 'Compuertas Cuanticas'];
     const cmds: Command[] = missionNames.map((name, i) => ({
       id: 'goto-mission-' + i,
       label: 'Ir a Tarea ' + (i + 1) + ': ' + name,
@@ -228,6 +229,12 @@ export default function Home() {
               <Mission4Applications
                 onFinishAll={() => handleMissionComplete(3)}
                 onBack={() => handleTabSelect(2)}
+              />
+            )}
+            {activeTab === 4 && (
+              <Mission5Gates
+                onComplete={() => handleMissionComplete(4)}
+                onBack={() => handleTabSelect(3)}
               />
             )}
           </Suspense>
