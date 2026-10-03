@@ -64,7 +64,7 @@ Thumbs.db
 /script-*.ts
 /script.py
 /script-*.py
+
+# === Source dumps / Code exports ===
 code*.txt
-# Source dump files
 code.txt
-code*.txt
