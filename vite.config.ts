@@ -8,22 +8,17 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    environmentMatchGlobs: [
-      ['tests/unit/**', 'node'],
-      ['tests/component/**', 'jsdom']
-    ],
     setupFiles: ['./vitest.setup.ts'],
-    include: ['tests/unit/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}', 'tests/component/**/*.test.{ts,tsx}'],
+    include: [
+      'tests/unit/**/*.test.{ts,tsx}',
+      'src/**/*.test.{ts,tsx}',
+      'tests/component/**/*.test.{ts,tsx}',
+    ],
     exclude: ['tests/e2e/**', 'node_modules/**', '.next/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'tests/e2e/**',
-        'node_modules/**',
-        '.next/**',
-        'src/lib/three/**',
-      ],
+      exclude: ['tests/e2e/**', 'node_modules/**', '.next/**', 'src/lib/three/**'],
       thresholds: {
         'src/domain/**': { statements: 95, branches: 90 },
         'src/lib/**': { statements: 85, branches: 80 },
@@ -31,8 +26,6 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: { '@': path.resolve(__dirname, './src') },
   },
 });

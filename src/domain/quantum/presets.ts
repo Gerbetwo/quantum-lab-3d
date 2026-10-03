@@ -60,6 +60,17 @@ export function ghz6Circuit(): QuantumCircuit {
   return c;
 }
 
+/**
+
+ * Pedagogical 3-qubit teleportation preset.
+ *
+ * IMPORTANT: This circuit does NOT include the classical corrections
+ * (conditional X and Z on Bob's qubit) because the circuit model here
+ * does not support classically-controlled gates. It is intended to be
+ * used as a state-preparation / measurement demonstration only. The
+ * complete teleportation protocol (with corrections) is validated in
+ * tests/unit/quantum-engine.test.ts using an ad-hoc sequence.
+ */
 export function teleportation3Circuit(): QuantumCircuit {
   let c = createEmptyCircuit(3, 16);
   c = placeGate(c, { type: 'H', step: 0, targets: [1] });

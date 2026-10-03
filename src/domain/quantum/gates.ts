@@ -7,10 +7,8 @@
  *   - GateMatrix: square NxN of Complex.
  */
 
-export interface Complex {
-  re: number;
-  im: number;
-}
+import type { Complex } from './statevector';
+export type { Complex };
 
 export type StateVector = Complex[];
 export type GateMatrix = Complex[][];

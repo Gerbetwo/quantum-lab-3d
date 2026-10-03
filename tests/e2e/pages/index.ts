@@ -10,3 +10,4 @@ export { Task6Page } from './Task6Page';
 export { Task7Page } from './Task7Page';
 export { CelebrationPage } from './CelebrationPage';
 export { CommandPalettePage } from './CommandPalettePage';
+export { LabPage } from './LabPage';

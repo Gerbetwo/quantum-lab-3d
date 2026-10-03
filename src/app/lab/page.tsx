@@ -43,8 +43,6 @@ export default function LabPage() {
 
   // Invisible overlay for particle bursts (own mini renderer, sized to grid area)
   const particleContainerRef = useRef<HTMLDivElement>(null);
-  const particleSceneHandleRef = useRef<ReturnType<typeof useThreeScene> | null>(null);
-  const measurementRef = useRef<MeasurementParticlesHandle | null>(null);
 
   // Minimal scene just for particles (its own lifecycle, independent of missions)
   const particleScene = useThreeScene(particleContainerRef, {
@@ -55,9 +53,8 @@ export default function LabPage() {
     viewportRelative: true,
     aspect: 2,
   });
-  particleSceneHandleRef.current = particleScene;
 
-  const { burst } = useMeasurementBurst(particleScene);
+  const { controllerRef: particleControllerRef, burst } = useMeasurementBurst(particleScene);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -168,7 +165,7 @@ export default function LabPage() {
                   className="absolute inset-0 pointer-events-none"
                 />
                 <MeasurementParticles
-                  ref={measurementRef}
+                  ref={particleControllerRef}
                   sceneRef={particleScene}
                   maxInstances={1000}
                 />

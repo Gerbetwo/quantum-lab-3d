@@ -152,3 +152,11 @@ export function applyControlledPhaseN(
   }
   return out;
 }
+
+
+export function RY(theta: number): GateMatrix {
+  const half = theta / 2;
+  const cos = Math.cos(half);
+  const sin = Math.sin(half);
+  return { m: [c(cos), c(-sin), c(sin), c(cos)] };
+}

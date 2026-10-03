@@ -17,7 +17,8 @@
     "validate": "npm run test:all && npm run build",
     "test:console": "playwright test tests/e2e/console-audit.spec.ts",
     "test:visual": "RUN_VISUAL=1 playwright test tests/e2e/visual-regression.spec.ts",
-    "test:visual:update": "RUN_VISUAL=1 playwright test tests/e2e/visual-regression.spec.ts --update-snapshots"
+    "test:visual:update": "RUN_VISUAL=1 playwright test tests/e2e/visual-regression.spec.ts --update-snapshots",
+    "audit:perf": "tsx scripts/audit-performance.ts"
   },
   "dependencies": {
     "@vitest/coverage-v8": "^5.0.3",
@@ -53,5 +54,8 @@
     "typescript": "^5.7.2",
     "vite": "^6.1.0",
     "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }

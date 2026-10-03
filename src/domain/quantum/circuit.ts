@@ -1,4 +1,3 @@
-import { normalizeStateVector } from './statevector';
 /**
  * Quantum Circuit Domain Model (pure, no React, no Three.js).
  *

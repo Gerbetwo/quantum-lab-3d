@@ -268,3 +268,20 @@ export function playMeasurementCollapse(qubit: number = 0): void {
     playSweep({ ctx, destination: ctx.destination, gain: 0.16 }, fromHz, toHz, 320, 'sawtooth');
   } catch { /* no-op */ }
 }
+
+
+// ---------------------------------------------------------------------------
+// Phase 4 - explicit AudioContext lifecycle control (test + HMR safety)
+// ---------------------------------------------------------------------------
+
+export function __closeAudioContext(): void {
+  if (cachedCtx) {
+    try { void cachedCtx.close(); } catch { /* no-op */ }
+    cachedCtx = null;
+    cachedCtor = null;
+  }
+}
+
+interface HotContext { hot?: { dispose(cb: () => void): void } }
+const hotCtx = (typeof module !== 'undefined' ? module : undefined) as unknown as HotContext | undefined;
+hotCtx?.hot?.dispose(() => { __closeAudioContext(); });

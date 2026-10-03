@@ -163,4 +163,4 @@ src/
 - **Nuevas Misiones Cuánticas**: Modo de aprendizaje guiado ampliado (misiones 0 a 3).
 - **Persistencia Per-Misión y Exportación JSON**: Guardado local y exportación portátil del estado de la sesión (`.json`).
 - **Auditoría Responsive y Accesibilidad**: Cobertura E2E con Playwright y `@axe-core/playwright` (WCAG 2.1 AA) en viewports 1920, 1280, 768 y 375px.
-- **Control Presupuestario de Bundle**: Medición con `@next/bundle-analyzer` y gate automatizado (<300 KB gzip).
+- **Control Presupuestario de Bundle**: Medición con `@next/bundle-analyzer` y gate automatizado (<250 KB gzip).

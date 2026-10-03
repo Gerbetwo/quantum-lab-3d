@@ -82,7 +82,7 @@ export default function CircuitGrid({
                 'px-1 py-0.5 rounded text-[10px] font-mono transition-all duration-150',
                 s === playhead
                   ? 'bg-cyan/20 text-cyan'
-                  : 'text-slate-500 hover:bg-surface-2',
+                  : 'text-slate-400 hover:bg-surface-2',
               )}
             >
               {s}
