@@ -5,4 +5,8 @@ export { Task1Page } from './Task1Page';
 export { Task2Page } from './Task2Page';
 export { Task3Page } from './Task3Page';
 export { Task4Page } from './Task4Page';
+export { Task5Page } from './Task5Page';
+export { Task6Page } from './Task6Page';
+export { Task7Page } from './Task7Page';
 export { CelebrationPage } from './CelebrationPage';
+export { CommandPalettePage } from './CommandPalettePage';

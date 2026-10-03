@@ -62,5 +62,9 @@ Thumbs.db
 # === Ephemeral phase automation (repo root only) ===
 /script.ts
 /script-*.ts
-
+/script.py
+/script-*.py
+code*.txt
+# Source dump files
+code.txt
 code*.txt

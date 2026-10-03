@@ -157,3 +157,10 @@ src/
 - **Scene lifecycle:** toda escena WebGL pasa por `useThreeScene`. Nunca se instancia `WebGLRenderer` fuera de `createScene`.
 - **Shared geometries:** `cached('key', () => new Geometry())` para geometrias reutilizables. `dispose()` las respeta via `userData.__shared`.
 - **Cookie writes:** siempre via `updateStoredMetrics` o `saveCompletedMission` - nunca `Cookies.set` directo en componentes.
+
+
+## v0.3.0 features
+- **Nuevas Misiones Cuánticas**: Modo de aprendizaje guiado ampliado (misiones 0 a 3).
+- **Persistencia Per-Misión y Exportación JSON**: Guardado local y exportación portátil del estado de la sesión (`.json`).
+- **Auditoría Responsive y Accesibilidad**: Cobertura E2E con Playwright y `@axe-core/playwright` (WCAG 2.1 AA) en viewports 1920, 1280, 768 y 375px.
+- **Control Presupuestario de Bundle**: Medición con `@next/bundle-analyzer` y gate automatizado (<300 KB gzip).

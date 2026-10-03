@@ -35,24 +35,32 @@ interface Props {
   onComplete: () => void;
 }
 
-function createTextSprite(text: string, color: string = '#00f0ff', fontSize: number = 44) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.font = `bold ${fontSize}px "Orbitron", sans-serif, system-ui`;
-    ctx.fillStyle = color;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 10;
-    ctx.fillText(text, 128, 64);
+// Cache de Texturas/Materiales de Sprites para evitar fugas de memoria VRAM
+const spriteMaterialCache = new Map<string, THREE.SpriteMaterial>();
+
+function createTextSprite(text: string, color = '#ffffff', fontSize = 28): THREE.Sprite {
+  const cacheKey = `${text}_${color}_${fontSize}`;
+  let material = spriteMaterialCache.get(cacheKey);
+
+  if (!material) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = color;
+      ctx.font = `Bold ${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 128, 64);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    spriteMaterialCache.set(cacheKey, material);
   }
-  const texture = new THREE.CanvasTexture(canvas);
-  const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
-  const sprite = new THREE.Sprite(spriteMat);
-  sprite.scale.set(0.9, 0.45, 1);
+
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(1.8, 0.9, 1);
   return sprite;
 }
 

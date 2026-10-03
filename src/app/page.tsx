@@ -10,13 +10,19 @@ import {
   getStoredActiveTab,
   saveActiveTab,
 } from "@/lib/cookies";
-import { playButtonClick } from "@/lib/sound";
+import { playButtonClick, isAudioEnabled, setAudioEnabled } from "@/lib/sound";
+import { useFullscreen } from "@/hooks/useFullscreen";
+import CommandPalette, { type Command } from "@/components/CommandPalette";
+import { useRouter } from "next/navigation";
 import { Play, RotateCcw, Loader2 } from "lucide-react";
 
 const Mission1Superposition = lazy(() => import("@/components/missions/Mission1Superposition"));
 const Mission2Entanglement = lazy(() => import("@/components/missions/Mission2Entanglement"));
 const Mission3Decoherence = lazy(() => import("@/components/missions/Mission3Decoherence"));
 const Mission4Applications = lazy(() => import("@/components/missions/Mission4Applications"));
+const Mission5Gates = lazy(() => import("@/components/missions/Mission5Gates"));
+const Mission6Grover = lazy(() => import("@/components/missions/Mission6Grover"));
+const Mission7ErrorCorrection = lazy(() => import("@/components/missions/Mission7ErrorCorrection"));
 
 function MissionLoading() {
   return (
@@ -41,6 +47,12 @@ export default function Home() {
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
   const [celebrationDismissed, setCelebrationDismissed] = useState<boolean>(false);
 
+  // Phase 3: command palette + fullscreen + runtime audio toggle
+  const router = useRouter();
+  const [paletteOpen, setPaletteOpen] = useState<boolean>(false);
+  const [audioOn, setAudioOn] = useState<boolean>(() => isAudioEnabled());
+  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
+
   const timeLeftRef = useRef<number>(timeLeft);
   useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
 
@@ -51,6 +63,17 @@ export default function Home() {
   }, []);
 
   useEffect(() => { saveActiveTab(activeTab); }, [activeTab]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     if (!isStarted || isTimeUp) return;
@@ -70,7 +93,7 @@ export default function Home() {
   const handleMissionComplete = useCallback((missionIndex: number) => {
     const updatedProgress = getStoredProgress();
     setCompletedMissions(updatedProgress);
-    if (missionIndex < 3) setActiveTab(missionIndex + 1);
+    if (missionIndex < 6) setActiveTab(missionIndex + 1);
   }, []);
 
   const handleTabSelect = useCallback((tabIndex: number) => {
@@ -88,11 +111,63 @@ export default function Home() {
   const handleToggleTimer = useCallback(() => { setIsStarted((prev) => !prev); }, []);
   const handleDismissCelebration = useCallback(() => { setCelebrationDismissed(true); }, []);
 
-  const showCelebration = completedMissions.includes(3) && !celebrationDismissed;
+  const showCelebration = completedMissions.includes(6) && !celebrationDismissed;
+
+  const handleToggleAudio = useCallback(() => {
+    const next = !isAudioEnabled();
+    setAudioEnabled(next);
+    setAudioOn(next);
+  }, []);
+
+  const commands: Command[] = React.useMemo(() => {
+    const missionNames = ['Superposicion', 'Entrelazamiento', 'Decoherencia', 'Aplicaciones', 'Compuertas Cuanticas', 'Busqueda de Grover', 'Correccion de Errores'];
+    const cmds: Command[] = missionNames.map((name, i) => ({
+      id: 'goto-mission-' + i,
+      label: 'Ir a Tarea ' + (i + 1) + ': ' + name,
+      keywords: ['mision', 'tarea', 'm' + (i + 1), name.toLowerCase()],
+      category: 'navigation',
+      action: () => handleTabSelect(i),
+    }));
+    cmds.push({
+      id: 'restart',
+      label: 'Reiniciar laboratorio',
+      keywords: ['restart', 'reiniciar', 'reset', 'tiempo'],
+      category: 'control',
+      action: handleRestartLab,
+    });
+    cmds.push({
+      id: 'toggle-audio',
+      label: audioOn ? 'Silenciar audio' : 'Activar audio',
+      keywords: ['audio', 'sound', 'mute', 'silenciar', 'sonido'],
+      category: 'control',
+      action: handleToggleAudio,
+    });
+    cmds.push({
+      id: 'toggle-fullscreen',
+      label: isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa',
+      keywords: ['fullscreen', 'pantalla', 'f11'],
+      category: 'control',
+      action: () => { void toggleFullscreen(); },
+    });
+    cmds.push({
+      id: 'goto-sandbox',
+      label: 'Abrir Sandbox (exploracion libre)',
+      keywords: ['sandbox', 'libre', 'explorar'],
+      category: 'navigation',
+      action: () => router.push('/sandbox'),
+    });
+    return cmds;
+  }, [audioOn, isFullscreen, handleTabSelect, handleRestartLab, handleToggleAudio, toggleFullscreen, router]);
 
   return (
     <main className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-cyan selection:text-slate-950">
-      <Header timeLeft={timeLeft} isRunning={isStarted && !isTimeUp} onToggleTimer={handleToggleTimer} />
+      <Header
+        timeLeft={timeLeft}
+        isRunning={isStarted && !isTimeUp}
+        onToggleTimer={handleToggleTimer}
+        onToggleFullscreen={toggleFullscreen}
+        isFullscreen={isFullscreen}
+      />
 
       {!isStarted ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12 max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-300">
@@ -158,6 +233,24 @@ export default function Home() {
                 onBack={() => handleTabSelect(2)}
               />
             )}
+            {activeTab === 4 && (
+              <Mission5Gates
+                onComplete={() => handleMissionComplete(4)}
+                onBack={() => handleTabSelect(3)}
+              />
+            )}
+            {activeTab === 5 && (
+              <Mission6Grover
+                onComplete={() => handleMissionComplete(5)}
+                onBack={() => handleTabSelect(4)}
+              />
+            )}
+            {activeTab === 6 && (
+              <Mission7ErrorCorrection
+                onComplete={() => handleMissionComplete(6)}
+                onBack={() => handleTabSelect(5)}
+              />
+            )}
           </Suspense>
         </div>
       )}
@@ -165,6 +258,12 @@ export default function Home() {
       {showCelebration && (
         <CelebrationModal onClose={handleDismissCelebration} isOpen={showCelebration} />
       )}
+
+      <CommandPalette
+        isOpen={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        commands={commands}
+      />
     </main>
   );
 }

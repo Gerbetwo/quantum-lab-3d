@@ -1,12 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   isAudioEnabled,
+  setAudioEnabled,
+  toggleAudio,
   playButtonClick,
   playLaserScan,
   playQuantumCollapse,
   playChimeSuccess,
   playDecoherenceAlert,
   __markUserInteracted,
+  __resetAudioOverride,
 } from '@/lib/sound';
 
 describe('Phase 5 - sound.ts full coverage', () => {
@@ -15,6 +18,7 @@ describe('Phase 5 - sound.ts full coverage', () => {
   beforeEach(() => {
     delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
     __markUserInteracted();
+    __resetAudioOverride();
     vi.useFakeTimers();
   });
 
@@ -43,6 +47,36 @@ describe('Phase 5 - sound.ts full coverage', () => {
     });
     it('true when any other string', () => {
       process.env.NEXT_PUBLIC_ENABLE_AUDIO = 'maybe';
+      expect(isAudioEnabled()).toBe(true);
+    });
+  });
+
+  describe('runtime override (Phase 3)', () => {
+    it('setAudioEnabled(true) overrides env=false', () => {
+      process.env.NEXT_PUBLIC_ENABLE_AUDIO = 'false';
+      setAudioEnabled(true);
+      expect(isAudioEnabled()).toBe(true);
+    });
+
+    it('setAudioEnabled(false) overrides env=undefined', () => {
+      delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
+      setAudioEnabled(false);
+      expect(isAudioEnabled()).toBe(false);
+    });
+
+    it('toggleAudio flips and returns the new state', () => {
+      delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
+      expect(isAudioEnabled()).toBe(true);
+      expect(toggleAudio()).toBe(false);
+      expect(isAudioEnabled()).toBe(false);
+      expect(toggleAudio()).toBe(true);
+      expect(isAudioEnabled()).toBe(true);
+    });
+
+    it('__resetAudioOverride restores env-based behavior', () => {
+      setAudioEnabled(false);
+      expect(isAudioEnabled()).toBe(false);
+      __resetAudioOverride();
       expect(isAudioEnabled()).toBe(true);
     });
   });

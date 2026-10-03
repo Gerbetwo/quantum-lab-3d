@@ -182,3 +182,15 @@ npm run test:coverage
 npm run test:visual:update   # primera vez: generar baselines
 npm run test:visual          # comparar contra baselines
 ```
+
+
+## [2026-10-02] Registro Fases 0–10 (v0.3.0 Release)
+- **Fases 0–6**: Refactorización de componentes 3D, optimización R3F y sincronización de estado global.
+- **Fase 7**: Persistencia por misión en cookies y exportación/descarga de sesiones JSON.
+- **Fase 8**: Pruebas e2e responsive (1920/1280/768/375), auditoría de accesibilidad WCAG (`@axe-core/playwright`) y gate de peso de bundle.
+- **Fase 9**: Documentación del sistema (`AGENTS.md`, `README.md` y diario de mantenimiento).
+- **Fase 10**: Tag final de release `v0.3.0-features` y validación de la suite de pruebas.
+
+### Lecciones Aprendidas:
+1. **Compatibilidad Next.js 16 / Webpack Plugins**: Al integrar herramientas de análisis de bundle como `@next/bundle-analyzer`, ejecutar `next build --webpack` o declarar `turbopack: {}` evita conflictos de compilación en proyectos configurados con Turbopack por defecto.
+2. **Posicionamiento de Directivas**: Las directivas de renderizado como `'use client'` deben declararse antes de cualquier sentencia `import` para cumplir el estándar de compilación de RSC.
