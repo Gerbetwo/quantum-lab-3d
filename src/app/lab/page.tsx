@@ -1,6 +1,6 @@
-import type { SceneHandle } from '@/lib/three/createScene';
 'use client';
 
+import type { SceneHandle } from '@/lib/three/createScene';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import LeanLabLayout from '@/components/LeanLabLayout';
 import GatePalette from '@/components/circuit/GatePalette';
