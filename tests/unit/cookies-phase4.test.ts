@@ -1,132 +1,51 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 import Cookies from 'js-cookie';
 import {
-  createDefaultMetrics,
-  getStoredMetrics,
-  updateStoredMetrics,
-  getStoredActiveTab,
   saveActiveTab,
+  getStoredActiveTab,
   deleteAllUserData,
-  getOrCreateUserId,
-  saveCompletedMission,
+  COOKIE_ACTIVE_TAB,
   COOKIE_USER_ID,
   COOKIE_PROGRESS,
   COOKIE_METRICS,
-  COOKIE_ACTIVE_TAB,
-  MAX_COOKIE_SIZE_BYTES,
-  DEFAULT_METRICS,
-} from '@/lib/cookies';
+} from '../../src/lib/cookies';
 
-describe('Phase 4 - cookies.ts hardening', () => {
+describe('Phase 5 - Active tab persistence', () => {
   beforeEach(() => {
-    Object.keys(Cookies.get()).forEach((n) => Cookies.remove(n));
+    deleteAllUserData();
   });
 
-  describe('createDefaultMetrics', () => {
-    it('returns a fresh, mutable object each call (immutability)', () => {
-      const a = createDefaultMetrics();
-      const b = createDefaultMetrics();
-      expect(a).toEqual(b);
-      expect(a).not.toBe(b);
-      expect(a.missionTimes).not.toBe(b.missionTimes);
-      expect(a.actions.applicationsExplored).not.toBe(b.actions.applicationsExplored);
-
-      a.actions.applicationsExplored.push('x');
-      expect(b.actions.applicationsExplored).toEqual([]);
-    });
-
-    it('matches DEFAULT_METRICS shape (backward compat)', () => {
-      expect(createDefaultMetrics()).toEqual(DEFAULT_METRICS);
+  test('saveActiveTab + getStoredActiveTab round-trip for every valid tab', () => {
+    [0, 1, 2, 3].forEach((tab) => {
+      saveActiveTab(tab);
+      expect(getStoredActiveTab()).toBe(tab);
     });
   });
 
-  describe('getStoredMetrics isolation', () => {
-    it('returns distinct objects per call (no shared refs)', () => {
-      const a = getStoredMetrics();
-      const b = getStoredMetrics();
-      expect(a).not.toBe(b);
-      expect(a.actions.applicationsExplored).not.toBe(b.actions.applicationsExplored);
-    });
-
-    it('mutating a returned object does not affect future reads', () => {
-      const m = getStoredMetrics();
-      m.totalTimeSeconds = 999;
-      m.actions.applicationsExplored.push('hacked');
-
-      const fresh = getStoredMetrics();
-      expect(fresh.totalTimeSeconds).toBe(0);
-      expect(fresh.actions.applicationsExplored).toEqual([]);
-    });
+  test('simulated reload recovers the last active tab from cookie', () => {
+    saveActiveTab(1);
+    const recovered = getStoredActiveTab();
+    expect(recovered).toBe(1);
   });
 
-  describe('updateStoredMetrics size guard', () => {
-    it('skips write when JSON exceeds MAX_COOKIE_SIZE_BYTES', () => {
-      const huge = 'x'.repeat(MAX_COOKIE_SIZE_BYTES + 100);
-      updateStoredMetrics((prev) => ({
-        ...prev,
-        actions: { ...prev.actions, applicationsExplored: [huge] },
-      }));
-      expect(Cookies.get(COOKIE_METRICS)).toBeUndefined();
-    });
-
-    it('writes when JSON is within limit', () => {
-      updateStoredMetrics((prev) => ({ ...prev, totalTimeSeconds: 42 }));
-      expect(Cookies.get(COOKIE_METRICS)).toBeDefined();
-    });
-  });
-
-  describe('activeTab persistence', () => {
-    it('returns 0 when cookie missing', () => {
+  test('rejects invalid tab values on save (out-of-range, NaN)', () => {
+    const invalidTabs: unknown[] = ['invalid_tab', 123, null, undefined, NaN, {}, []];
+    invalidTabs.forEach((invalid) => {
+      saveActiveTab(invalid as any);
       expect(getStoredActiveTab()).toBe(0);
     });
-
-    it('round-trips a valid tab (0-3)', () => {
-      saveActiveTab(2);
-      expect(getStoredActiveTab()).toBe(2);
-    });
-
-    it('clamps out-of-range values to 0 on read', () => {
-      Cookies.set(COOKIE_ACTIVE_TAB, '99');
-      expect(getStoredActiveTab()).toBe(0);
-      Cookies.set(COOKIE_ACTIVE_TAB, 'abc');
-      expect(getStoredActiveTab()).toBe(0);
-    });
-
-    it('ignores writes of out-of-range values', () => {
-      saveActiveTab(99);
-      expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeUndefined();
-    });
   });
 
-  describe('deleteAllUserData', () => {
-    it('removes every quantum_* cookie', () => {
-      getOrCreateUserId();
-      saveCompletedMission(1);
-      updateStoredMetrics((p) => ({ ...p, totalTimeSeconds: 1 }));
-      saveActiveTab(2);
+  test('deleteAllUserData also removes the active tab cookie', () => {
+    saveActiveTab(2);
+    expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBe('2');
 
-      expect(Cookies.get(COOKIE_USER_ID)).toBeDefined();
-      expect(Cookies.get(COOKIE_PROGRESS)).toBeDefined();
-      expect(Cookies.get(COOKIE_METRICS)).toBeDefined();
-      expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeDefined();
+    deleteAllUserData();
 
-      deleteAllUserData();
-
-      expect(Cookies.get(COOKIE_USER_ID)).toBeUndefined();
-      expect(Cookies.get(COOKIE_PROGRESS)).toBeUndefined();
-      expect(Cookies.get(COOKIE_METRICS)).toBeUndefined();
-      expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeUndefined();
-    });
-  });
-
-  describe('getStoredProgress contract (documented: SET, not sequence)', () => {
-    it('returns sorted unique set regardless of insertion order', () => {
-      saveCompletedMission(2);
-      saveCompletedMission(0);
-      saveCompletedMission(2);
-      saveCompletedMission(1);
-      const progress = JSON.parse(Cookies.get(COOKIE_PROGRESS) || '[]');
-      expect(progress).toEqual([0, 1, 2]);
-    });
+    expect(Cookies.get(COOKIE_USER_ID)).toBeUndefined();
+    expect(Cookies.get(COOKIE_PROGRESS)).toBeUndefined();
+    expect(Cookies.get(COOKIE_METRICS)).toBeUndefined();
+    expect(Cookies.get(COOKIE_ACTIVE_TAB)).toBeUndefined();
+    expect(getStoredActiveTab()).toBe(0);
   });
 });

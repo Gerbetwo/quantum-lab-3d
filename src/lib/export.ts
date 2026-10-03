@@ -1,19 +1,25 @@
 import {
   getOrCreateUserId,
   getStoredProgress,
-  getStoredMetrics,
   getStoredActiveTab,
+  getStoredMetrics,
   getAllMissionStates,
+  saveMissionState,
+  getMissionState,
+  saveCompletedMission,
+  UserMetrics
 } from './cookies';
+
+export { saveMissionState, getMissionState, saveCompletedMission };
 
 export interface SessionExportData {
   version: string;
   exportedAt: string;
   userId: string;
   progress: number[];
-  metrics: ReturnType<typeof getStoredMetrics>;
+  metrics: UserMetrics;
   activeTab: number;
-  missionState: Record<string, Record<string, unknown>>;
+  missionState: Record<string, any>;
 }
 
 export function exportSessionJSON(): string {
@@ -26,22 +32,18 @@ export function exportSessionJSON(): string {
     activeTab: getStoredActiveTab(),
     missionState: getAllMissionStates(),
   };
-
   return JSON.stringify(data, null, 2);
 }
 
 export function downloadSessionJSON(): void {
-  if (typeof window === 'undefined') return;
-
   const jsonString = exportSessionJSON();
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `quantum-lab-session-${Date.now()}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `quantum-session-${getOrCreateUserId()}.json`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
   URL.revokeObjectURL(url);
 }
