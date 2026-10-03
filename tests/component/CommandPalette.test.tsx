@@ -6,9 +6,9 @@ import CommandPalette, { type Command } from '@/components/CommandPalette';
 
 function makeCommands(handlers = { a: vi.fn(), b: vi.fn(), c: vi.fn() }): Command[] {
   return [
-    { id: 'a', label: 'Ir a Tarea 1', keywords: ['mision', 'superposicion'], action: handlers.a },
-    { id: 'b', label: 'Reiniciar laboratorio', keywords: ['restart', 'reset'], action: handlers.b },
-    { id: 'c', label: 'Pantalla completa', keywords: ['fullscreen'], action: handlers.c },
+    { id: 'a', title: 'Ir a Tarea 1', keywords: ['mision', 'superposicion'], action: handlers.a },
+    { id: 'b', title: 'Reiniciar laboratorio', keywords: ['restart', 'reset'], action: handlers.b },
+    { id: 'c', title: 'Pantalla completa', keywords: ['fullscreen'], action: handlers.c },
   ];
 }
 

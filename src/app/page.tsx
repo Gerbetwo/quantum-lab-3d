@@ -123,35 +123,35 @@ export default function Home() {
     const missionNames = ['Superposicion', 'Entrelazamiento', 'Decoherencia', 'Aplicaciones', 'Compuertas Cuanticas', 'Busqueda de Grover', 'Correccion de Errores'];
     const cmds: Command[] = missionNames.map((name, i) => ({
       id: 'goto-mission-' + i,
-      label: 'Ir a Tarea ' + (i + 1) + ': ' + name,
+      title: 'Ir a Tarea ' + (i + 1) + ': ' + name,
       keywords: ['mision', 'tarea', 'm' + (i + 1), name.toLowerCase()],
       category: 'navigation',
       action: () => handleTabSelect(i),
     }));
     cmds.push({
       id: 'restart',
-      label: 'Reiniciar laboratorio',
+      title: 'Reiniciar laboratorio',
       keywords: ['restart', 'reiniciar', 'reset', 'tiempo'],
       category: 'control',
       action: handleRestartLab,
     });
     cmds.push({
       id: 'toggle-audio',
-      label: audioOn ? 'Silenciar audio' : 'Activar audio',
+      title: audioOn ? 'Silenciar audio' : 'Activar audio',
       keywords: ['audio', 'sound', 'mute', 'silenciar', 'sonido'],
       category: 'control',
       action: handleToggleAudio,
     });
     cmds.push({
       id: 'toggle-fullscreen',
-      label: isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa',
+      title: isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa',
       keywords: ['fullscreen', 'pantalla', 'f11'],
       category: 'control',
       action: () => { void toggleFullscreen(); },
     });
     cmds.push({
       id: 'goto-sandbox',
-      label: 'Abrir Sandbox (exploracion libre)',
+      title: 'Abrir Sandbox (exploracion libre)',
       keywords: ['sandbox', 'libre', 'explorar'],
       category: 'navigation',
       action: () => router.push('/sandbox'),

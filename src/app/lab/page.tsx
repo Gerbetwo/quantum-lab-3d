@@ -27,10 +27,10 @@ import MeasurementParticles, {
 
 type Preset = 'ghz6' | 'teleportation3' | 'qft3';
 
-const PRESETS: Record<Preset, { label: string; factory: () => QuantumCircuit }> = {
-  ghz6: { label: 'GHZ 6-qubit', factory: ghz6Circuit },
-  teleportation3: { label: 'Teleportacion 3-qubit', factory: teleportation3Circuit },
-  qft3: { label: 'QFT 3-qubit', factory: qft3Circuit },
+const PRESETS: Record<Preset, { title: string; factory: () => QuantumCircuit }> = {
+  ghz6: { title: 'GHZ 6-qubit', factory: ghz6Circuit },
+  teleportation3: { title: 'Teleportacion 3-qubit', factory: teleportation3Circuit },
+  qft3: { title: 'QFT 3-qubit', factory: qft3Circuit },
 };
 
 const CONTROLLED: readonly GateType[] = ['CNOT', 'CZ', 'CS', 'CT'];
@@ -121,12 +121,12 @@ export default function LabPage() {
   }, []);
 
   const commands: Command[] = useMemo(() => [
-    { id: 'circuits:run', label: 'Ejecutar circuito completo', keywords: ['run', 'ejecutar', 'simular'], category: 'circuits', action: handleRun },
-    { id: 'circuits:step-next', label: 'Avanzar un paso', keywords: ['step', 'paso', 'next'], category: 'circuits', action: handleStepNext },
-    { id: 'circuits:reset', label: 'Limpiar circuito', keywords: ['reset', 'limpiar', 'clear'], category: 'circuits', action: handleReset },
-    { id: 'circuits:preset-ghz', label: 'Cargar estado GHZ 6-qubit', keywords: ['ghz', 'preset'], category: 'circuits', action: () => loadPreset('ghz6') },
-    { id: 'circuits:preset-teleport', label: 'Cargar teleportacion 3-qubit', keywords: ['teleport', 'preset'], category: 'circuits', action: () => loadPreset('teleportation3') },
-    { id: 'circuits:preset-qft', label: 'Cargar QFT 3-qubit', keywords: ['qft', 'fourier', 'preset'], category: 'circuits', action: () => loadPreset('qft3') },
+    { id: 'circuits:run', title: 'Ejecutar circuito completo', keywords: ['run', 'ejecutar', 'simular'], category: 'circuits', action: handleRun },
+    { id: 'circuits:step-next', title: 'Avanzar un paso', keywords: ['step', 'paso', 'next'], category: 'circuits', action: handleStepNext },
+    { id: 'circuits:reset', title: 'Limpiar circuito', keywords: ['reset', 'limpiar', 'clear'], category: 'circuits', action: handleReset },
+    { id: 'circuits:preset-ghz', title: 'Cargar estado GHZ 6-qubit', keywords: ['ghz', 'preset'], category: 'circuits', action: () => loadPreset('ghz6') },
+    { id: 'circuits:preset-teleport', title: 'Cargar teleportacion 3-qubit', keywords: ['teleport', 'preset'], category: 'circuits', action: () => loadPreset('teleportation3') },
+    { id: 'circuits:preset-qft', title: 'Cargar QFT 3-qubit', keywords: ['qft', 'fourier', 'preset'], category: 'circuits', action: () => loadPreset('qft3') },
   ], [handleRun, handleStepNext, handleReset, loadPreset]);
 
   return (
@@ -177,7 +177,7 @@ export default function LabPage() {
                   onClick={() => loadPreset(k)}
                   className="px-3 py-1.5 text-xs rounded-lg border border-edge hover:bg-surface-1 transition-colors"
                 >
-                  {PRESETS[k].label}
+                  {PRESETS[k].title}
                 </button>
               ))}
             </div>

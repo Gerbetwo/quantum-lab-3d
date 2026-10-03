@@ -2,21 +2,30 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-export interface Command {
-  id: string;
-  label: string;
+export interface CommandItem {
+  id: string | number;
+  title: string;
   keywords?: string[];
-  category?: 'navigation' | 'control' | string;
-  action: () => void;
+  category?: string;
+  action?: () => void;
 }
+
+/** @deprecated Use `CommandItem`. Alias kept for backward compatibility. */
+export type Command = CommandItem;
 
 export interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
-  commands: Command[];
+  commands: CommandItem[];
+  onSelectTab?: (tab: number) => void;
 }
 
-export default function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProps) {
+export default function CommandPalette({
+  isOpen,
+  onClose,
+  commands,
+  onSelectTab,
+}: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -25,13 +34,12 @@ export default function CommandPalette({ isOpen, onClose, commands }: CommandPal
     const q = query.trim().toLowerCase();
     if (!q) return commands;
     return commands.filter((c) => {
-      const inLabel = c.label.toLowerCase().includes(q);
+      const inTitle = c.title.toLowerCase().includes(q);
       const inKeywords = (c.keywords ?? []).some((k) => k.toLowerCase().includes(q));
-      return inLabel || inKeywords;
+      return inTitle || inKeywords;
     });
   }, [commands, query]);
 
-  // Reset query and autofocus when opening.
   useEffect(() => {
     if (!isOpen) return;
     setQuery('');
@@ -40,16 +48,19 @@ export default function CommandPalette({ isOpen, onClose, commands }: CommandPal
     return () => clearTimeout(id);
   }, [isOpen]);
 
-  // Keep the selection in range when the filtered list changes.
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
 
   if (!isOpen) return null;
 
-  const execute = (cmd: Command) => {
+  const execute = (cmd: CommandItem) => {
     onClose();
-    cmd.action();
+    if (cmd.action) {
+      cmd.action();
+    } else if (typeof cmd.id === 'number' && onSelectTab) {
+      onSelectTab(cmd.id);
+    }
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -126,7 +137,7 @@ export default function CommandPalette({ isOpen, onClose, commands }: CommandPal
                   (i === selectedIndex ? 'bg-cyan/15 text-cyan' : 'text-slate-300')
                 }
               >
-                {c.label}
+                {c.title}
               </li>
             ))
           )}
