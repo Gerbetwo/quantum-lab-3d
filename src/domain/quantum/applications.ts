@@ -1,14 +1,24 @@
-/**
- * Application Simulation & Deduplication Helpers
- */
+export interface ShorFactorResult {
+  p: number;
+  q: number;
+  totalTimeMs: number;
+}
 
-export function formatShorResult(timeSeconds: number = 0.42): string {
-  return `¡Clave RSA factorizada en ${timeSeconds} segundos! (Algoritmo de Shor)`;
+export function formatShorResult(timeOrParam: any): string {
+  const timeStr = typeof timeOrParam === 'number' ? timeOrParam.toString() : '0.42';
+  return `Algoritmo de Shor completado en ${timeStr} segundos`;
 }
 
 export function updateExploredApplications(
-  current: string[],
-  newApps: string[]
+  currentList: string[],
+  newApps: string | string[]
 ): string[] {
-  return Array.from(new Set([...current, ...newApps]));
+  const toAdd = Array.isArray(newApps) ? newApps : [newApps];
+  const combined = [...currentList];
+  for (const item of toAdd) {
+    if (typeof item === 'string' && !combined.includes(item)) {
+      combined.push(item);
+    }
+  }
+  return combined;
 }

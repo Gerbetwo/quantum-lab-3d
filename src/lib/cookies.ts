@@ -1,88 +1,105 @@
 import Cookies from 'js-cookie';
 
-export const COOKIE_USER_ID = 'quantum_user_id';
-export const COOKIE_PROGRESS = 'quantum_lab_progress';
-export const COOKIE_METRICS = 'quantum_lab_metrics';
-export const COOKIE_ACTIVE_TAB = 'quantum_lab_active_tab';
+export const COOKIE_USER_ID = 'ql_user_id';
+export const COOKIE_PROGRESS = 'ql_progress';
+export const COOKIE_METRICS = 'ql_metrics';
+export const COOKIE_ACTIVE_TAB = 'ql_active_tab';
+export const COOKIE_MISSION_STATE = 'ql_mission_state';
 
-export const DEFAULT_COOKIE_OPTIONS: Cookies.CookieAttributes = {
-  expires: 30,
-  sameSite: 'lax',
+export const USER_ID_COOKIE_KEY = COOKIE_USER_ID;
+export const PROGRESS_COOKIE_KEY = COOKIE_PROGRESS;
+export const METRICS_COOKIE_KEY = COOKIE_METRICS;
+export const ACTIVE_TAB_COOKIE_KEY = COOKIE_ACTIVE_TAB;
+
+export const MAX_COOKIE_SIZE_BYTES = 3000;
+
+export const TAB_INDEX_MAP: Record<string, number> = {
+  superposition: 0,
+  entanglement: 1,
+  decoherence: 2,
+  applications: 3,
 };
 
-/** Cookies are capped at ~4 KB. Keep a safe margin. */
-export const MAX_COOKIE_SIZE_BYTES = 3072;
+export const TAB_NAME_MAP: Record<number, string> = {
+  0: 'superposition',
+  1: 'entanglement',
+  2: 'decoherence',
+  3: 'applications',
+};
+
+export const VALID_TABS = [0, 1, 2, 3];
+
+export interface MissionTimes {
+  superposition: number;
+  entanglement: number;
+  decoherence: number;
+  applications: number;
+}
+
+export interface UserActions {
+  superpositionMeasurements: number;
+  entanglementMeasurements: number;
+  decoherenceTested: boolean;
+  applicationsExplored: string[];
+}
 
 export interface UserMetrics {
   totalTimeSeconds: number;
-  missionTimes: {
-    superposition: number;
-    entanglement: number;
-    decoherence: number;
-    applications: number;
-  };
-  actions: {
-    superpositionMeasurements: number;
-    entanglementMeasurements: number;
-    decoherenceTested: boolean;
-    applicationsExplored: string[];
-  };
+  completedMissions?: number[];
+  missionTimes: MissionTimes;
+  actions: UserActions;
+  [key: string]: any;
 }
 
-/** Frozen template. Never return it directly; use createDefaultMetrics(). */
-export const DEFAULT_METRICS: Readonly<UserMetrics> = Object.freeze({
-  totalTimeSeconds: 0,
-  missionTimes: Object.freeze({
-    superposition: 0,
-    entanglement: 0,
-    decoherence: 0,
-    applications: 0,
-  }),
-  actions: Object.freeze({
-    superpositionMeasurements: 0,
-    entanglementMeasurements: 0,
-    decoherenceTested: false,
-    applicationsExplored: Object.freeze([]) as unknown as string[],
-  }),
-}) as Readonly<UserMetrics>;
-
-/** Returns a fresh, mutable default metrics object. */
 export function createDefaultMetrics(): UserMetrics {
   return {
-    totalTimeSeconds: DEFAULT_METRICS.totalTimeSeconds,
-    missionTimes: { ...DEFAULT_METRICS.missionTimes },
+    totalTimeSeconds: 0,
+    missionTimes: {
+      superposition: 0,
+      entanglement: 0,
+      decoherence: 0,
+      applications: 0,
+    },
     actions: {
-      ...DEFAULT_METRICS.actions,
-      applicationsExplored: [...DEFAULT_METRICS.actions.applicationsExplored],
+      superpositionMeasurements: 0,
+      entanglementMeasurements: 0,
+      decoherenceTested: false,
+      applicationsExplored: [],
     },
   };
 }
 
-export function getOrCreateUserId(): string {
-  let userId = Cookies.get(COOKIE_USER_ID);
-  if (!userId) {
-    const randomHex = Math.floor(Math.random() * 0xffff)
-      .toString(16)
-      .padStart(4, '0')
-      .toUpperCase();
-    userId = `QL-${randomHex}`;
-    Cookies.set(COOKIE_USER_ID, userId, DEFAULT_COOKIE_OPTIONS);
+export const DEFAULT_METRICS = createDefaultMetrics();
+
+function safeSetCookie(key: string, value: string): void {
+  if (value.length > MAX_COOKIE_SIZE_BYTES) {
+    return;
   }
-  return userId;
+  Cookies.set(key, value, { expires: 365, sameSite: 'lax' });
 }
 
-/**
- * Returns the set of completed mission indices (0-3), sorted ascending.
- * It is a SET, not a sequence: e.g. re-completing mission 1 does not change
- * the array order, and duplicates are impossible by construction.
- */
+export function getOrCreateUserId(): string {
+  const existing = Cookies.get(COOKIE_USER_ID);
+  if (existing) {
+    return existing;
+  }
+  const randomHex = Math.floor(Math.random() * 0xffff)
+    .toString(16)
+    .toUpperCase()
+    .padStart(4, '0');
+  const newUserId = `QL-${randomHex}`;
+  safeSetCookie(COOKIE_USER_ID, newUserId);
+  return newUserId;
+}
+
 export function getStoredProgress(): number[] {
-  const stored = Cookies.get(COOKIE_PROGRESS);
-  if (!stored) return [0];
+  const raw = Cookies.get(COOKIE_PROGRESS);
+  if (!raw) return [0];
   try {
-    const parsed = JSON.parse(stored);
-    if (Array.isArray(parsed) && parsed.every((n) => typeof n === 'number')) {
-      return parsed.length > 0 ? Array.from(new Set(parsed)).sort((a, b) => a - b) : [0];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed.every((item) => typeof item === 'number')) {
+      const uniqueSorted = Array.from(new Set(parsed as number[])).sort((a, b) => a - b);
+      return uniqueSorted.length > 0 ? uniqueSorted : [0];
     }
     return [0];
   } catch {
@@ -90,97 +107,159 @@ export function getStoredProgress(): number[] {
   }
 }
 
-export function saveCompletedMission(missionIndex: number): number[] {
-  const currentProgress = getStoredProgress();
-  const updated = Array.from(new Set([...currentProgress, missionIndex])).sort((a, b) => a - b);
-  Cookies.set(COOKIE_PROGRESS, JSON.stringify(updated), DEFAULT_COOKIE_OPTIONS);
-  return updated;
+export function saveCompletedMission(missionIndex: number): void {
+  if (typeof missionIndex !== 'number' || isNaN(missionIndex) || missionIndex < 0 || missionIndex > 3) {
+    return;
+  }
+  const current = getStoredProgress();
+  if (!current.includes(missionIndex)) {
+    const updated = [...current, missionIndex].sort((a, b) => a - b);
+    safeSetCookie(COOKIE_PROGRESS, JSON.stringify(updated));
+  }
 }
 
 export function getStoredMetrics(): UserMetrics {
-  const stored = Cookies.get(COOKIE_METRICS);
-  if (!stored) return createDefaultMetrics();
+  const raw = Cookies.get(COOKIE_METRICS);
+  const defaults = createDefaultMetrics();
+  if (!raw) return defaults;
   try {
-    const parsed = JSON.parse(stored);
-    return {
-      totalTimeSeconds: typeof parsed.totalTimeSeconds === 'number' ? parsed.totalTimeSeconds : 0,
-      missionTimes: {
-        superposition: parsed.missionTimes?.superposition ?? 0,
-        entanglement: parsed.missionTimes?.entanglement ?? 0,
-        decoherence: parsed.missionTimes?.decoherence ?? 0,
-        applications: parsed.missionTimes?.applications ?? 0,
-      },
-      actions: {
-        superpositionMeasurements: parsed.actions?.superpositionMeasurements ?? 0,
-        entanglementMeasurements: parsed.actions?.entanglementMeasurements ?? 0,
-        decoherenceTested: Boolean(parsed.actions?.decoherenceTested),
-        applicationsExplored: Array.isArray(parsed.actions?.applicationsExplored)
-          ? parsed.actions.applicationsExplored
-          : [],
-      },
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return defaults;
+    }
+
+    const missionTimes: MissionTimes = {
+      superposition: typeof parsed.missionTimes?.superposition === 'number' ? parsed.missionTimes.superposition : 0,
+      entanglement: typeof parsed.missionTimes?.entanglement === 'number' ? parsed.missionTimes.entanglement : 0,
+      decoherence: typeof parsed.missionTimes?.decoherence === 'number' ? parsed.missionTimes.decoherence : 0,
+      applications: typeof parsed.missionTimes?.applications === 'number' ? parsed.missionTimes.applications : 0,
     };
+
+    const actions: UserActions = {
+      superpositionMeasurements: typeof parsed.actions?.superpositionMeasurements === 'number' ? parsed.actions.superpositionMeasurements : 0,
+      entanglementMeasurements: typeof parsed.actions?.entanglementMeasurements === 'number' ? parsed.actions.entanglementMeasurements : 0,
+      decoherenceTested: typeof parsed.actions?.decoherenceTested === 'boolean' ? parsed.actions.decoherenceTested : false,
+      applicationsExplored: Array.isArray(parsed.actions?.applicationsExplored) ? parsed.actions.applicationsExplored : [],
+    };
+
+    const res: UserMetrics = {
+      totalTimeSeconds: typeof parsed.totalTimeSeconds === 'number' ? parsed.totalTimeSeconds : 0,
+      missionTimes,
+      actions,
+    };
+
+    if (Array.isArray(parsed.completedMissions)) {
+      res.completedMissions = parsed.completedMissions;
+    }
+
+    return res;
   } catch {
-    return createDefaultMetrics();
+    return defaults;
   }
 }
 
 export function updateStoredMetrics(
-  updater: (prev: UserMetrics) => UserMetrics
-): UserMetrics {
+  updater: Partial<UserMetrics> | ((prev: UserMetrics) => Partial<UserMetrics>)
+): void {
   const current = getStoredMetrics();
-  const updated = updater(current);
-  const json = JSON.stringify(updated);
-  if (json.length > MAX_COOKIE_SIZE_BYTES) {
-    if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-      console.warn(
-        `[cookies] metrics payload (${json.length} bytes) exceeds limit (${MAX_COOKIE_SIZE_BYTES}); skipping write`
-      );
-    }
-    return updated;
-  }
-  Cookies.set(COOKIE_METRICS, json, DEFAULT_COOKIE_OPTIONS);
-  return updated;
-}
+  const partial = typeof updater === 'function' ? updater(current) : updater;
 
-export function incrementActiveMissionTime(missionIndex: number): UserMetrics {
-  const missionKeys: Array<keyof UserMetrics['missionTimes']> = [
-    'superposition',
-    'entanglement',
-    'decoherence',
-    'applications',
-  ];
-  const key = missionKeys[missionIndex] || 'superposition';
-
-  return updateStoredMetrics((prev) => ({
-    ...prev,
-    totalTimeSeconds: prev.totalTimeSeconds + 1,
+  const updated: UserMetrics = {
+    ...current,
+    ...partial,
+    totalTimeSeconds: partial.totalTimeSeconds !== undefined ? partial.totalTimeSeconds : current.totalTimeSeconds,
     missionTimes: {
-      ...prev.missionTimes,
-      [key]: (prev.missionTimes[key] || 0) + 1,
+      ...current.missionTimes,
+      ...(partial.missionTimes || {}),
     },
-  }));
+    actions: {
+      ...current.actions,
+      ...(partial.actions || {}),
+    },
+  };
+  if (partial.completedMissions || current.completedMissions) {
+    updated.completedMissions = partial.completedMissions || current.completedMissions;
+  }
+  safeSetCookie(COOKIE_METRICS, JSON.stringify(updated));
 }
 
-// ---------------------------------------------------------------------------
-// Active tab persistence
-// ---------------------------------------------------------------------------
+export function incrementActiveMissionTime(tabInput: number | string, deltaSeconds: number = 1): void {
+  let tabKey: keyof MissionTimes | null = null;
+  if (typeof tabInput === 'number' && tabInput >= 0 && tabInput <= 3) {
+    tabKey = TAB_NAME_MAP[tabInput] as keyof MissionTimes;
+  } else if (typeof tabInput === 'string' && tabInput in TAB_INDEX_MAP) {
+    tabKey = tabInput as keyof MissionTimes;
+  }
+
+  if (!tabKey) return;
+
+  const metrics = getStoredMetrics();
+  const currentMissionTime = metrics.missionTimes[tabKey] || 0;
+  updateStoredMetrics({
+    totalTimeSeconds: metrics.totalTimeSeconds + deltaSeconds,
+    missionTimes: {
+      ...metrics.missionTimes,
+      [tabKey]: currentMissionTime + deltaSeconds,
+    },
+  });
+}
 
 export function getStoredActiveTab(): number {
-  const stored = Cookies.get(COOKIE_ACTIVE_TAB);
-  if (!stored) return 0;
-  const n = parseInt(stored, 10);
-  if (!Number.isFinite(n) || n < 0 || n > 3) return 0;
-  return n;
+  const val = Cookies.get(COOKIE_ACTIVE_TAB);
+  if (val === undefined || val === null) return 0;
+  const parsedNum = Number(val);
+  if (!isNaN(parsedNum) && parsedNum >= 0 && parsedNum <= 3) {
+    return parsedNum;
+  }
+  if (typeof val === 'string' && val in TAB_INDEX_MAP) {
+    return TAB_INDEX_MAP[val];
+  }
+  return 0;
 }
 
-export function saveActiveTab(tab: number): void {
-  if (!Number.isFinite(tab) || tab < 0 || tab > 3) return;
-  Cookies.set(COOKIE_ACTIVE_TAB, String(tab), DEFAULT_COOKIE_OPTIONS);
+export function saveActiveTab(tab: number | string): void {
+  let numericTab: number | null = null;
+  if (typeof tab === 'number' && tab >= 0 && tab <= 3) {
+    numericTab = tab;
+  } else if (typeof tab === 'string' && tab in TAB_INDEX_MAP) {
+    numericTab = TAB_INDEX_MAP[tab];
+  }
+
+  if (numericTab === null || isNaN(numericTab)) return;
+  safeSetCookie(COOKIE_ACTIVE_TAB, String(numericTab));
 }
 
-// ---------------------------------------------------------------------------
-// GDPR / right to erasure
-// ---------------------------------------------------------------------------
+export function getAllMissionStates(): Record<string, any> {
+  const raw = Cookies.get(COOKIE_MISSION_STATE);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+export function getMissionState(missionIndex: number): Record<string, any> | null {
+  const all = getAllMissionStates();
+  return all[missionIndex] !== undefined ? all[missionIndex] : null;
+}
+
+export function saveMissionState(missionIndex: number, state: Record<string, any>): void {
+  const currentAll = getAllMissionStates();
+  const updatedAll = {
+    ...currentAll,
+    [missionIndex]: state,
+  };
+  const serialized = JSON.stringify(updatedAll);
+  if (serialized.length > MAX_COOKIE_SIZE_BYTES) {
+    return;
+  }
+  safeSetCookie(COOKIE_MISSION_STATE, serialized);
+}
 
 export function deleteAllUserData(): void {
   Cookies.remove(COOKIE_USER_ID);
@@ -188,59 +267,4 @@ export function deleteAllUserData(): void {
   Cookies.remove(COOKIE_METRICS);
   Cookies.remove(COOKIE_ACTIVE_TAB);
   Cookies.remove(COOKIE_MISSION_STATE);
-}
-
-export const COOKIE_MISSION_STATE = 'quantum_mission_state';
-
-export interface MissionStateMap {
-  0: Record<string, unknown>;
-  1: Record<string, unknown>;
-  2: Record<string, unknown>;
-  3: Record<string, unknown>;
-  [key: number]: Record<string, unknown>;
-}
-
-export function getAllMissionStates(): Record<string, Record<string, unknown>> {
-  if (typeof window === 'undefined') return {};
-  const raw = Cookies.get(COOKIE_MISSION_STATE);
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-export function getMissionState<K extends keyof MissionStateMap>(mission: K): MissionStateMap[K] | null {
-  const allStates = getAllMissionStates();
-  const state = allStates[String(mission)];
-  return (state as MissionStateMap[K]) ?? null;
-}
-
-export function saveMissionState<K extends keyof MissionStateMap>(
-  mission: K,
-  state: MissionStateMap[K]
-): void {
-  if (typeof window === 'undefined') return;
-  const currentStates = getAllMissionStates();
-  const updatedStates = {
-    ...currentStates,
-    [String(mission)]: state,
-  };
-
-  const serialized = JSON.stringify(updatedStates);
-  const sizeBytes = new Blob([serialized]).size;
-
-  if (sizeBytes > MAX_COOKIE_SIZE_BYTES) {
-    console.warn(
-      `[saveMissionState] Límite de tamaño de cookie excedido: ${sizeBytes} bytes > ${MAX_COOKIE_SIZE_BYTES} bytes`
-    );
-    return;
-  }
-
-  Cookies.set(COOKIE_MISSION_STATE, serialized, {
-    expires: 365,
-    sameSite: 'lax',
-  });
 }

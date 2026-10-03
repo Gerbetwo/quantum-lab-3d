@@ -176,7 +176,7 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
   const classicalCost = classicalExpectedTrials(N);
 
   return (
-    <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
+    <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-teal-400 px-2.5 py-1 rounded-md bg-teal-500/10 border border-teal-500/30">
@@ -217,7 +217,7 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
               Grover lo logra en aproximadamente sqrt(N) iteraciones cuanticas.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full  text-left">
             <div className="p-5 rounded-2xl bg-slate-950/80 border border-teal-500/40">
               <div className="font-orbitron font-bold text-teal-400 text-lg mb-1">Oracle</div>
               <p className="text-xs text-slate-300">Marca internamente el elemento buscado sin revelarlo.</p>
@@ -242,7 +242,7 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
               Clasico vs Cuantico
             </h2>
           </div>
-          <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="w-full  grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-6 rounded-2xl bg-slate-950/80 border border-slate-800">
               <div className="text-xs font-mono text-slate-400 mb-1">Supercomputador Clasico</div>
               <div className="text-3xl font-orbitron font-bold text-rose-400">N / 2</div>
@@ -274,7 +274,7 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
               {step === 2 ? 'Iteracion Unica (N=4)' : 'Escalando el Algoritmo'}
             </h2>
           </div>
-          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl flex flex-col items-center">
+          <div className="w-full  p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl flex flex-col items-center">
             <div
               ref={containerRef}
               role="img"

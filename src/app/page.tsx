@@ -212,7 +212,7 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-6xl mx-auto w-full">
+        <div className="flex-1 flex flex-col px-2 sm:px-4 py-4 mx-auto w-full">
           <Suspense fallback={<MissionLoading />}>
             {activeTab === 0 && <Mission1Superposition onComplete={() => handleMissionComplete(0)} />}
             {activeTab === 1 && (

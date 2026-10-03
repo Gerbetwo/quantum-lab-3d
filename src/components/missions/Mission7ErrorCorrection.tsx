@@ -151,7 +151,7 @@ export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
   const decodedBit = bitFlipDecode(encoded);
 
   return (
-    <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
+    <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-orange-400 px-2.5 py-1 rounded-md bg-orange-500/10 border border-orange-500/30">
@@ -192,7 +192,7 @@ export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
               El codigo de repeticion de 3 qubits triplica el dato y corrige errores individuales por votacion mayoritaria.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full  text-left">
             <div className="p-5 rounded-2xl bg-slate-950/80 border border-orange-500/40">
               <div className="font-orbitron font-bold text-orange-400 text-lg mb-1">Redundancia</div>
               <p className="text-xs text-slate-300">En lugar de 1 qubit, usamos 3. Si uno falla, los otros dos dan la respuesta.</p>
@@ -229,7 +229,7 @@ export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
             </p>
           </div>
 
-          <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl flex flex-col items-center">
+          <div className="w-full p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl flex flex-col items-center">
             <div
               ref={containerRef}
               role="img"
