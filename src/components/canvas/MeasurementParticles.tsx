@@ -35,7 +35,7 @@ const MeasurementParticles = forwardRef<MeasurementParticlesHandle, MeasurementP
       const pool = createParticlePool(maxInstances);
       poolRef.current = pool;
       handle.add(pool.mesh, 'measurement-particles');
-      const detach = handle.onFrame((_elapsed, dt) => {
+      const detach = handle.onFrame((_elapsed: number, dt: number) => {
         tick(pool, Math.min(0.05, dt));
       });
       return () => {

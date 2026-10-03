@@ -1,185 +1,116 @@
 import * as THREE from 'three';
 
-export interface SceneConfig {
-  width: number;
-  height: number;
-  cameraPos: [number, number, number];
-  cameraLookAt?: [number, number, number];
-  fov?: number;
-  near?: number;
-  far?: number;
-  pixelRatioCap?: number;
-  /** When true, the canvas follows the container width and derives height from `aspect`. */
-  viewportRelative?: boolean;
-  /** width / height ratio used with viewportRelative. Default 16/10. */
-  aspect?: number;
-}
-
 export interface SceneHandle {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
-  add(obj: THREE.Object3D, id?: string): void;
-  /** Toggle visibility of a group registered via add(obj, id). */
-  setVisible(id: string, visible: boolean): void;
-  onFrame(cb: (elapsed: number, delta: number) => void): () => void;
-  dispose(): void;
+  add: (obj: THREE.Object3D, id?: string) => void;
+  onFrame: (cb: (elapsed: number, dt: number) => void) => () => void;
+  setVisible?: (visible: boolean) => void;
+  dispose?: () => void;
 }
 
-const SHARED_CACHE = new Map<string, unknown>();
+const resourceCache = new Map<string, THREE.BufferGeometry | THREE.Material>();
+const spriteMaterialCache = new Map<string, THREE.SpriteMaterial>();
 
-/**
- * Returns a process-wide cached instance for the given key.
- * The instance is marked with userData.__shared so that createScene.dispose()
- * does NOT dispose it (reusable across scene lifecycles).
- */
-export function cached<T extends { userData: Record<string, unknown> }>(
-  key: string,
-  factory: () => T
-): T {
-  const existing = SHARED_CACHE.get(key) as T | undefined;
-  if (existing) return existing;
-  const inst = factory();
-  inst.userData = { ...inst.userData, __shared: true };
-  SHARED_CACHE.set(key, inst);
-  return inst;
+export function cached<T extends THREE.BufferGeometry | THREE.Material>(key: string, fn: () => T): T {
+  if (!resourceCache.has(key)) {
+    const item = fn();
+    item.userData = item.userData || {};
+    item.userData.__shared = true;
+    resourceCache.set(key, item);
+  }
+  return resourceCache.get(key) as T;
+}
+
+export function clearResourceCache(): void {
+  resourceCache.forEach((resource) => resource.dispose());
+  resourceCache.clear();
+}
+
+export function clearSpriteMaterialCache(): void {
+  spriteMaterialCache.forEach((mat) => {
+    if (mat.map) mat.map.dispose();
+    mat.dispose();
+  });
+  spriteMaterialCache.clear();
+}
+
+export function createTextSprite(
+  text: string,
+  colorOrOptions?: string | { color?: string; fontSize?: number },
+  fontSizeParam?: number
+): THREE.Sprite {
+  let color = '#ffffff';
+  let fontSize = 28;
+
+  if (typeof colorOrOptions === 'string') {
+    color = colorOrOptions;
+    if (typeof fontSizeParam === 'number') fontSize = fontSizeParam;
+  } else if (typeof colorOrOptions === 'object' && colorOrOptions !== null) {
+    if (colorOrOptions.color) color = colorOrOptions.color;
+    if (colorOrOptions.fontSize) fontSize = colorOrOptions.fontSize;
+  }
+
+  const cacheKey = `${text}_${color}_${fontSize}`;
+  let material = spriteMaterialCache.get(cacheKey);
+
+  if (!material) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = color;
+      ctx.font = `Bold ${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 128, 64);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    spriteMaterialCache.set(cacheKey, material);
+  }
+
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(1.8, 0.9, 1);
+  return sprite;
+}
+
+export function disposeResource(resource: { dispose?: () => void; userData?: Record<string, any> } | null | undefined): void {
+  if (resource && typeof resource.dispose === 'function') {
+    if (resource.userData?.__shared) {
+      return;
+    }
+    resource.dispose();
+  }
+}
+
+export function setupBaseScene(container: HTMLElement) {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+  let renderer: THREE.WebGLRenderer | null = null;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+  } catch {
+    // Entorno JSDOM
+  }
+
+  const cleanup = () => {
+    if (renderer) {
+      renderer.dispose();
+      if (container && container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+    }
+  };
+
+  return { scene, camera, renderer, cleanup };
 }
 
 export function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-export function createScene(container: HTMLElement, config: SceneConfig): SceneHandle {
-  const {
-    width: initialWidth,
-    height,
-    cameraPos,
-    cameraLookAt = [0, 0, 0],
-    fov = 45,
-    near = 0.1,
-    far = 100,
-    pixelRatioCap = 2,
-    viewportRelative = false,
-    aspect = 16 / 10,
-  } = config;
-
-  const computeSize = (): { w: number; h: number } => {
-    if (viewportRelative) {
-      const w = container.clientWidth || initialWidth || 600;
-      return { w, h: w / aspect };
-    }
-    const w = initialWidth || container.clientWidth || 600;
-    return { w, h: height };
-  };
-
-  let { w: vpWidth, h: vpHeight } = computeSize();
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(fov, vpWidth / vpHeight, near, far);
-  camera.position.set(cameraPos[0], cameraPos[1], cameraPos[2]);
-  camera.lookAt(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(vpWidth, vpHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioCap));
-  container.innerHTML = '';
-  container.appendChild(renderer.domElement);
-
-  const frameCallbacks = new Set<(elapsed: number, delta: number) => void>();
-  let disposed = false;
-  const startedAt = performance.now();
-  let lastTime = startedAt;
-
-  const loop = () => {
-    if (disposed) return;
-    if (typeof document !== 'undefined' && document.hidden) return;
-    const now = performance.now();
-    const delta = (now - lastTime) / 1000;
-    lastTime = now;
-    const elapsed = (now - startedAt) / 1000;
-    for (const cb of frameCallbacks) cb(elapsed, delta);
-    renderer.render(scene, camera);
-  };
-  renderer.setAnimationLoop(loop);
-
-  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
-
-  const applyResize = () => {
-    if (disposed) return;
-    const { w, h } = computeSize();
-    if (w === 0 || h === 0) return;
-    vpWidth = w;
-    vpHeight = h;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
-  };
-
-  const onResize = () => {
-    if (resizeTimer) clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(applyResize, 120);
-  };
-
-  const resizeObserver = viewportRelative && typeof ResizeObserver !== 'undefined'
-    ? new ResizeObserver(onResize)
-    : null;
-  if (resizeObserver) {
-    resizeObserver.observe(container);
-  } else {
-    window.addEventListener('resize', onResize);
-  }
-
-  const disposeResource = (obj: unknown) => {
-    if (!obj) return;
-    const anyObj = obj as { userData?: Record<string, unknown>; dispose?: () => void };
-    if (anyObj.userData?.__shared === true) return;
-    anyObj.dispose?.();
-  };
-
-  const groups = new Map<string, THREE.Object3D>();
-
-  const handle: SceneHandle = {
-    scene,
-    camera,
-    renderer,
-    add(obj, id) {
-      scene.add(obj);
-      if (id) groups.set(id, obj);
-    },
-    setVisible(id, visible) {
-      const g = groups.get(id);
-      if (g) g.visible = visible;
-    },
-    onFrame(cb) {
-      frameCallbacks.add(cb);
-      return () => { frameCallbacks.delete(cb); };
-    },
-    dispose() {
-      if (disposed) return;
-      disposed = true;
-      renderer.setAnimationLoop(null);
-      if (resizeObserver) resizeObserver.disconnect();
-      else window.removeEventListener('resize', onResize);
-      if (resizeTimer) clearTimeout(resizeTimer);
-      groups.clear();
-      frameCallbacks.clear();
-      scene.traverse((obj) => {
-        const anyObj = obj as unknown as {
-          geometry?: unknown;
-          material?: unknown;
-        };
-        disposeResource(anyObj.geometry);
-        const mat = anyObj.material;
-        if (Array.isArray(mat)) mat.forEach(disposeResource);
-        else disposeResource(mat);
-      });
-      renderer.dispose();
-      if (renderer.domElement.parentNode === container) {
-        container.removeChild(renderer.domElement);
-      }
-    },
-  };
-
-  return handle;
 }

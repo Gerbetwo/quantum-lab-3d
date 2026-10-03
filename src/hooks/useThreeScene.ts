@@ -1,65 +1,94 @@
-'use client';
+import { useEffect } from 'react';
+import * as THREE from 'three';
 
-import { useEffect, useRef, type RefObject, type MutableRefObject } from 'react';
-import {
-  createScene,
-  type SceneConfig,
-  type SceneHandle,
-} from '@/lib/three/createScene';
-
-export interface UseThreeSceneOptions extends SceneConfig {
-  /**
-   * @deprecated Since v0.3.0. Prefer stable group visibility via handle.setVisible
-   * or direct .visible toggling on refs. Kept for backward compatibility.
-   */
-  recreateOn?: unknown;
-  onSetup?: (handle: SceneHandle) => void | (() => void);
+interface UseThreeSceneOptions {
+  width?: number;
+  height?: number;
+  viewportRelative?: boolean;
+  aspect?: number;
+  cameraPos?: [number, number, number];
+  cameraLookAt?: [number, number, number];
+  recreateOn?: string;
+  onSetup?: (handle: {
+    scene: THREE.Scene;
+    camera: THREE.PerspectiveCamera;
+    renderer: THREE.WebGLRenderer;
+    add: (...objs: THREE.Object3D[]) => void;
+    onFrame: (cb: (t: number, dt: number) => void) => void;
+  }) => (() => void) | void;
 }
 
 export function useThreeScene(
-  containerRef: RefObject<HTMLElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   options: UseThreeSceneOptions
-): MutableRefObject<SceneHandle | null> {
-  const handleRef = useRef<SceneHandle | null>(null);
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
-
-  const recreateOn = options.recreateOn;
+) {
+  const {
+    width = 600,
+    height = 400,
+    cameraPos = [0, 0, 5],
+    cameraLookAt = [0, 0, 0],
+    recreateOn,
+    onSetup,
+  } = options;
 
   useEffect(() => {
+    if (!containerRef.current) return;
+
+    let renderer: THREE.WebGLRenderer | null = null;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch {
+      // Entorno de prueba JSDOM sin contexto WebGL real
+      return;
+    }
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    camera.position.set(...cameraPos);
+    camera.lookAt(...cameraLookAt);
+
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2));
+
     const container = containerRef.current;
-    if (!container) return;
+    container.innerHTML = '';
+    container.appendChild(renderer.domElement);
 
-    const opts = optionsRef.current;
-    const handle = createScene(container, {
-      width: container.clientWidth || opts.width,
-      height: opts.height,
-      cameraPos: opts.cameraPos,
-      cameraLookAt: opts.cameraLookAt,
-      fov: opts.fov,
-      near: opts.near,
-      far: opts.far,
-      pixelRatioCap: opts.pixelRatioCap,
-      viewportRelative: opts.viewportRelative,
-      aspect: opts.aspect,
-    });
+    const frameCallbacks: Array<(t: number, dt: number) => void> = [];
+    let cleanupSetup: (() => void) | void;
 
-    handleRef.current = handle;
-    const setupCleanup = optionsRef.current.onSetup?.(handle);
+    if (onSetup) {
+      cleanupSetup = onSetup({
+        scene,
+        camera,
+        renderer,
+        add: (...objs) => scene.add(...objs),
+        onFrame: (cb) => frameCallbacks.push(cb),
+      });
+    }
+
+    let animId: number;
+    let lastTime = performance.now();
+
+    const animate = (time: number) => {
+      const dt = (time - lastTime) / 1000;
+      lastTime = time;
+      frameCallbacks.forEach((cb) => cb(time, dt));
+      if (renderer) renderer.render(scene, camera);
+      animId = requestAnimationFrame(animate);
+    };
+
+    animId = requestAnimationFrame(animate);
 
     return () => {
-      if (typeof setupCleanup === 'function') {
-        try {
-          setupCleanup();
-        } catch {
-          /* ignore */
+      cancelAnimationFrame(animId);
+      if (cleanupSetup) cleanupSetup();
+      if (renderer) {
+        renderer.dispose();
+        if (container && container.contains(renderer.domElement)) {
+          container.removeChild(renderer.domElement);
         }
       }
-      handle.dispose();
-      handleRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recreateOn]);
-
-  return handleRef;
 }

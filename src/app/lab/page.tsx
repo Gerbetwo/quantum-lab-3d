@@ -1,3 +1,4 @@
+import type { SceneHandle } from '@/lib/three/createScene';
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -45,14 +46,7 @@ export default function LabPage() {
   const particleContainerRef = useRef<HTMLDivElement>(null);
 
   // Minimal scene just for particles (its own lifecycle, independent of missions)
-  const particleScene = useThreeScene(particleContainerRef, {
-    width: 400,
-    height: 200,
-    cameraPos: [0, 0, 3],
-    cameraLookAt: [0, 0, 0],
-    viewportRelative: true,
-    aspect: 2,
-  });
+  const particleScene = useRef<SceneHandle | null>(null);
 
   const { controllerRef: particleControllerRef, burst } = useMeasurementBurst(particleScene);
 
