@@ -6,9 +6,14 @@ import {
   ArrowLeft,
   CheckCircle2,
   Zap,
+  Share2,
+  Sparkles,
+  Radio,
+  HelpCircle,
 } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playLaserScan, playQuantumCollapse } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
 import { measureQubit } from '@/domain/quantum/measurement';
 import { useThreeScene } from '@/hooks/useThreeScene';
@@ -19,20 +24,24 @@ interface Props {
   __testRandom?: () => number;
 }
 
+const STEP_TITLES = [
+  'Dos Qubits Independientes',
+  'Creación del Par de Bell',
+  'Separación a Distancia',
+  'Medición Instantánea',
+  'Reto de Comprensión',
+] as const;
+
 export default function Mission2Entanglement({ onComplete, onBack, __testRandom }: Props) {
   const [step, setStep] = useState<number>(0);
   const totalSteps = 5;
-
   const [aliceIndependentVal, setAliceIndependentVal] = useState<number>(0);
   const [bobIndependentVal, setBobIndependentVal] = useState<number>(0);
-
   const [aliceMeasured, setAliceMeasured] = useState<number | null>(null);
   const [bobMeasured, setBobMeasured] = useState<number | null>(null);
   const [hasTriggeredMeasurement, setHasTriggeredMeasurement] = useState<boolean>(false);
-
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
-
   const containerRef = useRef<HTMLDivElement>(null);
 
   const goToNextStep = useCallback(() => {
@@ -47,11 +56,8 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' && step < totalSteps - 1) {
-        goToNextStep();
-      } else if (e.key === 'ArrowLeft' && step > 0) {
-        goToPrevStep();
-      }
+      if (e.key === 'ArrowRight' && step < totalSteps - 1) goToNextStep();
+      else if (e.key === 'ArrowLeft' && step > 0) goToPrevStep();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -66,15 +72,12 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
   const handleMeasureAlice = () => {
     playLaserScan();
     setTimeout(() => playQuantumCollapse(), 150);
-
     const rng = __testRandom ?? Math.random;
     const outcome = measureQubit(Math.PI / 2, rng);
     const correlated = correlateEntangledMeasurement(outcome);
-
     setAliceMeasured(correlated.alice);
     setBobMeasured(correlated.bob);
     setHasTriggeredMeasurement(true);
-
     updateStoredMetrics((prev) => ({
       ...prev,
       actions: {
@@ -95,114 +98,69 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
     }
   };
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
-    <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
+    <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-400 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30">
-            Tarea 2
-          </span>
-          <span className="text-xs font-mono text-slate-400">
-            Paso {step + 1} de {totalSteps}
-          </span>
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-400 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30">Tarea 2</span>
+          <span className="text-xs font-mono text-slate-400">Paso {step + 1} de {totalSteps}</span>
         </div>
-
         <div role="tablist" aria-label="Pasos de la misión" className="flex items-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                playButtonClick();
-                setStep(i);
-              }}
-              className={`h-2 rounded-full transition-all ${
-                step === i
-                  ? 'w-8 bg-purple-500 shadow-sm shadow-purple-500/50'
-                  : i < step
-                  ? 'w-3 bg-emerald-500'
-                  : 'w-2 bg-slate-800 hover:bg-slate-700'
-              }`}
-              role="tab"
-              aria-label={`Ir al paso ${i + 1}`}
-              aria-selected={step === i}
-            />
+            <button key={i} onClick={() => { playButtonClick(); setStep(i); }} className={`h-2 rounded-full transition-all ${step === i ? 'w-8 bg-purple-500 shadow-sm shadow-purple-500/50' : i < step ? 'w-3 bg-emerald-500' : 'w-2 bg-slate-800 hover:bg-slate-700'}`} role="tab" aria-label={`Ir al paso ${i + 1}`} aria-selected={step === i} />
           ))}
         </div>
       </div>
 
       {step === 0 && (
-        <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4">
-          <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-            Dos Qubits Independientes
-          </h2>
-
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-8 py-4 animate-in fade-in zoom-in-95 duration-300">
+          <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">Dos Qubits Independientes</h2>
+          <div className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+            <Share2 className="w-4 h-4 text-purple-400" /> Ausencia de Enlace
+          </div>
+          <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto leading-relaxed">En condiciones normales, dos partículas u ordenadores cuánticos en lugares distintos son <strong className="text-white">totalmente independientes</strong>.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
             <div className="p-6 rounded-3xl bg-slate-950/80 border border-cyan/40 backdrop-blur-md shadow-xl flex flex-col items-center gap-4">
-              <div className="text-4xl font-orbitron font-bold text-white">
-                |{aliceIndependentVal}⟩
-              </div>
-              <button
-                onClick={() => {
-                  playButtonClick();
-                  setAliceIndependentVal((prev) => (prev === 0 ? 1 : 0));
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-cyan/15 border border-cyan/40 text-cyan text-xs font-mono font-semibold"
-              >
-                Conmutar Alice (0 ↔ 1)
-              </button>
+              <div className="text-4xl font-orbitron font-bold text-white">|{aliceIndependentVal}⟩</div>
+              <button onClick={() => { playButtonClick(); setAliceIndependentVal((prev) => (prev === 0 ? 1 : 0)); }} className="w-full py-2.5 px-4 rounded-xl bg-cyan/15 border border-cyan/40 text-cyan text-xs font-mono font-semibold">Conmutar Alice (0 ↔ 1)</button>
             </div>
-
             <div className="p-6 rounded-3xl bg-slate-950/80 border border-emerald-500/40 backdrop-blur-md shadow-xl flex flex-col items-center gap-4">
-              <div className="text-4xl font-orbitron font-bold text-white">
-                |{bobIndependentVal}⟩
-              </div>
-              <button
-                onClick={() => {
-                  playButtonClick();
-                  setBobIndependentVal((prev) => (prev === 0 ? 1 : 0));
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-semibold"
-              >
-                Conmutar Bob (0 ↔ 1)
-              </button>
+              <div className="text-4xl font-orbitron font-bold text-white">|{bobIndependentVal}⟩</div>
+              <button onClick={() => { playButtonClick(); setBobIndependentVal((prev) => (prev === 0 ? 1 : 0)); }} className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-semibold">Conmutar Bob (0 ↔ 1)</button>
             </div>
           </div>
         </div>
       )}
 
       {(step === 1 || step === 2 || step === 3) && (
-        <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2">
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-5 py-2 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              {step === 1 && <Sparkles className="w-4 h-4 text-purple-400" />}
+              {step === 2 && <Radio className="w-4 h-4 text-purple-400" />}
+              {step === 3 && <Zap className="w-4 h-4 text-purple-400" />}
+              {step === 1 && 'Correlación Cuántica'}
+              {step === 2 && 'No-Localidad'}
+              {step === 3 && 'Colapso Correlacionado'}
+            </div>
+            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
+              {step === 1 && 'Al hacer interactuar dos qubits en el laboratorio, sus estados se entrelazan formando una única función de onda compartida.'}
+              {step === 2 && '¿Qué ocurre si separamos a Alice y Bob a cientos de miles de kilómetros de distancia?'}
+              {step === 3 && 'Alice mide su qubit. Observa cómo el resultado determina en el acto el estado de Bob, sin retardo de tiempo.'}
+            </p>
+          </div>
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
             <div ref={containerRef} role="img" aria-label="Estaciones Alice y Bob entrelazadas" className="w-full" />
-
             {step === 3 && (
               <div className="w-full max-w-md mt-2 flex flex-col gap-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-2xl bg-cyan/10 border border-cyan/40 text-center">
-                    <div data-testid="alice-state" className="text-2xl font-orbitron font-bold text-cyan mt-1">
-                      {aliceMeasured !== null ? `|${aliceMeasured}⟩` : 'Superposición'}
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-center">
-                    <div data-testid="bob-state" className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">
-                      {bobMeasured !== null ? `|${bobMeasured}⟩` : 'Superposición'}
-                    </div>
-                  </div>
+                  <div className="p-3 rounded-2xl bg-cyan/10 border border-cyan/40 text-center"><div data-testid="alice-state" className="text-2xl font-orbitron font-bold text-cyan mt-1">{aliceMeasured !== null ? `|${aliceMeasured}⟩` : 'Superposición'}</div></div>
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-center"><div data-testid="bob-state" className="text-2xl font-orbitron font-bold text-emerald-400 mt-1">{bobMeasured !== null ? `|${bobMeasured}⟩` : 'Superposición'}</div></div>
                 </div>
-
-                <button
-                  onClick={handleMeasureAlice}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-purple-600 text-white font-orbitron font-bold text-xs uppercase"
-                >
-                  <Zap className="w-4 h-4 inline mr-2" /> Medir en Laboratorio de Alice
-                </button>
-
-                {hasTriggeredMeasurement && (
-                  <div data-testid="correlation-result" className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left">
-                    ¡Correlación Perfecta Instantánea!
-                  </div>
-                )}
+                <button onClick={handleMeasureAlice} className="w-full py-3.5 px-4 rounded-2xl bg-purple-600 text-white font-orbitron font-bold text-xs uppercase"><Zap className="w-4 h-4 inline mr-2" /> Medir en Laboratorio de Alice</button>
+                {hasTriggeredMeasurement && <div data-testid="correlation-result" className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs text-left">¡Correlación Perfecta Instantánea!</div>}
               </div>
             )}
           </div>
@@ -210,46 +168,26 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
       )}
 
       {step === 4 && (
-        <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4">
-          <div className="w-full max-w-xl flex flex-col gap-3.5">
-            <button
-              onClick={() => handleQuizChoice('instant_same')}
-              className="p-5 rounded-2xl border text-left text-sm bg-slate-950/80 border-slate-800 text-slate-300"
-            >
-              B) Instantáneamente el estado correlacionado (|1⟩), sin retardo de tiempo
-            </button>
+        <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
+          <div>
+            <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2"><HelpCircle className="w-4 h-4 text-purple-400" /> Comprobación Final</div>
+            <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">Si Alice y Bob tienen un par entrelazado y Alice mide su qubit obteniendo |1⟩, ¿qué resultado medirá Bob de forma instantánea?</p>
           </div>
-
+          <div className="w-full max-w-xl flex flex-col gap-3.5">
+            <button onClick={() => handleQuizChoice('instant_same')} className="p-5 rounded-2xl border text-left text-sm bg-slate-950/80 border-slate-800 text-slate-300">B) Instantáneamente el estado correlacionado (|1⟩), sin retardo de tiempo</button>
+          </div>
           {showFeedback && userChoice === 'instant_same' && (
             <div className="w-full max-w-xl p-4 rounded-2xl text-sm flex items-center justify-between gap-4 text-left bg-emerald-950/30 border border-emerald-500/40 text-emerald-200">
               <span>¡Correcto! En un estado entrelazado, la medición fija el estado.</span>
-              <button
-                onClick={onComplete}
-                className="py-2.5 px-5 rounded-xl bg-emerald-500 text-slate-950 font-orbitron font-bold text-xs uppercase"
-              >
-                Pasar a Tarea 3 <ArrowRight className="w-4 h-4" />
-              </button>
+              <button onClick={onComplete} className="py-2.5 px-5 rounded-xl bg-emerald-500 text-slate-950 font-orbitron font-bold text-xs uppercase">Pasar a Tarea 3 <ArrowRight className="w-4 h-4" /></button>
             </div>
           )}
         </div>
       )}
 
       <div className="flex justify-between items-center border-t border-slate-800 pt-4 mt-4">
-        <button
-          onClick={step === 0 ? onBack : goToPrevStep}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-800 text-slate-400 font-mono text-xs uppercase"
-        >
-          <ArrowLeft className="w-4 h-4" /> {step === 0 ? 'Volver a Tarea 1' : 'Paso Anterior'}
-        </button>
-
-        {step < totalSteps - 1 && (
-          <button
-            onClick={goToNextStep}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 text-white font-orbitron font-bold text-xs uppercase"
-          >
-            Siguiente Paso <ArrowRight className="w-4 h-4" />
-          </button>
-        )}
+        <button onClick={step === 0 ? onBack : goToPrevStep} className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-800 text-slate-400 font-mono text-xs uppercase"><ArrowLeft className="w-4 h-4" /> {step === 0 ? 'Volver a Tarea 1' : 'Paso Anterior'}</button>
+        {step < totalSteps - 1 && <button onClick={goToNextStep} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 text-white font-orbitron font-bold text-xs uppercase">Siguiente Paso <ArrowRight className="w-4 h-4" /></button>}
       </div>
     </div>
   );

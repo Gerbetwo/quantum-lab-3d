@@ -3,7 +3,7 @@ import { MissionPage } from './MissionPage';
 
 export class Task3Page extends MissionPage {
   async expectReady() {
-    await expect(this.page.getByText(/La Fragilidad Cuántica/i)).toBeVisible();
+    await this.expectMissionTitle(/La Fragilidad Cuántica/i);
   }
 
   async complete() {

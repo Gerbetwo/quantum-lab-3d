@@ -2,9 +2,6 @@ import Cookies from 'js-cookie';
 
 export const COOKIE_USER_ID = 'ql_user_id';
 export const COOKIE_PROGRESS = 'ql_progress';
-
-/** Total number of playable missions. */
-export const TOTAL_MISSIONS = 7;
 export const COOKIE_METRICS = 'ql_metrics';
 export const COOKIE_ACTIVE_TAB = 'ql_active_tab';
 export const COOKIE_MISSION_STATE = 'ql_mission_state';
@@ -111,11 +108,7 @@ export function getStoredProgress(): number[] {
 }
 
 export function saveCompletedMission(missionIndex: number): void {
-  if (
-    !Number.isInteger(missionIndex) ||
-    missionIndex < 0 ||
-    missionIndex >= TOTAL_MISSIONS
-  ) {
+  if (typeof missionIndex !== 'number' || isNaN(missionIndex) || missionIndex < 0 || missionIndex > 3) {
     return;
   }
   const current = getStoredProgress();
@@ -274,14 +267,4 @@ export function deleteAllUserData(): void {
   Cookies.remove(COOKIE_METRICS);
   Cookies.remove(COOKIE_ACTIVE_TAB);
   Cookies.remove(COOKIE_MISSION_STATE);
-}
-
-/** Returns true only when all seven missions are completed. */
-export function areAllMissionsCompleted(): boolean {
-  const progress = getStoredProgress();
-
-  return Array.from(
-    { length: TOTAL_MISSIONS },
-    (_, index) => index,
-  ).every((index) => progress.includes(index));
 }

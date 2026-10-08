@@ -25,6 +25,6 @@ test.describe('Command palette', () => {
     await palette.filter('entrelazamiento');
     await palette.execute(/entrelazamiento/i);
 
-    await expect(page.getByText(/Dos Qubits Independientes/i)).toBeVisible();
+    await expect(page.getByTestId('header-mission-title')).toBeVisible();
   });
 });

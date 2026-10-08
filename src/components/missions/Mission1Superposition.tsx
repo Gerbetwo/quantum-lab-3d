@@ -16,6 +16,7 @@ import {
   Compass,
   Atom,
   Coins,
+  Scan,
 } from 'lucide-react';
 import {
   playButtonClick,
@@ -24,6 +25,7 @@ import {
   playQuantumCollapse,
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import { calculateBlochProbabilities } from '@/domain/quantum/bloch';
 import { measureQubit } from '@/domain/quantum/measurement';
 import { useThreeScene } from '@/hooks/useThreeScene';
@@ -31,6 +33,43 @@ import { useThreeScene } from '@/hooks/useThreeScene';
 interface Props {
   onComplete: () => void;
 }
+
+// Cache de Texturas/Materiales de Sprites para evitar fugas de memoria VRAM
+const spriteMaterialCache = new Map<string, THREE.SpriteMaterial>();
+
+function createTextSprite(text: string, color = '#ffffff', fontSize = 28): THREE.Sprite {
+  const cacheKey = `${text}_${color}_${fontSize}`;
+  let material = spriteMaterialCache.get(cacheKey);
+
+  if (!material) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = color;
+      ctx.font = `Bold ${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 128, 64);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    spriteMaterialCache.set(cacheKey, material);
+  }
+
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(1.8, 0.9, 1);
+  return sprite;
+}
+
+const STEP_TITLES = [
+  'El Bit Clásico',
+  'El Qubit y su Notación',
+  'La Esfera de Bloch',
+  'El Colapso de la Medición',
+  'Reto de Comprensión',
+] as const;
 
 export default function Mission1Superposition({ onComplete }: Props) {
   const [step, setStep] = useState<number>(0);
@@ -125,8 +164,10 @@ export default function Mission1Superposition({ onComplete }: Props) {
     }
   };
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
-    <div className="w-full flex-1 max-w-5xl mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
+    <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan px-2.5 py-1 rounded-md bg-cyan/10 border border-cyan/30">
@@ -166,9 +207,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
             <div className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <Layers className="w-4 h-4 text-cyan" /> Fundamento Clásico
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              El Bit Clásico
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
               En la informática tradicional, un bit solo puede existir en uno de dos estados posibles, <strong className="text-white">estrictamente 0 o estrictamente 1</strong>.
             </p>
@@ -213,6 +251,60 @@ export default function Mission1Superposition({ onComplete }: Props) {
             <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
               El Qubit y su Notación
             </h2>
+            <p className="text-base sm:text-lg text-slate-300 mt-2 max-w-xl mx-auto leading-relaxed">
+              La unidad cuántica no es un simple dígito binario. Puede existir en una <strong className="text-cyan">superposición</strong> de ambos estados a la vez.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl text-left">
+            <div className="p-6 rounded-3xl bg-slate-950/80 border border-cyan/40 backdrop-blur-md shadow-xl flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan/10 border border-cyan/40 flex items-center justify-center text-cyan">
+                  <Atom className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-orbitron font-bold text-white text-sm">¿Por qué se escribe |0⟩ y |1⟩?</h3>
+                  <span className="text-[11px] font-mono text-cyan">Notación Ket (Dirac)</span>
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                El número se encierra entre una barra y un ángulo para indicar que no es un dígito matemático, sino un <strong className="text-white">estado físico fundamental</strong>.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-slate-950/80 border border-purple-500/40 backdrop-blur-md shadow-xl flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/40 flex items-center justify-center text-purple-400">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-orbitron font-bold text-white text-sm">¿Qué representa la aguja?</h3>
+                  <span className="text-[11px] font-mono text-purple-400">Vector de Estado |ψ⟩</span>
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                La flecha que nace del centro indica la probabilidad actual. Si está inclinada hacia el medio, el qubit tiene probabilidad simultánea de dar 0 y 1.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/60 border border-slate-800 w-full max-w-3xl flex items-center justify-between gap-4 text-left">
+            <div className="flex items-start gap-3">
+              <Coins className={`w-6 h-6 shrink-0 mt-0.5 ${isCoinSpinning ? 'text-cyan animate-spin' : 'text-slate-400'}`} />
+              <div className="text-xs sm:text-sm text-slate-300">
+                <strong className="text-white block font-sans mb-0.5">La analogía de la moneda:</strong>
+                Una moneda en reposo es cara o cruz (bit clásico). Mientras gira en el aire, contiene ambas caras a la vez hasta que cae en la mano.
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                playButtonClick();
+                setIsCoinSpinning(!isCoinSpinning);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-cyan hover:bg-slate-850 shrink-0"
+            >
+              {isCoinSpinning ? 'Atrapar Moneda' : 'Lanzar al Aire'}
+            </button>
           </div>
         </div>
       )}
@@ -223,6 +315,16 @@ export default function Mission1Superposition({ onComplete }: Props) {
             <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
               {step === 2 ? 'La Esfera de Bloch' : 'El Colapso de la Medición'}
             </h2>
+            <div className="text-xs font-mono text-cyan uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              {step === 2 && <Activity className="w-4 h-4 text-cyan" />}
+              {step === 3 && <Scan className="w-4 h-4 text-cyan" />}
+              {step === 2 ? 'Espacio de Estados' : 'El Momento Decisivo'}
+            </div>
+            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
+              {step === 2
+                ? 'Arrastra con el ratón sobre la esfera para girarla 360°. Ajusta el deslizador para ver cómo la aguja cambia las probabilidades en vivo.'
+                : 'Mientras no se mida, la aguja permanece en superposición. Dispara el detector para observar cómo la observación destruye la superposición.'}
+            </p>
           </div>
 
           <div className="w-full max-w-2xl p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl relative flex flex-col items-center">
@@ -283,6 +385,12 @@ export default function Mission1Superposition({ onComplete }: Props) {
             <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
               Reto de Comprensión
             </h2>
+            <div className="text-xs font-mono text-cyan uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+              <HelpCircle className="w-4 h-4 text-cyan" /> Comprobación Final
+            </div>
+            <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
+              ¿Qué ocurre cuando se mide un qubit que está en superposición?
+            </p>
           </div>
 
           <div className="w-full max-w-xl flex flex-col gap-3.5">

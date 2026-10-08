@@ -3,7 +3,7 @@ import { MissionPage } from './MissionPage';
 
 export class Task2Page extends MissionPage {
   async expectReady() {
-    await expect(this.page.getByText(/Dos Qubits Independientes/i)).toBeVisible();
+    await this.expectMissionTitle(/Dos Qubits Independientes/i);
   }
 
   async complete() {

@@ -27,8 +27,8 @@
         "./src/*"
       ]
     },
-    "baseUrl": ".",
     "types": [
+      "node",
       "@testing-library/jest-dom"
     ]
   },

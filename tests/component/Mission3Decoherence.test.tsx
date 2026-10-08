@@ -27,7 +27,7 @@ describe('HU-14..HU-17 - Mission 3 Decoherence Component', () => {
 
   it('HU-14: thermal photon hit increments perturbation counter', () => {
     render(<Mission3Decoherence onComplete={onComplete} onBack={onBack} />);
-    expect(screen.getByText('La Fragilidad Cuántica')).toBeInTheDocument();
+    expect(screen.getByText('El Mayor Enemigo Cuántico')).toBeInTheDocument();
 
     const counter = screen.getByTestId('photon-counter');
     expect(counter).toHaveTextContent('0');

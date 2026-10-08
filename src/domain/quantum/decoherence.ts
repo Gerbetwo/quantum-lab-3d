@@ -2,12 +2,15 @@
  * QuantumLab 3D - Domain: Decoherence
  */
 
-export function calculateCoherenceTime(tempMK: number): number {
-  if (tempMK <= 0) return 300;
-  const val = Math.max(0, 250 - tempMK * 0.3067);
-  return Number(val.toFixed(1));
+export function calculateCoherenceTime(temperatureMilliKelvin: number): number {
+  if (temperatureMilliKelvin < 0) return 0.1;
+  const time = 250 * Math.exp(-temperatureMilliKelvin / 800);
+  return Math.max(0.1, Math.round(time * 10) / 10);
 }
 
-export function isCriticalDecoherence(tempMK: number): boolean {
-  return tempMK > 1200;
+export function isCriticalDecoherence(temperatureMilliKelvin: number): boolean {
+  return (
+    temperatureMilliKelvin > 1200 ||
+    calculateCoherenceTime(temperatureMilliKelvin) < 1.0
+  );
 }

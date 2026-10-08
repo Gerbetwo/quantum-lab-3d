@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 interface UseThreeSceneOptions {
@@ -20,7 +20,7 @@ interface UseThreeSceneOptions {
 
 export function useThreeScene(
   containerRef: React.RefObject<HTMLDivElement | null>,
-  options: UseThreeSceneOptions
+  options: UseThreeSceneOptions,
 ) {
   const {
     width = 600,
@@ -31,64 +31,127 @@ export function useThreeScene(
     onSetup,
   } = options;
 
+  const optionsRef = useRef({
+    width,
+    height,
+    cameraPos,
+    cameraLookAt,
+    onSetup,
+  });
+
+  optionsRef.current = {
+    width,
+    height,
+    cameraPos,
+    cameraLookAt,
+    onSetup,
+  };
+
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const {
+      width: sceneWidth,
+      height: sceneHeight,
+      cameraPos: sceneCameraPos,
+      cameraLookAt: sceneCameraLookAt,
+      onSetup: sceneOnSetup,
+    } = optionsRef.current;
 
     let renderer: THREE.WebGLRenderer | null = null;
+
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
     } catch {
-      // Entorno de prueba JSDOM sin contexto WebGL real
+      // JSDOM/test environment without a real WebGL context.
       return;
     }
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(...cameraPos);
-    camera.lookAt(...cameraLookAt);
 
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2));
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      sceneWidth / sceneHeight,
+      0.1,
+      100,
+    );
 
-    const container = containerRef.current;
+    camera.position.set(...sceneCameraPos);
+    camera.lookAt(...sceneCameraLookAt);
+
+    renderer.setSize(sceneWidth, sceneHeight);
+
+    const pixelRatio =
+      typeof window !== 'undefined'
+        ? Math.min(window.devicePixelRatio || 1, 2)
+        : 1;
+
+    renderer.setPixelRatio(pixelRatio);
+
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    const frameCallbacks: Array<(t: number, dt: number) => void> = [];
+    const frameCallbacks: Array<
+      (t: number, dt: number) => void
+    > = [];
+
     let cleanupSetup: (() => void) | void;
 
-    if (onSetup) {
-      cleanupSetup = onSetup({
+    if (sceneOnSetup) {
+      cleanupSetup = sceneOnSetup({
         scene,
         camera,
         renderer,
-        add: (...objs) => scene.add(...objs),
-        onFrame: (cb) => frameCallbacks.push(cb),
+
+        add: (...objects: THREE.Object3D[]) => {
+          scene.add(...objects);
+        },
+
+        onFrame: (callback: (t: number, dt: number) => void) => {
+          frameCallbacks.push(callback);
+        },
       });
     }
 
-    let animId: number;
+    let animationFrameId: number;
     let lastTime = performance.now();
 
     const animate = (time: number) => {
       const dt = (time - lastTime) / 1000;
       lastTime = time;
-      frameCallbacks.forEach((cb) => cb(time, dt));
-      if (renderer) renderer.render(scene, camera);
-      animId = requestAnimationFrame(animate);
+
+      frameCallbacks.forEach((callback) => {
+        callback(time, dt);
+      });
+
+      renderer?.render(scene, camera);
+
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    animId = requestAnimationFrame(animate);
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      cancelAnimationFrame(animId);
-      if (cleanupSetup) cleanupSetup();
+      cancelAnimationFrame(animationFrameId);
+
+      cleanupSetup?.();
+
       if (renderer) {
         renderer.dispose();
-        if (container && container.contains(renderer.domElement)) {
+
+        if (container.contains(renderer.domElement)) {
           container.removeChild(renderer.domElement);
         }
       }
+
+      frameCallbacks.length = 0;
     };
-  }, [recreateOn]);
+  }, [containerRef, recreateOn]);
 }

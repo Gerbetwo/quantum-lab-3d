@@ -2,14 +2,19 @@
  * QuantumLab 3D - Domain: Applications
  */
 
+export interface ShorFactorResult {
+  p: number;
+  q: number;
+  totalTimeMs: number;
+}
+
 export function formatShorResult(timeSeconds: number): string {
-  return "Shor: Clave RSA factorizada en " + timeSeconds + " segundos";
+  return `Algoritmo de Shor completado en ${timeSeconds} segundos`;
 }
 
 export function updateExploredApplications(
   current: string[],
-  incoming: string[]
+  incoming: string[],
 ): string[] {
-  const set = new Set<string>([...current, ...incoming]);
-  return Array.from(set);
+  return Array.from(new Set([...current, ...incoming]));
 }

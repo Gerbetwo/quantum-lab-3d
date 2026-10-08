@@ -6,6 +6,7 @@ import { Atom, Play, Pause, User, Clock, Maximize2, Minimize2 } from 'lucide-rea
 import { getOrCreateUserId } from '@/lib/cookies';
 import { playButtonClick } from '@/lib/sound';
 import { useIsDesktop } from '@/hooks/useBreakpoint';
+import { useMissionTitleState } from '@/hooks/useMissionTitle';
 
 interface Props {
   timeLeft: number;
@@ -31,7 +32,7 @@ function formatTime(seconds: number): string {
 
 const BrandSection = memo(function BrandSection({ compact }: { compact: boolean }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 shrink-0">
       <div className="w-9 h-9 rounded-xl bg-cyan/10 border border-cyan/40 flex items-center justify-center text-cyan shadow-sm shadow-cyan/20">
         <Atom className="w-5 h-5 text-cyan" />
       </div>
@@ -158,6 +159,7 @@ export default function Header({
   const [userId, setUserId] = useState<string>('');
   const isDesktop = useIsDesktop();
   const compact = !isDesktop;
+  const missionTitle = useMissionTitleState();
 
   useEffect(() => {
     setUserId(getOrCreateUserId());
@@ -171,7 +173,19 @@ export default function Header({
       <div className="w-full flex justify-between items-center gap-3">
         <BrandSection compact={compact} />
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex-1 min-w-0 flex items-center justify-center px-2">
+          {missionTitle && (
+            <h1
+              data-testid="header-mission-title"
+              title={missionTitle}
+              className="font-orbitron font-bold text-sm sm:text-base lg:text-lg text-white tracking-wider truncate"
+            >
+              {missionTitle}
+            </h1>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <UserBadge userId={userId} compact={compact} />
 
           <TimerDisplay

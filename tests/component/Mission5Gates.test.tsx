@@ -29,7 +29,7 @@ describe('HU-22..HU-26 - Mission 5 Gates Component', () => {
     expect(screen.getByTestId('mission5-intro')).toBeInTheDocument();
 
     fireEvent.click(goToStep(2));
-    expect(screen.getByText(/Aplica Compuertas en Vivo/i)).toBeInTheDocument();
+    expect(screen.getByText(/Playground de Compuertas/i)).toBeInTheDocument();
   });
 
   it('applies X gate and updates the state display', () => {

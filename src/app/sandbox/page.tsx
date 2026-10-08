@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState, lazy, Suspense } from 'react';
+import { useCallback, useState, lazy, Suspense } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, FlaskConical, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
@@ -76,7 +76,7 @@ export default function SandboxPage() {
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 max-w-6xl mx-auto w-full">
+      <div className="flex-1 flex flex-col px-4 sm:px-6 py-6 w-full">
         <div role="tablist" aria-label="Selector de misiones" className="flex items-center gap-2 mb-6 flex-wrap">
           {MISSIONS.map((m, i) => (
             <button
