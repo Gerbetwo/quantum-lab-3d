@@ -86,9 +86,9 @@ Items identificados durante el ciclo pero **diferidos conscientemente** por ries
 - **Resolucion futura:** pool de 4 osciladores con stop + restart diferido. ~2 h.
 
 ### DT-08 - Archivo `code.txt` trackeado en git
-- **Estado:** dump de codigo fuente (~13 K lineas) presente en la raiz y versionado.
-- **Riesgo:** alto.
-- **Resolucion:** `git rm --cached code.txt` + decision sobre si versionarlo. **Prioridad alta**.
+- **Estado:** RESUELTO (v0.3.1-remediation).
+- **Riesgo:** bajo (removido del tracking).
+- **Resolucion:** Ejecutado `git rm --cached code.txt` y verificado .gitignore.
 
 ### DT-09 - Tests no cubren `src/lib/three/createScene.ts`
 - **Estado:** excluido de coverage por ser wrapper WebGL. Solo validado por E2E.
