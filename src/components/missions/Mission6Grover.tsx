@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, HelpCircle, Search, Zap } from 'lu
 import clsx from 'clsx';
 import { playButtonClick, playChimeSuccess, playLaserScan } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import {
   groverIterations,
   classicalExpectedTrials,
@@ -21,6 +22,14 @@ interface Props {
   onComplete: () => void;
   onBack: () => void;
 }
+
+const STEP_TITLES = [
+  'Algoritmo de Grover',
+  'Clásico vs Cuántico',
+  'Iteración Única (N=4)',
+  'Escalando el Algoritmo',
+  'Comprobación',
+] as const;
 
 export default function Mission6Grover({ onComplete, onBack }: Props) {
   const totalSteps = 5;
@@ -175,6 +184,8 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
   const optimalIterations = groverIterations(N);
   const classicalCost = classicalExpectedTrials(N);
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
     <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
@@ -209,9 +220,6 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-teal-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <Search className="w-4 h-4 text-teal-400" /> Busqueda Cuantica
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              Algoritmo de Grover
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
               Buscar en una lista desordenada de N items requiere hasta N intentos clasicos.
               Grover lo logra en aproximadamente sqrt(N) iteraciones cuanticas.
@@ -238,9 +246,6 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-6 py-4 animate-in fade-in zoom-in-95 duration-300">
           <div>
             <div className="text-xs font-mono text-teal-400 uppercase tracking-widest mb-2">Comparacion de Costos</div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Clasico vs Cuantico
-            </h2>
           </div>
           <div className="w-full  grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-6 rounded-2xl bg-slate-950/80 border border-slate-800">
@@ -270,9 +275,6 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-teal-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               {step === 2 ? <><Zap className="w-4 h-4 text-teal-400" /> Amplificacion de Amplitud</> : <><Search className="w-4 h-4 text-teal-400" /> Algoritmo Completo</>}
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              {step === 2 ? 'Iteracion Unica (N=4)' : 'Escalando el Algoritmo'}
-            </h2>
           </div>
           <div className="w-full  p-4 rounded-3xl bg-[#060a14] border border-slate-800/90 shadow-2xl flex flex-col items-center">
             <div
@@ -369,9 +371,6 @@ export default function Mission6Grover({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-teal-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <HelpCircle className="w-4 h-4 text-teal-400" /> Reto Final
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Comprobacion
-            </h2>
             <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
               Por que funciona el algoritmo de Grover?
             </p>

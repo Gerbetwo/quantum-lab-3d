@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, HelpCircle, Shield } from 'lucide-
 import clsx from 'clsx';
 import { playButtonClick, playChimeSuccess, playLaserScan } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import {
   bitFlipEncode, injectBitFlip, detectBitFlipSyndrome, bitFlipDecode,
   type Bit, type BitTriple,
@@ -18,6 +19,14 @@ interface Props {
   onComplete: () => void;
   onBack: () => void;
 }
+
+const STEP_TITLES = [
+  'Corrección de Errores',
+  'Bit-Flip en Acción',
+  'Phase-Flip en Acción',
+  'El Decodificador',
+  'Comprobación',
+] as const;
 
 export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
   const totalSteps = 5;
@@ -150,6 +159,8 @@ export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
 
   const decodedBit = bitFlipDecode(encoded);
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
     <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
@@ -184,9 +195,6 @@ export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-orange-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <Shield className="w-4 h-4 text-orange-400" /> Protegiendo la Informacion
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              Correccion de Errores
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
               Los qubits son fragiles: cualquier ruido puede corromper su informacion.
               El codigo de repeticion de 3 qubits triplica el dato y corrige errores individuales por votacion mayoritaria.
@@ -217,11 +225,6 @@ export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
               {step === 2 && 'Errores de Fase (Z)'}
               {step === 3 && 'Decodificacion por Sindrome'}
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              {step === 1 && 'Bit-Flip en Accion'}
-              {step === 2 && 'Phase-Flip en Accion'}
-              {step === 3 && 'El Decodificador'}
-            </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
               {step === 1 && 'Haz click en cualquier qubit para invertirlo. Luego presiona Decodificar para ver cual fue corregido.'}
               {step === 2 && 'Un error de fase no cambia los valores 0/1, pero altera la fase cuantica. Es invisible en la base computacional.'}
@@ -358,9 +361,6 @@ export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-orange-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <HelpCircle className="w-4 h-4 text-orange-400" /> Reto Final
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Comprobacion
-            </h2>
             <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
               Por que el codigo de repeticion de 3 qubits puede corregir un error de bit?
             </p>

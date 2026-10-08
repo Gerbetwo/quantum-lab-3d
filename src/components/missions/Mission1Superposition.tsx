@@ -25,6 +25,7 @@ import {
   playQuantumCollapse,
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import { calculateBlochProbabilities } from '@/domain/quantum/bloch';
 import { measureQubit } from '@/domain/quantum/measurement';
 import { useThreeScene } from '@/hooks/useThreeScene';
@@ -63,6 +64,14 @@ function createTextSprite(text: string, color = '#ffffff', fontSize = 28): THREE
   sprite.scale.set(1.8, 0.9, 1);
   return sprite;
 }
+
+const STEP_TITLES = [
+  'El Bit Clásico',
+  'El Qubit y su Notación',
+  'La Esfera de Bloch',
+  'El Colapso de la Medición',
+  'Reto de Comprensión',
+] as const;
 
 export default function Mission1Superposition({ onComplete }: Props) {
   const [step, setStep] = useState<number>(0);
@@ -330,6 +339,8 @@ export default function Mission1Superposition({ onComplete }: Props) {
     }
   };
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
     <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
@@ -371,9 +382,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
             <div className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <Layers className="w-4 h-4 text-cyan" /> Fundamento Clásico
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              El Bit Clásico
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
               En la informática tradicional, un bit solo puede existir en uno de dos estados posibles, <strong className="text-white">estrictamente 0 o strictly 1</strong>.
             </p>
@@ -419,9 +427,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
             <div className="text-xs font-mono text-cyan uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4 text-cyan" /> Fundamento Cuántico
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              El Qubit y su Notación
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-2 max-w-xl mx-auto leading-relaxed">
               La unidad cuántica no es un simple dígito binario. Puede existir en una <strong className="text-cyan">superposición</strong> de ambos estados a la vez.
             </p>
@@ -488,9 +493,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
               {step === 3 && <Scan className="w-4 h-4 text-cyan" />}
               {step === 2 ? 'Espacio de Estados' : 'El Momento Decisivo'}
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              {step === 2 ? 'La Esfera de Bloch' : 'El Colapso de la Medición'}
-            </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
               {step === 2
                 ? 'Arrastra con el ratón sobre la esfera para girarla 360°. Ajusta el deslizador para ver cómo la aguja cambia las probabilidades en vivo.'
@@ -636,9 +638,6 @@ export default function Mission1Superposition({ onComplete }: Props) {
             <div className="text-xs font-mono text-cyan uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <HelpCircle className="w-4 h-4 text-cyan" /> Comprobación Final
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Reto de Comprensión
-            </h2>
             <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
               ¿Qué ocurre cuando se mide un qubit que está en superposición?
             </p>

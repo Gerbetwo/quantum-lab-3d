@@ -19,6 +19,7 @@ import {
   playLaserScan,
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import { calculateCoherenceTime, isCriticalDecoherence } from '@/domain/quantum/decoherence';
 import { useThreeScene } from '@/hooks/useThreeScene';
 import { prefersReducedMotion, cached } from '@/lib/three/createScene';
@@ -28,6 +29,13 @@ interface Props {
   onComplete: () => void;
   onBack: () => void;
 }
+
+const STEP_TITLES = [
+  'La Fragilidad Cuántica',
+  'Simulador Térmico Criogénico',
+  'El Refrigerador de Dilución',
+  'Reto de Comprensión',
+] as const;
 
 export default function Mission3Decoherence({ onComplete, onBack }: Props) {
   const [step, setStep] = useState<number>(0);
@@ -237,6 +245,8 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
     }
   };
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
     <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
@@ -278,9 +288,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-amber-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-400" /> El Mayor Enemigo Cuántico
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              La Fragilidad Cuántica
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
               Un qubit en superposición es extremadamente delicado. Cualquier partícula de calor, vibración o radiación ambiental provoca <strong className="text-amber-400">decoherencia</strong>, destruyendo el cálculo.
             </p>
@@ -321,10 +328,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
               {step === 1 && 'Temperatura vs Estabilidad'}
               {step === 2 && 'Aislamiento Extremo'}
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              {step === 1 && 'Simulador Térmico Criogénico'}
-              {step === 2 && 'El Refrigerador de Dilución'}
-            </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
               {step === 1 && 'Mueve el deslizador térmico. Observa cómo al subir la temperatura, el calor bombardea el procesador y destruye el tiempo de coherencia.'}
               {step === 2 && 'Ese icónico &quot;candelabro dorado&quot; contiene etapas concéntricas de enfriamiento criogénico con isótopos de helio al vacío absoluto.'}
@@ -410,9 +413,6 @@ export default function Mission3Decoherence({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-amber-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <HelpCircle className="w-4 h-4 text-amber-400" /> Comprobación Final
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Reto de Comprensión
-            </h2>
             <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
               ¿Por qué los computadores cuánticos basados en superconductores deben operar a temperaturas cercanas al cero absoluto?
             </p>

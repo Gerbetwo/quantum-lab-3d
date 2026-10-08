@@ -31,7 +31,7 @@ describe('HU-18..HU-21 - Mission 4 Applications Component', () => {
 
   it('HU-18: myth cards inspection toggles state', () => {
     render(<Mission4Applications onFinishAll={onFinishAll} onBack={onBack} />);
-    expect(screen.getByText(/Para qué NO sirve un Computador Cuántico/i)).toBeInTheDocument();
+    expect(screen.getByText(/Desmitificando la Tecnología/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Videojuegos, Navegar o YouTube'));
     expect(screen.getByText('Uso Inadecuado')).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('HU-18..HU-21 - Mission 4 Applications Component', () => {
       vi.advanceTimersByTime(1200);
     });
 
-    expect(screen.getByTestId('shor-status')).toHaveTextContent(/Clave RSA factorizada en 0.42 segundos/i);
+    expect(screen.getByTestId('shor-status')).toHaveTextContent(/Algoritmo de Shor completado en 0.42 segundos/i);
   });
 
   it('HU-21: quiz choice B triggers completion handler', () => {

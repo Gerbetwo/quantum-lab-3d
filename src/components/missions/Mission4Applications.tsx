@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playLaserScan } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import { formatShorResult, updateExploredApplications } from '@/domain/quantum/applications';
 import { useThreeScene } from '@/hooks/useThreeScene';
 import { prefersReducedMotion, cached } from '@/lib/three/createScene';
@@ -26,6 +27,13 @@ interface Props {
   onFinishAll: () => void;
   onBack: () => void;
 }
+
+const STEP_TITLES = [
+  '¿Para qué NO sirve un Computador Cuántico?',
+  'Simulación Molecular y Química',
+  'Criptografía y Algoritmo de Shor',
+  'Reto de Comprensión',
+] as const;
 
 export default function Mission4Applications({ onFinishAll, onBack }: Props) {
   const [step, setStep] = useState<number>(0);
@@ -188,6 +196,8 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
     }
   };
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
     <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
@@ -229,9 +239,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             <div className="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <Cpu className="w-4 h-4 text-emerald-400" /> Desmitificando la Tecnología
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              ¿Para qué NO sirve un Computador Cuántico?
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
               Existe la creencia popular de que un procesador cuántico es simplemente &quot;un ordenador normal pero mil veces más rápido&quot;. <strong className="text-rose-400">Esto es falso</strong>.
             </p>
@@ -297,9 +304,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             <div className="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <FlaskConical className="w-4 h-4 text-emerald-400" /> El Santo Grial
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Simulación Molecular y Química
-            </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
               La naturaleza no es clásica: está hecha de partículas cuánticas. Para modelar un medicamento o catalizador, necesitas un ordenador que hable el mismo lenguaje.
             </p>
@@ -364,9 +368,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             <div className="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" /> Seguridad Informática
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Criptografía y Algoritmo de Shor
-            </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-xl mx-auto leading-relaxed">
               Toda la seguridad de internet (banca, contraseñas, comercio electrónico RSA) depende de que es casi imposible factorizar números primos gigantes.
             </p>
@@ -413,9 +414,6 @@ export default function Mission4Applications({ onFinishAll, onBack }: Props) {
             <div className="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <HelpCircle className="w-4 h-4 text-emerald-400" /> Evaluación Final
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Reto de Comprensión
-            </h2>
             <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
               ¿En cuál de estos campos ofrece la computación cuántica una verdadera ventaja exponencial frente a los computadores clásicos?
             </p>

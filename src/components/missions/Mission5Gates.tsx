@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, HelpCircle, Zap } from 'lucide-rea
 import clsx from 'clsx';
 import { playButtonClick, playChimeSuccess, playLaserScan } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import {
   X_GATE, Z_GATE, H_GATE, I_GATE,
   applyGate, applyCNOT, evaluateCircuit, stateToBlochAngles, stateLabel,
@@ -25,6 +26,14 @@ type GateKey = 'X' | 'Z' | 'H' | 'I';
 const KET0: StateVector = [{ re: 1, im: 0 }, { re: 0, im: 0 }];
 const GATES: Record<GateKey, GateMatrix> = { X: X_GATE, Z: Z_GATE, H: H_GATE, I: I_GATE };
 const CYCLE: GateKey[] = ['I', 'X', 'Z', 'H'];
+
+const STEP_TITLES = [
+  'Manipulando el Qubit',
+  'Aplica Compuertas en Vivo',
+  'Tres Compuertas en Secuencia',
+  'De Superposición a Bell',
+  'Comprobación',
+] as const;
 
 export default function Mission5Gates({ onComplete, onBack }: Props) {
   const totalSteps = 5;
@@ -168,6 +177,8 @@ export default function Mission5Gates({ onComplete, onBack }: Props) {
   const renderGateBadge = (g: GateKey) =>
     g === 'I' ? '—' : g;
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
     <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
@@ -202,9 +213,6 @@ export default function Mission5Gates({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-pink-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <Zap className="w-4 h-4 text-pink-400" /> Compuertas Cuanticas
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              Manipulando el Qubit
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
               Una <strong className="text-pink-400">compuerta cuantica</strong> es una operacion que transforma el estado de un qubit. A diferencia de la logica clasica, admite rotaciones continuas y crea superposiciones.
             </p>
@@ -238,11 +246,6 @@ export default function Mission5Gates({ onComplete, onBack }: Props) {
               {step === 2 && <><ArrowRight className="w-4 h-4 text-pink-400" /> Constructor de Circuito</>}
               {step === 3 && <><CheckCircle2 className="w-4 h-4 text-pink-400" /> Entrelazamiento via CNOT</>}
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              {step === 1 && 'Aplica Compuertas en Vivo'}
-              {step === 2 && 'Tres Compuertas en Secuencia'}
-              {step === 3 && 'De Superposicion a Bell'}
-            </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
               {step === 1 && 'Presiona X, Z o H. La flecha de la esfera de Bloch se actualiza al estado resultante.'}
               {step === 2 && 'Haz click en cada slot para rotar la compuerta. Ejecuta para ver el estado final.'}
@@ -369,9 +372,6 @@ export default function Mission5Gates({ onComplete, onBack }: Props) {
             <div className="text-xs font-mono text-pink-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <HelpCircle className="w-4 h-4 text-pink-400" /> Reto Final
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Comprobacion
-            </h2>
             <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
               Aplicas una compuerta H a un qubit en estado |0&#10217;. Cual es el estado resultante?
             </p>

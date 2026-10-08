@@ -27,7 +27,7 @@ describe('HU-09..HU-13 - Mission 2 Entanglement Component', () => {
 
   it('HU-09: toggles independent qubits separately', () => {
     render(<Mission2Entanglement onComplete={onComplete} onBack={onBack} />);
-    expect(screen.getByText('Dos Qubits Independientes')).toBeInTheDocument();
+    expect(screen.getByText('Ausencia de Enlace')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Conmutar Alice/i }));
     expect(screen.getByText('|1⟩')).toBeInTheDocument();

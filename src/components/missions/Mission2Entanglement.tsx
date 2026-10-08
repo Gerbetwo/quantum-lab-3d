@@ -23,6 +23,7 @@ import {
   playQuantumCollapse,
 } from '@/lib/sound';
 import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { useMissionTitle } from '@/hooks/useMissionTitle';
 import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
 import { measureQubit } from '@/domain/quantum/measurement';
 import { useThreeScene } from '@/hooks/useThreeScene';
@@ -35,6 +36,14 @@ interface Props {
   /** Test-only RNG override. Not for production use. */
   __testRandom?: () => number;
 }
+
+const STEP_TITLES = [
+  'Dos Qubits Independientes',
+  'Creación del Par de Bell',
+  'Separación a Distancia',
+  'Medición Instantánea',
+  'Reto de Comprensión',
+] as const;
 
 export default function Mission2Entanglement({ onComplete, onBack, __testRandom }: Props) {
   const [step, setStep] = useState<number>(0);
@@ -236,6 +245,8 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
     }
   };
 
+  useMissionTitle(STEP_TITLES[step] ?? '');
+
   return (
     <div className="w-full flex-1 mx-auto flex flex-col justify-between py-2 text-slate-100 min-h-[640px]">
       <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
@@ -277,9 +288,6 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
             <div className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <Share2 className="w-4 h-4 text-purple-400" /> Ausencia de Enlace
             </div>
-            <h2 className="text-3xl sm:text-5xl font-orbitron font-bold text-white tracking-wide">
-              Dos Qubits Independientes
-            </h2>
             <p className="text-base sm:text-lg text-slate-300 mt-3 max-w-xl mx-auto leading-relaxed">
               En condiciones normales, dos partículas u ordenadores cuánticos en lugares distintos son <strong className="text-white">totalmente independientes</strong>.
             </p>
@@ -340,11 +348,6 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
               {step === 2 && 'No-Localidad'}
               {step === 3 && 'Colapso Correlacionado'}
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              {step === 1 && 'Creación del Par de Bell'}
-              {step === 2 && 'Separación a Distancia'}
-              {step === 3 && 'Medición Instantánea'}
-            </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
               {step === 1 && 'Al hacer interactuar dos qubits en el laboratorio, sus estados se entrelazan formando una única función de onda compartida.'}
               {step === 2 && '¿Qué ocurre si separamos a Alice y Bob a cientos de miles de kilómetros de distancia?'}
@@ -458,9 +461,6 @@ export default function Mission2Entanglement({ onComplete, onBack, __testRandom 
             <div className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <HelpCircle className="w-4 h-4 text-purple-400" /> Comprobación Final
             </div>
-            <h2 className="text-2xl sm:text-4xl font-orbitron font-bold text-white tracking-wide">
-              Reto de Comprensión
-            </h2>
             <p className="text-base sm:text-lg text-slate-200 mt-2 font-semibold max-w-xl mx-auto">
               Si Alice y Bob tienen un par entrelazado y Alice mide su qubit obteniendo |1⟩, ¿qué resultado medirá Bob de forma instantánea?
             </p>
