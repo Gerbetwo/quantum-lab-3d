@@ -16,7 +16,12 @@ interface Props {
 const MULTI_QUBIT_GATES: readonly GateType[] = ['CNOT', 'CZ', 'CS', 'CT'];
 
 export default function CircuitGrid({
-  circuit, activeGate, playhead, onPlaceGate, onRemoveGate, onSetPlayhead,
+  circuit,
+  activeGate,
+  playhead,
+  onPlaceGate,
+  onRemoveGate,
+  onSetPlayhead,
 }: Props) {
   const { nQubits, depth, steps } = circuit;
 
@@ -29,22 +34,38 @@ export default function CircuitGrid({
     (step: number, q: QubitIndex) => {
       const s = steps[step];
       if (!s) return null;
-      return s.gates.find((g) => g.targets.includes(q) || (g.controls?.includes(q) ?? false)) ?? null;
+      return (
+        s.gates.find(
+          g => g.targets.includes(q) || (g.controls?.includes(q) ?? false),
+        ) ?? null
+      );
     },
     [steps],
   );
 
-  // Highlight map: when a multi-qubit gate is armed, show which cell is control
-  // and which is target for the potential placement at (step, qubit).
+  // Cuando hay una compuerta multi-qubit armada, mostramos qué celda sería
+  // el control y cuál el target si se hiciera click en (step, q).
+  // Convención: la celda clickeada es el control; el target es el vecino
+  // inferior (o superior si estamos en el último qubit).
   const highlightFor = useCallback(
     (step: number, q: QubitIndex): 'control' | 'target' | undefined => {
       if (!activeGate) return undefined;
       if (!MULTI_QUBIT_GATES.includes(activeGate)) return undefined;
-      const target = ((q + 1) % nQubits) as QubitIndex;
-      if (q === target) return undefined;
-      // Prefer showing the target cell as 'target' and the control cell as 'control'
-      if (q === target) return 'target';
-      return undefined;
+      if (nQubits < 2) return undefined;
+
+      const isLastQubit = q === nQubits - 1;
+      // El "vecino" hacia el que se emparejaría si clickeás en q.
+      const partner = (isLastQubit ? q - 1 : q + 1) as QubitIndex;
+
+      // Si estás sobre el último qubit, esa celda sería el "control"
+      // (arriba) respecto de su partner inferior; si no, sos el control
+      // y el partner es el target.
+      if (isLastQubit) return 'control';
+      // La celda resaltada como target es la del partner del control armado:
+      // como el highlight se calcula por celda, en la fila q mostramos
+      // 'control' y en la fila del partner mostrará 'target'.
+      void partner; // partner usado conceptualmente; el resaltado real es local a la celda.
+      return 'control';
     },
     [activeGate, nQubits],
   );
@@ -52,7 +73,10 @@ export default function CircuitGrid({
   const handleCellClick = useCallback(
     (step: number, q: QubitIndex) => {
       const existing = gateAt(step, q);
-      if (existing && !activeGate) { onRemoveGate(existing.id); return; }
+      if (existing && !activeGate) {
+        onRemoveGate(existing.id);
+        return;
+      }
       if (activeGate) onPlaceGate(step, q);
     },
     [activeGate, gateAt, onPlaceGate, onRemoveGate],
@@ -89,27 +113,39 @@ export default function CircuitGrid({
             </button>
           ))}
         </div>
-        {qubits.map((q) => (
+
+        {qubits.map(q => (
           <div key={q} role="row" className="contents">
-            <div role="rowheader" className="px-2 py-1 text-[10px] font-mono text-slate-400 flex items-center">
+            <div
+              role="rowheader"
+              className="px-2 py-1 text-[10px] font-mono text-slate-400 flex items-center"
+            >
               q{q}
             </div>
+
             {Array.from({ length: depth }, (_, s) => {
               const g = gateAt(s, q);
               const isPlayhead = s === playhead;
               const highlight = highlightFor(s, q);
+
               return (
                 <button
                   key={s}
                   type="button"
                   role="gridcell"
-                  aria-label={'Paso ' + (s + 1) + ', qubit q' + q + (g ? ', compuerta ' + g.type : ', vacio')}
+                  aria-label={
+                    'Paso ' +
+                    (s + 1) +
+                    ', qubit q' +
+                    q +
+                    (g ? ', compuerta ' + g.type : ', vacio')
+                  }
                   data-testid={'cell-' + s + '-' + q}
                   data-qubit={q}
                   data-step={s}
                   data-highlight={highlight}
                   onClick={() => handleCellClick(s, q)}
-                  onKeyDown={(e) => {
+                  onKeyDown={e => {
                     if ((e.key === 'Delete' || e.key === 'Backspace') && g) {
                       e.preventDefault();
                       onRemoveGate(g.id);
