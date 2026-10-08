@@ -3,7 +3,7 @@
 import React from 'react';
 
 interface HistogramViewProps {
-  evaluation: any;
+  evaluation: unknown;
 }
 
 export function HistogramView({ evaluation }: HistogramViewProps) {

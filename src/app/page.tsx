@@ -1,269 +1,145 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
-import Header from "@/components/Header";
-import CelebrationModal from "@/components/CelebrationModal";
-import {
-  getOrCreateUserId,
-  getStoredProgress,
-  incrementActiveMissionTime,
-  getStoredActiveTab,
-  saveActiveTab,
-} from "@/lib/cookies";
-import { playButtonClick, isAudioEnabled, setAudioEnabled } from "@/lib/sound";
-import { useFullscreen } from "@/hooks/useFullscreen";
-import CommandPalette, { type Command } from "@/components/CommandPalette";
-import { useRouter } from "next/navigation";
-import { Play, RotateCcw, Loader2 } from "lucide-react";
+import React, { useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { useSession } from '@/hooks/useSession';
+import { getCoreMissions, MissionId, isMainJourneyComplete } from '@/config/missions';
 
-const Mission1Superposition = lazy(() => import("@/components/missions/Mission1Superposition"));
-const Mission2Entanglement = lazy(() => import("@/components/missions/Mission2Entanglement"));
-const Mission3Decoherence = lazy(() => import("@/components/missions/Mission3Decoherence"));
-const Mission4Applications = lazy(() => import("@/components/missions/Mission4Applications"));
-const Mission5Gates = lazy(() => import("@/components/missions/Mission5Gates"));
-const Mission6Grover = lazy(() => import("@/components/missions/Mission6Grover"));
-const Mission7ErrorCorrection = lazy(() => import("@/components/missions/Mission7ErrorCorrection"));
+const SuperpositionMission = dynamic(
+  () => import('@/components/missions/Mission1Superposition'),
+  {
+    loading: () => <div className="p-8 text-center text-slate-400">Cargando Misión 1...</div>,
+  }
+);
 
-function MissionLoading() {
-  return (
-    <div
-      data-testid="mission-loading"
-      className="flex-1 flex items-center justify-center py-16 text-slate-400"
-      aria-busy="true"
-      aria-live="polite"
-    >
-      <Loader2 className="w-6 h-6 animate-spin text-cyan" />
-      <span className="ml-3 text-sm font-mono">Cargando módulo…</span>
-    </div>
-  );
-}
+const EntanglementMission = dynamic(
+  () => import('@/components/missions/Mission2Entanglement'),
+  {
+    loading: () => <div className="p-8 text-center text-slate-400">Cargando Misión 2...</div>,
+  }
+);
 
-export default function Home() {
-  const [_userId, setUserId] = useState<string>("");
-  const [completedMissions, setCompletedMissions] = useState<number[]>([0]);
-  const [activeTab, setActiveTab] = useState<number>(0);
-  const [isStarted, setIsStarted] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number>(600);
-  const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
-  const [celebrationDismissed, setCelebrationDismissed] = useState<boolean>(false);
+const DecoherenceMission = dynamic(
+  () => import('@/components/missions/Mission3Decoherence'),
+  {
+    loading: () => <div className="p-8 text-center text-slate-400">Cargando Misión 3...</div>,
+  }
+);
 
-  // Phase 3: command palette + fullscreen + runtime audio toggle
-  const router = useRouter();
-  const [paletteOpen, setPaletteOpen] = useState<boolean>(false);
-  const [audioOn, setAudioOn] = useState<boolean>(() => isAudioEnabled());
-  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
+const ApplicationsMission = dynamic(
+  () => import('@/components/missions/Mission4Applications'),
+  {
+    loading: () => <div className="p-8 text-center text-slate-400">Cargando Misión 4...</div>,
+  }
+);
 
-  const timeLeftRef = useRef<number>(timeLeft);
-  useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
+export default function HomePage() {
+  const { session, isHydrated, setActiveMission, completeMission, recordTime, isUnlocked } = useSession();
+  const coreMissions = getCoreMissions();
+
+  const activeMissionId: MissionId =
+    session.activeMission && coreMissions.some((m) => m.id === session.activeMission)
+      ? session.activeMission
+      : 'superposition';
 
   useEffect(() => {
-    setUserId(getOrCreateUserId());
-    setCompletedMissions(getStoredProgress());
-    setActiveTab(getStoredActiveTab());
-  }, []);
-
-  useEffect(() => { saveActiveTab(activeTab); }, [activeTab]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setPaletteOpen((v) => !v);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  useEffect(() => {
-    if (!isStarted || isTimeUp) return;
-    const timer = setInterval(() => {
-      const current = timeLeftRef.current;
-      if (current <= 1) {
-        setIsTimeUp(true);
-        setTimeLeft(0);
-        return;
-      }
-      setTimeLeft(current - 1);
-      incrementActiveMissionTime(activeTab);
+    if (!isHydrated || !activeMissionId) return;
+    const interval = setInterval(() => {
+      recordTime(activeMissionId, 1);
     }, 1000);
-    return () => clearInterval(timer);
-  }, [isStarted, isTimeUp, activeTab]);
+    return () => clearInterval(interval);
+  }, [isHydrated, activeMissionId, recordTime]);
 
-  const handleMissionComplete = useCallback((missionIndex: number) => {
-    const updatedProgress = getStoredProgress();
-    setCompletedMissions(updatedProgress);
-    if (missionIndex < 6) setActiveTab(missionIndex + 1);
-  }, []);
-
-  const handleTabSelect = useCallback((tabIndex: number) => {
-    playButtonClick();
-    setActiveTab(tabIndex);
-  }, []);
-
-  const handleStartLab = useCallback(() => { playButtonClick(); setIsStarted(true); }, []);
-  const handleRestartLab = useCallback(() => {
-    playButtonClick();
-    setTimeLeft(600);
-    setIsTimeUp(false);
-    setActiveTab(0);
-  }, []);
-  const handleToggleTimer = useCallback(() => { setIsStarted((prev) => !prev); }, []);
-  const handleDismissCelebration = useCallback(() => { setCelebrationDismissed(true); }, []);
-
-  const showCelebration = completedMissions.includes(6) && !celebrationDismissed;
-
-  const handleToggleAudio = useCallback(() => {
-    const next = !isAudioEnabled();
-    setAudioEnabled(next);
-    setAudioOn(next);
-  }, []);
-
-  const commands: Command[] = React.useMemo(() => {
-    const missionNames = ['Superposicion', 'Entrelazamiento', 'Decoherencia', 'Aplicaciones', 'Compuertas Cuanticas', 'Busqueda de Grover', 'Correccion de Errores'];
-    const cmds: Command[] = missionNames.map((name, i) => ({
-      id: 'goto-mission-' + i,
-      title: 'Ir a Tarea ' + (i + 1) + ': ' + name,
-      keywords: ['mision', 'tarea', 'm' + (i + 1), name.toLowerCase()],
-      category: 'navigation',
-      action: () => handleTabSelect(i),
-    }));
-    cmds.push({
-      id: 'restart',
-      title: 'Reiniciar laboratorio',
-      keywords: ['restart', 'reiniciar', 'reset', 'tiempo'],
-      category: 'control',
-      action: handleRestartLab,
-    });
-    cmds.push({
-      id: 'toggle-audio',
-      title: audioOn ? 'Silenciar audio' : 'Activar audio',
-      keywords: ['audio', 'sound', 'mute', 'silenciar', 'sonido'],
-      category: 'control',
-      action: handleToggleAudio,
-    });
-    cmds.push({
-      id: 'toggle-fullscreen',
-      title: isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa',
-      keywords: ['fullscreen', 'pantalla', 'f11'],
-      category: 'control',
-      action: () => { void toggleFullscreen(); },
-    });
-    cmds.push({
-      id: 'goto-sandbox',
-      title: 'Abrir Sandbox (exploracion libre)',
-      keywords: ['sandbox', 'libre', 'explorar'],
-      category: 'navigation',
-      action: () => router.push('/sandbox'),
-    });
-    return cmds;
-  }, [audioOn, isFullscreen, handleTabSelect, handleRestartLab, handleToggleAudio, toggleFullscreen, router]);
+  const journeyFinished = isMainJourneyComplete(session.completed);
 
   return (
-    <main className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-cyan selection:text-slate-950">
-      <Header
-        timeLeft={timeLeft}
-        isRunning={isStarted && !isTimeUp}
-        onToggleTimer={handleToggleTimer}
-        onToggleFullscreen={toggleFullscreen}
-        isFullscreen={isFullscreen}
-      />
-
-      {!isStarted ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12 max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-300">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan/10 border border-cyan/30 text-cyan text-xs font-mono mb-6">
-            <span className="w-2 h-2 rounded-full bg-cyan animate-ping" />
-            Masterclass de Computación Cuántica 3D
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      <header className="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+              QuantumLab 3D
+            </h1>
+            <span className="text-xs bg-cyan-950 text-cyan-400 border border-cyan-800/60 px-2 py-0.5 rounded-full font-mono">
+              v0.3.1
+            </span>
           </div>
-          <h1 className="text-4xl sm:text-6xl font-orbitron font-bold tracking-tight text-white mb-6 leading-tight">
-            LABORATORIO DE <span className="text-cyan">FÍSICA CUÁNTICA</span>
-          </h1>
-          <p className="text-slate-300 text-base sm:text-lg mb-8 leading-relaxed max-w-2xl">
-            Bienvenido al simulador interactivo de mecánica cuántica. Explora la
-            superposición, el entrelazamiento, la decoherencia y las
-            aplicaciones reales mediante simulaciones en 3D en vivo.
-          </p>
-          <button
-            onClick={handleStartLab}
-            className="py-4 px-8 rounded-2xl bg-cyan text-slate-950 hover:bg-cyan/90 font-orbitron font-bold text-sm uppercase tracking-wider flex items-center gap-3 transition-all shadow-xl shadow-cyan/25 active:scale-95"
-          >
-            <Play className="w-5 h-5 fill-slate-950" /> Iniciar Experimentos
-          </button>
-        </div>
-      ) : isTimeUp ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12 max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
-          <div className="p-8 rounded-3xl bg-slate-950 border border-rose-500/40 shadow-2xl flex flex-col items-center gap-6">
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 font-orbitron font-bold text-xl">
-              10:00
-            </div>
-            <div>
-              <h2 className="text-2xl font-orbitron font-bold text-white mb-2">¡Tiempo Límite Agotado!</h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                Has alcanzado el tiempo límite de 10 minutos para esta sesión de
-                laboratorio. Puedes reiniciar el tiempo para continuar explorando los módulos.
-              </p>
-            </div>
-            <button
-              onClick={handleRestartLab}
-              className="py-3.5 px-6 rounded-2xl bg-cyan text-slate-950 font-orbitron font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyan/90 transition-all shadow-lg shadow-cyan/20 active:scale-95"
+
+          <nav className="flex items-center gap-1 overflow-x-auto py-1">
+            {coreMissions.map((m) => {
+              const unlocked = isUnlocked(m.id);
+              const completed = session.completed.includes(m.id);
+              const isActive = activeMissionId === m.id;
+
+              return (
+                <button
+                  key={m.id}
+                  disabled={!unlocked}
+                  onClick={() => setActiveMission(m.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+                      : unlocked
+                        ? 'bg-slate-800/80 text-slate-200 hover:bg-slate-700'
+                        : 'bg-slate-900 text-slate-600 cursor-not-allowed border border-slate-800/40'
+                  }`}
+                >
+                  {completed && <span className="text-emerald-400 font-bold">✓</span>}
+                  <span>{m.title}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <a
+              href="/sandbox"
+              className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-md transition"
+              data-testid="open-lab-btn"
             >
-              <RotateCcw className="w-4 h-4" /> Reiniciar Temporizador
-            </button>
+              Abrir Laboratorio
+            </a>
           </div>
         </div>
-      ) : (
-        <div className="flex-1 flex flex-col px-2 sm:px-4 py-4 mx-auto w-full">
-          <Suspense fallback={<MissionLoading />}>
-            {activeTab === 0 && <Mission1Superposition onComplete={() => handleMissionComplete(0)} />}
-            {activeTab === 1 && (
-              <Mission2Entanglement
-                onComplete={() => handleMissionComplete(1)}
-                onBack={() => handleTabSelect(0)}
-              />
-            )}
-            {activeTab === 2 && (
-              <Mission3Decoherence
-                onComplete={() => handleMissionComplete(2)}
-                onBack={() => handleTabSelect(1)}
-              />
-            )}
-            {activeTab === 3 && (
-              <Mission4Applications
-                onFinishAll={() => handleMissionComplete(3)}
-                onBack={() => handleTabSelect(2)}
-              />
-            )}
-            {activeTab === 4 && (
-              <Mission5Gates
-                onComplete={() => handleMissionComplete(4)}
-                onBack={() => handleTabSelect(3)}
-              />
-            )}
-            {activeTab === 5 && (
-              <Mission6Grover
-                onComplete={() => handleMissionComplete(5)}
-                onBack={() => handleTabSelect(4)}
-              />
-            )}
-            {activeTab === 6 && (
-              <Mission7ErrorCorrection
-                onComplete={() => handleMissionComplete(6)}
-                onBack={() => handleTabSelect(5)}
-              />
-            )}
-          </Suspense>
-        </div>
-      )}
+      </header>
 
-      {showCelebration && (
-        <CelebrationModal onClose={handleDismissCelebration} isOpen={showCelebration} />
-      )}
+      <section className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+        {journeyFinished && (
+          <div className="mb-6 p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-xl text-emerald-200 text-sm flex items-center justify-between">
+            <span>
+              🎉 ¡Felicidades! Has completado el recorrido principal de aprendizaje cuántico.
+            </span>
+            <a
+              href="/sandbox"
+              className="underline font-bold text-emerald-300 hover:text-white"
+            >
+              Explorar Sandbox Avanzado &rarr;
+            </a>
+          </div>
+        )}
 
-      <CommandPalette
-        isOpen={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        commands={commands}
-      />
+        {activeMissionId === 'superposition' && (
+          <SuperpositionMission onComplete={() => completeMission('superposition')} />
+        )}
+        {activeMissionId === 'entanglement' && (
+          <EntanglementMission
+            onComplete={() => completeMission('entanglement')}
+            onBack={() => setActiveMission('superposition')}
+          />
+        )}
+        {activeMissionId === 'decoherence' && (
+          <DecoherenceMission
+            onComplete={() => completeMission('decoherence')}
+            onBack={() => setActiveMission('entanglement')}
+          />
+        )}
+        {activeMissionId === 'applications' && (
+          <ApplicationsMission
+            onFinishAll={() => completeMission('applications')}
+            onBack={() => setActiveMission('decoherence')}
+          />
+        )}
+      </section>
     </main>
   );
 }

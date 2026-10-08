@@ -1,3 +1,9 @@
+/**
+ * Canonical Mission Registry for QuantumLab 3D
+ */
+
+export type MissionGroup = 'core' | 'sandbox';
+
 export type MissionId =
   | 'superposition'
   | 'entanglement'
@@ -10,71 +16,103 @@ export type MissionId =
 export interface MissionDefinition {
   id: MissionId;
   title: string;
-  shortTitle: string;
-  mode: 'core' | 'sandbox';
-  order: number;
+  subtitle: string;
   description: string;
+  group: MissionGroup;
+  order: number;
+  icon?: string;
 }
 
-export const MISSIONS: MissionDefinition[] = [
+export const MISSIONS: readonly MissionDefinition[] = [
   {
     id: 'superposition',
-    title: '01 Superposición y Colapso',
-    shortTitle: 'Superposición',
-    mode: 'core',
+    title: '1. Superposición Cuántica',
+    subtitle: 'El estado base del qubit',
+    description: 'Explora cómo un qubit puede existir simultáneamente en |0⟩ y |1⟩.',
+    group: 'core',
     order: 1,
-    description: 'Explora la esfera de Bloch y la probabilidad de colapso cuántico.'
   },
   {
     id: 'entanglement',
-    title: '02 Entrelazamiento y Par de Bell',
-    shortTitle: 'Entrelazamiento',
-    mode: 'core',
+    title: '2. Entrelazamiento Cuántico',
+    subtitle: 'Estados Bell y no-localidad',
+    description: 'Comprende la correlación instantánea entre qubits entrelazados.',
+    group: 'core',
     order: 2,
-    description: 'Mide correlaciones no locales entre Alice y Bob sin canal superlumínico.'
   },
   {
     id: 'decoherence',
-    title: '03 Decoherencia y Criogenia',
-    shortTitle: 'Decoherencia',
-    mode: 'core',
+    title: '3. Decoherecia y Ruido',
+    subtitle: 'Interacción con el entorno',
+    description: 'Observa cómo la pérdida de fase destruye la superposición.',
+    group: 'core',
     order: 3,
-    description: 'Analiza el impacto del ruido térmico en el tiempo de coherencia.'
   },
   {
     id: 'applications',
-    title: '04 Aplicaciones y Límites',
-    shortTitle: 'Aplicaciones',
-    mode: 'core',
+    title: '4. Aplicaciones Cuánticas',
+    subtitle: 'Criptografía y Teletransportación',
+    description: 'Aplica los principios cuánticos a protocolos de comunicación.',
+    group: 'core',
     order: 4,
-    description: 'Simulación de algoritmos, optimización y criptografía (Shor N=15).'
   },
   {
     id: 'gates',
-    title: 'Puertas Cuánticas',
-    shortTitle: 'Gates',
-    mode: 'sandbox',
+    title: 'Puertas lógicas',
+    subtitle: 'Sandbox Avanzado',
+    description: 'Manipula las puertas Pauli, Hadamard y CNOT directamente.',
+    group: 'sandbox',
     order: 5,
-    description: 'Sandbox interactivo de puertas lógicas cuánticas.'
   },
   {
     id: 'grover',
-    title: 'Búsqueda de Grover',
-    shortTitle: 'Grover',
-    mode: 'sandbox',
+    title: 'Algoritmo de Grover',
+    subtitle: 'Búsqueda Cuántica',
+    description: 'Aceleración cuadrática para búsqueda en bases no estructuradas.',
+    group: 'sandbox',
     order: 6,
-    description: 'Algoritmo de amplificación de amplitud.'
   },
   {
     id: 'error-correction',
     title: 'Corrección de Errores',
-    shortTitle: 'Error Correction',
-    mode: 'sandbox',
+    subtitle: 'Qubits lógicos',
+    description: 'Protección contra el ruido mediante redundancia cuántica.',
+    group: 'sandbox',
     order: 7,
-    description: 'Modelo didáctico de códigos de repetición.'
-  }
+  },
 ];
 
-export const getCoreMissions = () => MISSIONS.filter((m) => m.mode === 'core');
-export const getSandboxMissions = () => MISSIONS.filter((m) => m.mode === 'sandbox');
-export const getMission = (id: MissionId) => MISSIONS.find((m) => m.id === id);
+export const CORE_MISSION_IDS: readonly MissionId[] = MISSIONS
+  .filter(m => m.group === 'core')
+  .map(m => m.id);
+
+export function getCoreMissions(): MissionDefinition[] {
+  return MISSIONS.filter(m => m.group === 'core').sort((a, b) => a.order - b.order);
+}
+
+export function getSandboxMissions(): MissionDefinition[] {
+  return MISSIONS.filter(m => m.group === 'sandbox').sort((a, b) => a.order - b.order);
+}
+
+export function getMissionById(id: string): MissionDefinition | undefined {
+  return MISSIONS.find(m => m.id === id);
+}
+
+export function isMissionId(val: unknown): val is MissionId {
+  return typeof val === 'string' && MISSIONS.some(m => m.id === val);
+}
+
+
+export function isMainJourneyComplete(completed: string[] | Set<string> | Record<string, boolean>): boolean {
+  const coreIds = ['superposition', 'entanglement', 'decoherence', 'applications'];
+  if (Array.isArray(completed)) {
+    return coreIds.every((id) => completed.includes(id));
+  }
+  if (completed instanceof Set) {
+    return coreIds.every((id) => completed.has(id));
+  }
+  if (completed && typeof completed === 'object') {
+    return coreIds.every((id) => Boolean(completed[id]));
+  }
+  return false;
+}

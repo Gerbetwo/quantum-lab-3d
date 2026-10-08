@@ -3,7 +3,7 @@
 import React from 'react';
 
 interface BlochPairViewProps {
-  evaluation: any;
+  evaluation: unknown;
 }
 
 export function BlochPairView({ evaluation }: BlochPairViewProps) {

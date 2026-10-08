@@ -3,7 +3,7 @@
 import React from 'react';
 
 interface PhaseDiskViewProps {
-  evaluation: any;
+  evaluation: unknown;
 }
 
 export function PhaseDiskView({ evaluation }: PhaseDiskViewProps) {
