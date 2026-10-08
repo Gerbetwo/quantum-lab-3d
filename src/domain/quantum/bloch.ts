@@ -11,9 +11,9 @@ export interface BlochProbabilities {
   prob1: number;
 }
 
-export function calculateBlochVector(theta: number, phi: number = 0): BlochVector {
-  const x = Math.sin(theta) * Math.cos(phi);
-  const y = Math.sin(theta) * Math.sin(phi);
+export function calculateBlochVector(theta: number, _phi: number = 0): BlochVector {
+  const x = Math.sin(theta) * Math.cos(_phi);
+  const y = Math.sin(theta) * Math.sin(_phi);
   const z = Math.cos(theta);
   return {
     x: Math.round(x * 1000) / 1000,
@@ -30,7 +30,7 @@ export function calculateBlochProbabilities(theta: number): BlochProbabilities {
   return { alpha, beta, prob0, prob1 };
 }
 
-export function formatStateVector(theta: number, phi: number = 0): string {
+export function formatStateVector(theta: number, _phi: number = 0): string {
   const cos = Math.round(Math.cos(theta / 2) * 100) / 100;
   const sin = Math.round(Math.sin(theta / 2) * 100) / 100;
   if (sin === 0) return `|ψ⟩ = ${cos}|0⟩`;

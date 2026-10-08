@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import CircuitGrid from '@/components/circuit/CircuitGrid';
 import { createEmptyCircuit, placeGate } from '@/domain/quantum/circuit';
 
-function noop() {}
+function _noop() {}
 
 describe('CircuitGrid', () => {
   it('renders 6x16 gridcells for a 6-qubit 16-depth circuit', () => {

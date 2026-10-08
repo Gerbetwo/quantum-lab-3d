@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   ArrowRight,
   ArrowLeft,
-  CheckCircle2,
+  
   Zap,
   AlertTriangle,
   ThermometerSnowflake,
@@ -12,7 +12,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { playButtonClick, playChimeSuccess, playDecoherenceAlert, playLaserScan } from '@/lib/sound';
-import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
+import { saveCompletedMission } from '@/lib/cookies';
 import { useMissionTitle } from '@/hooks/useMissionTitle';
 import { calculateCoherenceTime, isCriticalDecoherence } from '@/domain/quantum/decoherence';
 import { useThreeScene } from '@/hooks/useThreeScene';

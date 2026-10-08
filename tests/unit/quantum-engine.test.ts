@@ -9,7 +9,7 @@ import {
 } from '@/domain/quantum/gatesN';
 import { applyGate, H_GATE, X_GATE, Z_GATE } from '@/domain/quantum/gates';
 import {
-  createEmptyCircuit, placeGate, evaluateFullCircuit,
+   evaluateFullCircuit,
 } from '@/domain/quantum/circuit';
 import {
   ghz6Circuit, qft3Circuit, teleportation3Circuit, ghzState,

@@ -31,7 +31,7 @@ describe('Phase 5 - Active tab persistence', () => {
   test('rejects invalid tab values on save (out-of-range, NaN)', () => {
     const invalidTabs: unknown[] = ['invalid_tab', 123, null, undefined, NaN, {}, []];
     invalidTabs.forEach((invalid) => {
-      saveActiveTab(invalid as any);
+      saveActiveTab(invalid as unknown as string);
       expect(getStoredActiveTab()).toBe(0);
     });
   });

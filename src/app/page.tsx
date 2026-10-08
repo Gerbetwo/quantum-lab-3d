@@ -39,7 +39,7 @@ function MissionLoading() {
 }
 
 export default function Home() {
-  const [userId, setUserId] = useState<string>("");
+  const [_userId, setUserId] = useState<string>("");
   const [completedMissions, setCompletedMissions] = useState<number[]>([0]);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [isStarted, setIsStarted] = useState<boolean>(false);

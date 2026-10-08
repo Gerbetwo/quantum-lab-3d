@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   ArrowRight,
   ArrowLeft,
-  CheckCircle2,
+  
   Zap,
   Share2,
   Sparkles,

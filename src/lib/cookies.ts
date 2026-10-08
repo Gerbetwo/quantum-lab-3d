@@ -51,7 +51,7 @@ export interface UserMetrics {
   completedMissions?: number[];
   missionTimes: MissionTimes;
   actions: UserActions;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function createDefaultMetrics(): UserMetrics {
@@ -236,7 +236,7 @@ export function saveActiveTab(tab: number | string): void {
   safeSetCookie(COOKIE_ACTIVE_TAB, String(numericTab));
 }
 
-export function getAllMissionStates(): Record<string, any> {
+export function getAllMissionStates(): Record<string, unknown> {
   const raw = Cookies.get(COOKIE_MISSION_STATE);
   if (!raw) return {};
   try {
@@ -250,12 +250,12 @@ export function getAllMissionStates(): Record<string, any> {
   }
 }
 
-export function getMissionState(missionIndex: number): Record<string, any> | null {
+export function getMissionState(missionIndex: number): Record<string, unknown> | null {
   const all = getAllMissionStates();
-  return all[missionIndex] !== undefined ? all[missionIndex] : null;
+  return all[missionIndex] !== undefined ? (all[missionIndex] as Record<string, unknown>) : null;
 }
 
-export function saveMissionState(missionIndex: number, state: Record<string, any>): void {
+export function saveMissionState(missionIndex: number, state: Record<string, unknown>): void {
   const currentAll = getAllMissionStates();
   const updatedAll = {
     ...currentAll,

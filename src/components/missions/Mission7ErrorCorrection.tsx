@@ -9,7 +9,7 @@ import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { useMissionTitle } from '@/hooks/useMissionTitle';
 import {
   bitFlipEncode, injectBitFlip, detectBitFlipSyndrome, bitFlipDecode,
-  type Bit, type BitTriple,
+   type BitTriple,
 } from '@/domain/quantum/errorCorrection';
 import { useThreeScene } from '@/hooks/useThreeScene';
 import { createOrbitControls } from '@/hooks/useOrbitControls';
@@ -22,7 +22,7 @@ interface Props {
 
 const STEP_TITLES = [
   'Corrección de Errores',
-  'Bit-Flip en Acción',
+  '_Bit-Flip en Acción',
   'Phase-Flip en Acción',
   'El Decodificador',
   'Comprobación',
@@ -221,7 +221,7 @@ export default function Mission7ErrorCorrection({ onComplete, onBack }: Props) {
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 py-2 animate-in fade-in zoom-in-95 duration-300">
           <div>
             <div className="text-xs font-mono text-orange-400 uppercase tracking-widest mb-1">
-              {step === 1 && 'Codigo de Repeticion - Errores de Bit'}
+              {step === 1 && 'Codigo de Repeticion - Errores de _Bit'}
               {step === 2 && 'Errores de Fase (Z)'}
               {step === 3 && 'Decodificacion por Sindrome'}
             </div>

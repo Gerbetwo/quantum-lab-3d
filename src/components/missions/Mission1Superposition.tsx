@@ -37,7 +37,7 @@ interface Props {
 // Cache de Texturas/Materiales de Sprites para evitar fugas de memoria VRAM
 const spriteMaterialCache = new Map<string, THREE.SpriteMaterial>();
 
-function createTextSprite(text: string, color = '#ffffff', fontSize = 28): THREE.Sprite {
+function _createTextSprite(text: string, color = '#ffffff', fontSize = 28): THREE.Sprite {
   const cacheKey = `${text}_${color}_${fontSize}`;
   let material = spriteMaterialCache.get(cacheKey);
 
@@ -87,9 +87,9 @@ export default function Mission1Superposition({ onComplete }: Props) {
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
-  const { alpha, beta, prob0: domainProb0 } = calculateBlochProbabilities(theta);
+  const { alpha: _alpha, beta: _beta, prob0: domainProb0 } = calculateBlochProbabilities(theta);
   const prob0 = isSuperposition ? domainProb0 : collapsedState === 0 ? 100 : 0;
-  const prob1 = 100 - prob0;
+  const _prob1 = 100 - prob0;
 
   const goToNextStep = useCallback(() => {
     playButtonClick();

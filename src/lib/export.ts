@@ -19,7 +19,7 @@ export interface SessionExportData {
   progress: number[];
   metrics: UserMetrics;
   activeTab: number;
-  missionState: Record<string, any>;
+  missionState: Record<string, unknown>;
 }
 
 export function exportSessionJSON(): string {

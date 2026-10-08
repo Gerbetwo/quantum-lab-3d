@@ -9,7 +9,7 @@ import { saveCompletedMission, updateStoredMetrics } from '@/lib/cookies';
 import { useMissionTitle } from '@/hooks/useMissionTitle';
 import {
   X_GATE, Z_GATE, H_GATE, I_GATE,
-  applyGate, applyCNOT, evaluateCircuit, stateToBlochAngles, stateLabel,
+  applyGate,  evaluateCircuit, stateToBlochAngles, stateLabel,
   type StateVector, type GateMatrix,
 } from '@/domain/quantum/gates';
 import { useThreeScene } from '@/hooks/useThreeScene';

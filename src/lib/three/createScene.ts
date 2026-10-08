@@ -77,7 +77,7 @@ export function createTextSprite(
   return sprite;
 }
 
-export function disposeResource(resource: { dispose?: () => void; userData?: Record<string, any> } | null | undefined): void {
+export function disposeResource(resource: { dispose?: () => void; userData?: Record<string, unknown> } | null | undefined): void {
   if (resource && typeof resource.dispose === 'function') {
     if (resource.userData?.__shared) {
       return;
