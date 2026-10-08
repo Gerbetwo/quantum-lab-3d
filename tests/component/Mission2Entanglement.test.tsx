@@ -3,21 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
 import Mission2Entanglement from '@/components/missions/Mission2Entanglement';
-import { goToStep } from '../helpers/queries';
 
-vi.mock('@/lib/sound', () => ({
-  playButtonClick: vi.fn(),
-  playChimeSuccess: vi.fn(),
-  playLaserScan: vi.fn(),
-  playQuantumCollapse: vi.fn(),
-}));
-
-vi.mock('@/lib/cookies', () => ({
-  saveCompletedMission: vi.fn(),
-  updateStoredMetrics: vi.fn(),
-}));
-
-describe('HU-09..HU-13 - Mission 2 Entanglement Component', () => {
+describe('Mission 2 Entanglement Component', () => {
   const onComplete = vi.fn();
   const onBack = vi.fn();
 
@@ -25,15 +12,14 @@ describe('HU-09..HU-13 - Mission 2 Entanglement Component', () => {
     vi.clearAllMocks();
   });
 
-  it('HU-09: toggles independent qubits separately', () => {
+  it('triggers onBack when clicking Previous on step 0', () => {
     render(<Mission2Entanglement onComplete={onComplete} onBack={onBack} />);
-    expect(screen.getByText('Ausencia de Enlace')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /Conmutar Alice/i }));
-    expect(screen.getByText('|1⟩')).toBeInTheDocument();
+    const prevBtn = screen.getByRole('button', { name: /← Anterior/i });
+    fireEvent.click(prevBtn);
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it('HU-12 & HU-13: correlated measurement with deterministic RNG, then quiz B', () => {
+  it('simulates Alice measurement and Bob correlation, then passes quiz', () => {
     render(
       <Mission2Entanglement
         onComplete={onComplete}
@@ -42,18 +28,22 @@ describe('HU-09..HU-13 - Mission 2 Entanglement Component', () => {
       />
     );
 
-    fireEvent.click(goToStep(4));
-    fireEvent.click(screen.getByRole('button', { name: /Medir en Laboratorio de Alice/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente →/i }));
+    expect(screen.getByText('2. Estación Alice (Tierra)')).toBeInTheDocument();
 
-    expect(screen.getByText(/Correlación Perfecta Instantánea/i)).toBeInTheDocument();
-    expect(screen.getByTestId('alice-state')).toHaveTextContent('|0⟩');
-    expect(screen.getByTestId('bob-state')).toHaveTextContent('|0⟩');
+    fireEvent.click(screen.getByRole('button', { name: /📡 Medir Qubit de Alice/i }));
+    expect(screen.getByText(/Alice midió:/i)).toBeInTheDocument();
 
-    fireEvent.click(goToStep(5));
-    fireEvent.click(screen.getByRole('button', { name: /Instantáneamente el estado correlacionado/i }));
-    expect(screen.getByText(/Correcto! En un estado entrelazado/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente →/i }));
+    expect(screen.getByText('3. Estación Bob (Andrómeda)')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Pasar a Tarea 3/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente →/i }));
+
+    const radioOption = screen.getByRole('radio', { name: /100% de correlación instantánea/i });
+    fireEvent.click(radioOption);
+
+    fireEvent.click(screen.getByRole('button', { name: /Validar Respuesta/i }));
+    expect(screen.getByText(/✅ ¡Correcto!/i)).toBeInTheDocument();
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 });

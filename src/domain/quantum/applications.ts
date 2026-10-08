@@ -1,20 +1,12 @@
-/**
- * QuantumLab 3D - Domain: Applications
- */
+import { factorizeShorN15, ShorStepResult } from './shor';
 
-export interface ShorFactorResult {
-  p: number;
-  q: number;
-  totalTimeMs: number;
-}
-
-export function formatShorResult(timeSeconds: number): string {
-  return `Algoritmo de Shor completado en ${timeSeconds} segundos`;
-}
+export { factorizeShorN15 };
+export type { ShorStepResult };
 
 export function updateExploredApplications(
-  current: string[],
-  incoming: string[],
+  currentExplored: string[],
+  appId: string
 ): string[] {
-  return Array.from(new Set([...current, ...incoming]));
+  if (currentExplored.includes(appId)) return currentExplored;
+  return [...currentExplored, appId];
 }

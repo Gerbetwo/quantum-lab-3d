@@ -1,15 +1,19 @@
-import { describe, it, expect } from 'vitest';
-import { formatShorResult, updateExploredApplications } from '@/domain/quantum/applications';
+import { describe, test, expect } from 'vitest';
+import { updateExploredApplications, factorizeShorN15 } from '@/domain/quantum/applications';
 
-describe('HU-20 — Shor Algorithm & Applications Domain', () => {
-  it('formats Shor algorithm completion result correctly', () => {
-    const formatted = formatShorResult(0.42);
-    expect(formatted).toContain('0.42 segundos');
-    expect(formatted).toContain('Shor');
+describe('Applications Domain', () => {
+  test('updateExploredApplications añade un elemento sin duplicar', () => {
+    const list = ['molecular_simulation'];
+    const updated = updateExploredApplications(list, 'cryptography_shor');
+    expect(updated).toEqual(['molecular_simulation', 'cryptography_shor']);
+
+    const same = updateExploredApplications(updated, 'cryptography_shor');
+    expect(same).toBe(updated);
   });
 
-  it('deduplicates explored applications without duplicates', () => {
-    const apps = updateExploredApplications(['molecular_simulation'], ['molecular_simulation', 'cryptography_shor']);
-    expect(apps).toEqual(['molecular_simulation', 'cryptography_shor']);
+  test('factorizeShorN15 re-exportado funciona correctamente', () => {
+    const res = factorizeShorN15(7);
+    expect(res.isSuccess).toBe(true);
+    expect(res.factors).toEqual([3, 5]);
   });
 });

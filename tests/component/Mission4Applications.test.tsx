@@ -1,65 +1,36 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
 import Mission4Applications from '@/components/missions/Mission4Applications';
-import { goToStep } from '../helpers/queries';
 
-vi.mock('@/lib/sound', () => ({
-  playButtonClick: vi.fn(),
-  playChimeSuccess: vi.fn(),
-  playLaserScan: vi.fn(),
-}));
-
-vi.mock('@/lib/cookies', () => ({
-  saveCompletedMission: vi.fn(),
-  updateStoredMetrics: vi.fn(),
-}));
-
-describe('HU-18..HU-21 - Mission 4 Applications Component', () => {
+describe('Mission 4 Applications Component', () => {
   const onFinishAll = vi.fn();
   const onBack = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('HU-18: myth cards inspection toggles state', () => {
-    render(<Mission4Applications onFinishAll={onFinishAll} onBack={onBack} />);
-    expect(screen.getByText(/Desmitificando la Tecnología/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('Videojuegos, Navegar o YouTube'));
-    expect(screen.getByText('Uso Inadecuado')).toBeInTheDocument();
-  });
-
-  it('HU-20: Shor algorithm simulation using fake timers', () => {
+  it('executes Shor demonstration for base selection and completes quiz', () => {
     render(<Mission4Applications onFinishAll={onFinishAll} onBack={onBack} />);
 
-    fireEvent.click(goToStep(3));
-    fireEvent.click(screen.getByRole('button', { name: /Probar Algoritmo de Shor Cuántico/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente →/i }));
+    expect(screen.getByText('2. Demostración Didáctica de Factorización (N = 15)')).toBeInTheDocument();
 
-    expect(screen.getByTestId('shor-status')).toHaveTextContent(/Procesando estados cuánticos/i);
+    const select = screen.getByLabelText(/Seleccionar base coprima con 15/i);
+    fireEvent.change(select, { target: { value: '2' } });
 
-    act(() => {
-      vi.advanceTimersByTime(1200);
-    });
+    expect(screen.getByTestId('shor-summary')).toHaveTextContent('N = 15 | Base a = 2');
 
-    expect(screen.getByTestId('shor-status')).toHaveTextContent(/Algoritmo de Shor completado en 0.42 segundos/i);
-  });
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente →/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente →/i }));
 
-  it('HU-21: quiz choice B triggers completion handler', () => {
-    render(<Mission4Applications onFinishAll={onFinishAll} onBack={onBack} />);
+    const radioOption = screen.getByRole('radio', { name: /Reduce la complejidad de factorización/i });
+    fireEvent.click(radioOption);
 
-    fireEvent.click(goToStep(4));
-    fireEvent.click(screen.getByRole('button', { name: /Simular moléculas complejas/i }));
-    expect(screen.getByText(/Excelente deducción/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /Finalizar Laboratorio/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Validar Respuesta/i }));
+    expect(screen.getByText(/✅ ¡Correcto!/i)).toBeInTheDocument();
     expect(onFinishAll).toHaveBeenCalledTimes(1);
   });
 });

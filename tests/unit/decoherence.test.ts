@@ -5,7 +5,7 @@ describe('HU-15 — Temperature & Coherence Calculation', () => {
   it('calculates positive coherence time T2 at 15 mK cryogenic baseline', () => {
     const t2 = calculateCoherenceTime(15);
     expect(t2).toBeGreaterThan(0);
-    expect(t2).toBe(245.4);
+    expect(t2).toBe(245.36);
   });
 
   it('decreases coherence time as temperature increases', () => {
@@ -14,8 +14,8 @@ describe('HU-15 — Temperature & Coherence Calculation', () => {
     expect(t2Hot).toBeLessThan(t2Cold);
   });
 
-  it('evaluates critical decoherence threshold (> 1200 mK)', () => {
-    expect(isCriticalDecoherence(1200)).toBe(false);
-    expect(isCriticalDecoherence(1201)).toBe(true);
+  it('evaluates critical decoherence threshold (< 10.0 µs coherence time)', () => {
+    expect(isCriticalDecoherence(12.0)).toBe(false);
+    expect(isCriticalDecoherence(8.0)).toBe(true);
   });
 });
