@@ -4,7 +4,7 @@ import {
   applyGate, matrixMultiply, applyCNOT, evaluateCircuit,
   stateToBlochAngles, gatesApproxEqual, stateLabel,
   type StateVector,
-} from '@/core/quantum/gates';
+} from '@/core/math/gates';
 
 const KET0: StateVector = [{ re: 1, im: 0 }, { re: 0, im: 0 }];
 const KET1: StateVector = [{ re: 0, im: 0 }, { re: 1, im: 0 }];

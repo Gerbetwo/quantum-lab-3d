@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import type { StateVector } from '@/core/quantum/statevector';
+import type { StateVector } from '@/core/math/statevector';
 
 const BlochPairView = React.lazy(() => import('@/features/circuit/components/viewports/BlochPairView'));
 const HistogramView = React.lazy(() => import('@/features/circuit/components/viewports/HistogramView'));

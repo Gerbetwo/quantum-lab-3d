@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { measureEntangledQubit } from '@/core/quantum/entanglement';
+import { measureEntangledQubit } from '@/core/math/entanglement';
 
 describe('Entanglement Domain', () => {
   test('correlates Alice and Bob outcomes perfectly', () => {

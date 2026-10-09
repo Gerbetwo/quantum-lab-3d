@@ -3,7 +3,7 @@ import {
   calculateBlochVector,
   calculateBlochProbabilities,
   formatStateVector,
-} from "@/core/quantum/bloch";
+} from '@/core/math/bloch';
 
 describe("HU-06 — Bloch Probabilities Calculation", () => {
   it("calculates exact state amplitudes and probabilities for North Pole (|0⟩)", () => {

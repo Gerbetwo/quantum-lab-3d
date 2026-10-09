@@ -7,7 +7,7 @@ import {
   Link as LinkIcon, Snowflake, RefreshCw, Activity,
   type LucideIcon,
 } from 'lucide-react';
-import type { GateType } from '@/core/quantum/circuit';
+import type { GateType } from '@/core/math/circuit';
 import Tooltip from '@/shared/ui/Tooltip';
 
 const DEFAULT_GATES: readonly GateType[] = ['H', 'X', 'Y', 'Z', 'S', 'T', 'CNOT', 'CZ', 'SWAP'];

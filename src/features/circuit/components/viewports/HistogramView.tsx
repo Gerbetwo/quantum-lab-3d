@@ -1,5 +1,5 @@
 import React from 'react';
-import type { StateVector } from '@/core/quantum/types';
+import type { StateVector } from '@/core/types';
 
 interface ViewportProps {
   evaluation?: StateVector;

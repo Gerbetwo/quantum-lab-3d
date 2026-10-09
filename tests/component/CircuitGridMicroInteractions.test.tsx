@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom';
 import CircuitGrid from '@/features/circuit/components/CircuitGrid';
-import { createEmptyCircuit } from '@/core/quantum/circuit';
+import { createEmptyCircuit } from '@/core/math/circuit';
 
 function noop() {}
 

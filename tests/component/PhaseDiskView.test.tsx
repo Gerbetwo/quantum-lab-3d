@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import '@testing-library/jest-dom';
 import PhaseDiskView from '@/features/circuit/components/viewports/PhaseDiskView';
-import { createZeroState } from '@/core/quantum/statevector';
+import { createZeroState } from '@/core/math/statevector';
 
 describe('PhaseDiskView', () => {
   it('renders a canvas with role=img and aria-label', () => {

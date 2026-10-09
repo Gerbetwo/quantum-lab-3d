@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { QuantumCircuit, QubitIndex } from '@/core/quantum/circuit';
+import type { QuantumCircuit, QubitIndex } from '@/core/math/circuit';
 
 interface CircuitGridProps {
   circuit: QuantumCircuit;

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { createEmptyCircuit, evaluateFullCircuit } from '@/core/quantum/circuit';
-import type { QuantumCircuit, StateVectorHistory } from '@/core/quantum/circuit';
+import { createEmptyCircuit, evaluateFullCircuit } from '@/core/math/circuit';
+import type { QuantumCircuit, StateVectorHistory } from '@/core/math/circuit';
 import { BlochPairView, PhaseDiskView, HistogramView } from './viewports';
 
 export function CircuitWorkbench() {

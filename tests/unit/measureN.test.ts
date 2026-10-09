@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { createZeroState } from '@/core/quantum/statevector';
-import { applyGateN, applyCNOT_N, H, X } from '@/core/quantum/gates';
-import { measureAll, measureQubitN } from '@/core/quantum/measurement';
+import { createZeroState } from '@/core/math/statevector';
+import { applyGateN, applyCNOT_N, H, X } from '@/core/math/gates';
+import { measureAll, measureQubitN } from '@/core/math/measurement';
 
 describe('Phase1 - N-qubit Measurement (injectable RNG)', () => {
   it('measureAll on |0> returns 0', () => {

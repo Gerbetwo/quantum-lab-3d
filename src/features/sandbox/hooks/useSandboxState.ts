@@ -6,10 +6,10 @@ import {
   placeGate,
   removeGate,
   evaluateFullCircuit,
-} from '@/core/quantum/circuit';
-import type { StateVector } from '@/core/quantum/statevector';
-import * as PresetsModule from '@/core/quantum/presets';
-import * as DecoherenceModule from '@/core/quantum/decoherence';
+} from '@/core/math/circuit';
+import type { StateVector } from '@/core/math/statevector';
+import * as PresetsModule from '@/core/math/presets';
+import * as DecoherenceModule from '@/core/math/decoherence';
 import * as SoundModule from '@/shared/lib/sound';
 
 export type Circuit = ReturnType<typeof createEmptyCircuit>;

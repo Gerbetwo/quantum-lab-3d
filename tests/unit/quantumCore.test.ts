@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { measureQubitState, validateCircuit, createInitialState } from '@/core/quantum';
-import { createZeroState, probability, probabilities, norm, type StateVector, type Complex } from '@/core/quantum/statevector';
-import { applyGateN, applyCNOT_N, applyCZ_N, applySWAP_N, H, X, Y, Z, S, T } from '@/core/quantum/gates';
-import { evaluateFullCircuit } from '@/core/quantum/circuit';
-import { ghz6Circuit, ghzState } from '@/core/quantum/presets';
-import { measureQubitN } from '@/core/quantum/measurement';
+import { measureQubitState, validateCircuit, createInitialState } from '@/core';
+import { createZeroState, probability, probabilities, norm, type StateVector, type Complex } from '@/core/math/statevector';
+import { applyGateN, applyCNOT_N, applyCZ_N, applySWAP_N, H, X, Y, Z, S, T } from '@/core/math/gates';
+import { evaluateFullCircuit } from '@/core/math/circuit';
+import { ghz6Circuit, ghzState } from '@/core/math/presets';
+import { measureQubitN } from '@/core/math/measurement';
 
 const EPS = 1e-7;
 

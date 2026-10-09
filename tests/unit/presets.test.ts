@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { bellState, ghzState, wState } from '@/core/quantum/presets';
-import { probabilities } from '@/core/quantum/statevector';
+import { bellState, ghzState, wState } from '@/core/math/presets';
+import { probabilities } from '@/core/math/statevector';
 
 describe('Phase1 - LUT Presets (Bell, GHZ, W)', () => {
   it('bellState(phi+) = (|00>+|11>)/sqrt(2)', () => {
