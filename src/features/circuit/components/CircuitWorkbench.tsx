@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useCallback, useMemo } from 'react';
+import { useState, useTransition, useCallback, useMemo } from 'react';
 import GatePalette from './GatePalette';
 import CircuitGrid from './CircuitGrid';
 import ViewModeSwitcher, { ViewMode } from './ViewModeSwitcher';

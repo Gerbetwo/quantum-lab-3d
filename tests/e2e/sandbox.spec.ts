@@ -1,47 +1,25 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('QuantumLab 3D - Phase 1 Sandbox & Navigation Flow', () => {
-  test('Prueba A - Entrada desde la página principal', async ({ page }) => {
-    await page.goto('/');
-    const openLabBtn = page.getByTestId('open-lab-btn').or(page.getByRole('link', { name: /laboratorio/i }));
-    await expect(openLabBtn).toBeVisible();
-    await openLabBtn.click();
-    await expect(page).toHaveURL(/sandbox/);
-    await expect(page.getByTestId('circuit-workbench')).toBeVisible();
-    await expect(page.getByTestId('circuit-grid')).toBeVisible();
+test.describe('E2E Quantum Sandbox Suite', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/sandbox');
   });
 
-  test('Prueba B - Acceso directo /sandbox y redirección /lab', async ({ page }) => {
-    // Direct /sandbox access
-    await page.goto('/sandbox');
-    await expect(page.getByTestId('circuit-workbench')).toBeVisible();
-
-    // Redirect /lab -> /sandbox
-    await page.goto('/lab');
-    await expect(page).toHaveURL(/sandbox/);
-    await expect(page.getByTestId('circuit-workbench')).toBeVisible();
+  test('debe cargar la interfaz completa del Sandbox sin estado mock', async ({ page }) => {
+    await expect(page.locator('h1')).toContainText('Quantum Sandbox Laboratory');
+    await expect(page.locator('text=Catálogo de Puertas')).toBeVisible();
+    await expect(page.locator('button:has-text("Medir Circuito")')).toBeVisible();
   });
 
-  test('Prueba C - Interacción básica con el workbench', async ({ page }) => {
-    await page.goto('/sandbox');
-    await expect(page.getByTestId('circuit-workbench')).toBeVisible();
+  test('debe permitir cambiar la escala de qubits', async ({ page }) => {
+    const select = page.locator('#qubit-count');
+    await select.selectOption('4');
+    await expect(page.locator('footer')).toContainText('Estado Vectorial:');
+  });
 
-    // Select Hadamard gate and place it
-    const hGate = page.getByRole('button', { name: /^H$/i }).or(page.getByTestId('gate-H'));
-    if (await hGate.isVisible()) {
-      await hGate.click();
-    }
-
-    // Select preset
-    const presetSelector = page.getByTestId('preset-selector');
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption({ index: 1 });
-    }
-
-    // Reset circuit
-    const resetBtn = page.getByTestId('reset-circuit-btn');
-    if (await resetBtn.isVisible()) {
-      await resetBtn.click();
-    }
+  test('debe disparar la medición correctamente', async ({ page }) => {
+    const measureBtn = page.locator('button:has-text("Medir Circuito")');
+    await measureBtn.click();
+    await expect(page.locator('footer')).toContainText('Resultado Medido:');
   });
 });

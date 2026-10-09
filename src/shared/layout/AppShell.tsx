@@ -18,7 +18,7 @@ export function AppShell({ children, title, subtitle }: AppShellProps) {
             {subtitle && <p className="text-sm text-slate-400">{subtitle}</p>}
           </div>
         )}
-        <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 flex flex-col w-full mx-auto px-2 sm:px-2 lg:px-2 py-2">
           {children}
         </main>
         <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">

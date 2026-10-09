@@ -57,7 +57,7 @@ export const MissionShell: React.FC<MissionShellProps> = ({
   const isCompleted = state === 'completed';
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full p-4 text-slate-100">
+    <div className="flex flex-col gap-6 mx-auto w-full text-slate-100">
       <header className="flex flex-col gap-2 border-b border-slate-700 pb-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-2xl font-bold text-cyan-400 tracking-wide">{title}</h1>
@@ -67,7 +67,7 @@ export const MissionShell: React.FC<MissionShellProps> = ({
         </div>
         <p className="text-sm text-slate-300 leading-relaxed">{description}</p>
       </header>
-
+{/* 
       <nav aria-label="Progreso de la misión" className="flex items-center gap-2 py-2 overflow-x-auto">
         {Array.from({ length: totalSteps }).map((_, idx) => {
           const isCurrent = idx === currentStep;
@@ -91,7 +91,7 @@ export const MissionShell: React.FC<MissionShellProps> = ({
             />
           );
         })}
-      </nav>
+      </nav> */}
 
       {errorMessage && (
         <div role="alert" className="p-3 bg-rose-950/80 border border-rose-500/50 rounded-lg text-rose-200 text-sm flex items-center gap-2">

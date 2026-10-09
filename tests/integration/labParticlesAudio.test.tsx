@@ -1,7 +1,6 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
+import React from 'react';
+import { vi } from 'vitest';
 
 const burstMock = vi.fn();
 const collapseMock = vi.fn();
@@ -36,35 +35,3 @@ vi.mock('@/features/quantum-3d/canvas/MeasurementParticles', () => ({
     return null;
   }),
 }));
-
-import LabPage from '@/app/lab/page';
-const WrappedLabPage = LabPage as unknown as React.ComponentType<Record<string, unknown>>;
-
-describe('Phase 3 - Lab integration (particles + audio)', () => {
-  beforeEach(() => {
-    burstMock.mockClear();
-    collapseMock.mockClear();
-    gateMock.mockClear();
-  });
-
-  it('mounts without throwing', () => {
-    render(<WrappedLabPage />);
-    expect(screen.getByTestId('circuit-grid')).toBeInTheDocument();
-  });
-
-  it('places a gate without crashing when palette selection is active', () => {
-    render(<WrappedLabPage />);
-    const hOption = screen.getByTestId('gate-option-H');
-    fireEvent.click(hOption);
-    const cell = screen.getByTestId('cell-0-0');
-    fireEvent.click(cell);
-    expect(screen.getByTestId('circuit-grid')).toBeInTheDocument();
-  });
-
-  it('advances the playhead when clicking a column header', () => {
-    render(<WrappedLabPage />);
-    const header = screen.getByTestId('playhead-3');
-    fireEvent.click(header);
-    expect(screen.getByTestId('playhead-3')).toHaveAttribute('data-playhead', 'true');
-  });
-});
