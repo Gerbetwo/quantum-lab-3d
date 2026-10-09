@@ -1,13 +1,32 @@
 @import "tailwindcss";
 
-@layer components {
-  .quantum-panel {
-    @apply rounded-xl border border-slate-800 bg-slate-900/80 p-4 backdrop-blur-md shadow-lg transition-all;
-  }
-  .circuit-grid-cell {
-    @apply flex h-12 w-12 items-center justify-center rounded border border-dashed border-slate-700 hover:border-cyan-500 transition-colors cursor-pointer;
-  }
-  .quantum-heading {
-    @apply text-lg font-semibold tracking-tight text-slate-100;
-  }
+:root {
+  --bg-obsidian: #090D16;
+  --bg-panel-glass: rgba(15, 23, 42, 0.75);
+  --border-cyan-glow: rgba(0, 240, 255, 0.25);
+  --qubit-0-cyan: #00F0FF;
+  --qubit-1-purple: #A855F7;
+  --entanglement-gold: #F59E0B;
+  --decoherence-red: #EF4444;
+  --text-hud-primary: #F8FAFC;
+  --text-hud-muted: #94A3B8;
+}
+
+body {
+  background-color: var(--bg-obsidian);
+  color: var(--text-hud-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+.hud-glass-card {
+  background: var(--bg-panel-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-cyan-glow);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border-radius: 0.75rem;
+}
+
+.hud-font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
