@@ -25,7 +25,7 @@ export interface MeasurementParticlesProps {
   maxInstances?: number;
 }
 
-const MeasurementParticles = forwardRef<MeasurementParticlesHandle, MeasurementParticlesProps>(
+export const MeasurementParticles = forwardRef<MeasurementParticlesHandle, MeasurementParticlesProps>(
   function MeasurementParticles({ sceneRef, maxInstances = 1000 }, ref) {
     const poolRef = useRef<ParticlePool | null>(null);
 

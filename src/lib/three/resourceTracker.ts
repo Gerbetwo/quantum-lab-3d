@@ -1,30 +1,47 @@
 import * as THREE from 'three';
 
+export interface DisposableResource {
+  dispose(): void;
+}
+
 export class ResourceTracker {
-  private resources = new Set<THREE.Object3D | THREE.BufferGeometry | THREE.Material | THREE.Texture>();
+  private resources = new Set<DisposableResource | THREE.Object3D>();
 
-  public track<T extends THREE.Object3D | THREE.BufferGeometry | THREE.Material | THREE.Texture>(resource: T): T {
+  track<T extends DisposableResource | THREE.Object3D>(resource: T): T {
     if (!resource) return resource;
-
-    if ('dispose' in resource || resource instanceof THREE.Object3D) {
-      this.resources.add(resource);
+    if (resource instanceof THREE.Object3D) {
+      resource.traverse((child: THREE.Object3D) => {
+        const meshChild = child as THREE.Mesh;
+        if (meshChild.geometry && typeof meshChild.geometry.dispose === 'function') {
+          this.resources.add(meshChild.geometry as DisposableResource);
+        }
+        const mat = meshChild.material;
+        if (mat) {
+          if (Array.isArray(mat)) {
+            mat.forEach((m) => {
+              if (m && typeof m.dispose === 'function') {
+                this.resources.add(m as DisposableResource);
+              }
+            });
+          } else if (typeof mat.dispose === 'function') {
+            this.resources.add(mat as DisposableResource);
+          }
+        }
+      });
+    } else if ('dispose' in resource && typeof (resource as DisposableResource).dispose === 'function') {
+      this.resources.add(resource as DisposableResource);
     }
     return resource;
   }
 
-  public dispose(): void {
+  dispose() {
     for (const resource of this.resources) {
-      if ('userData' in resource && resource.userData?.__shared) {
-        // No liberar recursos compartidos globales
+      const resWithData = resource as { userData?: { __shared?: boolean }; dispose?: () => void };
+      if (resWithData.userData && resWithData.userData.__shared === true) {
         continue;
       }
-
-      if (resource instanceof THREE.Object3D) {
-        if (resource.parent) {
-          resource.parent.remove(resource);
-        }
-      } else if ('dispose' in resource && typeof resource.dispose === 'function') {
-        resource.dispose();
+      if (resWithData.dispose && typeof resWithData.dispose === 'function') {
+        resWithData.dispose();
       }
     }
     this.resources.clear();
