@@ -1,6 +1,5 @@
-
-@tailwind utilities;
-
+/* src/app/globals.css */
+@import "tailwindcss";
 :root {
   color-scheme: dark;
 
