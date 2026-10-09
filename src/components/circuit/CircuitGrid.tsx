@@ -1,172 +1,116 @@
-'use client';
+import React, { useMemo, useState, useEffect } from 'react';
+import type { QuantumCircuit, QubitIndex, GateType } from '@/domain/quantum/circuit';
 
-import React, { useCallback, useMemo } from 'react';
-import clsx from 'clsx';
-import type { GateType, QuantumCircuit, QubitIndex } from '@/domain/quantum/circuit';
-
-interface Props {
+export interface CircuitGridProps {
   circuit: QuantumCircuit;
-  activeGate: GateType | null;
-  playhead: number;
-  onPlaceGate: (step: number, qubit: QubitIndex) => void;
-  onRemoveGate: (gateId: string) => void;
-  onSetPlayhead: (n: number) => void;
+  activeGate?: GateType | null | string;
+  playhead?: number;
+  onPlaceGate?: (stepIndex: number, qubitIndex: QubitIndex, gateType?: string) => void;
+  onRemoveGate?: (gateId: string) => void;
+  onSetPlayhead?: React.Dispatch<React.SetStateAction<number>> | ((val: number) => void);
 }
 
-const MULTI_QUBIT_GATES: readonly GateType[] = ['CNOT', 'CZ', 'CS', 'CT'];
-
-export default function CircuitGrid({
+export const CircuitGrid: React.FC<CircuitGridProps> = ({
   circuit,
-  activeGate,
-  playhead,
+  playhead = 0,
   onPlaceGate,
   onRemoveGate,
   onSetPlayhead,
-}: Props) {
-  const { nQubits, depth, steps } = circuit;
+}) => {
+  const { numQubits, nQubits, depth = 16, steps } = circuit;
+  const totalQubits = numQubits ?? nQubits ?? 6;
+  const [selectedGateId, setSelectedGateId] = useState<string | null>(null);
 
-  const qubits: QubitIndex[] = useMemo(
-    () => Array.from({ length: nQubits }, (_, i) => i as QubitIndex),
-    [nQubits],
+  const qubits = useMemo(
+    () => Array.from({ length: totalQubits }, (_, i) => i as QubitIndex),
+    [totalQubits]
   );
 
-  const gateAt = useCallback(
-    (step: number, q: QubitIndex) => {
-      const s = steps[step];
-      if (!s) return null;
-      return (
-        s.gates.find(
-          g => g.targets.includes(q) || (g.controls?.includes(q) ?? false),
-        ) ?? null
-      );
-    },
-    [steps],
+  const stepsArray = useMemo(
+    () => Array.from({ length: depth }, (_, i) => i),
+    [depth]
   );
 
-  // Cuando hay una compuerta multi-qubit armada, mostramos qué celda sería
-  // el control y cuál el target si se hiciera click en (step, q).
-  // Convención: la celda clickeada es el control; el target es el vecino
-  // inferior (o superior si estamos en el último qubit).
-  const highlightFor = useCallback(
-    (step: number, q: QubitIndex): 'control' | 'target' | undefined => {
-      if (!activeGate) return undefined;
-      if (!MULTI_QUBIT_GATES.includes(activeGate)) return undefined;
-      if (nQubits < 2) return undefined;
-
-      const isLastQubit = q === nQubits - 1;
-      // El "vecino" hacia el que se emparejaría si clickeás en q.
-      const partner = (isLastQubit ? q - 1 : q + 1) as QubitIndex;
-
-      // Si estás sobre el último qubit, esa celda sería el "control"
-      // (arriba) respecto de su partner inferior; si no, sos el control
-      // y el partner es el target.
-      if (isLastQubit) return 'control';
-      // La celda resaltada como target es la del partner del control armado:
-      // como el highlight se calcula por celda, en la fila q mostramos
-      // 'control' y en la fila del partner mostrará 'target'.
-      void partner; // partner usado conceptualmente; el resaltado real es local a la celda.
-      return 'control';
-    },
-    [activeGate, nQubits],
-  );
-
-  const handleCellClick = useCallback(
-    (step: number, q: QubitIndex) => {
-      const existing = gateAt(step, q);
-      if (existing && !activeGate) {
-        onRemoveGate(existing.id);
-        return;
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedGateId && onRemoveGate) {
+        onRemoveGate(selectedGateId);
+        setSelectedGateId(null);
       }
-      if (activeGate) onPlaceGate(step, q);
-    },
-    [activeGate, gateAt, onPlaceGate, onRemoveGate],
-  );
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedGateId, onRemoveGate]);
 
   return (
-    <div className="w-full overflow-x-auto" data-testid="circuit-grid-wrapper">
-      <div
-        role="grid"
-        aria-label="Editor de circuito cuantico"
-        data-testid="circuit-grid"
-        className="inline-grid gap-0.5"
-        style={{ gridTemplateColumns: 'auto repeat(' + depth + ', minmax(2rem, 1fr))' }}
-      >
-        <div role="row" className="contents">
-          <div role="columnheader" aria-label="Qubit" />
-          {Array.from({ length: depth }, (_, s) => (
-            <button
+    <div data-testid="circuit-grid" role="grid" className="p-4 bg-slate-900 rounded-lg overflow-x-auto">
+      <div className="flex space-x-1 mb-2 ml-12">
+        {stepsArray.map((s) => {
+          const isPlayheadCol = s === playhead;
+          return (
+            <div
               key={s}
-              type="button"
-              role="columnheader"
-              aria-label={'Ir al paso ' + (s + 1)}
-              data-testid={'playhead-' + s}
-              data-playhead={s === playhead ? 'true' : undefined}
-              onClick={() => onSetPlayhead(s)}
-              className={clsx(
-                'px-1 py-0.5 rounded text-[10px] font-mono transition-all duration-150',
-                s === playhead
-                  ? 'bg-cyan/20 text-cyan'
-                  : 'text-slate-400 hover:bg-surface-2',
-              )}
+              data-testid={`playhead-${s}`}
+              data-playhead={isPlayheadCol ? 'true' : undefined}
+              onClick={() => onSetPlayhead && onSetPlayhead(s)}
+              className={`w-10 text-center text-xs cursor-pointer py-1 rounded ${
+                isPlayheadCol ? 'bg-cyan-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'
+              }`}
             >
               {s}
-            </button>
-          ))}
-        </div>
-
-        {qubits.map(q => (
-          <div key={q} role="row" className="contents">
-            <div
-              role="rowheader"
-              className="px-2 py-1 text-[10px] font-mono text-slate-400 flex items-center"
-            >
-              q{q}
             </div>
-
-            {Array.from({ length: depth }, (_, s) => {
-              const g = gateAt(s, q);
-              const isPlayhead = s === playhead;
-              const highlight = highlightFor(s, q);
-
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  role="gridcell"
-                  aria-label={
-                    'Paso ' +
-                    (s + 1) +
-                    ', qubit q' +
-                    q +
-                    (g ? ', compuerta ' + g.type : ', vacio')
-                  }
-                  data-testid={'cell-' + s + '-' + q}
-                  data-qubit={q}
-                  data-step={s}
-                  data-highlight={highlight}
-                  onClick={() => handleCellClick(s, q)}
-                  onKeyDown={e => {
-                    if ((e.key === 'Delete' || e.key === 'Backspace') && g) {
-                      e.preventDefault();
-                      onRemoveGate(g.id);
-                    }
-                  }}
-                  className={clsx(
-                    'h-7 rounded border text-[10px] font-orbitron font-bold outline-none',
-                    'focus:ring-2 focus:ring-cyan/40 transition-all duration-150',
-                    isPlayhead ? 'border-cyan/60' : 'border-edge',
-                    g ? 'bg-cyan/15 text-cyan' : 'bg-surface-2 text-slate-600 hover:bg-surface-3',
-                    highlight === 'target' && 'ring-1 ring-amber-400/60',
-                    highlight === 'control' && 'ring-1 ring-purple-400/60',
-                  )}
-                >
-                  {g ? g.type : ''}
-                </button>
-              );
-            })}
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {qubits.map((q) => (
+        <div key={q} role="row" className="flex items-center space-x-1 my-1">
+          <div className="w-10 text-right pr-2 text-slate-400 text-sm">q{q}</div>
+          {stepsArray.map((s) => {
+            const stepObj = steps?.find((st) => st.step === s);
+            const gate = stepObj?.gates.find(
+              (g) => g.targets?.includes(q) || g.targetQubit === q
+            );
+            const isPlayheadCol = s === playhead;
+
+            return (
+              <div
+                key={s}
+                role="gridcell"
+                tabIndex={0}
+                data-testid={`cell-${s}-${q}`}
+                data-playhead={isPlayheadCol ? 'true' : undefined}
+                onClick={() => {
+                  if (gate?.id) {
+                    setSelectedGateId(gate.id);
+                  }
+                  if (onPlaceGate) {
+                    onPlaceGate(s, q);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Delete' || e.key === 'Backspace')) {
+                    if (gate?.id && onRemoveGate) {
+                      onRemoveGate(gate.id);
+                    }
+                  }
+                }}
+                className={`w-10 h-10 border flex items-center justify-center text-cyan-400 cursor-pointer select-none transition-colors ${
+                  isPlayheadCol ? 'border-cyan-500 bg-slate-800/60' : 'border-slate-700 bg-slate-900'
+                } ${selectedGateId === gate?.id ? 'ring-2 ring-yellow-400' : ''}`}
+              >
+                {gate ? (
+                  <span className="font-mono text-xs font-semibold px-1 py-0.5 rounded bg-cyan-950 text-cyan-300">
+                    {gate.type}
+                  </span>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
-}
+};
+
+export default CircuitGrid;

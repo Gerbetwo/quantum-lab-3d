@@ -1,217 +1,277 @@
-/**
- * Quantum Circuit Domain Model (pure, no React, no Three.js).
- *
- * Supports up to 6 qubits and 16 time steps.
- * Gates: H, X, Y, Z, S, T, CNOT, CZ, SWAP, CS, CT.
- */
-
-import type { StateVector } from './statevector';
-import { createZeroState } from './statevector';
 import {
-  H, X, Y, Z, S, T,
-  applyGateN, applyCNOT_N, applyCZ_N, applySWAP_N, applyControlledPhaseN,
-} from './gatesN';
+  GateType,
+  QubitIndex,
+  PlacedGate,
+  CircuitStep,
+  QuantumCircuit,
+  StateVectorHistory,
+  ValidationResult,
+  StateVector,
+} from './types';
 
-export type GateType = 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T'
-                     | 'CNOT' | 'CZ' | 'SWAP' | 'CS' | 'CT';
-
-export type QubitIndex = 0 | 1 | 2 | 3 | 4 | 5;
+export type {
+  GateType,
+  QubitIndex,
+  PlacedGate,
+  CircuitStep,
+  QuantumCircuit,
+  StateVectorHistory,
+  ValidationResult,
+};
 
 export const MAX_DEPTH = 16;
 export const MIN_QUBITS_CIRCUIT = 1;
 export const MAX_QUBITS_CIRCUIT = 6;
 
-export interface PlacedGate {
-  readonly id: string;
-  readonly type: GateType;
-  readonly step: number;
-  readonly targets: readonly QubitIndex[];
-  readonly controls?: readonly QubitIndex[];
-}
-
-export interface CircuitStep {
-  readonly index: number;
-  readonly gates: readonly PlacedGate[];
-}
-
-export interface QuantumCircuit {
-  readonly nQubits: number;
-  readonly depth: number;
-  readonly steps: readonly CircuitStep[];
-}
-
-export interface StateVectorHistory {
-  readonly initial: StateVector;
-  readonly afterEachStep: readonly StateVector[];
-  readonly final: StateVector;
-}
-
-export interface ValidationResult {
-  readonly ok: boolean;
-  readonly errors: readonly string[];
-}
-
-function assertNever(x: never): never {
-  throw new Error('Unhandled gate type: ' + String(x));
-}
-
 export function createEmptyCircuit(nQubits: number, depth: number = MAX_DEPTH): QuantumCircuit {
-  if (!Number.isInteger(nQubits) || nQubits < MIN_QUBITS_CIRCUIT || nQubits > MAX_QUBITS_CIRCUIT) {
-    throw new RangeError('nQubits must be an integer in [1, 6], got ' + nQubits);
+  if (nQubits < MIN_QUBITS_CIRCUIT || nQubits > MAX_QUBITS_CIRCUIT) {
+    throw new Error(`Número de qubits fuera de rango (${MIN_QUBITS_CIRCUIT}-${MAX_QUBITS_CIRCUIT}).`);
   }
-  if (!Number.isInteger(depth) || depth < 1 || depth > MAX_DEPTH) {
-    throw new RangeError('depth must be an integer in [1, ' + MAX_DEPTH + '], got ' + depth);
+  if (depth <= 0 || depth > MAX_DEPTH) {
+    throw new Error(`Profundidad fuera de rango (1-${MAX_DEPTH}).`);
   }
-  const steps: CircuitStep[] = [];
-  for (let i = 0; i < depth; i++) steps.push({ index: i, gates: [] });
-  return { nQubits, depth, steps };
+
+  const steps: CircuitStep[] = Array.from({ length: depth }, (_, i) => ({
+    step: i,
+    gates: [],
+  }));
+  return { numQubits: nQubits, nQubits, depth, steps, gates: [] };
 }
 
-function gateId(type: GateType, step: number, targets: readonly QubitIndex[]): string {
-  return 'g-' + step + '-' + type + '-' + targets.join('-');
+export function createInitialState(numQubits: number): [number, number][] {
+  return Array.from({ length: numQubits }, () => [1, 0]);
 }
 
-function validateGate(circuit: QuantumCircuit, gate: Omit<PlacedGate, 'id'>): void {
-  const ctrls = gate.controls ?? [];
-  if (!Number.isInteger(gate.step) || gate.step < 0 || gate.step >= circuit.depth) {
-    throw new RangeError('step ' + gate.step + ' out of range [0, ' + circuit.depth + ')');
+export function initialStateN(nQubits: number): StateVector {
+  const dim = 1 << nQubits;
+  const state: StateVector = Array.from({ length: dim }, () => ({ re: 0, im: 0 }));
+  state[0] = { re: 1, im: 0 };
+  return state;
+}
+
+export function evaluateStepN(state: StateVector, step: CircuitStep, nQubits: number): StateVector {
+  let curr = [...state];
+  if (!step || !step.gates) return curr;
+
+  for (const gate of step.gates) {
+    const targets = gate.targets || (gate.targetQubit !== undefined ? [gate.targetQubit] : []);
+    const controls = gate.controls || (gate.controlQubit !== undefined ? [gate.controlQubit] : []);
+    if (targets.length === 0) continue;
+    const target = targets[0];
+    const dim = curr.length;
+    const next: StateVector = Array.from({ length: dim }, () => ({ re: 0, im: 0 }));
+
+    const isH = gate.type === 'H';
+    const isX = gate.type === 'X';
+    const isZ = gate.type === 'Z';
+    const isCNOT = gate.type === 'CNOT';
+
+    for (let i = 0; i < dim; i++) {
+      const bit = (i >> (nQubits - 1 - target)) & 1;
+      const peer = i ^ (1 << (nQubits - 1 - target));
+
+      if (isCNOT && controls.length > 0) {
+        const control = controls[0];
+        const controlBit = (i >> (nQubits - 1 - control)) & 1;
+        if (controlBit === 1) {
+          next[i] = curr[peer];
+        } else {
+          next[i] = { ...curr[i] };
+        }
+      } else if (isX) {
+        next[i] = curr[peer];
+      } else if (isZ) {
+        const val = curr[i];
+        next[i] = bit === 1 ? { re: -val.re, im: -val.im } : { ...val };
+      } else if (isH) {
+        const inv = 1 / Math.SQRT2;
+        const v0 = bit === 0 ? curr[i] : curr[peer];
+        const v1 = bit === 0 ? curr[peer] : curr[i];
+        const sign = bit === 1 ? -1 : 1;
+        
+        const re = inv * (v0.re + sign * v1.re);
+        const im = inv * (v0.im + sign * v1.im);
+        next[i] = { re, im };
+      } else {
+        next[i] = { ...curr[i] };
+      }
+    }
+    curr = next;
   }
-  const totalQubits = gate.targets.length + ctrls.length;
-  if (totalQubits < 1) throw new Error('gate must act on at least one qubit');
-  if (totalQubits > 2) throw new Error('gate cannot act on more than 2 qubits');
-  const all = [...gate.targets, ...ctrls];
-  for (const q of all) {
-    if (!Number.isInteger(q) || q < 0 || q >= circuit.nQubits) {
-      throw new RangeError('qubit ' + q + ' out of range [0, ' + circuit.nQubits + ')');
+  return curr;
+}
+
+export function placeGate(
+  circuit: QuantumCircuit,
+  gate: Omit<PlacedGate, 'id' | 'targets' | 'controls'> & {
+    id?: string;
+    targets?: number[];
+    controls?: number[];
+  }
+): QuantumCircuit {
+  const stepIdx = gate.step ?? 0;
+  if (stepIdx < 0 || stepIdx >= circuit.depth) {
+    throw new Error('Paso fuera de rango.');
+  }
+
+  const targetQ = gate.targetQubit ?? (gate.targets && gate.targets[0]) ?? 0;
+  const controlQ = gate.controlQubit ?? (gate.controls && gate.controls[0]);
+
+  const targets = gate.targets || [targetQ];
+  const controls = gate.controls || (controlQ !== undefined ? [controlQ] : []);
+
+  const nQ = circuit.nQubits ?? circuit.numQubits;
+  for (const t of targets) {
+    if (t < 0 || t >= nQ) {
+      throw new Error(`Qubit objetivo ${t} fuera de rango.`);
     }
   }
-  if (new Set(all).size !== all.length) {
-    throw new RangeError('gate has duplicate qubits: ' + all.join(','));
+  for (const c of controls) {
+    if (c < 0 || c >= nQ) {
+      throw new Error(`Qubit de control ${c} fuera de rango.`);
+    }
   }
-}
+  if (gate.type === 'CNOT' || gate.type === 'CZ' || gate.type === 'CS' || gate.type === 'CT') {
+    if (controls.length > 0 && targets.length > 0 && controls[0] === targets[0]) {
+      throw new Error('El qubit de control y objetivo no pueden ser iguales.');
+    }
+  }
 
-function gateTouchesQubit(gate: PlacedGate, q: QubitIndex): boolean {
-  if (gate.targets.includes(q)) return true;
-  if (gate.controls && gate.controls.includes(q)) return true;
-  return false;
-}
-
-export function placeGate(circuit: QuantumCircuit, gate: Omit<PlacedGate, 'id'>): QuantumCircuit {
-  validateGate(circuit, gate);
-  const newGate: PlacedGate = {
-    id: gateId(gate.type, gate.step, gate.targets),
-    type: gate.type,
-    step: gate.step,
-    targets: gate.targets,
-    ...(gate.controls && gate.controls.length > 0 ? { controls: gate.controls } : {}),
+  const id = gate.id || `gate-${Math.random().toString(36).substring(2, 9)}`;
+  const newPlacedGate: PlacedGate = {
+    ...gate,
+    id,
+    targetQubit: targetQ,
+    controlQubit: controlQ,
+    targets,
+    controls,
+    step: stepIdx,
   };
-  const allQubits = [...gate.targets, ...(gate.controls ?? [])];
-  const newSteps = circuit.steps.map((step) => {
-    if (step.index !== gate.step) return step;
-    const filtered = step.gates.filter((g) => !allQubits.some((q) => gateTouchesQubit(g, q)));
-    return { index: step.index, gates: [...filtered, newGate] };
+
+  const newSteps = circuit.steps.map((stepObj) => {
+    if (stepObj.step === stepIdx) {
+      const filtered = stepObj.gates.filter((g) => {
+        const gTargets = g.targets || (g.targetQubit !== undefined ? [g.targetQubit] : []);
+        return !gTargets.some((t) => targets.includes(t));
+      });
+      return { ...stepObj, gates: [...filtered, newPlacedGate] };
+    }
+    return stepObj;
   });
-  return { nQubits: circuit.nQubits, depth: circuit.depth, steps: newSteps };
+
+  const allGates = newSteps.flatMap((s) => s.gates);
+  return {
+    ...circuit,
+    numQubits: nQ,
+    nQubits: nQ,
+    depth: circuit.depth ?? MAX_DEPTH,
+    steps: newSteps,
+    gates: allGates,
+  };
 }
 
 export function removeGate(circuit: QuantumCircuit, gateIdToRemove: string): QuantumCircuit {
-  let changed = false;
-  const newSteps = circuit.steps.map((step) => {
-    const filtered = step.gates.filter((g) => g.id !== gateIdToRemove);
-    if (filtered.length !== step.gates.length) changed = true;
-    return changed ? { index: step.index, gates: filtered } : step;
-  });
-  return changed
-    ? { nQubits: circuit.nQubits, depth: circuit.depth, steps: newSteps }
-    : circuit;
+  const newSteps = circuit.steps.map((step) => ({
+    ...step,
+    gates: step.gates.filter((g) => g.id !== gateIdToRemove),
+  }));
+  const allGates = newSteps.flatMap((s) => s.gates);
+  const nQ = circuit.nQubits ?? circuit.numQubits;
+  return {
+    ...circuit,
+    numQubits: nQ,
+    nQubits: nQ,
+    depth: circuit.depth ?? MAX_DEPTH,
+    steps: newSteps,
+    gates: allGates,
+  };
 }
 
 export function clearStep(circuit: QuantumCircuit, stepIndex: number): QuantumCircuit {
-  if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= circuit.depth) {
-    throw new RangeError('step ' + stepIndex + ' out of range [0, ' + circuit.depth + ')');
+  if (stepIndex < 0 || stepIndex >= circuit.depth) {
+    throw new Error('Paso fuera de rango para limpiar.');
   }
-  const newSteps = circuit.steps.map((s) =>
-    s.index === stepIndex ? { index: s.index, gates: [] } : s,
-  );
-  return { nQubits: circuit.nQubits, depth: circuit.depth, steps: newSteps };
+  const newSteps = circuit.steps.map((s) => (s.step === stepIndex ? { ...s, gates: [] } : s));
+  const allGates = newSteps.flatMap((s) => s.gates);
+  const nQ = circuit.nQubits ?? circuit.numQubits;
+  return {
+    ...circuit,
+    numQubits: nQ,
+    nQubits: nQ,
+    depth: circuit.depth ?? MAX_DEPTH,
+    steps: newSteps,
+    gates: allGates,
+  };
 }
 
-export function validateCircuit(circuit: QuantumCircuit): ValidationResult {
+export function validateCircuit(circuit: Partial<QuantumCircuit>): ValidationResult {
   const errors: string[] = [];
-  if (!Number.isInteger(circuit.nQubits) || circuit.nQubits < MIN_QUBITS_CIRCUIT || circuit.nQubits > MAX_QUBITS_CIRCUIT) {
-    errors.push('nQubits out of range');
-  }
-  if (!Number.isInteger(circuit.depth) || circuit.depth < 1 || circuit.depth > MAX_DEPTH) {
-    errors.push('depth out of range');
-  }
-  if (circuit.steps.length !== circuit.depth) {
-    errors.push('steps.length !== depth');
-  }
-  circuit.steps.forEach((step, i) => {
-    if (step.index !== i) errors.push('step ' + i + ' has wrong index');
-    step.gates.forEach((g) => {
-      try {
-        validateGate(circuit, g);
-      } catch (e) {
-        errors.push('step ' + i + ': ' + (e as Error).message);
-      }
-    });
-  });
-  return { ok: errors.length === 0, errors };
-}
+  const nQ = circuit.nQubits ?? circuit.numQubits ?? 0;
 
-function applyGateToState(state: StateVector, gate: PlacedGate, nQubits: number): StateVector {
-  const t0 = gate.targets[0];
-  const t1 = gate.targets[1];
-  const c0 = gate.controls?.[0];
-  switch (gate.type) {
-    case 'H': return applyGateN(state, H, t0, nQubits);
-    case 'X': return applyGateN(state, X, t0, nQubits);
-    case 'Y': return applyGateN(state, Y, t0, nQubits);
-    case 'Z': return applyGateN(state, Z, t0, nQubits);
-    case 'S': return applyGateN(state, S, t0, nQubits);
-    case 'T': return applyGateN(state, T, t0, nQubits);
-    case 'SWAP':
-      if (t1 === undefined) throw new Error('SWAP requires 2 targets');
-      return applySWAP_N(state, t0, t1, nQubits);
-    case 'CNOT':
-      if (c0 === undefined) throw new Error('CNOT requires a control');
-      return applyCNOT_N(state, c0, t0, nQubits);
-    case 'CZ':
-      if (c0 === undefined) throw new Error('CZ requires a control');
-      return applyCZ_N(state, c0, t0, nQubits);
-    case 'CS':
-      if (c0 === undefined) throw new Error('CS requires a control');
-      return applyControlledPhaseN(state, c0, t0, Math.PI / 2, nQubits);
-    case 'CT':
-      if (c0 === undefined) throw new Error('CT requires a control');
-      return applyControlledPhaseN(state, c0, t0, Math.PI / 4, nQubits);
-    default: return assertNever(gate.type);
+  if (nQ < MIN_QUBITS_CIRCUIT || nQ > MAX_QUBITS_CIRCUIT) {
+    errors.push(`Número de qubits fuera de rango (${MIN_QUBITS_CIRCUIT}-${MAX_QUBITS_CIRCUIT}).`);
   }
+
+  const gatesToValidate: PlacedGate[] = circuit.gates
+    ? circuit.gates
+    : circuit.steps
+    ? circuit.steps.flatMap((s) => s.gates)
+    : [];
+
+  for (const gate of gatesToValidate) {
+    const targets =
+      gate.targets || (gate.targetQubit !== undefined ? [gate.targetQubit] : []);
+    const controls =
+      gate.controls || (gate.controlQubit !== undefined ? [gate.controlQubit] : []);
+
+    for (const t of targets) {
+      if (t < 0 || t >= nQ) {
+        errors.push(`Qubit objetivo ${t} fuera de rango.`);
+      }
+    }
+    for (const c of controls) {
+      if (c < 0 || c >= nQ) {
+        errors.push(`Qubit de control ${c} fuera de rango.`);
+      }
+      if (targets.includes(c)) {
+        errors.push('Un qubit no puede actuar como control y objetivo a la vez.');
+      }
+    }
+  }
+
+  const isOk = errors.length === 0;
+  return { ok: isOk, valid: isOk, errors };
 }
 
 export function evaluateCircuitStep(state: StateVector, step: CircuitStep, nQubits: number): StateVector {
-  let s = state;
-  for (const gate of step.gates) s = applyGateToState(s, gate, nQubits);
-  return s;
+  return evaluateStepN(state, step, nQubits);
 }
 
 export function evaluateFullCircuit(circuit: QuantumCircuit): StateVectorHistory {
-  const initial = createZeroState(circuit.nQubits);
-  const afterEachStep: StateVector[] = [];
-  let current = initial;
-  for (const step of circuit.steps) {
-    current = evaluateCircuitStep(current, step, circuit.nQubits);
-    afterEachStep.push(current);
+  const nQ = circuit.numQubits || circuit.nQubits || 1;
+  let currentState = initialStateN(nQ);
+  const stepStates: StateVector[] = [currentState];
+
+  const steps = circuit.steps || [];
+  for (const step of steps) {
+    currentState = evaluateStepN(currentState, step, nQ);
+    stepStates.push(currentState);
   }
-  return { initial, afterEachStep, final: current };
+
+  const afterEachStep = stepStates.slice(1);
+  const finalState = stepStates[stepStates.length - 1];
+
+  return {
+    stepStates,
+    afterEachStep,
+    final: finalState,
+  };
 }
 
 export function evaluateUpToStep(circuit: QuantumCircuit, nSteps: number): StateVector {
-  const n = Math.max(0, Math.min(Math.floor(nSteps), circuit.steps.length));
-  let state = createZeroState(circuit.nQubits);
-  for (let i = 0; i < n; i++) {
-    state = evaluateCircuitStep(state, circuit.steps[i], circuit.nQubits);
-  }
-  return state;
+  const depth = circuit.depth ?? MAX_DEPTH;
+  const clamped = Math.max(0, Math.min(nSteps, depth));
+  const history = evaluateFullCircuit(circuit);
+  const targetIndex = Math.min(clamped, history.stepStates.length - 1);
+  return history.stepStates[targetIndex];
 }
