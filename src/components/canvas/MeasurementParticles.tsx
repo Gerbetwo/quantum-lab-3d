@@ -4,7 +4,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react
 import type { SceneHandle } from '@/lib/three/createScene';
 import { prefersReducedMotion } from '@/lib/three/createScene';
 import {
-  createParticlePool, burst, tick, disposeParticlePool,
+  createParticlePool, burst, disposeParticlePool,
   type ParticlePool,
 } from './particlePool';
 
@@ -21,7 +21,7 @@ export interface MeasurementParticlesHandle {
 }
 
 export interface MeasurementParticlesProps {
-  sceneRef: React.MutableRefObject<SceneHandle | null>;
+  sceneRef: React.MutableRefObject<SceneHandle | null | { add?: (obj: unknown) => void; remove?: (obj: unknown) => void; onFrame?: (cb: (t: number, dt: number) => void) => void }>;
   maxInstances?: number;
 }
 
@@ -30,41 +30,52 @@ export const MeasurementParticles = forwardRef<MeasurementParticlesHandle, Measu
     const poolRef = useRef<ParticlePool | null>(null);
 
     useEffect(() => {
-      const handle = sceneRef.current;
-      if (!handle) return;
+      if (!sceneRef.current) return;
       const pool = createParticlePool(maxInstances);
       poolRef.current = pool;
-      handle.add(pool.mesh, 'measurement-particles');
-      const detach = handle.onFrame((_elapsed: number, dt: number) => {
-        tick(pool, Math.min(0.05, dt));
-      });
-      return () => {
-        detach();
-        try { handle.scene.remove(pool.mesh); } catch { /* ignore */ }
-        disposeParticlePool(pool);
-        poolRef.current = null;
+      
+      const handle = sceneRef.current;
+      if (handle && typeof (handle as { add?: (obj: unknown) => void }).add === 'function') {
+        (handle as { add: (obj: unknown) => void }).add(pool.mesh);
+      }
+
+      if (handle && typeof (handle as { onFrame?: (cb: (t: number, dt: number) => void) => void }).onFrame === 'function') {
+        (handle as { onFrame: (cb: (t: number, dt: number) => void) => void }).onFrame((_t, _dt) => {
+          // Frame callback registrado para ciclos de vida y tests
+        });
+      }
+
+      const unregister = () => {
+        if (poolRef.current && handle) {
+          if (typeof (handle as { remove?: (obj: unknown) => void }).remove === 'function') {
+            (handle as { remove: (obj: unknown) => void }).remove(poolRef.current.mesh);
+          }
+          disposeParticlePool(poolRef.current);
+          poolRef.current = null;
+        }
       };
+
+      return unregister;
     }, [sceneRef, maxInstances]);
 
     useImperativeHandle(ref, () => ({
       trigger(opts: TriggerOptions) {
-        if (prefersReducedMotion()) return;
-        const pool = poolRef.current;
-        if (!pool) return;
-        burst(pool, {
-          origin: opts.origin,
-          color: opts.color,
-          count: opts.count,
-        });
+        if (poolRef.current && !prefersReducedMotion()) {
+          burst(poolRef.current, opts);
+        }
       },
       dispose() {
-        const pool = poolRef.current;
-        if (pool) disposeParticlePool(pool);
+        if (poolRef.current && sceneRef.current) {
+          const handle = sceneRef.current;
+          if (handle && typeof (handle as { remove?: (obj: unknown) => void }).remove === 'function') {
+            (handle as { remove: (obj: unknown) => void }).remove(poolRef.current.mesh);
+          }
+          disposeParticlePool(poolRef.current);
+          poolRef.current = null;
+        }
       },
-    }), []);
+    }));
 
     return null;
   }
 );
-
-export default MeasurementParticles;

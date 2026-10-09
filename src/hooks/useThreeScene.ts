@@ -1,75 +1,77 @@
 import { useEffect, useRef } from 'react';
-import { createScene, SceneHandle } from '../lib/three/createScene';
-import { ResourceTracker } from '../lib/three/resourceTracker';
-import * as THREE from 'three';
+import { createScene, SceneHandle } from '@/lib/three/createScene';
+import { ResourceTracker } from '@/lib/three/resourceTracker';
+import type * as THREE from 'three';
 
-export interface SceneConfig {
+export interface ThreeSceneOptions {
   width?: number;
   height?: number;
   viewportRelative?: boolean;
   aspect?: number;
-  cameraPos?: [number, number, number];
-  cameraLookAt?: [number, number, number];
+  cameraPos?: [number, number, number] | number[];
+  cameraLookAt?: [number, number, number] | number[];
   recreateOn?: string;
-  onSetup?: (handle: SceneHandle) => void;
-  onResize?: (width: number, height: number) => void;
+  onSetup?: (handle: SceneHandle) => (() => void) | void;
 }
 
 export function useThreeScene(
-  initFnOrRef: React.RefObject<HTMLDivElement | null> | ((scene: THREE.Scene, tracker: ResourceTracker) => { update: (theta: number, phi?: number) => void }),
-  configOrTheta?: SceneConfig | number,
-  phiArg: number = 0
-) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const controllerRef = useRef<SceneHandle | null>(null);
-  const configRef = useRef(configOrTheta);
-  configRef.current = configOrTheta;
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  options?: ThreeSceneOptions
+): React.RefObject<HTMLDivElement | null>;
+
+export function useThreeScene<TReturn>(
+  factory: (scene: THREE.Scene, tracker: ResourceTracker) => TReturn
+): React.RefObject<HTMLDivElement | null>;
+
+export function useThreeScene<A1, TReturn>(
+  factory: (scene: THREE.Scene, tracker: ResourceTracker, arg1: A1) => TReturn,
+  arg1: A1
+): React.RefObject<HTMLDivElement | null>;
+
+export function useThreeScene<A1, A2, TReturn>(
+  factory: (scene: THREE.Scene, tracker: ResourceTracker, arg1: A1, arg2: A2) => TReturn,
+  arg1: A1,
+  arg2: A2
+): React.RefObject<HTMLDivElement | null>;
+
+export function useThreeScene(
+  containerOrFactory: React.RefObject<HTMLDivElement | null> | ((scene: THREE.Scene, tracker: ResourceTracker, ...args: unknown[]) => unknown),
+  optionsOrFirstArg?: ThreeSceneOptions | unknown,
+  ...restArgs: unknown[]
+): React.RefObject<HTMLDivElement | null> {
+  const internalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
+    const container = internalRef.current;
     if (!container) return;
 
-    let initFn: (scene: THREE.Scene, tracker: ResourceTracker) => { update: (theta: number, phi?: number) => void };
+    if (typeof containerOrFactory === 'function') {
+      const controller = createScene(container);
+      const tracker = new ResourceTracker();
 
-    if (typeof initFnOrRef === 'function') {
-      initFn = initFnOrRef;
-    } else {
-      const cfg = configRef.current as SceneConfig;
-      initFn = (_scene, _tracker) => {
-        const handle = createScene(container);
-        if (cfg && cfg.onSetup) {
-          cfg.onSetup(handle);
+      const res = containerOrFactory(controller.scene, tracker, optionsOrFirstArg, ...restArgs);
+      return () => {
+        if (res && typeof (res as { dispose?: () => void }).dispose === 'function') {
+          (res as { dispose: () => void }).dispose();
         }
-        return {
-          update: () => {}
-        };
+        tracker.dispose();
+        controller.dispose();
+      };
+    } else {
+      const options = (optionsOrFirstArg || {}) as ThreeSceneOptions;
+      const handle = createScene(container);
+      let cleanupFn: (() => void) | void;
+      if (options.onSetup) {
+        cleanupFn = options.onSetup(handle);
+      }
+      return () => {
+        if (typeof cleanupFn === 'function') {
+          cleanupFn();
+        }
+        handle.dispose();
       };
     }
+  }, [containerOrFactory, optionsOrFirstArg, restArgs]);
 
-    const controller = createScene(container, initFn);
-    controllerRef.current = controller;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        controller.resize(width, height);
-      }
-    });
-
-    resizeObserver.observe(container);
-
-    return () => {
-      resizeObserver.disconnect();
-      controller.dispose();
-      controllerRef.current = null;
-    };
-  }, [initFnOrRef]);
-
-  useEffect(() => {
-    if (controllerRef.current && typeof configOrTheta === 'number') {
-      controllerRef.current.update(configOrTheta, phiArg);
-    }
-  }, [configOrTheta, phiArg]);
-
-  return containerRef;
+  return internalRef;
 }
