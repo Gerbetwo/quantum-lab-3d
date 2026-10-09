@@ -1,125 +1,104 @@
-import React, { useState } from 'react';
-import { MissionShell } from '@/components/learning/MissionShell';
-import { KnowledgeCheck } from '@/components/learning/KnowledgeCheck';
-import {
-  createInitialMissionState,
-  canNavigateToStep,
-  advanceStep,
-  previousStep,
-  completeQuiz,
-} from '@/domain/learning/missionMachine';
-import {
-  calculateCoherenceTime,
-  milliKelvinToKelvin,
-} from '@/domain/quantum/decoherence';
+/**
+ * Mission3Decoherence.tsx — Misión 3: Decoherencia y Entorno Criogénico
+ */
+'use client';
+import React, { useState, useEffect, useRef } from 'react';
+import { calculateCoherenceTime } from '@/domain/quantum/decoherence';
+import { createCryostatScene } from '@/lib/three/scenes/createCryostatScene';
 
 interface Mission3Props {
-  onComplete: () => void;
+  onComplete?: () => void;
   onBack?: () => void;
 }
 
-export const Mission3Decoherence: React.FC<Mission3Props> = ({ onComplete, onBack }) => {
-  const [progress, setProgress] = useState(createInitialMissionState());
-  const [tempMK, setTempMK] = useState(15);
+export default function Mission3Decoherence({ onComplete, onBack }: Mission3Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<ReturnType<typeof createCryostatScene> | null>(null);
+  const [temp, setTemp] = useState<number>(15);
+  const [step, setStep] = useState(0);
+  const [selectedQuiz, setSelectedQuiz] = useState<string>('');
+  const [quizValidated, setQuizValidated] = useState(false);
 
-  const tempK = milliKelvinToKelvin(tempMK);
-  const t2Time = calculateCoherenceTime(tempMK);
+  const t2 = calculateCoherenceTime(temp);
 
-  const handleStepChange = (targetStep: number) => {
-    if (canNavigateToStep(targetStep, 4, progress)) {
-      setProgress((prev) => ({ ...prev, currentStep: targetStep }));
+  useEffect(() => {
+    if (containerRef.current) {
+      sceneRef.current = createCryostatScene(containerRef.current, temp);
     }
+    return () => {
+      sceneRef.current?.dispose();
+    };
+  }, [temp]);
+
+  const handleTempChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    setTemp(val);
+    sceneRef.current?.updateTemperature(val);
   };
 
-  const handleNext = () => {
-    setProgress((prev) => advanceStep(prev.currentStep, 4, prev));
-  };
-
-  const handlePrev = () => {
-    if (progress.currentStep === 0 && onBack) {
-      onBack();
-    } else {
-      setProgress((prev) => previousStep(prev.currentStep, prev));
+  const validateQuiz = () => {
+    if (selectedQuiz.includes('Para minimizar las excitaciones térmicas')) {
+      setQuizValidated(true);
+      if (onComplete) onComplete();
     }
-  };
-
-  const handleQuizPass = () => {
-    setProgress((prev) => completeQuiz(prev));
-    onComplete();
   };
 
   return (
-    <MissionShell
-      title="Misión 3: Decoherencia y Entorno Criogénico"
-      description="Observa el impacto del ruido térmico y la temperatura sobre el tiempo de coherencia T₂."
-      currentStep={progress.currentStep}
-      totalSteps={4}
-      maxUnlockedStep={progress.maxUnlockedStep}
-      state={progress.state}
-      onStepChange={handleStepChange}
-      onNext={handleNext}
-      onPrev={handlePrev}
-      onBack={onBack}
-      assessmentNode={
-        <KnowledgeCheck
-          question="¿Por qué los computadores cuánticos de qubits superconductores operan a temperaturas cercanas a 0 K (miliKelvin)?"
-          options={[
-            { id: 'a', text: 'Para acelerar los pulsos de microondas.' },
-            { id: 'b', text: 'Para minimizar las excitaciones térmicas que destruyen la coherencia cuántica (T₂).', explanation: 'El calor ambiental destruye rápidamente los estados de superposición.' },
-            { id: 'c', text: 'No tiene impacto físico, solo previene sobrecalentamiento de cables.' },
-          ]}
-          correctOptionId="b"
-          onPass={handleQuizPass}
-        />
-      }
-    >
-      {progress.currentStep === 0 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-cyan-300">1. Fragilidad del Estado Cuántico</h2>
-          <p className="text-slate-300">La interacción con fotones térmicos destruye la fase del qubit en un proceso llamado decoherencia.</p>
-        </div>
-      )}
+    <div className="flex flex-col items-center p-6 w-full max-w-4xl mx-auto text-white">
+      <h2 className="text-2xl font-bold mb-4">Misión 3: Decoherencia y Entorno Criogénico</h2>
 
-      {progress.currentStep === 1 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-cyan-300">2. Control del Criostato de Dilución</h2>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="temp-range" className="text-sm font-medium">
-              Temperatura: <span className="text-cyan-400 font-bold">{tempK} K</span> ({tempMK} mK)
-            </label>
+      {step === 1 && (
+        <div className="w-full flex flex-col items-center">
+          <h3 className="text-xl font-semibold mb-2">2. Control del Criostato de Dilución</h3>
+          <div ref={containerRef} className="w-full h-80 bg-slate-900 rounded-xl overflow-hidden shadow-lg mb-6 border border-slate-700" role="img" aria-label="Escena 3D del Criostato y Qubit central" />
+          <div className="w-full bg-slate-800 p-4 rounded-xl border border-slate-700 mb-4">
+            <label className="block text-sm font-medium mb-2">Temperatura del Criostato: {temp} mK</label>
             <input
-              id="temp-range"
               type="range"
-              min={15}
-              max={300000}
-              step={100}
-              value={tempMK}
-              onChange={(e) => setTempMK(parseInt(e.target.value, 10))}
-              aria-label="Temperatura del criostato en miliKelvin"
-              className="w-full accent-cyan-400"
+              min="15"
+              max="300000"
+              value={temp}
+              onChange={handleTempChange}
+              className="w-full accent-cyan-500 cursor-pointer"
             />
           </div>
-          <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-lg mt-2">
-            Tiempo de Coherencia T₂ calculado: <span className="font-bold text-cyan-400">{t2Time} µs</span>
-          </div>
+          <p className="text-lg font-medium text-cyan-400">Tiempo de Coherencia T₂: {t2} µs</p>
         </div>
       )}
 
-      {progress.currentStep === 2 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-cyan-300">3. Aislamiento Físico</h2>
-          <p className="text-slate-300">A temperaturas ambiente (300 K), el tiempo de coherencia T₂ decae a fracciones despreciables.</p>
+      {step === 3 && (
+        <div className="w-full bg-slate-800 p-6 rounded-xl border border-slate-700">
+          <h3 className="text-lg font-bold mb-3">Cuestionario de Decoherencia</h3>
+          <label className="block mb-2 cursor-pointer">
+            <input
+              type="radio"
+              name="quiz"
+              value="Para minimizar las excitaciones térmicas"
+              onChange={(e) => setSelectedQuiz(e.target.value)}
+              className="mr-2"
+            />
+            Para minimizar las excitaciones térmicas
+          </label>
+          <button onClick={validateQuiz} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-semibold mt-2">
+            Validar Respuesta
+          </button>
+          {quizValidated && <p className="mt-3 text-emerald-400 font-bold">✅ ¡Correcto!</p>}
         </div>
       )}
 
-      {progress.currentStep === 3 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-cyan-300">4. Evaluación de Decoherencia</h2>
-          <p className="text-slate-300">Responde el cuestionario para finalizar la misión.</p>
-        </div>
-      )}
-    </MissionShell>
+      <div className="flex gap-4 mt-6">
+        {step === 0 && onBack && (
+          <button onClick={onBack} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg">
+            ← Anterior
+          </button>
+        )}
+        <button
+          onClick={() => setStep(step + 1)}
+          className="px-6 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-semibold"
+        >
+          Siguiente →
+        </button>
+      </div>
+    </div>
   );
-};
-
-export default Mission3Decoherence;
+}

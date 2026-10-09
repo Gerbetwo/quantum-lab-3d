@@ -1,17 +1,15 @@
-export function milliKelvinToKelvin(mK: number): number {
-  return Math.round((mK / 1000) * 1000) / 1000;
-}
-
-export function kelvinToMilliKelvin(K: number): number {
-  return Math.round(K * 1000);
-}
+/**
+ * Dominio Cuántico: Decoherencia y Entorno Criogénico
+ * Modelo puro para cálculo de T2 en función de la temperatura en miliKelvin.
+ */
 
 export function calculateCoherenceTime(temperatureMilliKelvin: number): number {
-  const clampedT = Math.max(15, Math.min(300000, temperatureMilliKelvin));
-  const t2 = 250 * Math.exp(-clampedT / 800);
-  return Math.max(0.01, Math.round(t2 * 100) / 100);
+  const safeTemp = Math.max(15, temperatureMilliKelvin);
+  // T2(T) = 250 * exp(-T / 800) us
+  const t2 = 250 * Math.exp(-safeTemp / 800);
+  return Math.max(0.1, Math.round(t2 * 10) / 10);
 }
 
-export function isCriticalDecoherence(coherenceTimeMs: number): boolean {
-  return coherenceTimeMs < 10.0;
+export function isCriticalDecoherence(temperatureMilliKelvin: number): boolean {
+  return temperatureMilliKelvin > 150000; // > 150 K
 }

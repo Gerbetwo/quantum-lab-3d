@@ -1,126 +1,126 @@
-import React, { useState } from 'react';
-import { MissionShell } from '@/components/learning/MissionShell';
-import { KnowledgeCheck } from '@/components/learning/KnowledgeCheck';
-import {
-  createInitialMissionState,
-  canNavigateToStep,
-  advanceStep,
-  previousStep,
-  completeQuiz,
-} from '@/domain/learning/missionMachine';
+/**
+ * Mission2Entanglement.tsx — Misión 2: Entrelazamiento Cuántico
+ */
+'use client';
+import React, { useState, useEffect, useRef } from 'react';
+import { measureEntangledQubit, EntanglementState } from '@/domain/quantum/entanglement';
+import { createEntanglementScene } from '@/lib/three/scenes/createEntanglementScene';
 
 interface Mission2Props {
-  onComplete: () => void;
+  onComplete?: () => void;
   onBack?: () => void;
   __testRandom?: () => number;
 }
 
-export const Mission2Entanglement: React.FC<Mission2Props> = ({ onComplete, onBack, __testRandom }) => {
-  const [progress, setProgress] = useState(createInitialMissionState());
-  const [aliceMeasured, setAliceMeasured] = useState(false);
-  const [sharedState, setSharedState] = useState<0 | 1 | null>(null);
+export default function Mission2Entanglement({ onComplete, onBack, __testRandom }: Mission2Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<ReturnType<typeof createEntanglementScene> | null>(null);
+  const [step, setStep] = useState(0);
+  const [state, setState] = useState<EntanglementState>({
+    aliceOutcome: null,
+    bobOutcome: null,
+    correlated: false,
+    explanation: 'Pulsa "Medir Qubit de Alice" para observar el colapso y la correlación instantánea no-local.'
+  });
+  const [selectedQuiz, setSelectedQuiz] = useState<string>('');
+  const [quizValidated, setQuizValidated] = useState(false);
 
-  const handleAliceMeasure = () => {
-    const rng = __testRandom ? __testRandom() : Math.random();
-    const outcome = rng < 0.5 ? 0 : 1;
-    setSharedState(outcome);
-    setAliceMeasured(true);
-  };
-
-  const stepReqs = { 1: aliceMeasured };
-
-  const handleStepChange = (targetStep: number) => {
-    if (canNavigateToStep(targetStep, 4, progress, stepReqs)) {
-      setProgress((prev) => ({ ...prev, currentStep: targetStep }));
+  useEffect(() => {
+    if (containerRef.current) {
+      sceneRef.current = createEntanglementScene(containerRef.current);
     }
+    return () => {
+      sceneRef.current?.dispose();
+    };
+  }, []);
+
+  const handleMeasure = () => {
+    const forced = __testRandom ? (__testRandom() < 0.5 ? 0 : 1) : undefined;
+    const res = measureEntangledQubit(forced, __testRandom);
+    setState(res);
+    sceneRef.current?.updateState(true, res.aliceOutcome);
   };
 
-  const handleNext = () => {
-    setProgress((prev) => advanceStep(prev.currentStep, 4, prev, stepReqs));
-  };
-
-  const handlePrev = () => {
-    if (progress.currentStep === 0 && onBack) {
-      onBack();
-    } else {
-      setProgress((prev) => previousStep(prev.currentStep, prev));
+  const validateQuiz = () => {
+    if (selectedQuiz.includes('100% de correlación instantánea')) {
+      setQuizValidated(true);
+      if (onComplete) onComplete();
     }
-  };
-
-  const handleQuizPass = () => {
-    setProgress((prev) => completeQuiz(prev));
-    onComplete();
   };
 
   return (
-    <MissionShell
-      title="Misión 2: Entrelazamiento y Pares de Bell"
-      description="Demuestra la correlación no local entre qubits entrelazados a larga distancia."
-      currentStep={progress.currentStep}
-      totalSteps={4}
-      maxUnlockedStep={progress.maxUnlockedStep}
-      state={progress.state}
-      onStepChange={handleStepChange}
-      onNext={handleNext}
-      onPrev={handlePrev}
-      onBack={onBack}
-      isNextDisabled={progress.currentStep === 1 && !aliceMeasured}
-      helpMessage={progress.currentStep === 1 && !aliceMeasured ? 'Mide el qubit de Alice para observar el resultado instantáneo en Bob.' : null}
-      assessmentNode={
-        <KnowledgeCheck
-          question="Si Alice mide |1⟩ en su qubit entrelazado en el estado Bell |Φ+⟩, ¿qué obtendrá Bob instantáneamente?"
-          options={[
-            { id: 'a', text: 'Un resultado aleatorio independiente.' },
-            { id: 'b', text: '|1⟩ con 100% de correlación instantánea.', explanation: 'En el estado Bell, las mediciones están fuertemente correlacionadas.' },
-            { id: 'c', text: 'Siempre |0⟩.' },
-          ]}
-          correctOptionId="b"
-          onPass={handleQuizPass}
-        />
-      }
-    >
-      {progress.currentStep === 0 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-cyan-300">1. El Par de Bell</h2>
-          <p className="text-slate-300">Dos qubits entrelazados no poseen estados individuales independientes.</p>
+    <div className="flex flex-col items-center p-6 w-full max-w-4xl mx-auto text-white">
+      <h2 className="text-2xl font-bold mb-4">Misión 2: Entrelazamiento Cuántico (Par de Bell)</h2>
+      
+      {step === 0 && (
+        <div className="w-full flex flex-col items-center">
+          <p className="text-center mb-4 text-slate-300">Introducción al Entrelazamiento Cuántico y los Estados de Bell.</p>
         </div>
       )}
 
-      {progress.currentStep === 1 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-cyan-300">2. Estación Alice (Tierra)</h2>
-          <button
-            type="button"
-            onClick={handleAliceMeasure}
-            className="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg cursor-pointer w-fit"
-          >
+      {step === 1 && (
+        <div className="w-full flex flex-col items-center">
+          <h3 className="text-xl font-semibold mb-2">2. Estación Alice (Tierra)</h3>
+          <div ref={containerRef} className="w-full h-80 bg-slate-900 rounded-xl overflow-hidden shadow-lg mb-6 border border-slate-700" role="img" aria-label="Escena 3D de Entrelazamiento de Alice y Bob" />
+          <button onClick={handleMeasure} className="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 rounded-lg font-semibold transition mb-4">
             📡 Medir Qubit de Alice
           </button>
-          {aliceMeasured && (
-            <div className="p-3 bg-cyan-950/60 border border-cyan-500/40 rounded-lg text-sm text-cyan-200">
-              Alice midió: <span className="font-bold">|{sharedState}⟩</span>. Bob en Andrómeda ha recibido instantáneamente el correlato.
-            </div>
+          {state.aliceOutcome !== null && (
+            <p className="text-md text-emerald-400 mb-2">Alice midió: {state.aliceOutcome}</p>
           )}
         </div>
       )}
 
-      {progress.currentStep === 2 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-cyan-300">3. Estación Bob (Andrómeda)</h2>
-          <p className="text-slate-300">
-            Resultado de Bob: <span className="font-bold text-cyan-400">|{sharedState}⟩</span>.
-          </p>
+      {step === 2 && (
+        <div className="w-full flex flex-col items-center">
+          <h3 className="text-xl font-semibold mb-2">3. Estación Bob (Andrómeda)</h3>
+          <p className="text-slate-300 mb-4">Bob observa la correlación instantánea del par entrelazado.</p>
         </div>
       )}
 
-      {progress.currentStep === 3 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-cyan-300">4. Evaluación de Entrelazamiento</h2>
-          <p className="text-slate-300">Completa el cuestionario para finalizar la misión.</p>
+      {step === 3 && (
+        <div className="w-full bg-slate-800 p-6 rounded-xl border border-slate-700">
+          <h3 className="text-lg font-bold mb-3">Cuestionario de Entrelazamiento</h3>
+          <label className="block mb-2 cursor-pointer">
+            <input
+              type="radio"
+              name="quiz"
+              value="100% de correlación instantánea"
+              onChange={(e) => setSelectedQuiz(e.target.value)}
+              className="mr-2"
+            />
+            100% de correlación instantánea
+          </label>
+          <label className="block mb-4 cursor-pointer">
+            <input
+              type="radio"
+              name="quiz"
+              value="Independencia total"
+              onChange={(e) => setSelectedQuiz(e.target.value)}
+              className="mr-2"
+            />
+            Independencia total
+          </label>
+          <button onClick={validateQuiz} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-semibold">
+            Validar Respuesta
+          </button>
+          {quizValidated && <p className="mt-3 text-emerald-400 font-bold">✅ ¡Correcto!</p>}
         </div>
       )}
-    </MissionShell>
+
+      <div className="flex gap-4 mt-6">
+        {step === 0 && onBack && (
+          <button onClick={onBack} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg">
+            ← Anterior
+          </button>
+        )}
+        <button
+          onClick={() => setStep(step + 1)}
+          className="px-6 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-semibold"
+        >
+          Siguiente →
+        </button>
+      </div>
+    </div>
   );
-};
-
-export default Mission2Entanglement;
+}

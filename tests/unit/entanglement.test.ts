@@ -1,14 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { correlateEntangledMeasurement } from '@/domain/quantum/entanglement';
+import { describe, test, expect } from 'vitest';
+import { measureEntangledQubit } from '@/domain/quantum/entanglement';
 
-describe('HU-12 — Entangled Pair Correlated Measurement', () => {
-  it('correlates Bob outcome to 0 when Alice measures 0', () => {
-    const result = correlateEntangledMeasurement(0);
-    expect(result).toEqual({ alice: 0, bob: 0 });
-  });
-
-  it('correlates Bob outcome to 1 when Alice measures 1', () => {
-    const result = correlateEntangledMeasurement(1);
-    expect(result).toEqual({ alice: 1, bob: 1 });
+describe('Entanglement Domain', () => {
+  test('correlates Alice and Bob outcomes perfectly', () => {
+    const res = measureEntangledQubit(1);
+    expect(res.aliceOutcome).toBe(1);
+    expect(res.bobOutcome).toBe(1);
+    expect(res.correlated).toBe(true);
   });
 });
