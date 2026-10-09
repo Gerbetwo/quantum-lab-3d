@@ -1,27 +1,30 @@
-import React from 'react';
 import { AppHeader } from './AppHeader';
-import { AppNavigation, NavItem } from './AppNavigation';
+import { SessionProvider } from '@/components/session/SessionProvider';
 
 interface AppShellProps {
+  children: React.ReactNode;
   title?: string;
   subtitle?: string;
-  headerActions?: React.ReactNode;
-  navItems?: NavItem[];
-  children: React.ReactNode;
 }
 
-export const AppShell: React.FC<AppShellProps> = ({
-  title,
-  subtitle,
-  headerActions,
-  navItems,
-  children
-}) => {
+export function AppShell({ children, title, subtitle }: AppShellProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-[#0b1020] text-[#f3f6fc]">
-      <AppHeader title={title} subtitle={subtitle} actions={headerActions} />
-      {navItems && navItems.length > 0 && <AppNavigation items={navItems} />}
-      <div className="flex-1 flex flex-col">{children}</div>
-    </div>
+    <SessionProvider>
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+        <AppHeader />
+        {(title || subtitle) && (
+          <div data-testid="app-shell-header" className="bg-slate-900 border-b border-slate-800 px-6 py-4">
+            {title && <h1 className="text-xl font-bold text-white">{title}</h1>}
+            {subtitle && <p className="text-sm text-slate-400">{subtitle}</p>}
+          </div>
+        )}
+        <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {children}
+        </main>
+        <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+          QuantumLab 3D &copy; 2026 — Plataforma de Aprendizaje Cuántico Interactivo
+        </footer>
+      </div>
+    </SessionProvider>
   );
-};
+}

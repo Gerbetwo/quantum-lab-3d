@@ -38,6 +38,7 @@ vi.mock('@/components/canvas/MeasurementParticles', () => ({
 }));
 
 import LabPage from '@/app/lab/page';
+const WrappedLabPage = LabPage as unknown as React.ComponentType<Record<string, unknown>>;
 
 describe('Phase 3 - Lab integration (particles + audio)', () => {
   beforeEach(() => {
@@ -47,12 +48,12 @@ describe('Phase 3 - Lab integration (particles + audio)', () => {
   });
 
   it('mounts without throwing', () => {
-    render(<LabPage />);
+    render(<WrappedLabPage />);
     expect(screen.getByTestId('circuit-grid')).toBeInTheDocument();
   });
 
   it('places a gate without crashing when palette selection is active', () => {
-    render(<LabPage />);
+    render(<WrappedLabPage />);
     const hOption = screen.getByTestId('gate-option-H');
     fireEvent.click(hOption);
     const cell = screen.getByTestId('cell-0-0');
@@ -61,7 +62,7 @@ describe('Phase 3 - Lab integration (particles + audio)', () => {
   });
 
   it('advances the playhead when clicking a column header', () => {
-    render(<LabPage />);
+    render(<WrappedLabPage />);
     const header = screen.getByTestId('playhead-3');
     fireEvent.click(header);
     expect(screen.getByTestId('playhead-3')).toHaveAttribute('data-playhead', 'true');

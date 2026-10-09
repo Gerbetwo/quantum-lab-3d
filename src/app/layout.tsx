@@ -1,20 +1,26 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
+import { SessionProvider } from '@/components/session/SessionProvider';
+import { AppShell } from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
-  title: "QuantumLab 3D — Experimental Sandbox",
-  description: "Interactive 3D Quantum Computing Learning Platform (Qubits, Superposition, Entanglement, Decoherence)",
+  title: 'QuantumLab 3D',
+  description: 'Plataforma de aprendizaje cuántico interactivo',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="es" className="dark">
-      <body className="bg-[#070913] text-slate-100 min-h-screen antialiased flex flex-col font-sans">
-        {children}
+      <body className="bg-slate-950 text-slate-100 antialiased min-h-screen">
+        <SessionProvider>
+          <AppShell>
+            {children}
+          </AppShell>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -23,7 +23,7 @@ export function useSession() {
 
   const setActiveMission = useCallback((missionId: MissionId | null) => {
     setSession(prev => {
-      const next: Session = { ...prev, activeMission: missionId };
+      const next: Session = { ...prev, activeMission: missionId ?? prev.activeMission };
       saveSession(next);
       return next;
     });

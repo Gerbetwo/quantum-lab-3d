@@ -10,8 +10,9 @@ describe('AppShell Component', () => {
       </AppShell>
     );
 
-    expect(screen.getByRole('banner')).toHaveTextContent('QuantumLab Test');
-    expect(screen.getByRole('banner')).toHaveTextContent('Subtítulo de prueba');
+    const headerEl = screen.getByTestId('app-shell-header');
+    expect(headerEl).toHaveTextContent('QuantumLab Test');
+    expect(headerEl).toHaveTextContent('Subtítulo de prueba');
     expect(screen.getByText('Contenido Principal')).toBeInTheDocument();
   });
 });

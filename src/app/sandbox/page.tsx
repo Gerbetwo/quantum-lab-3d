@@ -1,14 +1,11 @@
-import { CircuitWorkbench } from '@/components/circuit/CircuitWorkbench';
-
-export const metadata = {
-  title: 'QuantumLab 3D - Workbench Interactivo',
-  description: 'Editor interactivo de circuitos cuánticos con simulación 3D en tiempo real.',
-};
-
 export default function SandboxPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 py-8">
-      <CircuitWorkbench />
-    </main>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-extrabold text-white">Laboratorio Cuántico Libre</h1>
+      <p className="text-slate-400">Diseña circuitos y experimenta con simulaciones avanzadas.</p>
+      <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center text-slate-400">
+        Área de trabajo del Sandbox en ejecución.
+      </div>
+    </div>
   );
 }

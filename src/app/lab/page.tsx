@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 
-export default function LabPage() {
+export default function LabAliasPage() {
   redirect('/sandbox');
-  return null;
 }

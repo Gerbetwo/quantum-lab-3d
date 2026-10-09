@@ -46,8 +46,7 @@ describe('Phase 2 - Unified Session & Persistence Contract', () => {
 
   it('Caso 4: ID de misión desconocido es filtrado', () => {
     const mockSession = createEmptySession('test_user');
-    // @ts-expect-error -- Allow invalid mission string for testing
-    mockSession.completed = ['superposition', 'invalid_mission_xyz'];
+        mockSession.completed = ['superposition', 'invalid_mission_xyz'];
     saveSession(mockSession);
 
     const loaded = loadSession();
