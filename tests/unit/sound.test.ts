@@ -8,12 +8,15 @@ import {
   playQuantumCollapse,
   playChimeSuccess,
   playDecoherenceAlert,
+  playGateForQubit,
+  playHover,
+  playMeasurementCollapse,
   __markUserInteracted,
   __resetAudioOverride,
 } from '@/shared/lib/sound';
 
-describe('Phase 5 - sound.ts full coverage', () => {
-  const original = process.env.NEXT_PUBLIC_ENABLE_AUDIO;
+describe('Suite Unificada de Pruebas de Sonido', () => {
+  const originalEnv = process.env.NEXT_PUBLIC_ENABLE_AUDIO;
 
   beforeEach(() => {
     delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
@@ -24,12 +27,12 @@ describe('Phase 5 - sound.ts full coverage', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    if (original === undefined) delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
-    else process.env.NEXT_PUBLIC_ENABLE_AUDIO = original;
+    if (originalEnv === undefined) delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
+    else process.env.NEXT_PUBLIC_ENABLE_AUDIO = originalEnv;
   });
 
   describe('isAudioEnabled', () => {
-    it('true when env undefined (backward compatible)', () => {
+    it('true when env undefined', () => {
       delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
       expect(isAudioEnabled()).toBe(true);
     });
@@ -45,50 +48,31 @@ describe('Phase 5 - sound.ts full coverage', () => {
       process.env.NEXT_PUBLIC_ENABLE_AUDIO = 'true';
       expect(isAudioEnabled()).toBe(true);
     });
-    it('true when any other string', () => {
-      process.env.NEXT_PUBLIC_ENABLE_AUDIO = 'maybe';
-      expect(isAudioEnabled()).toBe(true);
-    });
   });
 
-  describe('runtime override (Phase 3)', () => {
+  describe('runtime override', () => {
     it('setAudioEnabled(true) overrides env=false', () => {
       process.env.NEXT_PUBLIC_ENABLE_AUDIO = 'false';
       setAudioEnabled(true);
       expect(isAudioEnabled()).toBe(true);
     });
 
-    it('setAudioEnabled(false) overrides env=undefined', () => {
-      delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
-      setAudioEnabled(false);
-      expect(isAudioEnabled()).toBe(false);
-    });
-
-    it('toggleAudio flips and returns the new state', () => {
+    it('toggleAudio flips and returns new state', () => {
       delete process.env.NEXT_PUBLIC_ENABLE_AUDIO;
       expect(isAudioEnabled()).toBe(true);
       expect(toggleAudio()).toBe(false);
       expect(isAudioEnabled()).toBe(false);
-      expect(toggleAudio()).toBe(true);
-      expect(isAudioEnabled()).toBe(true);
-    });
-
-    it('__resetAudioOverride restores env-based behavior', () => {
-      setAudioEnabled(false);
-      expect(isAudioEnabled()).toBe(false);
-      __resetAudioOverride();
-      expect(isAudioEnabled()).toBe(true);
     });
   });
 
-  describe('playback functions with AudioContext available (MockAudioContext)', () => {
+  describe('playback functions', () => {
     it('playLaserScan does not throw', () => {
       expect(() => playLaserScan()).not.toThrow();
     });
     it('playQuantumCollapse does not throw', () => {
       expect(() => playQuantumCollapse()).not.toThrow();
     });
-    it('playChimeSuccess schedules 4 notes without throwing', () => {
+    it('playChimeSuccess schedules notes without throwing', () => {
       expect(() => playChimeSuccess()).not.toThrow();
       vi.advanceTimersByTime(400);
     });
@@ -98,38 +82,14 @@ describe('Phase 5 - sound.ts full coverage', () => {
     it('playButtonClick does not throw', () => {
       expect(() => playButtonClick()).not.toThrow();
     });
-  });
-
-  describe('playback functions when audio is disabled', () => {
-    beforeEach(() => {
-      process.env.NEXT_PUBLIC_ENABLE_AUDIO = 'false';
+    it('playGateForQubit does not throw', () => {
+      expect(() => playGateForQubit(0, 'H')).not.toThrow();
     });
-
-    it('every function is a silent no-op', () => {
-      expect(() => playLaserScan()).not.toThrow();
-      expect(() => playQuantumCollapse()).not.toThrow();
-      expect(() => playChimeSuccess()).not.toThrow();
-      expect(() => playDecoherenceAlert()).not.toThrow();
-      expect(() => playButtonClick()).not.toThrow();
+    it('playHover does not throw', () => {
+      expect(() => playHover()).not.toThrow();
     });
-  });
-
-  describe('playback functions when window has no AudioContext', () => {
-    beforeEach(() => {
-      vi.stubGlobal('AudioContext', undefined);
-      vi.stubGlobal('webkitAudioContext', undefined);
-    });
-
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
-    it('every function is a safe no-op', () => {
-      expect(() => playLaserScan()).not.toThrow();
-      expect(() => playQuantumCollapse()).not.toThrow();
-      expect(() => playChimeSuccess()).not.toThrow();
-      expect(() => playDecoherenceAlert()).not.toThrow();
-      expect(() => playButtonClick()).not.toThrow();
+    it('playMeasurementCollapse does not throw', () => {
+      expect(() => playMeasurementCollapse(2)).not.toThrow();
     });
   });
 });

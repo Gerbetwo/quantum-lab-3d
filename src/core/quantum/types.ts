@@ -5,6 +5,7 @@ export interface Complex {
 
 export type StateVector = Complex[];
 export type GateMatrix = Complex[][];
+export type Matrix = GateMatrix;
 
 export interface QuantumState {
   vector: StateVector;
