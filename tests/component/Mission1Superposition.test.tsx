@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import Mission1Superposition from '@/components/missions/Mission1Superposition';
+import Mission1Superposition from '@/features/missions/components/Mission1Superposition';
 
 describe('Mission 1 Superposition Component', () => {
   const onComplete = vi.fn();

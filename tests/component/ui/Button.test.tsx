@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, test, expect, vi } from 'vitest';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/shared/ui/Button';
 
 describe('Button Component', () => {
   test('ejecuta onClick cuando es presionado', () => {

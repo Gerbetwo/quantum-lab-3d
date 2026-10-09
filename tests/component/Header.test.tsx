@@ -2,17 +2,17 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import Header from '@/components/Header';
+import Header from '@/shared/layout/Header';
 
-vi.mock('@/lib/sound', () => ({
+vi.mock('@/shared/lib/sound', () => ({
   playButtonClick: vi.fn(),
 }));
 
-vi.mock('@/lib/cookies', () => ({
+vi.mock('@/features/session/lib/cookies', () => ({
   getOrCreateUserId: vi.fn(() => 'QL-TEST'),
 }));
 
-import { getOrCreateUserId } from '@/lib/cookies';
+import { getOrCreateUserId } from '@/features/session/lib/cookies';
 
 describe('Phase 4 - Header (memoization + a11y)', () => {
   beforeEach(() => {

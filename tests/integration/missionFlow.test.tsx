@@ -12,7 +12,7 @@ const { cookieState, pushProgress } = vi.hoisted(() => {
   return { cookieState: state, pushProgress: push };
 });
 
-vi.mock('@/lib/cookies', () => ({
+vi.mock('@/features/session/lib/cookies', () => ({
   getOrCreateUserId: () => 'QL-TEST',
   getStoredProgress: () => [...cookieState.progress],
   getStoredActiveTab: () => 0,
@@ -32,7 +32,7 @@ vi.mock('@/lib/cookies', () => ({
   COOKIE_ACTIVE_TAB: 'quantum_lab_active_tab',
 }));
 
-vi.mock('@/lib/sound', () => ({
+vi.mock('@/shared/lib/sound', () => ({
   playButtonClick: vi.fn(),
   playChimeSuccess: vi.fn(),
   playLaserScan: vi.fn(),
@@ -43,7 +43,7 @@ vi.mock('@/lib/sound', () => ({
   toggleAudio: vi.fn(),
 }));
 
-vi.mock('@/hooks/useFullscreen', () => ({
+vi.mock('@/shared/hooks/useFullscreen', () => ({
   useFullscreen: () => ({ isFullscreen: false, enter: vi.fn(), exit: vi.fn(), toggle: vi.fn() }),
 }));
 
@@ -51,50 +51,50 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
-vi.mock('@/components/Header', () => ({
+vi.mock('@/shared/layout/Header', () => ({
   default: () => <div data-testid="header-mock">Header</div>,
 }));
 
-vi.mock('@/components/CelebrationModal', () => ({
+vi.mock('@/shared/layout/CelebrationModal', () => ({
   default: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="celebration-modal">Complete!</div> : null,
 }));
 
-vi.mock('@/components/CommandPalette', () => ({
+vi.mock('@/shared/layout/CommandPalette', () => ({
   default: () => null,
 }));
 
-vi.mock('@/components/missions/Mission1Superposition', () => ({
+vi.mock('@/features/missions/components/Mission1Superposition', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
     <button data-testid="mission-1" onClick={() => { pushProgress(0); onComplete(); }}>Complete Mission 1</button>
   ),
 }));
-vi.mock('@/components/missions/Mission2Entanglement', () => ({
+vi.mock('@/features/missions/components/Mission2Entanglement', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
     <button data-testid="mission-2" onClick={() => { pushProgress(1); onComplete(); }}>Complete Mission 2</button>
   ),
 }));
-vi.mock('@/components/missions/Mission3Decoherence', () => ({
+vi.mock('@/features/missions/components/Mission3Decoherence', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
     <button data-testid="mission-3" onClick={() => { pushProgress(2); onComplete(); }}>Complete Mission 3</button>
   ),
 }));
-vi.mock('@/components/missions/Mission4Applications', () => ({
+vi.mock('@/features/missions/components/Mission4Applications', () => ({
   default: ({ onFinishAll }: { onFinishAll: () => void }) => (
     <button data-testid="mission-4" onClick={() => { pushProgress(3); onFinishAll(); }}>Complete Mission 4</button>
   ),
 }));
-vi.mock('@/components/missions/Mission5Gates', () => ({
+vi.mock('@/features/missions/components/Mission5Gates', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
     <button data-testid="mission-5" onClick={() => { pushProgress(4); onComplete(); }}>Complete Mission 5</button>
   ),
 }));
-vi.mock('@/components/missions/Mission6Grover', () => ({
+vi.mock('@/features/missions/components/Mission6Grover', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
     <button data-testid="mission-6" onClick={() => { pushProgress(5); onComplete(); }}>Complete Mission 6</button>
   ),
 }));
-vi.mock('@/components/missions/Mission7ErrorCorrection', () => ({
+vi.mock('@/features/missions/components/Mission7ErrorCorrection', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
     <button data-testid="mission-7" onClick={() => { pushProgress(6); onComplete(); }}>Complete Mission 7</button>
   ),

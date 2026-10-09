@@ -2,16 +2,16 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import Mission5Gates from '@/components/missions/Mission5Gates';
+import Mission5Gates from '@/features/missions/components/Mission5Gates';
 import { goToStep } from '../helpers/queries';
 
-vi.mock('@/lib/sound', () => ({
+vi.mock('@/shared/lib/sound', () => ({
   playButtonClick: vi.fn(),
   playChimeSuccess: vi.fn(),
   playLaserScan: vi.fn(),
 }));
 
-vi.mock('@/lib/cookies', () => ({
+vi.mock('@/features/session/lib/cookies', () => ({
   saveCompletedMission: vi.fn(),
   updateStoredMetrics: vi.fn(),
 }));

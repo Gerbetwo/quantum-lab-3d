@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as THREE from 'three';
-import { createScene, disposeResource } from '@/lib/three/createScene';
+import { createScene, disposeResource } from '@/features/quantum-3d/lib/createScene';
 
 describe('Infraestructura WebGL - createScene y Gestión de Memoria', () => {
   let container: HTMLDivElement;

@@ -8,7 +8,7 @@ import {
   COOKIE_USER_ID,
   COOKIE_PROGRESS,
   COOKIE_METRICS,
-} from '../../src/lib/cookies';
+} from '@/features/session/lib/cookies';
 
 describe('Phase 5 - Active tab persistence', () => {
   beforeEach(() => {

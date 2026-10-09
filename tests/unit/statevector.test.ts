@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   MAX_QUBITS, MAX_DIM, createZeroState, normalize,
   probability, probabilities, innerProduct, dimOf,
-} from '@/domain/quantum/statevector';
+} from '@/core/quantum/statevector';
 
 describe('Phase1 - N-qubit State Vector (N<=6)', () => {
   it('exposes MAX_QUBITS=6 and MAX_DIM=64', () => {

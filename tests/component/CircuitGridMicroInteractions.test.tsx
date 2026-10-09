@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom';
-import CircuitGrid from '@/components/circuit/CircuitGrid';
-import { createEmptyCircuit } from '@/domain/quantum/circuit';
+import CircuitGrid from '@/features/circuit/components/CircuitGrid';
+import { createEmptyCircuit } from '@/core/quantum/circuit';
 
 function noop() {}
 

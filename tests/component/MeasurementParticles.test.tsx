@@ -3,7 +3,7 @@ import React, { createRef } from 'react';
 import { render } from '@testing-library/react';
 import { describe, test, expect, vi } from 'vitest';
 import * as THREE from 'three';
-import { MeasurementParticles, MeasurementParticlesHandle } from '@/components/canvas/MeasurementParticles';
+import { MeasurementParticles, MeasurementParticlesHandle } from '@/features/quantum-3d/canvas/MeasurementParticles';
 
 describe('Phase 3 - MeasurementParticles', () => {
   test('mounts without throwing and exposes trigger/dispose via ref', () => {

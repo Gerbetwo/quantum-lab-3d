@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { runShorDemo } from '@/domain/quantum/applications';
+import { runShorDemo } from '@/core/quantum/applications';
 
 describe('Shor Applications Domain', () => {
   test('correctly finds period and factors for base 2', () => {

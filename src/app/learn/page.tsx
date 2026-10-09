@@ -1,31 +1,46 @@
 import Link from 'next/link';
+import { MISSIONS, type MissionDefinition } from '@/features/missions/config/missions';
+import LeanLabLayout from '@/shared/layout/LeanLabLayout';
+import { PageContainer } from '@/shared/layout/PageContainer';
+import { PageHeader } from '@/shared/layout/PageHeader';
 
-export default function LearnIndexPage() {
+export default function LearnPage() {
   return (
-    <div className="space-y-8 max-w-4xl mx-auto py-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold text-white">Recorrido de Aprendizaje Cuántico</h1>
-        <p className="text-slate-400">Selecciona una misión para comenzar o continuar tu formación práctica.</p>
-      </div>
-      <div className="grid gap-4">
-        {[
-          { id: 'mission-1', title: 'Misión 1: Superposición y Esfera de Bloch', desc: 'Aprende los estados fundamentales y el colapso cuántico.' },
-          { id: 'mission-2', title: 'Misión 2: Entrelazamiento Cuántico', desc: 'Explora pares de Bell y correlaciones no locales.' },
-          { id: 'mission-3', title: 'Misión 3: Decoherencia Térmica', desc: 'Estudia el ruido térmico en sistemas criogénicos.' },
-          { id: 'mission-4', title: 'Misión 4: Aplicaciones y Algoritmo de Shor', desc: 'Aplica algoritmos cuánticos avanzados.' },
-        ].map((m, idx) => (
-          <Link key={m.id} href={`/learn/${m.id}`} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-between group">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Módulo {idx + 1}</span>
-              <h2 className="text-xl font-bold text-white group-hover:text-cyan-300 transition-colors">{m.title}</h2>
-              <p className="text-sm text-slate-400">{m.desc}</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500 group-hover:text-slate-950 transition-all">
-              &rarr;
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <LeanLabLayout>
+      <PageContainer className="py-8">
+        <PageHeader
+          title="Módulos de Aprendizaje Cuántico"
+          description="Selecciona una misión para explorar conceptos interactivos mediante simulaciones 3D."
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {MISSIONS.map((mission: MissionDefinition, index: number) => (
+            <Link
+              key={mission.id}
+              href={`/missions/${mission.id}`}
+              className="group flex flex-col justify-between p-6 bg-slate-900/70 border border-slate-800 rounded-2xl hover:border-cyan-500/50 hover:bg-slate-800/60 transition-all duration-300"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono px-2.5 py-1 bg-cyan-950/80 text-cyan-400 rounded-md border border-cyan-800/40">
+                    Misión {index + 1}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-100 mt-4 group-hover:text-cyan-300 transition-colors">
+                  {mission.title}
+                </h3>
+                <p className="text-sm text-slate-400 mt-2 line-clamp-3 leading-relaxed">
+                  {mission.description}
+                </p>
+              </div>
+
+              <div className="mt-6 flex items-center text-xs font-semibold text-cyan-400 group-hover:translate-x-1 transition-transform">
+                Iniciar Misión &rarr;
+              </div>
+            </Link>
+          ))}
+        </div>
+      </PageContainer>
+    </LeanLabLayout>
   );
 }

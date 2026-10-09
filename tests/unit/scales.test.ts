@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   qubitToFrequency, gateDurationMs, adsrEnvelope,
   type ScaleName,
-} from '@/domain/quantum/scales';
+} from '@/core/quantum/scales';
 
 describe('Phase 3 - domain/quantum/scales.ts', () => {
   it('qubitToFrequency(0) equals baseHz', () => {

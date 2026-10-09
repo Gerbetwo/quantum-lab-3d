@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { calculateCoherenceTime } from '@/domain/quantum/decoherence';
+import { calculateCoherenceTime } from '@/core/quantum/decoherence';
 
 describe('Decoherence Domain', () => {
   test('calculates higher coherence time at lower temperatures', () => {

@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import CelebrationModal from '@/components/CelebrationModal';
+import CelebrationModal from '@/shared/layout/CelebrationModal';
 
-vi.mock('@/lib/sound', () => ({ playChimeSuccess: vi.fn() }));
-vi.mock('@/lib/cookies', () => ({
+vi.mock('@/shared/lib/sound', () => ({ playChimeSuccess: vi.fn() }));
+vi.mock('@/features/session/lib/cookies', () => ({
   getOrCreateUserId: vi.fn(() => 'QL-ABCD'),
   updateStoredMetrics: vi.fn(),
 }));
@@ -19,7 +19,7 @@ vi.mock('canvas-confetti', () => ({
   default: Object.assign(confettiFnMock, { reset: confettiResetMock }),
 }));
 
-vi.mock('@/lib/three/createScene', () => ({
+vi.mock('@/features/quantum-3d/lib/createScene', () => ({
   prefersReducedMotion: vi.fn(() => false),
 }));
 

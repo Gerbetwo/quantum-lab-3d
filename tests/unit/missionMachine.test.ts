@@ -5,7 +5,7 @@ import {
   canNavigateToStep,
   previousStep,
   completeQuiz,
-} from '../../src/domain/learning/missionMachine';
+} from '../../src/features/missions/domain/missionMachine';
 
 describe('Mission State Machine', () => {
   test('Inicia en not_started y paso 0', () => {

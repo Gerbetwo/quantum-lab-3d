@@ -11,7 +11,7 @@ import {
   COOKIE_ACTIVE_TAB,
   COOKIE_USER_ID,
   MAX_COOKIE_SIZE_BYTES,
-} from '@/lib/cookies';
+} from '@/features/session/lib/cookies';
 
 describe('Phase 5 - cookies.ts edge cases', () => {
   beforeEach(() => {

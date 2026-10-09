@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { getDefaultSession } from '../../src/lib/session';
+import { getDefaultSession } from '@/features/session/lib/session';
 
 describe('Fase 2 — Session Unit Tests', () => {
   test('getDefaultSession retorna estructura válida con versión 2', () => {

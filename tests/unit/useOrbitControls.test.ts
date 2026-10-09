@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as THREE from 'three';
-import { createOrbitControls, type OrbitControlsHandle } from '@/hooks/useOrbitControls';
+import { createOrbitControls, type OrbitControlsHandle } from '@/features/quantum-3d/hooks/useOrbitControls';
 
 // jsdom lacks PointerEvent in some versions; polyfill minimally.
 if (typeof (globalThis as { PointerEvent?: unknown }).PointerEvent === 'undefined') {

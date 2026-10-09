@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import '@testing-library/jest-dom';
-import Tooltip from '@/components/ui/Tooltip';
+import Tooltip from '@/shared/ui/Tooltip';
 
 describe('Phase 3 - Tooltip', () => {
   beforeEach(() => { vi.useFakeTimers(); });

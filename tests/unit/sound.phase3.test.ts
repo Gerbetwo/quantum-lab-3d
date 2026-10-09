@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   playGateForQubit, playHover, playMeasurementCollapse,
   __markUserInteracted, __resetAudioOverride,
-} from '@/lib/sound';
+} from '@/shared/lib/sound';
 
 describe('Phase 3 - sound.ts new API (no regression to legacy)', () => {
   const originalEnv = process.env.NEXT_PUBLIC_ENABLE_AUDIO;

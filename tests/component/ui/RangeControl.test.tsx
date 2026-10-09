@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, test, expect, vi } from 'vitest';
-import { RangeControl } from '@/components/ui/RangeControl';
+import { RangeControl } from '@/shared/ui/RangeControl';
 
 describe('RangeControl Component', () => {
   test('muestra la etiqueta y el valor actual con unidad', () => {

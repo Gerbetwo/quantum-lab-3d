@@ -2,19 +2,19 @@ import { describe, it, expect } from 'vitest';
 import {
   createZeroState, probability, probabilities, norm,
   type StateVector, type Complex,
-} from '@/domain/quantum/statevector';
+} from '@/core/quantum/statevector';
 import {
   applyGateN, applyCNOT_N, applyCZ_N, applySWAP_N, applyControlledPhaseN,
   H, X, Y, Z, S, T, I, type GateMatrix,
-} from '@/domain/quantum/gatesN';
-import { applyGate, H_GATE, X_GATE, Z_GATE } from '@/domain/quantum/gates';
+} from '@/core/quantum/gatesN';
+import { applyGate, H_GATE, X_GATE, Z_GATE } from '@/core/quantum/gates';
 import {
    evaluateFullCircuit,
-} from '@/domain/quantum/circuit';
+} from '@/core/quantum/circuit';
 import {
   ghz6Circuit, qft3Circuit, teleportation3Circuit, ghzState,
-} from '@/domain/quantum/presets';
-import { measureQubitN } from '@/domain/quantum/measureN';
+} from '@/core/quantum/presets';
+import { measureQubitN } from '@/core/quantum/measureN';
 
 const EPS = 1e-7;
 

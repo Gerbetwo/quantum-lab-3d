@@ -1,0 +1,240 @@
+'use client';
+
+import { downloadSessionJSON } from '@/features/session/lib/export';
+import React, { useEffect, useState, memo } from 'react';
+import { Atom, Play, Pause, User, Clock, Maximize2, Minimize2 } from 'lucide-react';
+import { getOrCreateUserId } from '@/features/session/lib/cookies';
+import { playButtonClick } from '@/shared/lib/sound';
+import { useIsDesktop } from '@/shared/hooks/useBreakpoint';
+import { useMissionTitleState } from '@/features/missions/hooks/useMissionTitle';
+
+interface Props {
+  timeLeft: number;
+  isRunning: boolean;
+  onToggleTimer: () => void;
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
+}
+
+const timeCache = new Map<number, string>();
+
+function formatTime(seconds: number): string {
+  const cached = timeCache.get(seconds);
+  if (cached !== undefined) return cached;
+
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const out = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+  timeCache.set(seconds, out);
+  return out;
+}
+
+const BrandSection = memo(function BrandSection({ compact }: { compact: boolean }) {
+  return (
+    <div className="flex items-center gap-3 shrink-0">
+      <div className="w-9 h-9 rounded-xl bg-cyan/10 border border-cyan/40 flex items-center justify-center text-cyan shadow-sm shadow-cyan/20">
+        <Atom className="w-5 h-5 text-cyan" />
+      </div>
+
+      {!compact && (
+        <div className="hidden md:block">
+          <div className="font-orbitron font-bold text-sm sm:text-base text-white tracking-wider flex items-center gap-2">
+            QUANTUMLAB <span className="text-cyan text-xs font-mono font-normal">3D</span>
+          </div>
+
+          <div className="text-[11px] font-sans text-slate-400">
+            Simulación Experimental Cuántica
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+const UserBadge = memo(function UserBadge({
+  userId,
+  compact,
+}: {
+  userId: string;
+  compact: boolean;
+}) {
+  const loading = userId.length === 0;
+
+  return (
+    <div
+      data-testid="user-badge"
+      className="bg-surface-2 border border-edge rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs font-mono"
+      aria-busy={loading}
+      title={userId || 'Cargando…'}
+    >
+      <User className="w-3.5 h-3.5 text-cyan" aria-hidden="true" />
+
+      {!compact && (
+        <span className="text-slate-400 hidden md:inline">
+          Usuario:
+        </span>
+      )}
+
+      {loading ? (
+        <span
+          data-testid="user-id-skeleton"
+          className="inline-block w-14 h-3 rounded bg-slate-700/60 animate-pulse"
+          aria-hidden="true"
+        />
+      ) : (
+        <span
+          data-testid="user-id-value"
+          className={`font-semibold text-slate-200 ${
+            compact ? 'inline-block max-w-[6ch] truncate align-bottom' : ''
+          }`}
+        >
+          {userId}
+        </span>
+      )}
+    </div>
+  );
+});
+
+const TimerDisplay = memo(function TimerDisplay({
+  timeLeft,
+  isRunning,
+  onToggleTimer,
+  compact,
+}: {
+  timeLeft: number;
+  isRunning: boolean;
+  onToggleTimer: () => void;
+  compact: boolean;
+}) {
+  const isUrgent = timeLeft <= 60;
+
+  return (
+    <div className="flex items-center gap-2.5 bg-surface-2 border border-edge rounded-lg px-3 py-1.5">
+      <Clock className="w-3.5 h-3.5 text-cyan" aria-hidden="true" />
+
+      {!compact && (
+        <span className="text-xs text-slate-400 hidden md:inline font-sans">
+          Tiempo:
+        </span>
+      )}
+
+      <span
+        data-testid="timer-display"
+        className={`font-mono font-bold text-sm tracking-wide ${
+          isUrgent
+            ? 'text-rose-400 animate-pulse'
+            : 'text-cyan'
+        }`}
+      >
+        {formatTime(timeLeft)}
+      </span>
+
+      <button
+        onClick={() => {
+          playButtonClick();
+          onToggleTimer();
+        }}
+        className="text-slate-400 hover:text-white transition-colors p-0.5 rounded hover:bg-slate-800"
+        title={isRunning ? 'Pausar temporizador' : 'Reanudar temporizador'}
+        aria-label={isRunning ? 'Pausar' : 'Reanudar'}
+      >
+        {isRunning ? (
+          <Pause className="w-3.5 h-3.5" />
+        ) : (
+          <Play className="w-3.5 h-3.5" />
+        )}
+      </button>
+    </div>
+  );
+});
+
+export default function Header({
+  timeLeft,
+  isRunning,
+  onToggleTimer,
+  onToggleFullscreen,
+  isFullscreen,
+}: Props) {
+  const [userId, setUserId] = useState<string>('');
+  const isDesktop = useIsDesktop();
+  const compact = !isDesktop;
+  const missionTitle = useMissionTitleState();
+
+  useEffect(() => {
+    setUserId(getOrCreateUserId());
+  }, []);
+
+  return (
+    <header
+      data-compact={compact ? 'true' : 'false'}
+      className="sticky top-0 z-40 bg-[#070913]/85 backdrop-blur-md border-b border-edge/80 px-4 sm:px-6 lg:px-8 py-2 lg:py-3 w-full animate-hudFade"
+    >
+      <div className="w-full flex justify-between items-center gap-3">
+        <BrandSection compact={compact} />
+
+        <div className="flex-1 min-w-0 flex items-center justify-center px-2">
+          {missionTitle && (
+            <h1
+              data-testid="header-mission-title"
+              title={missionTitle}
+              className="font-orbitron font-bold text-sm sm:text-base lg:text-lg text-white tracking-wider truncate"
+            >
+              {missionTitle}
+            </h1>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <UserBadge userId={userId} compact={compact} />
+
+          <TimerDisplay
+            timeLeft={timeLeft}
+            isRunning={isRunning}
+            onToggleTimer={onToggleTimer}
+            compact={compact}
+          />
+
+          {onToggleFullscreen && (
+            <button
+              onClick={() => {
+                playButtonClick();
+                onToggleFullscreen();
+              }}
+              className="p-2 rounded-lg bg-surface-2 border border-edge text-slate-400 hover:text-white hover:bg-surface-3 transition-colors"
+              aria-label={
+                isFullscreen
+                  ? 'Salir de pantalla completa'
+                  : 'Pantalla completa'
+              }
+              title={
+                isFullscreen
+                  ? 'Salir de pantalla completa'
+                  : 'Pantalla completa (F)'
+              }
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+      
+        <button
+          onClick={downloadSessionJSON}
+          className="px-3 py-1.5 text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/30 rounded-lg transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          title="Exportar estado de sesión en JSON"
+          aria-label="Exportar sesión"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Exportar
+        </button>
+      
+</header>
+  );
+}

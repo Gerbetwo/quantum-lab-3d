@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { playNote, playSweep, playChord } from '@/lib/audio/synth';
+import { playNote, playSweep, playChord } from '@/shared/lib/audio/synth';
 
 interface MockOsc {
   type: string;

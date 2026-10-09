@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { CircuitVisualizationModel } from '../../src/domain/quantum/visualizationModel';
+import { CircuitVisualizationModel } from '../../src/core/quantum/visualizationModel';
 
 describe('HU-Sandbox-Visualizations — Contratos Científicos', () => {
   test('el modelo de visualización calcula probabilidades coherentes con el vector de estado', () => {

@@ -11,7 +11,7 @@
  *   - src/app/lab/page.tsx        -> LabState + QuantumEngineContract
  *   - src/hooks/useMeasurementBurst.ts -> AudioVisualEngineContract
  *   - src/lib/sound.ts            -> AudioVisualEngineContract
- *   - src/domain/quantum/*        -> QuantumEngineContract (adapter only)
+ *   - src/core/quantum/*        -> QuantumEngineContract (adapter only)
  */
 
 import type {
@@ -19,9 +19,9 @@ import type {
   QubitIndex,
   QuantumCircuit,
   StateVectorHistory,
-} from '@/domain/quantum/circuit';
-import type { StateVector } from '@/domain/quantum/statevector';
-import type { QubitMeasurementResult } from '@/domain/quantum/measureN';
+} from '@/core/quantum/circuit';
+import type { StateVector } from '@/core/quantum/statevector';
+import type { QubitMeasurementResult } from '@/core/quantum/measureN';
 
 // ---------------------------------------------------------------------------
 // Shared enums / literals

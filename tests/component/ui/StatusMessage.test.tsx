@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, test, expect } from 'vitest';
-import { StatusMessage } from '@/components/ui/StatusMessage';
+import { StatusMessage } from '@/shared/ui/StatusMessage';
 
 describe('StatusMessage Component', () => {
   test('renderiza el mensaje con región accesible', () => {

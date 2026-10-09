@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom';
-import CommandPalette, { type Command } from '@/components/CommandPalette';
+import CommandPalette, { type Command } from '@/shared/layout/CommandPalette';
 
 function makeCommands(handlers = { a: vi.fn(), b: vi.fn(), c: vi.fn() }): Command[] {
   return [

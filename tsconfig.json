@@ -25,12 +25,22 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@core/*": [
+        "./src/core/*"
+      ],
+      "@features/*": [
+        "./src/features/*"
+      ],
+      "@shared/*": [
+        "./src/shared/*"
       ]
     },
     "types": [
       "node",
       "@testing-library/jest-dom"
-    ]
+    ],
+    "baseUrl": "."
   },
   "include": [
     "src",

@@ -7,7 +7,7 @@ import {
   isMainJourneyComplete,
   STORAGE_KEY,
   SESSION_VERSION,
-} from '@/lib/session';
+} from '@/features/session/lib/session';
 
 describe('Phase 2 - Unified Session & Persistence Contract', () => {
   beforeEach(() => {

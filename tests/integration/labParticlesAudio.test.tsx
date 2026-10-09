@@ -8,11 +8,11 @@ const collapseMock = vi.fn();
 const gateMock = vi.fn();
 const hoverMock = vi.fn();
 
-vi.mock('@/hooks/useMeasurementBurst', () => ({
+vi.mock('@/features/quantum-3d/hooks/useMeasurementBurst', () => ({
   useMeasurementBurst: () => ({ burst: burstMock }),
 }));
 
-vi.mock('@/lib/sound', () => ({
+vi.mock('@/shared/lib/sound', () => ({
   playButtonClick: vi.fn(),
   playChimeSuccess: vi.fn(),
   playLaserScan: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('@/lib/sound', () => ({
   __resetAudioOverride: vi.fn(),
 }));
 
-vi.mock('@/components/canvas/MeasurementParticles', () => ({
+vi.mock('@/features/quantum-3d/canvas/MeasurementParticles', () => ({
   default: React.forwardRef(function MockMP(_props, ref: React.Ref<unknown>) {
     React.useImperativeHandle(ref, () => ({ trigger: vi.fn(), dispose: vi.fn() }));
     return null;

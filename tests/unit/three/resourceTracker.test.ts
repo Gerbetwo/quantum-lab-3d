@@ -1,7 +1,7 @@
 
 import { describe, test, expect, vi } from 'vitest';
 import * as THREE from 'three';
-import { ResourceTracker } from '../../../src/lib/three/resourceTracker';
+import { ResourceTracker } from '@/features/quantum-3d/lib/resourceTracker';
 
 describe('ResourceTracker', () => {
   test('registra y libera recursos disponsables', () => {

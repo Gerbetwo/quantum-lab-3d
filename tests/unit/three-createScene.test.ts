@@ -8,7 +8,7 @@ import {
   clearSpriteMaterialCache,
   disposeResource,
   setupBaseScene,
-} from '@/lib/three/createScene';
+} from '@/features/quantum-3d/lib/createScene';
 
 describe('DT-09: WebGL Infrastructure & Material Cache Unit Tests', () => {
   beforeEach(() => {

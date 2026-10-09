@@ -2,7 +2,7 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { SceneStage } from '../../../src/components/learning/SceneStage';
+import { SceneStage } from '@/features/quantum-3d/components/SceneStage';
 
 describe('SceneStage Component', () => {
   test('renderiza etiqueta y children correctamente', () => {

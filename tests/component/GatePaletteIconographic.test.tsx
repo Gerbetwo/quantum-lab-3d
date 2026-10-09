@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom';
-import GatePalette from '@/components/circuit/GatePalette';
+import GatePalette from '@/features/circuit/components/GatePalette';
 
 describe('Phase 3 - GatePalette iconographic', () => {
   it('renders one option per gate (9 by default)', () => {

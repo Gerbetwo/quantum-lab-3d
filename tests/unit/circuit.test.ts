@@ -3,9 +3,9 @@ import {
   createEmptyCircuit, placeGate, removeGate, clearStep,
   evaluateCircuitStep, evaluateFullCircuit, evaluateUpToStep,
   MAX_DEPTH,
-} from '@/domain/quantum/circuit';
-import { probability } from '@/domain/quantum/statevector';
-import { ghz6Circuit, qft3Circuit } from '@/domain/quantum/presets';
+} from '@/core/quantum/circuit';
+import { probability } from '@/core/quantum/statevector';
+import { ghz6Circuit, qft3Circuit } from '@/core/quantum/presets';
 
 describe('circuit - createEmptyCircuit', () => {
   it('creates a 6-qubit 16-depth circuit by default', () => {
@@ -153,7 +153,7 @@ describe('circuit - evaluateUpToStep', () => {
 
 describe('circuit - validateCircuit', () => {
   it('returns ok for a well-formed circuit', async () => {
-    const { validateCircuit } = await import('@/domain/quantum/circuit');
+    const { validateCircuit } = await import('@/core/quantum/circuit');
     const c = ghz6Circuit();
     expect(validateCircuit(c).ok).toBe(true);
   });

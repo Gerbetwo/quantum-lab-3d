@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import Mission4Applications from '@/components/missions/Mission4Applications';
+import Mission4Applications from '@/features/missions/components/Mission4Applications';
 
 describe('Mission 4 Applications Component', () => {
   const onFinishAll = vi.fn();

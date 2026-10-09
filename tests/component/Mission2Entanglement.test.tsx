@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import Mission2Entanglement from '@/components/missions/Mission2Entanglement';
+import Mission2Entanglement from '@/features/missions/components/Mission2Entanglement';
 
 describe('Mission 2 Entanglement Component', () => {
   const onComplete = vi.fn();

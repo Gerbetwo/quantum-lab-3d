@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import Mission3Decoherence from '@/components/missions/Mission3Decoherence';
+import Mission3Decoherence from '@/features/missions/components/Mission3Decoherence';
 
 describe('Mission 3 Decoherence Component', () => {
   const onComplete = vi.fn();

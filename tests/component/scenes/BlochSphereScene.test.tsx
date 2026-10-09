@@ -2,7 +2,7 @@
 import { describe, test, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { BlochSphereScene } from '../../../src/components/scenes/BlochSphereScene';
+import { BlochSphereScene } from '@/features/quantum-3d/scenes/BlochSphereScene';
 
 describe('BlochSphereScene Component', () => {
   test('renderiza el contenedor con rol img y aria-label', () => {

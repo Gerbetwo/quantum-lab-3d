@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { SessionProvider } from '@/components/session/SessionProvider';
-import { AppShell } from '@/components/layout/AppShell';
+import { SessionProvider } from '@/features/session/components/SessionProvider';
+import { AppShell } from '@/shared/layout/AppShell';
 
 export const metadata: Metadata = {
   title: 'QuantumLab 3D',

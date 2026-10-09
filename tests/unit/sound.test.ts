@@ -10,7 +10,7 @@ import {
   playDecoherenceAlert,
   __markUserInteracted,
   __resetAudioOverride,
-} from '@/lib/sound';
+} from '@/shared/lib/sound';
 
 describe('Phase 5 - sound.ts full coverage', () => {
   const original = process.env.NEXT_PUBLIC_ENABLE_AUDIO;

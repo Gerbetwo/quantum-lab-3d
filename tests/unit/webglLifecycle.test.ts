@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from 'vitest';
-import { ResourceTracker } from '../../src/lib/three/resourceTracker';
+import { ResourceTracker } from '@/features/quantum-3d/lib/resourceTracker';
 import * as THREE from 'three';
 
 describe('Ciclo de Vida WebGL y ResourceTracker', () => {

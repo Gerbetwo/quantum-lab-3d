@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   measureQubit,
   calculateMeasurementDistribution,
-} from '../../src/domain/quantum/measurement';
+} from '../../src/core/quantum/measurement';
 describe('HU-07 — Deterministic Measurement & Collapse', () => {
   it('collapses to 0 when injectable random is less than P(0)', () => {
     const outcome = measureQubit(Math.PI / 2, () => 0.2);

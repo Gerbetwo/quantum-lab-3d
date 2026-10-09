@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { measureQubitState, validateCircuit, createInitialState } from '../../src/domain/quantum';
+import { measureQubitState, validateCircuit, createInitialState } from '../../src/core/quantum';
 
 describe('Capa de Dominio Cuántico (Motor Canónico)', () => {
   test('Validación de circuitos: detecta índices de qubit inválidos', () => {
