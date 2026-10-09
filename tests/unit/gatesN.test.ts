@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createZeroState, probability, probabilities } from '@/core/quantum/statevector';
 import {
   applyGateN, applyCNOT_N, applyCZ_N, applySWAP_N, H, X, Y, Z, I,
-} from '@/core/quantum/gatesN';
+} from '@/core/quantum/gates';
 
 describe('Phase1 - N-qubit Gates', () => {
   it('H|0> = (|0>+|1>)/sqrt(2)', () => {

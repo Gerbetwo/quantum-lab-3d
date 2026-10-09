@@ -1,52 +1,13 @@
-/* src/app/globals.css */
 @import "tailwindcss";
-:root {
-  color-scheme: dark;
 
-  --color-background: #0b1020;
-  --color-surface: #111a2c;
-  --color-surface-raised: #172238;
-  --color-border: #29364d;
-
-  --color-text: #f3f6fc;
-  --color-text-muted: #a6b2c6;
-
-  --color-primary: #53d8e8;
-  --color-primary-hover: #80e6f0;
-  --color-focus: #86e8f2;
-
-  --radius-control: 0.625rem;
-  --radius-panel: 1rem;
-
-  --space-panel: 1.5rem;
-
-  --motion-fast: 160ms;
-  --motion-normal: 220ms;
-
-  --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-body {
-  background-color: var(--color-background);
-  color: var(--color-text);
-  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  user-select: text;
-}
-
-/* Reglas de enfoque accesibles */
-:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+@layer components {
+  .quantum-panel {
+    @apply rounded-xl border border-slate-800 bg-slate-900/80 p-4 backdrop-blur-md shadow-lg transition-all;
+  }
+  .circuit-grid-cell {
+    @apply flex h-12 w-12 items-center justify-center rounded border border-dashed border-slate-700 hover:border-cyan-500 transition-colors cursor-pointer;
+  }
+  .quantum-heading {
+    @apply text-lg font-semibold tracking-tight text-slate-100;
   }
 }

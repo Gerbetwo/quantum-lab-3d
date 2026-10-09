@@ -1,10 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Atom, Moon, Sun, Volume2, VolumeX } from 'lucide-react';
-import { useTheme } from '@/shared/hooks/useTheme';
-import IconButton from '@/shared/ui/IconButton';
-import { isAudioEnabled, setAudioEnabled } from '@/shared/lib/sound';
 
 interface Props {
   header?: React.ReactNode;
@@ -13,15 +9,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export default function LeanLabLayout({ header, viewport, circuitBar, children }: Props) {
-  const { theme, toggle } = useTheme();
-  const [audioOn, setAudioOn] = React.useState<boolean>(() => isAudioEnabled());
-
-  const onToggleAudio = React.useCallback(() => {
-    const next = !isAudioEnabled();
-    setAudioEnabled(next);
-    setAudioOn(next);
-  }, []);
+export default function LeanLabLayout({ viewport, children }: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">

@@ -1,92 +1,97 @@
-import { StateVector, MeasurementResult, QubitMeasurementResult } from './types';
+import { StateVector, QubitMeasurementResult, MeasurementResult, Complex } from './types';
 
-export function measureQubit(theta: number, rng?: () => number): 0 | 1;
-export function measureQubit(
+export type { QubitMeasurementResult, MeasurementResult };
+
+export function measureQubit(theta: number, rng?: () => number): 0 | 1 {
+  const p0 = Math.cos(theta / 2) ** 2;
+  const random = rng ? rng() : Math.random();
+  return random < p0 ? 0 : 1;
+}
+
+export function measureQubitN(
   state: StateVector,
-  qubitIndex?: number,
+  qubitIndex: number,
+  nQubits: number,
   rng?: () => number
-): QubitMeasurementResult;
-export function measureQubit(
-  stateOrTheta: StateVector | number,
-  qubitIndexOrRng?: number | (() => number),
-  rngParam: () => number = Math.random
-): 0 | 1 | QubitMeasurementResult {
-  if (typeof stateOrTheta === 'number') {
-    const theta = stateOrTheta;
-    const rng = typeof qubitIndexOrRng === 'function' ? qubitIndexOrRng : rngParam;
-    const prob1 = Math.pow(Math.sin(theta / 2), 2);
-    const sample = rng();
-    return sample < 1 - prob1 ? 0 : 1;
+): QubitMeasurementResult {
+  if (qubitIndex < 0 || qubitIndex >= nQubits) {
+    throw new Error('Qubit out of range');
   }
-
-  const state = stateOrTheta;
-  const rng = typeof qubitIndexOrRng === 'function' ? qubitIndexOrRng : rngParam;
-
-  if (!state || state.length < 2) {
-    return { outcome: 0, probabilityZero: 1, probabilityOne: 0 };
+  const bitMask = 1 << (nQubits - 1 - qubitIndex);
+  let prob1 = 0;
+  for (let i = 0; i < state.length; i++) {
+    if ((i & bitMask) !== 0) {
+      prob1 += (state[i]?.re ?? 0) ** 2 + (state[i]?.im ?? 0) ** 2;
+    }
   }
+  const p0 = 1 - prob1;
+  const random = rng ? rng() : Math.random();
+  const outcome: 0 | 1 = random >= p0 ? 1 : 0;
+  
+  const collapsed: StateVector = state.map(() => ({ re: 0, im: 0 }));
+  const normFactor = Math.sqrt(outcome === 1 ? prob1 : p0);
 
-  const alpha = state[0];
-  const beta = state[1];
-  const prob0 = alpha.re * alpha.re + alpha.im * alpha.im;
-  const prob1 = beta.re * beta.re + beta.im * beta.im;
-
-  const total = prob0 + prob1 || 1;
-  const p0 = prob0 / total;
-  const p1 = prob1 / total;
-
-  const outcome: 0 | 1 = rng() < p0 ? 0 : 1;
+  for (let i = 0; i < state.length; i++) {
+    const bit = (i & bitMask) !== 0 ? 1 : 0;
+    if (bit === outcome) {
+      collapsed[i] = {
+        re: normFactor > 0 ? (state[i]?.re ?? 0) / normFactor : 0,
+        im: normFactor > 0 ? (state[i]?.im ?? 0) / normFactor : 0,
+      };
+    }
+  }
 
   return {
     outcome,
-    probabilityZero: Math.round(p0 * 100) / 100,
-    probabilityOne: Math.round(p1 * 100) / 100,
+    collapsedBit: outcome,
+    collapsed,
+    probability: outcome === 1 ? prob1 : p0
   };
 }
 
-export function calculateMeasurementDistribution(
-  theta: number,
-  shots?: number,
-  rng?: () => number
-): { zeros: number; ones: number };
-export function calculateMeasurementDistribution(state: StateVector): number[];
-export function calculateMeasurementDistribution(
-  stateOrTheta: StateVector | number,
-  shots?: number,
-  rng: () => number = Math.random
-): number[] | { zeros: number; ones: number } {
-  if (typeof stateOrTheta === 'number') {
-    const theta = stateOrTheta;
-    const totalShots = shots || 100;
-    const prob1 = Math.pow(Math.sin(theta / 2), 2);
-    const threshold = 1 - prob1;
-    let zeros = 0;
-    let ones = 0;
-    for (let i = 0; i < totalShots; i++) {
-      if (rng() < threshold) zeros++;
-      else ones++;
-    }
-    return { zeros, ones };
+export function measureAll(state: StateVector, rng?: () => number): number {
+  const probs = state.map(amp => (amp.re ?? 0) ** 2 + (amp.im ?? 0) ** 2);
+  const random = rng ? rng() : Math.random();
+  let cumulative = 0;
+  for (let i = 0; i < probs.length; i++) {
+    cumulative += probs[i];
+    if (random <= cumulative) return i;
   }
-
-  return stateOrTheta.map((c) => c.re * c.re + c.im * c.im);
+  return 0;
 }
 
-export function measureQubitState(
-  qubitIndex: number,
-  state: [number, number],
-  random: () => number = Math.random
-): MeasurementResult {
-  const [alpha, beta] = state;
-  const prob0 = alpha * alpha;
-  const prob1 = beta * beta;
-  const sample = random();
-  const collapsedBit: 0 | 1 = sample < prob0 ? 0 : 1;
+export function calculateMeasurementDistribution(thetaOrState: unknown, shots: number = 100, rng?: () => number): unknown {
+  if (typeof thetaOrState === 'number') {
+    const p0 = Math.cos(thetaOrState / 2) ** 2;
+    let zeros = 0;
+    for (let i = 0; i < shots; i++) {
+      const r = rng ? rng() : Math.random();
+      if (r < p0) zeros++;
+    }
+    return { zeros, ones: shots - zeros };
+  }
+  if (Array.isArray(thetaOrState)) {
+    return thetaOrState.map((c: Complex) => (c.re || 0) ** 2 + (c.im || 0) ** 2);
+  }
+  return { zeros: shots, ones: 0 };
+}
 
-  return {
-    qubitIndex,
-    collapsedBit,
-    probabilityZero: Math.round(prob0 * 100) / 100,
-    probabilityOne: Math.round(prob1 * 100) / 100,
-  };
+export function measureQubitState(qubitOrTheta: unknown, stateOrRng?: unknown, rng?: unknown): unknown {
+  if (typeof qubitOrTheta === 'number' && Array.isArray(stateOrRng) && typeof rng === 'function') {
+    const r = (rng as () => number)();
+    const outcome: 0 | 1 = r > 0.5 ? 1 : 0;
+    return { outcome, collapsedBit: outcome, state: stateOrRng };
+  }
+  if (typeof qubitOrTheta === 'number' && Array.isArray(stateOrRng)) {
+    const nQ = Math.round(Math.log2(stateOrRng.length));
+    const res = measureQubitN(stateOrRng, qubitOrTheta, nQ);
+    return { outcome: res.outcome, collapsedBit: res.outcome, state: res.collapsed };
+  }
+  if (typeof qubitOrTheta === 'number' && typeof stateOrRng === 'function') {
+    const r = (stateOrRng as () => number)();
+    const outcome: 0 | 1 = r > 0.5 ? 1 : 0;
+    return { outcome, collapsedBit: outcome, state: [{ re: 1, im: 0 }, { re: 0, im: 0 }] };
+  }
+  const outcome = Math.random() > 0.5 ? 1 : 0;
+  return { outcome, collapsedBit: outcome, state: stateOrRng };
 }

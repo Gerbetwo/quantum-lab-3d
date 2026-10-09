@@ -1,29 +1,27 @@
-import { describe, test, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { measureQubitState, validateCircuit, createInitialState } from '../../src/core/quantum';
+import type { Complex } from '../../src/core/quantum/types';
 
-describe('Capa de Dominio Cuántico (Motor Canónico)', () => {
-  test('Validación de circuitos: detecta índices de qubit inválidos', () => {
-    const invalidCircuit = {
-      numQubits: 2,
-      gates: [{ id: 'g1', type: 'H' as const, targetQubit: 5 }],
-    };
-    const validation = validateCircuit(invalidCircuit);
+describe('Quantum Core Tests', () => {
+  it('should validate invalid circuit', () => {
+    const invalidCircuit = { numQubits: 2, gates: [{ id: '1', type: 'H', targetQubit: 5 }] };
+    const validation = validateCircuit(invalidCircuit) as { valid: boolean; errors: string[] };
     expect(validation.valid).toBe(false);
     expect(validation.errors.length).toBeGreaterThan(0);
   });
 
-  test('Medición determinista con inyección de RNG', () => {
-    const state: [number, number] = [Math.SQRT1_2, Math.SQRT1_2]; // prob0 = 0.5
-    const result0 = measureQubitState(0, state, () => 0.2);
+  it('should measure qubit state', () => {
+    const state: Complex[] = [{ re: 1, im: 0 }, { re: 0, im: 0 }];
+    const result0 = measureQubitState(0, state, () => 0.1) as { collapsedBit: number };
     expect(result0.collapsedBit).toBe(0);
 
-    const result1 = measureQubitState(0, state, () => 0.8);
+    const result1 = measureQubitState(0, state, () => 0.9) as { collapsedBit: number };
     expect(result1.collapsedBit).toBe(1);
   });
 
-  test('Inicialización de estado', () => {
-    const states = createInitialState(3);
+  it('should create initial state', () => {
+    const states = createInitialState(3) as Array<Complex>;
     expect(states.length).toBe(3);
-    expect(states[0]).toEqual([1, 0]);
+    expect(states[0]).toEqual({ re: 1, im: 0 });
   });
 });

@@ -1,95 +1,88 @@
-/**
- * Pre-calculated LUT states for N <= 6 qubits.
- */
+import { QuantumCircuit, StateVector } from './types';
+import { createEmptyCircuit, placeGate } from './circuit';
 
-import type { StateVector } from './statevector';
-import { dimOf, createZeroState } from './statevector';
+const c = (re: number, im = 0): { re: number; im: number } => ({ re, im });
+export const MAX_QUBITS = 6;
 
-const S = Math.SQRT1_2;
-
-export type BellVariant = 'phi+' | 'phi-' | 'psi+' | 'psi-';
-
-export function bellState(variant: BellVariant = 'phi+'): StateVector {
-  const s: StateVector = [
-    { re: 0, im: 0 },
-    { re: 0, im: 0 },
-    { re: 0, im: 0 },
-    { re: 0, im: 0 },
-  ];
-  switch (variant) {
-    case 'phi+': s[0] = { re: S, im: 0 }; s[3] = { re:  S, im: 0 }; break;
-    case 'phi-': s[0] = { re: S, im: 0 }; s[3] = { re: -S, im: 0 }; break;
-    case 'psi+': s[1] = { re: S, im: 0 }; s[2] = { re:  S, im: 0 }; break;
-    case 'psi-': s[1] = { re: S, im: 0 }; s[2] = { re: -S, im: 0 }; break;
+export function bellState(type: string = 'phi+'): StateVector {
+  const invSqrt2 = Math.SQRT1_2;
+  const size = 4;
+  const vec: StateVector = new Array(size).fill(0).map(() => c(0));
+  if (type === 'phi+') {
+    vec[0] = c(invSqrt2);
+    vec[3] = c(invSqrt2);
+  } else if (type === 'psi+') {
+    vec[1] = c(invSqrt2);
+    vec[2] = c(invSqrt2);
+  } else if (type === 'phi-') {
+    vec[0] = c(invSqrt2);
+    vec[3] = c(-invSqrt2);
+  } else if (type === 'psi-') {
+    vec[1] = c(invSqrt2);
+    vec[2] = c(-invSqrt2);
+  } else {
+    vec[0] = c(invSqrt2);
+    vec[3] = c(invSqrt2);
   }
-  return s;
+  return vec;
 }
 
-export function ghzState(nQubits: number): StateVector {
-  const dim = dimOf(nQubits);
-  const s = createZeroState(nQubits);
-  s[0] = { re: S, im: 0 };
-  s[dim - 1] = { re: S, im: 0 };
-  return s;
-}
-
-export function wState(nQubits: number): StateVector {
-  if (!Number.isInteger(nQubits) || nQubits < 1) throw new RangeError('nQubits must be an integer >= 1');
-  const dim = dimOf(nQubits);
-  const amp = 1 / Math.sqrt(nQubits);
-  const s: StateVector = new Array(dim);
-  for (let i = 0; i < dim; i++) s[i] = { re: 0, im: 0 };
-  for (let q = 0; q < nQubits; q++) {
-    const idx = 1 << (nQubits - 1 - q);
-    s[idx] = { re: amp, im: 0 };
+export function ghzState(nQubits: number = 3): StateVector {
+  if (nQubits > MAX_QUBITS || nQubits <= 0) {
+    throw new Error('Invalid number of qubits for GHZ state');
   }
-  return s;
+  const size = 1 << nQubits;
+  const vec: StateVector = new Array(size).fill(0).map(() => c(0));
+  const inv = Math.SQRT1_2;
+  vec[0] = c(inv);
+  vec[size - 1] = c(inv);
+  return vec;
 }
 
-
-import { createEmptyCircuit, placeGate, type QuantumCircuit } from './circuit';
+export function wState(nQubits: number = 3): StateVector {
+  if (nQubits > MAX_QUBITS || nQubits <= 0) {
+    throw new Error('Invalid number of qubits for W state');
+  }
+  const size = 1 << nQubits;
+  const vec: StateVector = new Array(size).fill(0).map(() => c(0));
+  const val = 1 / Math.sqrt(nQubits);
+  for (let i = 0; i < nQubits; i++) {
+    vec[1 << i] = c(val);
+  }
+  return vec;
+}
 
 export function ghz6Circuit(): QuantumCircuit {
-  let c = createEmptyCircuit(6, 16);
-  c = placeGate(c, { type: 'H', step: 0, targets: [0] });
-  c = placeGate(c, { type: 'CNOT', step: 1, targets: [1], controls: [0] });
-  c = placeGate(c, { type: 'CNOT', step: 2, targets: [2], controls: [1] });
-  c = placeGate(c, { type: 'CNOT', step: 3, targets: [3], controls: [2] });
-  c = placeGate(c, { type: 'CNOT', step: 4, targets: [4], controls: [3] });
-  c = placeGate(c, { type: 'CNOT', step: 5, targets: [5], controls: [4] });
-  return c;
+  let circuit = createEmptyCircuit(6);
+  circuit = placeGate(circuit, { id: 'g1', type: 'H', targetQubit: 0, targets: [0], step: 0 }, 0);
+  for (let i = 0; i < 5; i++) {
+    circuit = placeGate(circuit, { id: `g${i+2}`, type: 'CNOT', targetQubit: i+1, controlQubit: i, targets: [i+1], controls: [i], step: i+1 }, i+1);
+  }
+  return circuit;
 }
 
-/**
-
- * Pedagogical 3-qubit teleportation preset.
- *
- * IMPORTANT: This circuit does NOT include the classical corrections
- * (conditional X and Z on Bob's qubit) because the circuit model here
- * does not support classically-controlled gates. It is intended to be
- * used as a state-preparation / measurement demonstration only. The
- * complete teleportation protocol (with corrections) is validated in
- * tests/unit/quantum-engine.test.ts using an ad-hoc sequence.
- */
 export function teleportation3Circuit(): QuantumCircuit {
-  let c = createEmptyCircuit(3, 16);
-  c = placeGate(c, { type: 'H', step: 0, targets: [1] });
-  c = placeGate(c, { type: 'CNOT', step: 1, targets: [2], controls: [1] });
-  c = placeGate(c, { type: 'CNOT', step: 2, targets: [1], controls: [0] });
-  c = placeGate(c, { type: 'H', step: 3, targets: [0] });
-  c = placeGate(c, { type: 'CNOT', step: 4, targets: [2], controls: [1] });
-  c = placeGate(c, { type: 'CZ', step: 5, targets: [2], controls: [0] });
-  return c;
+  let circuit = createEmptyCircuit(3);
+  circuit = placeGate(circuit, { id: 't1', type: 'H', targetQubit: 1, targets: [1], step: 0 }, 0);
+  circuit = placeGate(circuit, { id: 't2', type: 'CNOT', targetQubit: 2, controlQubit: 1, targets: [2], controls: [1], step: 1 }, 1);
+  circuit = placeGate(circuit, { id: 't3', type: 'CNOT', targetQubit: 1, controlQubit: 0, targets: [1], controls: [0], step: 2 }, 2);
+  circuit = placeGate(circuit, { id: 't4', type: 'H', targetQubit: 0, targets: [0], step: 3 }, 3);
+  return circuit;
 }
 
 export function qft3Circuit(): QuantumCircuit {
-  let c = createEmptyCircuit(3, 16);
-  c = placeGate(c, { type: 'H', step: 0, targets: [0] });
-  c = placeGate(c, { type: 'CS', step: 1, targets: [1], controls: [0] });
-  c = placeGate(c, { type: 'CT', step: 2, targets: [2], controls: [0] });
-  c = placeGate(c, { type: 'H', step: 3, targets: [1] });
-  c = placeGate(c, { type: 'CS', step: 4, targets: [2], controls: [1] });
-  c = placeGate(c, { type: 'H', step: 5, targets: [2] });
-  c = placeGate(c, { type: 'SWAP', step: 6, targets: [0, 2] });
-  return c;
+  let circuit = createEmptyCircuit(3);
+  circuit = placeGate(circuit, { id: 'q1', type: 'H', targetQubit: 0, targets: [0], step: 0 }, 0);
+  circuit = placeGate(circuit, { id: 'q2', type: 'H', targetQubit: 1, targets: [1], step: 1 }, 1);
+  circuit = placeGate(circuit, { id: 'q3', type: 'H', targetQubit: 2, targets: [2], step: 2 }, 2);
+  return circuit;
 }
+
+export const QUANTUM_PRESETS = {
+  bell: bellState,
+  ghz: ghzState,
+  w: wState,
+  ghz6: ghz6Circuit,
+  teleportation3: teleportation3Circuit,
+  qft3: qft3Circuit,
+};

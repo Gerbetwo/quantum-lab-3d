@@ -21,7 +21,7 @@ import type {
   StateVectorHistory,
 } from '@/core/quantum/circuit';
 import type { StateVector } from '@/core/quantum/statevector';
-import type { QubitMeasurementResult } from '@/core/quantum/measureN';
+import type { QubitMeasurementResult } from '@/core/quantum/measurement';
 
 // ---------------------------------------------------------------------------
 // Shared enums / literals

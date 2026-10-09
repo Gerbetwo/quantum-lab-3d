@@ -6,7 +6,7 @@ import {
 import {
   applyGateN, applyCNOT_N, applyCZ_N, applySWAP_N, applyControlledPhaseN,
   H, X, Y, Z, S, T, I, type GateMatrix,
-} from '@/core/quantum/gatesN';
+} from '@/core/quantum/gates';
 import { applyGate, H_GATE, X_GATE, Z_GATE } from '@/core/quantum/gates';
 import {
    evaluateFullCircuit,
@@ -14,7 +14,7 @@ import {
 import {
   ghz6Circuit, qft3Circuit, teleportation3Circuit, ghzState,
 } from '@/core/quantum/presets';
-import { measureQubitN } from '@/core/quantum/measureN';
+import { measureQubitN } from '@/core/quantum/measurement';
 
 const EPS = 1e-7;
 

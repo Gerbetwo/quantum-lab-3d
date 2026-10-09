@@ -1,4 +1,4 @@
-import { AppHeader } from './AppHeader';
+import Header from './Header';
 import { SessionProvider } from '@/features/session/components/SessionProvider';
 
 interface AppShellProps {
@@ -11,7 +11,7 @@ export function AppShell({ children, title, subtitle }: AppShellProps) {
   return (
     <SessionProvider>
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
-        <AppHeader />
+        <Header />
         {(title || subtitle) && (
           <div data-testid="app-shell-header" className="bg-slate-900 border-b border-slate-800 px-6 py-4">
             {title && <h1 className="text-xl font-bold text-white">{title}</h1>}
