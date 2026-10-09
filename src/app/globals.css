@@ -1,99 +1,54 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@import "tailwindcss";
-@config "../../tailwind.config.ts";
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --surface-0: #ffffff;
-  --surface-1: #f1f5f9;
-  --surface-2: #e2e8f0;
-  --surface-3: #cbd5e1;
-  --edge: #cbd5e1;
-}
+  color-scheme: dark;
 
-.dark {
-  --background: #070913;
-  --foreground: #f8fafc;
-  --surface-0: #030712;
-  --surface-1: #0b0f1d;
-  --surface-2: #111827;
-  --surface-3: #1e293b;
-  --edge: #1e293b;
+  --color-background: #0b1020;
+  --color-surface: #111a2c;
+  --color-surface-raised: #172238;
+  --color-border: #29364d;
+
+  --color-text: #f3f6fc;
+  --color-text-muted: #a6b2c6;
+
+  --color-primary: #53d8e8;
+  --color-primary-hover: #80e6f0;
+  --color-focus: #86e8f2;
+
+  --radius-control: 0.625rem;
+  --radius-panel: 1rem;
+
+  --space-panel: 1.5rem;
+
+  --motion-fast: 160ms;
+  --motion-normal: 220ms;
+
+  --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: 'Inter', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  margin: 0;
+  padding: 0;
   overflow-x: hidden;
+  user-select: text;
 }
 
-/* Custom font utilities */
-.font-orbitron {
-  font-family: 'Orbitron', monospace;
+/* Reglas de enfoque accesibles */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
-.font-rajdhani {
-  font-family: 'Rajdhani', sans-serif;
-}
-
-.font-inter {
-  font-family: 'Inter', sans-serif;
-}
-
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #070913;
-}
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #00f0ff;
-}
-
-/* Neon glow utility classes */
-.glow-cyan {
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
-}
-
-.glow-purple {
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
-}
-
-.glow-text-cyan {
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
-}
-
-.glow-text-purple {
-  text-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
-}
-
-/* Range input styling */
-input[type="range"] {
-  -webkit-appearance: none;
-  background: rgba(255, 255, 255, 0.12);
-  height: 6px;
-  border-radius: 4px;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 18px;
-  width: 18px;
-  border-radius: 50%;
-  background: #00f0ff;
-  box-shadow: 0 0 10px #00f0ff;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

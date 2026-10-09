@@ -222,7 +222,7 @@ export function CircuitWorkbench() {
           <ViewModeSwitcher mode={viewMode} onChange={setViewMode} />
         </div>
 
-        <div className="min-h-[250px] flex items-center justify-center bg-slate-950 rounded-lg p-4 border border-slate-800/80">
+        <div className="min-h-62.5 flex items-center justify-center bg-slate-950 rounded-lg p-4 border border-slate-800/80">
           {viewMode === 'phase-disk' && <PhaseDiskView evaluation={evaluationResult} />}
           {viewMode === 'bloch' && <BlochPairView evaluation={evaluationResult} />}
           {viewMode === 'histogram' && <HistogramView evaluation={evaluationResult} />}
