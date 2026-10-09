@@ -6,7 +6,7 @@ import {
   simulateGroverStep,
   measureAmplitude,
   groverSuccessProbability,
-} from '@/core/quantum/grover';
+} from '@/core/quantum/algorithms/grover';
 
 describe('HU-27..HU-31 - Grover Search Algorithm', () => {
   describe('groverIterations', () => {

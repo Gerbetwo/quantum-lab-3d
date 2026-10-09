@@ -1,31 +1,21 @@
-import { QuantumAlgorithmStrategy } from './types';
-import { StateVector } from '../types';
-import { createZeroState } from '../statevector';
-
-export interface ShorParams {
-  N: number;
-}
-
 export interface ShorResult {
-  factors: [number, number];
-  period: number;
-  stateVector: StateVector;
+  isSuccess: boolean;
+  period: number | null;
+  factors: [number, number] | null;
 }
 
-export class ShorAlgorithm implements QuantumAlgorithmStrategy<ShorParams, ShorResult> {
-  name = 'Shor Factoring';
-  private currentState: StateVector = createZeroState(4);
-
-  execute(_params: ShorParams): ShorResult {
-    this.currentState = createZeroState(4);
-    return {
-      factors: [3, 5],
-      period: 4,
-      stateVector: this.currentState,
-    };
+export function factorizeShorN15(a: number): ShorResult {
+  if (a <= 1 || a >= 15 || a % 3 === 0 || a % 5 === 0) {
+    return { isSuccess: false, period: null, factors: null };
   }
-
-  getCircuitState(): StateVector {
-    return this.currentState;
+  let r = 1;
+  let val = a % 15;
+  while (val !== 1 && r < 15) {
+    val = (val * a) % 15;
+    r++;
   }
+  if (r % 2 === 0) {
+    return { isSuccess: true, period: r, factors: [3, 5] };
+  }
+  return { isSuccess: false, period: r, factors: null };
 }

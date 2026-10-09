@@ -63,3 +63,53 @@ export interface ValidationResult {
   ok?: boolean;
   errors: string[];
 }
+
+export type ViewMode = 'bloch' | 'histogram' | 'phase-disk';
+export type PresetName = 'ghz6' | 'teleportation3' | 'qft3';
+
+export type LabEvent =
+  | { readonly type: 'GATE_PLACED';       readonly step: number;   readonly qubit: QubitIndex; readonly gate: GateType }
+  | { readonly type: 'GATE_REMOVED';      readonly gateId: string }
+  | { readonly type: 'PLAYHEAD_SET';      readonly step: number }
+  | { readonly type: 'VIEW_CHANGED';      readonly mode: ViewMode }
+  | { readonly type: 'PRESET_LOADED';     readonly name: PresetName }
+  | { readonly type: 'CIRCUIT_RUN' }
+  | { readonly type: 'CIRCUIT_RESET' }
+  | { readonly type: 'COLLAPSE_TRIGGERED'; readonly qubit: QubitIndex; readonly outcome: 0 | 1 };
+
+export interface LabSnapshot {
+  readonly circuit: QuantumCircuit;
+  readonly playhead: number;
+  readonly viewMode: ViewMode;
+  readonly activeGate: GateType | null;
+  readonly commandPaletteOpen: boolean;
+  readonly isDirty: boolean;
+  readonly lastRunAt: number | null;
+}
+
+export interface LabState {
+  readonly snapshot: Readonly<LabSnapshot>;
+  dispatch(event: LabEvent): void;
+  reset(): void;
+}
+
+export interface QuantumEngineContract {
+  evaluate(circuit: QuantumCircuit): StateVectorHistory;
+  evaluateUpTo(circuit: QuantumCircuit, n: number): StateVector;
+  measure(
+    state: StateVector,
+    target: number,
+    nQubits: number,
+    rng?: () => number,
+  ): QubitMeasurementResult;
+  norm(state: StateVector): number;
+  probabilities(state: StateVector): number[];
+}
+
+export interface AudioVisualEngineContract {
+  playGatePlaced(): void;
+  playMeasurementCollapse(qubit: number): void;
+  playStepAdvance(): void;
+  triggerParticleBurst(origin: [number, number, number], color: number, count: number): void;
+  dispose(): void;
+}

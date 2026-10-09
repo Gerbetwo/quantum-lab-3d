@@ -1,12 +1,12 @@
 'use client';
 
-import { downloadSessionJSON } from '@/features/session/lib/export';
+import { downloadSessionJSON } from '@/features/session/lib/sessionService';
 import React, { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Award, ExternalLink, CheckCircle2 } from 'lucide-react';
-import { getOrCreateUserId, updateStoredMetrics } from '@/features/session/lib/cookies';
+import { getOrCreateUserId, updateStoredMetrics } from '@/features/session/lib/sessionService';
 import { playChimeSuccess } from '@/shared/lib/sound';
-import { prefersReducedMotion } from '@/features/quantum-3d/lib/createScene';
+import { prefersReducedMotion } from '@/features/quantum-3d/lib/sceneManager';
 
 interface Props {
   isOpen: boolean;

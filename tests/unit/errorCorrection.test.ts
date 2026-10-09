@@ -3,7 +3,7 @@ import {
   bitFlipEncode, bitFlipDecode, detectBitFlipSyndrome,
   injectBitFlip, phaseFlipEncode, injectPhaseFlip, applyRepetitionCode3,
   type BitTriple,
-} from '@/core/quantum/errorCorrection';
+} from '@/core/quantum/algorithms/errorCorrection';
 
 describe('HU-32..HU-36 - Error Correction', () => {
   describe('bitFlipEncode', () => {

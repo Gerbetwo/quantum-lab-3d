@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { UserSession, loadSession, saveSession, getDefaultSession } from '@/features/session/lib/session';
+import { UserSession, loadSession, saveSession, getDefaultSession } from '@/features/session/lib/sessionService';
 
 interface SessionContextType {
   session: UserSession;

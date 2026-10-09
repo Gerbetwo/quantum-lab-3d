@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, type MutableRefObject } from 'react';
-import type { SceneHandle } from '@/features/quantum-3d/lib/createScene';
+import type { SceneHandle } from '../lib/sceneManager';
 import type { MeasurementParticlesHandle, TriggerOptions } from '@/features/quantum-3d/canvas/MeasurementParticles';
 
 export interface UseMeasurementBurstResult {

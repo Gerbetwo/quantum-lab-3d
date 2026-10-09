@@ -82,3 +82,7 @@ export function normalizeStateVector(amplitudes: { re: number; im: number }[]): 
     im: Math.abs(amp.im / norm) < 1e-12 ? 0 : amp.im / norm,
   }));
 }
+
+export function createInitialState(nQubits: number): StateVector {
+  return createZeroState(nQubits);
+}

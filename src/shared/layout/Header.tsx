@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { getOrCreateUserId } from '@/core/persistence/session';
+import { getOrCreateUserId } from '@/features/session/lib/sessionService';
 
 interface HeaderProps {
   title?: string;

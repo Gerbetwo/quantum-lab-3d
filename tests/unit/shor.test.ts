@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { factorizeShorN15 } from '../../src/core/quantum/shor';
+import { factorizeShorN15 } from '@/core/quantum/algorithms/shor';
 
 describe('Shor Domain — N = 15 Factoring', () => {
   test('Factoriza N=15 correctamente con base a = 7', () => {

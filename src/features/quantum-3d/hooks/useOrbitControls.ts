@@ -2,7 +2,7 @@
 
 import * as THREE from 'three';
 import { useEffect, useRef, type RefObject } from 'react';
-import { prefersReducedMotion } from '@/features/quantum-3d/lib/createScene';
+import { prefersReducedMotion } from '../lib/sceneManager';
 
 export interface OrbitControlsOptions {
   enableRotate?: boolean;

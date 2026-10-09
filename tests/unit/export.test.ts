@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import Cookies from 'js-cookie';
-import { exportSessionJSON, downloadSessionJSON } from '@/features/session/lib/export';
-import { saveMissionState, saveCompletedMission, COOKIE_USER_ID, COOKIE_MISSION_STATE } from '@/features/session/lib/cookies';
+import { exportSessionJSON, downloadSessionJSON } from '@/features/session/lib/sessionService';
+import { saveMissionState, saveCompletedMission, COOKIE_USER_ID, COOKIE_MISSION_STATE } from '@/features/session/lib/sessionService';
 
 describe('Exportación de sesión JSON', () => {
   beforeEach(() => {

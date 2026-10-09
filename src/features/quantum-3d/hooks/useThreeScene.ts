@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { createScene, SceneHandle } from '@/features/quantum-3d/lib/createScene';
+import { createScene, SceneHandle } from '../lib/sceneManager';
 import { ResourceTracker } from '@/features/quantum-3d/lib/resourceTracker';
 import type * as THREE from 'three';
 

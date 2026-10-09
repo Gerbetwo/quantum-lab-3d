@@ -5,9 +5,10 @@ import '@testing-library/jest-dom';
 import CelebrationModal from '@/shared/layout/CelebrationModal';
 
 vi.mock('@/shared/lib/sound', () => ({ playChimeSuccess: vi.fn() }));
-vi.mock('@/features/session/lib/cookies', () => ({
+vi.mock('@/features/session/lib/sessionService', () => ({
   getOrCreateUserId: vi.fn(() => 'QL-ABCD'),
   updateStoredMetrics: vi.fn(),
+  downloadSessionJSON: vi.fn(),
 }));
 
 const { confettiFnMock, confettiResetMock } = vi.hoisted(() => ({
@@ -19,7 +20,7 @@ vi.mock('canvas-confetti', () => ({
   default: Object.assign(confettiFnMock, { reset: confettiResetMock }),
 }));
 
-vi.mock('@/features/quantum-3d/lib/createScene', () => ({
+vi.mock('@/features/quantum-3d/lib/sceneManager', () => ({
   prefersReducedMotion: vi.fn(() => false),
 }));
 

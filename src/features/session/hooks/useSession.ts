@@ -9,7 +9,7 @@ import {
   recordMissionTimeInSession,
   resetCanonicalSession,
   createEmptySession,
-} from '@/features/session/lib/session';
+} from '@/features/session/lib/sessionService';
 import { MissionId, isMissionId } from '@/features/missions/config/missions';
 
 export function useSession() {

@@ -1,32 +1,36 @@
-import { QuantumAlgorithmStrategy } from './types';
-import { StateVector } from '../types';
-import { createZeroState } from '../statevector';
-
-export interface GroverParams {
-  numQubits: number;
-  targetIndex: number;
+export function groverIterations(N: number): number {
+  return Math.floor((Math.PI / 4) * Math.sqrt(N));
 }
 
-export interface GroverResult {
-  foundIndex: number;
-  probability: number;
-  stateVector: StateVector;
+export function classicalExpectedTrials(N: number): number {
+  return N / 2;
 }
 
-export class GroverAlgorithm implements QuantumAlgorithmStrategy<GroverParams, GroverResult> {
-  name = 'Grover Search';
-  private currentState: StateVector = createZeroState(2);
+export function uniformAmplitudes(N: number): number[] {
+  const amp = 1 / Math.sqrt(N);
+  return new Array(N).fill(amp);
+}
 
-  execute(params: GroverParams): GroverResult {
-    this.currentState = createZeroState(params.numQubits);
-    return {
-      foundIndex: params.targetIndex,
-      probability: 0.95,
-      stateVector: this.currentState,
-    };
-  }
+export function simulateGroverStep(amplitudes: number[], markedIndex: number): number[] {
+  const N = amplitudes.length;
+  const oracleState = amplitudes.map((amp, idx) => (idx === markedIndex ? -amp : amp));
+  const mean = oracleState.reduce((sum, val) => sum + val, 0) / N;
+  return oracleState.map((val) => 2 * mean - val);
+}
 
-  getCircuitState(): StateVector {
-    return this.currentState;
+export function measureAmplitude(amplitudes: number[], rng: () => number = Math.random): number {
+  const probs = amplitudes.map((a) => a * a);
+  const r = rng();
+  let cumulative = 0;
+  for (let i = 0; i < probs.length; i++) {
+    cumulative += probs[i];
+    if (r <= cumulative) return i;
   }
+  return amplitudes.length - 1;
+}
+
+export function groverSuccessProbability(N: number, iterations: number): number {
+  if (iterations === 0) return 1 / N;
+  const theta = Math.asin(1 / Math.sqrt(N));
+  return Math.sin((2 * iterations + 1) * theta) ** 2;
 }

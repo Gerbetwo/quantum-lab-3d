@@ -6,7 +6,7 @@ import {
   saveMissionState,
   getAllMissionStates,
   MAX_COOKIE_SIZE_BYTES,
-} from '@/features/session/lib/cookies';
+} from '@/features/session/lib/sessionService';
 
 describe('Persistencia de estado por misión', () => {
   beforeEach(() => {

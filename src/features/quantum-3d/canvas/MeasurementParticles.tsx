@@ -1,8 +1,8 @@
 'use client';
 
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import type { SceneHandle } from '@/features/quantum-3d/lib/createScene';
-import { prefersReducedMotion } from '@/features/quantum-3d/lib/createScene';
+import type { SceneHandle } from '../lib/sceneManager';
+import { prefersReducedMotion } from '../lib/sceneManager';
 import {
   createParticlePool, burst, disposeParticlePool,
   type ParticlePool,

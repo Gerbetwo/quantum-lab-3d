@@ -1,14 +1,25 @@
+/**
+ * Public API - Motor Cuántico Consolidado
+ */
+
 export * from './types';
 export * from './gates';
-export * from './measurement';
 export * from './circuit';
-export * from './presets';
+export {
+  createZeroState,
+  createInitialState,
+  norm,
+  normalize,
+  innerProduct,
+  probability,
+  probabilities,
+} from './statevector';
+export * from './measurement';
+export * from './bloch';
 export * from './decoherence';
-
-export function createInitialState(nQubits: number = 1): unknown {
-  if (nQubits === 3) {
-    return [{ re: 1, im: 0 }, { re: 1, im: 0 }, { re: 1, im: 0 }];
-  }
-  const size = 1 << nQubits;
-  return new Array(size).fill(0).map((_, i) => ({ re: i === 0 ? 1 : 0, im: 0 }));
-}
+export * from './entanglement';
+export * from './presets';
+export * from './scales';
+export * from './visualizationModel';
+export * from './applications';
+export * from './algorithms';
