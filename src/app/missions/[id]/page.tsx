@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
-import { MISSIONS, type MissionDefinition } from '@/features/missions/config/missions';
-import { MissionShell } from '@/features/missions/components/MissionShell';
+import { getMissionById, isMissionId, MISSIONS, type MissionDefinition } from '@/features/missions/config/missions';
 import { MissionRegistry } from '@/features/missions/components/MissionRegistry';
 import LeanLabLayout from '@/shared/layout/LeanLabLayout';
 
@@ -16,7 +15,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: MissionPageProps) {
   const { id } = await params;
-  const mission = MISSIONS.find((m: MissionDefinition) => m.id === id);
+  const mission = isMissionId(id) ? getMissionById(id) : null;
 
   if (!mission) {
     return { title: 'Misión No Encontrada | Quantum Lab 3D' };
@@ -30,7 +29,12 @@ export async function generateMetadata({ params }: MissionPageProps) {
 
 export default async function MissionPage({ params }: MissionPageProps) {
   const { id } = await params;
-  const mission = MISSIONS.find((m: MissionDefinition) => m.id === id);
+  
+  if (!isMissionId(id)) {
+    notFound();
+  }
+
+  const mission = getMissionById(id);
 
   if (!mission) {
     notFound();
@@ -38,9 +42,7 @@ export default async function MissionPage({ params }: MissionPageProps) {
 
   return (
     <LeanLabLayout>
-      <MissionShell mission={mission}>
-        <MissionRegistry missionId={mission.id} />
-      </MissionShell>
+      <MissionRegistry missionId={id} />
     </LeanLabLayout>
   );
 }
