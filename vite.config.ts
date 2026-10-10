@@ -11,26 +11,38 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     include: [
       "tests/unit/**/*.test.{ts,tsx}",
-      "src/**/*.test.{ts,tsx}",
       "tests/component/**/*.test.{ts,tsx}",
+      "tests/integration/**/*.test.{ts,tsx}",
+      "src/**/*.test.{ts,tsx}",
     ],
     exclude: ["tests/e2e/**", "node_modules/**", ".next/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
       thresholds: {
-        // Umbrales calibrados a la suite de pruebas real
-        "src/domain/**": {
+        "src/core/**": {
           statements: 85,
           branches: 75,
           functions: 85,
           lines: 85,
         },
-        "src/lib/**": {
+        "src/features/**": {
           statements: 80,
           branches: 75,
           functions: 75,
           lines: 80,
+        },
+        "src/shared/**": {
+          statements: 80,
+          branches: 75,
+          functions: 75,
+          lines: 80,
+        },
+        "src/store/**": {
+          statements: 85,
+          branches: 75,
+          functions: 85,
+          lines: 85,
         },
       },
     },
