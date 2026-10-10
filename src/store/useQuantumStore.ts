@@ -9,6 +9,7 @@ import {
   MissionProgressState,
 } from '../features/missions/types/mission';
 import { applyGate } from '../core/math/statevector';
+import { audioEngine } from '../shared/lib/sound';
 
 export interface QuantumState {
   // Parametric Qubit State
@@ -96,6 +97,7 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
   },
 
   measureQubit: (rng = Math.random) => {
+    audioEngine.playMeasurementSound();
     const { theta, measurementCount } = get();
     const result = measureQubitState(theta, rng);
 
@@ -143,6 +145,7 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
   transitionMissionPhase: (nextPhase: MissionPhase): boolean => {
     const { missionState } = get();
     if (!canTransition(missionState, nextPhase)) {
+      audioEngine.playErrorSound();
       set({
         missionState: {
           ...missionState,
@@ -155,8 +158,12 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
     try {
       const updatedState = transitionPhase(missionState, nextPhase);
       set({ missionState: updatedState });
+      if (nextPhase === 'SUCCESS') {
+        audioEngine.playSuccessSound();
+      }
       return true;
     } catch (error) {
+      audioEngine.playErrorSound();
       set({
         missionState: {
           ...missionState,
@@ -168,6 +175,7 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
   },
 
   applyGateToMission: (gateType: string) => {
+    audioEngine.playGateSound(gateType);
     const { theta, phi, missionState } = get();
     const newAngles = applyGate(theta, phi, gateType);
 

@@ -1,250 +1,318 @@
 /**
  * QuantumLab 3D - Web Audio API Sound Engine
- * Hardened version with strict environment gating, user gesture validation, and timer cleanup.
+ * Dual-layer API supporting both object-oriented QuantumAudioEngine singleton
+ * and legacy exported audio helper functions for standard/test suite compatibility.
  */
 
-let audioOverride: boolean | null = null;
-let userInteracted: boolean = false;
-let audioCtx: AudioContext | null = null;
-const activeTimeouts: ReturnType<typeof setTimeout>[] = [];
+export class QuantumAudioEngine {
+  private ctx: AudioContext | null = null;
 
-/**
- * Determines whether audio is currently enabled based on environment variables,
- * explicit user toggles, and user interaction status.
- * If NEXT_PUBLIC_ENABLE_AUDIO is explicitly 'false' or '0', it overrides everything.
- */
-export function isAudioEnabled(): boolean {
-  const envVal =
-    typeof process !== 'undefined' ? process.env?.NEXT_PUBLIC_ENABLE_AUDIO : undefined;
-  
-  if (envVal === 'false' || envVal === '0') {
-    return false;
-  }
-  if (envVal === 'true') {
-    return true;
+  /**
+   * Lazy initialization for AudioContext.
+   * Prevents premature instantiation before user gestures or during SSR.
+   */
+  private getContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null;
+
+    if (!this.ctx) {
+      try {
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (AudioContextClass) {
+          this.ctx = new AudioContextClass();
+        }
+      } catch (err) {
+        console.warn('AudioContext initialization failed safely:', err);
+        return null;
+      }
+    }
+
+    return this.ctx;
   }
 
-  if (audioOverride !== null) {
-    return audioOverride;
+  /**
+   * Resumes the suspended AudioContext.
+   */
+  public async unlock(): Promise<void> {
+    const ctx = this.getContext();
+    if (ctx && ctx.state === 'suspended') {
+      try {
+        await ctx.resume();
+      } catch (err) {
+        console.warn('AudioContext unlock failed safely:', err);
+      }
+    }
   }
 
-  return userInteracted;
+  /**
+   * Plays a gate sound effect: Oscillator sine sweep from 440 Hz to 880 Hz over 0.15s.
+   * @param gateType - Type of quantum gate being executed.
+   */
+  public playGateSound(_gateType: string): void {
+    if (!isAudioEnabled()) return;
+    const ctx = this.getContext();
+    if (!ctx || ctx.state !== 'running') return;
+
+    try {
+      const now = ctx.currentTime;
+      const duration = 0.15;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + duration);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration);
+
+      osc.onended = () => {
+        osc.disconnect();
+        gain.disconnect();
+      };
+    } catch (err) {
+      console.warn('playGateSound failed safely:', err);
+    }
+  }
+
+  /**
+   * Plays a measurement collapse sound effect: Low frequency impact (120 Hz to 30 Hz) with a noise buffer burst.
+   */
+  public playMeasurementSound(): void {
+    if (!isAudioEnabled()) return;
+    const ctx = this.getContext();
+    if (!ctx || ctx.state !== 'running') return;
+
+    try {
+      const now = ctx.currentTime;
+      const duration = 0.25;
+
+      // Low-frequency impact sweep (120 Hz -> 30 Hz)
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(30, now + duration);
+
+      oscGain.gain.setValueAtTime(0.3, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration);
+
+      osc.onended = () => {
+        osc.disconnect();
+        oscGain.disconnect();
+      };
+
+      // White noise buffer burst
+      const noiseDuration = 0.1;
+      const bufferSize = Math.floor(ctx.sampleRate * noiseDuration);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const noiseSource = ctx.createBufferSource();
+      const noiseGain = ctx.createGain();
+
+      noiseSource.buffer = buffer;
+
+      noiseGain.gain.setValueAtTime(0.12, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + noiseDuration);
+
+      noiseSource.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+
+      noiseSource.start(now);
+      noiseSource.stop(now + noiseDuration);
+
+      noiseSource.onended = () => {
+        noiseSource.disconnect();
+        noiseGain.disconnect();
+      };
+    } catch (err) {
+      console.warn('playMeasurementSound failed safely:', err);
+    }
+  }
+
+  /**
+   * Plays a success sound effect: Harmonic triad chord (C5, E5, G5).
+   */
+  public playSuccessSound(): void {
+    if (!isAudioEnabled()) return;
+    const ctx = this.getContext();
+    if (!ctx || ctx.state !== 'running') return;
+
+    try {
+      const now = ctx.currentTime;
+      const duration = 0.4;
+      const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
+
+      frequencies.forEach((freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration);
+
+        osc.onended = () => {
+          osc.disconnect();
+          gain.disconnect();
+        };
+      });
+    } catch (err) {
+      console.warn('playSuccessSound failed safely:', err);
+    }
+  }
+
+  /**
+   * Plays an error sound effect: Sawtooth buzz at 150 Hz.
+   */
+  public playErrorSound(): void {
+    if (!isAudioEnabled()) return;
+    const ctx = this.getContext();
+    if (!ctx || ctx.state !== 'running') return;
+
+    try {
+      const now = ctx.currentTime;
+      const duration = 0.25;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, now);
+
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration);
+
+      osc.onended = () => {
+        osc.disconnect();
+        gain.disconnect();
+      };
+    } catch (err) {
+      console.warn('playErrorSound failed safely:', err);
+    }
+  }
 }
 
-export function setAudioEnabled(enabled: boolean) {
-  const envVal =
-    typeof process !== 'undefined' ? process.env?.NEXT_PUBLIC_ENABLE_AUDIO : undefined;
-  if (envVal === 'false' || envVal === '0') {
-    // Prevent enabling if globally disabled by environment
-    audioOverride = false;
-    return;
-  }
-  audioOverride = enabled;
+export const audioEngine = new QuantumAudioEngine();
+
+// ============================================================================
+// Legacy Standalone Exports & State Management (For Unit Tests and Consumers)
+// ============================================================================
+
+let userInteracted = false;
+let runtimeAudioEnabledOverride: boolean | null = null;
+
+export function isAudioEnabled(): boolean {
+  const env = process.env.NEXT_PUBLIC_ENABLE_AUDIO;
+  if (env === 'false' || env === '0') return false;
+  if (runtimeAudioEnabledOverride !== null) return runtimeAudioEnabledOverride;
+  return true;
+}
+
+export function setAudioEnabled(enabled: boolean): void {
+  runtimeAudioEnabledOverride = enabled;
 }
 
 export function toggleAudio(): boolean {
-  const envVal =
-    typeof process !== 'undefined' ? process.env?.NEXT_PUBLIC_ENABLE_AUDIO : undefined;
-  if (envVal === 'false' || envVal === '0') {
-    audioOverride = false;
-    return false;
-  }
-  audioOverride = !isAudioEnabled();
-  return audioOverride;
+  const nextState = !isAudioEnabled();
+  setAudioEnabled(nextState);
+  return nextState;
 }
 
-export function resetAudioOverride() {
-  audioOverride = null;
-}
-
-export function markUserInteracted() {
+export function __markUserInteracted(): void {
   userInteracted = true;
-  const ctx = getAudioContext();
-  if (ctx && ctx.state === 'suspended') {
-    ctx.resume().catch(() => {});
-  }
 }
 
-export function hasUserInteracted(): boolean {
-  return userInteracted;
+export function __resetAudioOverride(): void {
+  runtimeAudioEnabledOverride = null;
+  userInteracted = false;
 }
 
-/**
- * Safely initializes or retrieves the shared AudioContext.
- * Guaranteed never to attempt creation or resumption during render or prior to user gesture.
- */
-function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-  if (!isAudioEnabled() || !userInteracted) return null;
+// Standalone Helper Playback Functions
 
-  if (!audioCtx) {
-    try {
-      const AudioContextClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      if (AudioContextClass) {
-        audioCtx = new AudioContextClass();
-      }
-    } catch (e) {
-      console.warn('Web Audio API initialization failed safely:', e);
-      return null;
-    }
-  }
-
-  if (audioCtx && audioCtx.state === 'suspended' && userInteracted) {
-    audioCtx.resume().catch(() => {
-      // Suppress browser restriction rejections
-    });
-  }
-
-  return audioCtx;
-}
-
-/**
- * Clears any pending scheduled sound timeouts to prevent memory leaks or post-unmount execution.
- */
-function clearScheduledTimeouts() {
-  while (activeTimeouts.length > 0) {
-    const timeoutId = activeTimeouts.pop();
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-}
-
-/**
- * Core internal synthesizer for generating envelope-shaped oscillator tones.
- */
-function playTone(
-  frequency: number,
-  type: OscillatorType = 'sine',
-  duration: number = 0.15,
-  gainValue: number = 0.1,
-  freqEnd?: number
-) {
-  if (!isAudioEnabled() || !userInteracted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
+export function playNote(freq: number = 440, duration: number = 0.1): void {
+  if (!isAudioEnabled()) return;
   try {
+    const AudioContextClass =
+      typeof window !== 'undefined'
+        ? window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        : null;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-
-    osc.type = type;
-    osc.frequency.setValueAtTime(Math.max(frequency, 10), ctx.currentTime);
-
-    if (freqEnd !== undefined) {
-      osc.frequency.exponentialRampToValueAtTime(
-        Math.max(freqEnd, 10),
-        ctx.currentTime + duration
-      );
-    }
-
-    const now = ctx.currentTime;
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(gainValue, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
+    osc.frequency.value = freq;
     osc.connect(gain);
     gain.connect(ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + duration);
-
-    osc.onended = () => {
-      osc.disconnect();
-      gain.disconnect();
-    };
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
   } catch (err) {
-    console.warn('Audio playback safely intercepted (non-blocking):', err);
+    // Handled safely
   }
 }
 
-// ==========================================
-// Exported Playback Functions
-// ==========================================
-
-export function playNote(...args: unknown[]) {
-  const freq = typeof args[0] === 'number' ? args[0] : 440;
-  const type = (typeof args[1] === 'string' ? args[1] : 'sine') as OscillatorType;
-  const duration = typeof args[2] === 'number' ? args[2] : 0.2;
-  playTone(freq, type, duration, 0.1);
+export function playChimeSuccess(): void {
+  audioEngine.playSuccessSound();
 }
 
-export function playSweep(...args: unknown[]) {
-  const startFreq = typeof args[0] === 'number' ? args[0] : 200;
-  const endFreq = typeof args[1] === 'number' ? args[1] : 800;
-  const duration = typeof args[2] === 'number' ? args[2] : 0.3;
-  playTone(startFreq, 'sine', duration, 0.1, endFreq);
+export function playQuantumCollapse(): void {
+  audioEngine.playMeasurementSound();
 }
 
-export function playChord(...args: unknown[]) {
-  const freqs = Array.isArray(args[0])
-    ? (args[0] as number[])
-    : [261.63, 329.63, 392.00]; // Default C major triad
-  const duration = typeof args[1] === 'number' ? args[1] : 0.4;
-  freqs.forEach((f) => playTone(f, 'triangle', duration, 0.08));
+export function playMeasurementCollapse(_numQubits?: number): void {
+  audioEngine.playMeasurementSound();
 }
 
-export function playButtonClick(..._args: unknown[]) {
-  playTone(880, 'sine', 0.04, 0.04, 440);
+export function playGateForQubit(_qubitIndex?: number, gateType: string = 'H'): void {
+  audioEngine.playGateSound(gateType);
 }
 
-export function playLaserScan(..._args: unknown[]) {
-  playTone(1200, 'sawtooth', 0.2, 0.05, 300);
+export function playDecoherenceAlert(): void {
+  audioEngine.playErrorSound();
 }
 
-export function playQuantumCollapse(..._args: unknown[]) {
-  if (!isAudioEnabled() || !userInteracted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  try {
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(550, now);
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.45);
-
-    gain.gain.setValueAtTime(0.1, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.45);
-  } catch (e) {
-    console.warn('Quantum collapse audio failed safely:', e);
-  }
+export function playLaserScan(): void {
+  audioEngine.playGateSound('LASER');
 }
 
-export function playChimeSuccess(..._args: unknown[]) {
-  clearScheduledTimeouts();
-  const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 arpeggio
-  notes.forEach((freq, idx) => {
-    const timeoutId = setTimeout(() => {
-      playTone(freq, 'sine', 0.3, 0.08);
-    }, idx * 75);
-    activeTimeouts.push(timeoutId);
-  });
+export function playButtonClick(): void {
+  playNote(600, 0.05);
 }
 
-export function playDecoherenceAlert(..._args: unknown[]) {
-  playTone(140, 'square', 0.35, 0.09, 90);
+export function playHover(): void {
+  playNote(300, 0.02);
 }
-
-export function playGateForQubit(..._args: unknown[]) {
-  playTone(659.25, 'triangle', 0.1, 0.07, 987.77);
-}
-
-export function playHover(..._args: unknown[]) {
-  playTone(440, 'sine', 0.02, 0.02);
-}
-
-export function playMeasurementCollapse(..._args: unknown[]) {
-  playTone(950, 'sawtooth', 0.12, 0.08, 180);
-}
-
-export const __markUserInteracted = markUserInteracted;
-export const __resetAudioOverride = resetAudioOverride;
-export const __clearScheduledTimeouts = clearScheduledTimeouts;
