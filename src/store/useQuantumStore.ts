@@ -16,6 +16,8 @@ export interface QuantumState {
   phi: number;
   temperatureK: number;
   coherenceTimeUs: number;
+  entanglementDegree?: number;
+  isEntangled?: boolean;
 
   // Measurement State
   lastOutcome: 0 | 1 | null;
@@ -73,6 +75,8 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
   phi: 0,
   temperatureK: 0.015,
   coherenceTimeUs: calculateCoherenceTime(0.015),
+  entanglementDegree: 0.0,
+  isEntangled: false,
 
   lastOutcome: null,
   lastProbability: null,
@@ -118,6 +122,8 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
       phi: 0,
       temperatureK: 0.015,
       coherenceTimeUs: calculateCoherenceTime(0.015),
+      entanglementDegree: 0.0,
+      isEntangled: false,
       lastOutcome: null,
       lastProbability: null,
       measurementCount: 0,
@@ -163,11 +169,8 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
 
   applyGateToMission: (gateType: string) => {
     const { theta, phi, missionState } = get();
-
-    // Mutate state vector angles using quantum engine logic
     const newAngles = applyGate(theta, phi, gateType);
 
-    // Update state vector and log the gate to appliedGatesHistory
     set({
       theta: newAngles.theta,
       phi: newAngles.phi,
