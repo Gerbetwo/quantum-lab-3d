@@ -23,6 +23,6 @@ describe('SceneStage Component', () => {
       </SceneStage>
     );
 
-    expect(screen.getByText(/WebGL no está disponible/i)).toBeInTheDocument();
+    expect(screen.getByText(/WebGL Simulation Unavailable/i)).toBeInTheDocument();
   });
 });

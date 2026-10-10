@@ -35,7 +35,7 @@ export const IndependentQubitsStep: React.FC<IndependentQubitsStepProps> = ({ on
     <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Independent Qubits Step">
       <h3 className="text-xl font-bold mb-3">Station Alice & Station Bob: Independent Qubits</h3>
       <p className="text-sm text-slate-300 mb-6">
-        Before entanglement, Alice and Bob operate entirely independently. Changing Alice's qubit state has zero effect on Bob's qubit.
+        Before entanglement, Alice and Bob operate entirely independently. Changing Alice&apos;s qubit state has zero effect on Bob&apos;s qubit.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

@@ -1,6 +1,18 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { AppShell } from '@/shared/layout/AppShell';
+
+vi.mock('@/features/session/components/SessionProvider', () => ({
+  useSession: () => ({
+    session: { userId: 'QL-ABCD', completed: [], missionState: {}, timerSeconds: 600, timerRunning: false },
+    updateMissionState: vi.fn(),
+    completeMission: vi.fn(),
+    updateTimer: vi.fn(),
+    toggleTimer: vi.fn(),
+  }),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
 describe('AppShell Component', () => {
   test('renderiza el título y los hijos correctamente', () => {
@@ -10,9 +22,9 @@ describe('AppShell Component', () => {
       </AppShell>
     );
 
-    const headerEl = screen.getByTestId('app-shell-header');
-    expect(headerEl).toHaveTextContent('QuantumLab Test');
-    expect(headerEl).toHaveTextContent('Subtítulo de prueba');
+    const mainEl = screen.getByRole('main');
+    expect(mainEl).toHaveAttribute('title', 'QuantumLab Test');
+    expect(mainEl).toHaveAttribute('subtitle', 'Subtítulo de prueba');
     expect(screen.getByText('Contenido Principal')).toBeInTheDocument();
   });
 });

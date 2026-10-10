@@ -30,3 +30,17 @@ body {
 .hud-font-mono {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
+
+
+/* Light Theme Token Overrides */
+.light {
+  --bg-obsidian: #F8FAFC;
+  --bg-panel-glass: rgba(255, 255, 255, 0.85);
+  --border-cyan-glow: rgba(0, 140, 255, 0.25);
+  --qubit-0-cyan: #0284C7;
+  --qubit-1-purple: #7C3AED;
+  --entanglement-gold: #D97706;
+  --decoherence-red: #DC2626;
+  --text-hud-primary: #0F172A;
+  --text-hud-muted: #64748B;
+}

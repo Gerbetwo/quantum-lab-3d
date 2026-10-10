@@ -10,7 +10,7 @@ interface ApplicationsExperienceProps {
 export const ApplicationsExperience: React.FC<ApplicationsExperienceProps> = ({ onMissionComplete }) => {
   const [activeStepId, setActiveStepId] = useState<string>('myths-applications');
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
-  const [exploredApplications, setExploredApplications] = useState<string[]>([]);
+  const [_exploredApplications, setExploredApplications] = useState<string[]>([]);
   const [knowledgeCheckPassed, setKnowledgeCheckPassed] = useState<boolean>(false);
 
   const handleStepComplete = (stepId: string) => {
@@ -54,7 +54,7 @@ export const ApplicationsExperience: React.FC<ApplicationsExperienceProps> = ({ 
         <span className="text-xs uppercase tracking-widest text-cyan-400 font-semibold">Mission 4 Experience</span>
         <h2 className="text-2xl font-bold mt-1">Real-World Quantum Applications</h2>
         <p className="text-sm text-slate-400 mt-1">
-          Explore quantum myths vs realities, molecular simulation comparisons, Shor's algorithm demonstration, and canonical knowledge validation.
+          Explore quantum myths vs realities, molecular simulation comparisons, Shor&apos;s algorithm demonstration, and canonical knowledge validation.
         </p>
 
         {/* Step Navigation Tabs */}
@@ -62,7 +62,7 @@ export const ApplicationsExperience: React.FC<ApplicationsExperienceProps> = ({ 
           {[
             { id: 'myths-applications', label: '1. Myths & Realities' },
             { id: 'molecular-comparison', label: '2. Molecular Simulation' },
-            { id: 'shor-demo', label: "3. Shor's Algorithm" },
+            { id: 'shor-demo', label: "3. Shor&apos;s Algorithm" },
             { id: 'knowledge-check', label: '4. Knowledge Check' },
           ].map((step) => (
             <button

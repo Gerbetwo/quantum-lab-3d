@@ -1,3 +1,20 @@
+
+vi.mock('@/features/session/components/SessionProvider', () => ({
+  useSession: () => ({
+    session: {
+      userId: 'QL-ABCD',
+      completed: [],
+      missionState: {},
+      timerSeconds: 600,
+      timerRunning: false,
+    },
+    updateMissionState: vi.fn(),
+    completeMission: vi.fn(),
+    updateTimer: vi.fn(),
+    toggleTimer: vi.fn(),
+  }),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';

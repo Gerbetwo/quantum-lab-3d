@@ -36,7 +36,7 @@ export const CorrelatedMeasurementStep: React.FC<CorrelatedMeasurementStepProps>
     <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Correlated Measurement Step">
       <h3 className="text-xl font-bold mb-3">Correlated Measurement & Non-Signaling</h3>
       <p className="text-sm text-slate-300 mb-4">
-        Measure the entangled pair. Because the states are linked, Alice's measurement yields a random outcome, and Bob's measurement will <em>always perfectly match</em> Alice's result. However, Alice cannot choose or force the outcome to transmit a message.
+        Measure the entangled pair. Because the states are linked, Alice&apos;s measurement yields a random outcome, and Bob&apos;s measurement will <em>always perfectly match</em> Alice&apos;s result. However, Alice cannot choose or force the outcome to transmit a message.
       </p>
 
       {!isBellPrepared && (

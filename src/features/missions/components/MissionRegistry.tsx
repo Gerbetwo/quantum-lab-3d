@@ -52,7 +52,7 @@ const ApplicationsExperience = dynamic(() => import('@/features/missions/experie
 });
 
 // Fully typed map ensuring all seven MissionId values are mapped to their experience modules
-const missionExperienceMap: Record<MissionId, React.ComponentType<any>> = {
+const missionExperienceMap: Record<MissionId, React.ComponentType<Record<string, unknown>>> = {
   superposition: SuperpositionExperience,
   entanglement: EntanglementExperience,
   'error-correction': ErrorCorrectionExperience,

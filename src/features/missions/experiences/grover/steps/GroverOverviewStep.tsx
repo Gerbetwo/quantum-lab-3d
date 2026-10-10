@@ -17,9 +17,9 @@ export const GroverOverviewStep: React.FC<GroverOverviewStepProps> = ({ onComple
 
   return (
     <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Grover Overview Step">
-      <h3 className="text-xl font-bold mb-3">Grover's Search: Overview & Amplitude Amplification</h3>
+      <h3 className="text-xl font-bold mb-3">Grover&apos;s Search: Overview & Amplitude Amplification</h3>
       <p className="text-sm text-slate-300 mb-4">
-        Grover's algorithm provides a quadratic speedup for unstructured search problems. It uses quantum superposition, an oracle to mark the target item, and a diffusion operator (amplitude amplification) to increase the probability amplitude of the correct solution.
+        Grover&apos;s algorithm provides a quadratic speedup for unstructured search problems. It uses quantum superposition, an oracle to mark the target item, and a diffusion operator (amplitude amplification) to increase the probability amplitude of the correct solution.
       </p>
 
       {/* Scope and Performance Safeguard */}

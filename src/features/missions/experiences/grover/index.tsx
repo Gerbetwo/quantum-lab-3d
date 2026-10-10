@@ -44,7 +44,7 @@ export const GroverExperience: React.FC<GroverExperienceProps> = ({ onMissionCom
     <div className="max-w-4xl mx-auto p-6 bg-slate-950 text-slate-100 rounded-2xl shadow-2xl border border-slate-800">
       <div className="mb-8 border-b border-slate-800 pb-4">
         <span className="text-xs uppercase tracking-widest text-cyan-400 font-semibold">Mission 6 Experience</span>
-        <h2 className="text-2xl font-bold mt-1">Grover's Search & Amplitude Amplification</h2>
+        <h2 className="text-2xl font-bold mt-1">Grover&apos;s Search & Amplitude Amplification</h2>
         <p className="text-sm text-slate-400 mt-1">
           Explore search query costs, single iteration distribution shifts, full algorithm execution, and canonical knowledge validation.
         </p>
@@ -87,12 +87,12 @@ export const GroverExperience: React.FC<GroverExperienceProps> = ({ onMissionCom
         )}
         {activeStepId === 'knowledge-check' && (
           <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Knowledge Check">
-            <h3 className="text-xl font-bold mb-3">Canonical Quiz: Grover's Search</h3>
+            <h3 className="text-xl font-bold mb-3">Canonical Quiz: Grover&apos;s Search</h3>
             <p className="text-sm text-slate-300 mb-6">
               Verify your understanding of quadratic speedup, oracle marking, amplitude amplification, and query complexity.
             </p>
             <div className="bg-slate-800 p-5 rounded-lg mb-6 border border-slate-700">
-              <p className="text-sm font-medium mb-3">What type of speedup does Grover's algorithm provide over classical unstructured search?</p>
+              <p className="text-sm font-medium mb-3">What type of speedup does Grover&apos;s algorithm provide over classical unstructured search?</p>
               <div className="space-y-2">
                 <button
                   type="button"

@@ -17,27 +17,27 @@ export function useGuidedMission(missionId: MissionId | string) {
 
   const mission = useMemo(() => getMissionById(missionId), [missionId]);
 
-  const rawMissionState = (
+  const rawMissionState = useMemo(() => (
     isMissionId(missionId)
       ? session.missionState[missionId]
       : (session.missionState as Record<string, unknown>)[missionId]
-  ) as MissionInternalState || {};
+  ) as MissionInternalState || {}, [session.missionState, missionId]);
   
   const currentStepIndex = typeof rawMissionState.currentStepIndex === 'number' && Number.isFinite(rawMissionState.currentStepIndex)
     ? Math.max(0, Math.min(rawMissionState.currentStepIndex, (mission?.steps.length ?? 1) - 1))
     : 0;
 
-  const completedSteps = Array.isArray(rawMissionState.completedSteps)
+  const completedSteps = useMemo(() => Array.isArray(rawMissionState.completedSteps)
     ? rawMissionState.completedSteps.filter((s): s is string => typeof s === 'string')
-    : [];
+    : [], [rawMissionState.completedSteps]);
 
   const quizPassed = typeof rawMissionState.quizPassed === 'boolean' ? rawMissionState.quizPassed : false;
 
-  const interaction = rawMissionState.interaction && typeof rawMissionState.interaction === 'object' && !Array.isArray(rawMissionState.interaction)
+  const interaction = useMemo(() => rawMissionState.interaction && typeof rawMissionState.interaction === 'object' && !Array.isArray(rawMissionState.interaction)
     ? (rawMissionState.interaction as Record<string, unknown>)
-    : {};
+    : {}, [rawMissionState.interaction]);
 
-  const steps = mission?.steps || [];
+  const steps = useMemo(() => mission?.steps || [], [mission?.steps]);
   const currentStep = steps[currentStepIndex];
 
   const isUnlocked = useMemo(() => {

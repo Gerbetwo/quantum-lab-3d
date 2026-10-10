@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 interface TeachingCircuitStepProps {
   onComplete?: (completed: boolean) => void;
-  onStateChange?: (state: { slots: ('—' | 'X' | 'Z' | 'H')[]; result: any; bellPrepared: boolean }) => void;
+  onStateChange?: (state: { slots: ('—' | 'X' | 'Z' | 'H')[]; result: unknown; bellPrepared: boolean }) => void;
 }
 
 type GateType = '—' | 'X' | 'Z' | 'H';

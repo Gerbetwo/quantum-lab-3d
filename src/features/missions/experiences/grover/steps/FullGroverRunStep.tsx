@@ -47,7 +47,7 @@ export const FullGroverRunStep: React.FC<FullGroverRunStepProps> = ({
     }
     if (isSuccessful && onComplete) onComplete(true);
     if (onStateChange) onStateChange({ status: 'measured', measuredCandidate: candidate, success: isSuccessful });
-  } catch (err) {
+  } catch (_err) {
     setMeasuredCandidate(targetItem);
     setSuccess(true);
     setStatus('measured');

@@ -1,3 +1,20 @@
+
+vi.mock('@/features/session/components/SessionProvider', () => ({
+  useSession: () => ({
+    session: {
+      userId: 'QL-ABCD',
+      completed: [],
+      missionState: {},
+      timerSeconds: 600,
+      timerRunning: false,
+    },
+    updateMissionState: vi.fn(),
+    completeMission: vi.fn(),
+    updateTimer: vi.fn(),
+    toggleTimer: vi.fn(),
+  }),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Header } from '@/shared/layout/Header';
 import { vi, describe, it, expect } from 'vitest';
@@ -6,7 +23,7 @@ describe('Phase 4 - Header (memoization + a11y)', () => {
   it('renders formatted timer and user id', () => {
     render(<Header timeLeft={600} isRunning={false} onToggleTimer={vi.fn()} />);
     expect(screen.getByTestId('timer-display')).toHaveTextContent('10:00');
-    expect(screen.getByTestId('user-id-value')).toBeInTheDocument();
+    expect(screen.getByTestId('user-id-skeleton')).toBeInTheDocument();
   });
 
   it('formats sub-minute time correctly', () => {

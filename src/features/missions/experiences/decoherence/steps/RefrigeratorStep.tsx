@@ -9,7 +9,7 @@ export const RefrigeratorStep: React.FC<RefrigeratorStepProps> = ({ onComplete, 
   const [activated, setActivated] = useState<boolean>(false);
   const [temperature, setTemperature] = useState<number>(300);
   const [coherenceTimeUs, setCoherenceTimeUs] = useState<number>(50);
-  const [isCritical, setIsCritical] = useState<boolean>(true);
+  const [_isCritical, setIsCritical] = useState<boolean>(true);
 
   const handleActivateRefrigerator = () => {
     if (activated) return;

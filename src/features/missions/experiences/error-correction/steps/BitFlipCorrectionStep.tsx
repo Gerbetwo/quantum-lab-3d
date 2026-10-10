@@ -11,7 +11,7 @@ export const BitFlipCorrectionStep: React.FC<BitFlipCorrectionStepProps> = ({
   onComplete,
   onRecordCorrection,
 }) => {
-  const [logicalState, setLogicalState] = useState<'0' | '1'>('0');
+  const [logicalState, _setLogicalState] = useState<'0' | '1'>('0');
   const [errorIndex, setErrorIndex] = useState<number | null>(null);
   const [corruptedWord, setCorruptedWord] = useState<string>('000');
   const [syndrome, setSyndrome] = useState<string>('0');

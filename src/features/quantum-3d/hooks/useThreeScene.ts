@@ -41,37 +41,105 @@ export function useThreeScene(
 ): React.RefObject<HTMLDivElement | null> {
   const internalRef = useRef<HTMLDivElement | null>(null);
 
+  // Stabilize arguments and factory references via refs to avoid infinite re-render loops
+  const argsRef = useRef(restArgs);
+  argsRef.current = restArgs;
+  const optionsRef = useRef(optionsOrFirstArg);
+  optionsRef.current = optionsOrFirstArg;
+  const factoryRef = useRef(containerOrFactory);
+  factoryRef.current = containerOrFactory;
+
   useEffect(() => {
     const container = internalRef.current;
     if (!container) return;
 
-    if (typeof containerOrFactory === 'function') {
-      const controller = createScene(container);
-      const tracker = new ResourceTracker();
+    let isDisposed = false;
+    let controller: SceneHandle | null = null;
+    let tracker: ResourceTracker | null = null;
+    let cleanupFn: (() => void) | void = undefined;
 
-      const res = containerOrFactory(controller.scene, tracker, optionsOrFirstArg, ...restArgs);
-      return () => {
-        if (res && typeof (res as { dispose?: () => void }).dispose === 'function') {
-          (res as { dispose: () => void }).dispose();
+    try {
+      const currentFactory = factoryRef.current;
+      const currentOptionsOrArg = optionsRef.current;
+      const currentRest = argsRef.current;
+
+      if (typeof currentFactory === 'function') {
+        controller = createScene(container);
+        if (isDisposed) {
+          controller.dispose();
+          return;
         }
-        tracker.dispose();
-        controller.dispose();
-      };
-    } else {
-      const options = (optionsOrFirstArg || {}) as ThreeSceneOptions;
-      const handle = createScene(container);
-      let cleanupFn: (() => void) | void;
-      if (options.onSetup) {
-        cleanupFn = options.onSetup(handle);
+        tracker = new ResourceTracker();
+        const res = currentFactory(controller.scene, tracker, currentOptionsOrArg, ...currentRest);
+        cleanupFn = () => {
+          if (res && typeof (res as { dispose?: () => void }).dispose === 'function') {
+            try {
+              (res as { dispose: () => void }).dispose();
+            } catch (e) {
+              console.error('Error disposing scene resource return:', e);
+            }
+          }
+        };
+      } else {
+        const options = (currentOptionsOrArg || {}) as ThreeSceneOptions;
+        controller = createScene(container);
+        if (isDisposed) {
+          controller.dispose();
+          return;
+        }
+        if (options.onSetup) {
+          cleanupFn = options.onSetup(controller);
+        }
       }
-      return () => {
-        if (typeof cleanupFn === 'function') {
-          cleanupFn();
+    } catch (error) {
+      console.error('Error during ThreeScene initialization:', error);
+      // Safe partial initialization recovery & cleanup
+      if (controller && !isDisposed) {
+        try {
+          controller.dispose();
+        } catch (_e) {
+          // Suppress secondary teardown exceptions
         }
-        handle.dispose();
-      };
+      }
+      if (tracker && !isDisposed) {
+        try {
+          tracker.dispose();
+        } catch (_e) {
+          // Suppress secondary teardown exceptions
+        }
+      }
     }
-  }, [containerOrFactory, optionsOrFirstArg, restArgs]);
+
+    // Idempotent cleanup return guaranteed to stop loops, observers, and release resources safely
+    return () => {
+      if (isDisposed) return;
+      isDisposed = true;
+
+      if (typeof cleanupFn === 'function') {
+        try {
+          cleanupFn();
+        } catch (e) {
+          console.error('Error in scene cleanup function:', e);
+        }
+      }
+
+      if (tracker) {
+        try {
+          tracker.dispose();
+        } catch (e) {
+          console.error('Error disposing resource tracker:', e);
+        }
+      }
+
+      if (controller) {
+        try {
+          controller.dispose();
+        } catch (e) {
+          console.error('Error disposing scene controller:', e);
+        }
+      }
+    };
+  }, [containerOrFactory]);
 
   return internalRef;
 }

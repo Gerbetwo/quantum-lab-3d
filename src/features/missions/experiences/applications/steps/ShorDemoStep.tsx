@@ -50,18 +50,18 @@ export const ShorDemoStep: React.FC<ShorDemoStepProps> = ({
 
       if (onComplete) onComplete(true);
       if (onStateChange) onStateChange({ evaluated: true, success: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
-      setErrorMessage(err?.message || 'Recoverable simulation error occurred.');
+      setErrorMessage(err instanceof Error ? err.message : 'Recoverable simulation error occurred.');
       if (onStateChange) onStateChange({ evaluated: true, success: false });
     }
   };
 
   return (
     <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Shor Algorithm Demo Step">
-      <h3 className="text-xl font-bold mb-3">Shor's Algorithm Demonstration (N = 15)</h3>
+      <h3 className="text-xl font-bold mb-3">Shor&apos;s Algorithm Demonstration (N = 15)</h3>
       <p className="text-sm text-slate-300 mb-4">
-        Run Shor's quantum factoring algorithm on integer <span className="font-mono text-cyan-400">N = 15</span>. This educational demonstration uses modular exponentiation and quantum phase estimation to find prime factors.
+        Run Shor&apos;s quantum factoring algorithm on integer <span className="font-mono text-cyan-400">N = 15</span>. This educational demonstration uses modular exponentiation and quantum phase estimation to find prime factors.
       </p>
 
       {/* Physics / Scope Safeguards */}

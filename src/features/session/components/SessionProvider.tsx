@@ -18,11 +18,16 @@ interface SessionContextType {
   session: UserSession;
   isHydrated: boolean;
   storageWarning: string | null;
+  elapsedSeconds: number;
+  isRunning: boolean;
   setActiveMission: (missionId: string) => void;
   completeMission: (missionId: string) => void;
   updateMissionState: (missionId: string, state: Record<string, unknown>) => void;
   recordAction: (actionName: string, payload?: unknown) => void;
   recordMissionTime: (missionId: string, durationMs: number) => void;
+  pauseSession: () => void;
+  resumeSession: () => void;
+  incrementActionCount: (actionType: string) => void;
   resetSession: () => void;
   deleteAllProgress: () => void;
 }
@@ -33,12 +38,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<UserSession>(() => getDefaultSession());
   const [isHydrated, setIsHydrated] = useState(false);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  
+  // Single source of truth for elapsed time and run state at the provider level
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [isRunning, setIsRunning] = useState<boolean>(true);
 
   useEffect(() => {
     const loaded = loadSession();
     setSession(loaded);
     setIsHydrated(true);
   }, []);
+
+  // Centralized timer effect with clean disposal (no duplicate ticking)
+  useEffect(() => {
+    if (!isRunning || !isHydrated) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isRunning, isHydrated]);
 
   const updateAndSave = useCallback((updater: (prev: UserSession) => UserSession) => {
     let nextState!: UserSession;
@@ -88,9 +106,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     updateAndSave(prev => recordMissionTimeInSession(prev, missionId, durationMs));
   }, [updateAndSave]);
 
+  const pauseSession = useCallback(() => {
+    setIsRunning(false);
+  }, []);
+
+  const resumeSession = useCallback(() => {
+    setIsRunning(true);
+  }, []);
+
+  const incrementActionCount = useCallback((actionType: string) => {
+    recordAction(actionType);
+  }, [recordAction]);
+
   const resetSession = useCallback(() => {
     const fresh = resetCanonicalSession();
     setSession(fresh);
+    setElapsedSeconds(0);
+    setIsRunning(true);
     const outcome = saveSession(fresh);
     if (!outcome.success) {
       setStorageWarning(outcome.error ?? 'Failed to persist session storage.');
@@ -103,6 +135,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     deleteAllLocalProgress();
     const fresh = resetCanonicalSession();
     setSession(fresh);
+    setElapsedSeconds(0);
+    setIsRunning(true);
     setStorageWarning(null);
   }, []);
 
@@ -112,11 +146,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         session,
         isHydrated,
         storageWarning,
+        elapsedSeconds,
+        isRunning,
         setActiveMission,
         completeMission,
         updateMissionState,
         recordAction,
         recordMissionTime,
+        pauseSession,
+        resumeSession,
+        incrementActionCount,
         resetSession,
         deleteAllProgress,
       }}

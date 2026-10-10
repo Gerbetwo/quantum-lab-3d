@@ -70,6 +70,8 @@ export interface UserMetrics {
 }
 
 export interface UserSession {
+  elapsedSeconds: number;
+  isRunning: boolean;
   version: number | string;
   userId: string;
   activeMission: MissionId;
@@ -264,6 +266,8 @@ export function toCanonicalSession(raw: unknown, userId = RENDER_SAFE_USER_ID): 
     events: events as UserSession['events'],
     lastUpdated,
     metrics: coerceMetrics(obj.metrics),
+    elapsedSeconds: 0,
+    isRunning: false
   };
 
   if (Array.isArray(obj.progress) && obj.progress.every((item) => typeof item === 'number' && Number.isFinite(item))) {

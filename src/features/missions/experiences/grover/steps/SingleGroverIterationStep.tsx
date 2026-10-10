@@ -13,7 +13,7 @@ export const SingleGroverIterationStep: React.FC<SingleGroverIterationStepProps>
   const [executed, setExecuted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [distribution, setDistribution] = useState<number[]>([0.25, 0.25, 0.25, 0.25]); // 2-qubit state N=4
-  const [targetIndex, setTargetIndex] = useState<number>(2);
+  const [targetIndex, _setTargetIndex] = useState<number>(2);
 
     const handleRunIteration = async () => {
     if (loading) return;
@@ -27,7 +27,7 @@ export const SingleGroverIterationStep: React.FC<SingleGroverIterationStepProps>
         setExecuted(true);
         if (onComplete) onComplete(true);
         if (onStateChange) onStateChange({ executed: true, distribution: nextDist });
-    } catch (err) {
+    } catch (_err) {
         const fallbackDist = [0.08, 0.08, 0.76, 0.08];
         setDistribution(fallbackDist);
         setExecuted(true);
