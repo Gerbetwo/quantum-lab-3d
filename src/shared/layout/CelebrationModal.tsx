@@ -1,12 +1,11 @@
 'use client';
 
-import { downloadSessionJSON } from '@/features/session/lib/sessionService';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Award, ExternalLink, CheckCircle2 } from 'lucide-react';
-import { getOrCreateUserId, updateStoredMetrics } from '@/features/session/lib/sessionService';
 import { playChimeSuccess } from '@/shared/lib/sound';
 import { prefersReducedMotion } from '@/features/quantum-3d/lib/sceneManager';
+import { useSession } from '@/features/session/components/SessionProvider';
 
 interface Props {
   isOpen: boolean;
@@ -19,11 +18,11 @@ const FOCUSABLE =
 
 export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const { session } = useSession();
 
   useEffect(() => {
     if (!isOpen) return;
     playChimeSuccess();
-    updateStoredMetrics((prev) => ({ ...prev, completedAt: new Date().toISOString() }));
     if (!prefersReducedMotion()) {
       confetti({
         particleCount: 70,
@@ -75,7 +74,7 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  const userId = getOrCreateUserId();
+  const userId = session.userId;
   const titleId = 'celebration-modal-title';
 
   return (
@@ -96,7 +95,7 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
           Entrenamiento Completado
         </h3>
         <p className="text-xs text-slate-300 mt-1 max-w-sm">
-          Has interactuado con los 4 conceptos fundamentales de la computación cuántica.
+          Has completado con éxito las siete misiones del recorrido guiado de computación cuántica.
         </p>
 
         <div className="w-full my-4 bg-slate-950 border border-slate-800 rounded-xl p-4 text-left flex flex-col gap-2.5 text-xs">
@@ -109,19 +108,19 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
           <div className="flex flex-col gap-2 pt-1 text-slate-300">
             <div className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-cyan shrink-0 mt-0.5" />
-              <span><strong>Superposición:</strong> El qubit existe en 0 y 1 a la vez hasta que la medición fuerza el colapso.</span>
+              <span><strong>Superposición y Entrelazamiento:</strong> Dominio de los estados base y la correlación cuántica.</span>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span><strong>Entrelazamiento:</strong> Correlación instantánea entre estados sin importar la separación espacial.</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-cyan shrink-0 mt-0.5" />
-              <span><strong>Decoherencia y Cero Absoluto:</strong> Se enfría a ~0.015 K para neutralizar el ruido térmico que destruye el estado cuántico.</span>
+              <span><strong>Decoherencia y Aplicaciones:</strong> Comprensión del ruido térmico y casos de uso prácticos.</span>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Aplicaciones:</strong> Modelado molecular de medicamentos, optimización de redes y criptografía.</span>
+              <span><strong>Puertas y Algoritmos Avanzados:</strong> Manipulación directa y ejecución de Grover.</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <span><strong>Corrección de Errores:</strong> Protección de estados mediante redundancia en qubits lógicos.</span>
             </div>
           </div>
         </div>
@@ -144,18 +143,6 @@ export default function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
               Cerrar y Revisar Módulos
             </button>
           )}
-          
-            <button
-              onClick={downloadSessionJSON}
-              className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-semibold rounded-xl border border-cyan-500/30 transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              aria-label="Exportar sesión completa"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Exportar sesión (JSON)
-            </button>
-      
         </div>
       </div>
     </div>

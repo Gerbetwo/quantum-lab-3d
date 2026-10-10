@@ -1,4 +1,3 @@
-import React from 'react';
 import type { StateVector } from '@/core/types';
 
 interface ViewportProps {

@@ -45,9 +45,15 @@ describe('Phase 2 - Unified Session & Persistence Contract', () => {
   });
 
   it('Caso 4: ID de misión desconocido es filtrado', () => {
-    const mockSession = createEmptySession('test_user');
-        mockSession.completed = ['superposition', 'invalid_mission_xyz'];
-    saveSession(mockSession);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          ...createEmptySession('test_user'),
+          completed: ['superposition', 'invalid_mission_xyz'],
+        }),
+      );
+    }
 
     const loaded = loadSession();
     expect(loaded.completed).toEqual(['superposition']);
@@ -64,5 +70,28 @@ describe('Phase 2 - Unified Session & Persistence Contract', () => {
 
     session = completeMissionInSession(session, 'applications');
     expect(isMainJourneyComplete(session.completed)).toBe(true);
+  });
+
+  it('migra mission-1..4 y conserva misiones 5–7', () => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          ...createEmptySession('test_user'),
+          activeMission: 'mission-2',
+          completed: ['mission-1', 'gates', 'grover', 'error-correction', 'unknown_xyz'],
+          missionState: { 'mission-1': { step: 2 }, gates: { slot: 1 } },
+          missionTime: { 'mission-3': 1500, grover: 800 },
+        }),
+      );
+    }
+
+    const loaded = loadSession();
+    expect(loaded.completed).toEqual(['superposition', 'gates', 'grover', 'error-correction']);
+    expect(loaded.activeMission).toBe('entanglement');
+    expect(loaded.missionState.superposition).toEqual({ step: 2 });
+    expect(loaded.missionState.gates).toEqual({ slot: 1 });
+    expect(loaded.missionTime.decoherence).toBe(1500);
+    expect(loaded.missionTime.grover).toBe(800);
   });
 });

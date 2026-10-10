@@ -18,7 +18,7 @@ export const BlochSphereWorkspace: React.FC = () => {
   }, [theta, phi]);
 
   return (
-    <div className="relative w-full h-[380px] rounded-xl border border-cyan-500/20 bg-slate-950/80 flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div className="relative w-full h-95 rounded-xl border border-cyan-500/20 bg-slate-950/80 flex flex-col items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.08)_0%,transparent_70%)] pointer-events-none" />
       
       <div className="relative z-10 w-48 h-48 rounded-full border-2 border-dashed border-cyan-400/40 flex items-center justify-center shadow-[0_0_30px_rgba(0,240,255,0.15)]">

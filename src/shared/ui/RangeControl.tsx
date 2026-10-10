@@ -20,7 +20,7 @@ export const RangeControl: React.FC<RangeControlProps> = ({
   onChange
 }) => {
   return (
-    <div className="flex flex-col gap-2 p-4 rounded-[1rem] bg-[#111a2c] border border-[#29364d]">
+    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[#111a2c] border border-[#29364d]">
       <div className="flex justify-between items-center text-sm">
         <span className="font-medium text-[#f3f6fc]">{label}</span>
         <span className="font-mono text-[#53d8e8]">{value} {unit}</span>

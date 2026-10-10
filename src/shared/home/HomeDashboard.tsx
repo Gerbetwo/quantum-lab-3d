@@ -27,12 +27,6 @@ export function HomeDashboard() {
           >
             {hasProgress ? 'Continuar recorrido' : 'Comenzar recorrido'}
           </Link>
-          <Link
-            href="/sandbox"
-            className="px-8 py-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-cyan-500/30 font-bold transition-all"
-          >
-            Abrir laboratorio libre
-          </Link>
         </div>
       </section>
     </div>

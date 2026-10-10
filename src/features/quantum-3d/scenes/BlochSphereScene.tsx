@@ -2,7 +2,6 @@
 /**
  * Componente React que envuelve la escena de la Esfera de Bloch
  */
-import React from 'react';
 import { useThreeScene } from '@/features/quantum-3d/hooks/useThreeScene';
 import { createBlochSphereScene } from '@/features/quantum-3d/lib/scenes/createBlochSphereScene';
 
@@ -17,7 +16,7 @@ export function BlochSphereScene({ theta, phi = 0 }: BlochSphereSceneProps) {
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-[280px] rounded-xl overflow-hidden relative"
+      className="w-full h-full min-h-70 rounded-xl overflow-hidden relative"
       role="img"
       aria-label="Representación 3D interactiva de la Esfera de Bloch"
     />

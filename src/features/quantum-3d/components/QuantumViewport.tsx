@@ -11,7 +11,7 @@ interface Props { state: StateVector; nQubits: number }
 export default function QuantumViewport({ state, nQubits }: Props) {
   const Fallback = (
     <div data-testid="viewport-loading" aria-busy="true"
-         className="w-full aspect-[16/10] bg-surface-1 animate-pulse rounded-2xl" />
+         className="w-full aspect-16/10 bg-surface-1 animate-pulse rounded-2xl" />
   );
   return (
     <div className="w-full rounded-2xl overflow-hidden bg-surface-1 border border-edge">

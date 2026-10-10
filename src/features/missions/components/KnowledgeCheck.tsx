@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 
 export interface QuizOption {
   id: string;
@@ -6,38 +8,64 @@ export interface QuizOption {
   explanation?: string;
 }
 
-export interface KnowledgeCheckProps {
+export interface QuizDefinition {
+  id: string;
   question: string;
   options: QuizOption[];
   correctOptionId: string;
+}
+
+export interface KnowledgeCheckProps {
+  quiz?: QuizDefinition;
+  question?: string;
+  options?: QuizOption[];
+  correctOptionId?: string;
+  selectedOptionId: string | null;
+  onSelectOption: (id: string) => void;
   onPass: () => void;
   title?: string;
 }
 
 export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
-  question,
-  options,
-  correctOptionId,
+  quiz,
+  question: propQuestion,
+  options: propOptions,
+  correctOptionId: propCorrectOptionId,
+  selectedOptionId,
+  onSelectOption,
   onPass,
   title = 'Comprobación de Conocimiento',
 }) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState<boolean>(false);
+  const question = quiz?.question ?? propQuestion ?? '';
+  const options: QuizOption[] = quiz?.options ?? propOptions ?? [];
+  const correctOptionId = quiz?.correctOptionId ?? propCorrectOptionId ?? '';
 
-  const isCorrect = selectedId === correctOptionId;
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [passedCalled, setPassedCalled] = useState<boolean>(false);
+
+  const isCorrect = selectedOptionId === correctOptionId;
+
+  useEffect(() => {
+    setSubmitted(false);
+    setPassedCalled(false);
+  }, [selectedOptionId, correctOptionId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedId) return;
+    if (!selectedOptionId) return;
     setSubmitted(true);
-    if (selectedId === correctOptionId) {
-      onPass();
+
+    if (selectedOptionId === correctOptionId) {
+      if (!passedCalled) {
+        setPassedCalled(true);
+        onPass();
+      }
     }
   };
 
   const handleRetry = () => {
-    setSelectedId(null);
     setSubmitted(false);
+    setPassedCalled(false);
   };
 
   return (
@@ -46,7 +74,7 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
       className="bg-slate-900/90 border border-slate-700 rounded-xl p-6 shadow-xl flex flex-col gap-4 text-slate-100"
     >
       <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-        <span className="text-xl">🧠</span>
+        <span className="text-xl" aria-hidden="true">🧠</span>
         <h2 id="quiz-heading" className="text-lg font-bold text-cyan-300">
           {title}
         </h2>
@@ -56,8 +84,8 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 mt-2">
         <div role="radiogroup" aria-label={question} className="flex flex-col gap-2">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
+          {options.map((opt: QuizOption) => {
+            const isSelected = selectedOptionId === opt.id;
             return (
               <label
                 key={opt.id}
@@ -73,7 +101,7 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
                   value={opt.id}
                   checked={isSelected}
                   disabled={submitted}
-                  onChange={() => setSelectedId(opt.id)}
+                  onChange={() => !submitted && onSelectOption(opt.id)}
                   className="mt-1 text-cyan-400 focus:ring-cyan-400 focus:ring-offset-slate-900"
                 />
                 <div className="flex flex-col">
@@ -112,9 +140,9 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
           {!submitted ? (
             <button
               type="submit"
-              disabled={!selectedId}
+              disabled={!selectedOptionId}
               className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                !selectedId
+                !selectedOptionId
                   ? 'opacity-40 cursor-not-allowed bg-slate-800 text-slate-500 border border-slate-700'
                   : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 cursor-pointer shadow-lg shadow-cyan-500/20'
               }`}
@@ -137,3 +165,5 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
     </section>
   );
 };
+
+export default KnowledgeCheck;

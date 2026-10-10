@@ -27,12 +27,12 @@ export const Dialog: React.FC<DialogProps> = ({ isOpen, title, onClose, children
     <dialog
       ref={dialogRef}
       onClose={onClose}
-      className="p-0 bg-transparent backdrop:bg-black/70 max-w-lg w-full rounded-[1rem] outline-none"
+      className="p-0 backdrop:bg-black/70 max-w-lg w-full rounded-2xl outline-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
     >
-      <div className="bg-[#111a2c] border border-[#29364d] rounded-[1rem] p-6 text-[#f3f6fc] shadow-2xl flex flex-col gap-4">
+      <div className="bg-[#111a2c] border border-[#29364d] rounded-2xl p-6 text-[#f3f6fc] shadow-2xl flex flex-col gap-4">
         <div className="flex justify-between items-center border-b border-[#29364d] pb-3">
           <h3 id="dialog-title" className="text-lg font-semibold">{title}</h3>
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Cerrar diálogo">

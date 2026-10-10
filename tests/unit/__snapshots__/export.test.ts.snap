@@ -14,7 +14,10 @@ exports[`Exportación de sesión JSON > exportSessionJSON genera la estructura c
       "superposition": 0,
       "entanglement": 0,
       "decoherence": 0,
-      "applications": 0
+      "applications": 0,
+      "gates": 0,
+      "grover": 0,
+      "error-correction": 0
     },
     "actions": {
       "superpositionMeasurements": 0,

@@ -20,7 +20,7 @@ export function SceneStage({ children, label, description, hasWebGL = true }: Sc
         <span className="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">WebGL 3D Active</span>
       </div>
       {description && <p className="text-xs text-slate-400 mb-3">{description}</p>}
-      <div className="relative w-full aspect-square max-h-[360px] bg-slate-900/50 rounded-xl overflow-hidden border border-slate-800/80">
+      <div className="relative w-full aspect-square max-h-90 bg-slate-900/50 rounded-xl overflow-hidden border border-slate-800/80">
         {hasWebGL ? children : <SceneFallback />}
       </div>
     </div>

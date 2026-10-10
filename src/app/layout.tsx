@@ -1,3 +1,4 @@
+// src/app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
 import { SessionProvider } from '@/features/session/components/SessionProvider';
@@ -5,7 +6,7 @@ import { AppShell } from '@/shared/layout/AppShell';
 
 export const metadata: Metadata = {
   title: 'QuantumLab 3D',
-  description: 'Plataforma de aprendizaje cuántico interactivo',
+  description: 'Interactive quantum learning platform',
 };
 
 export default function RootLayout({

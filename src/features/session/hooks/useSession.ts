@@ -1,54 +1,54 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import {
-  Session,
-  loadSession,
-  saveSession,
-  completeMissionInSession,
-  recordMissionTimeInSession,
-  resetCanonicalSession,
-  createEmptySession,
-} from '@/features/session/lib/sessionService';
+import { useCallback } from 'react';
+import { useSession as useSessionContext } from '@/features/session/components/SessionProvider';
 import { MissionId, isMissionId } from '@/features/missions/config/missions';
 
+const MISSION_ORDER: MissionId[] = [
+  'superposition',
+  'entanglement',
+  'decoherence',
+  'applications',
+  'gates',
+  'grover',
+  'error-correction',
+];
+
 export function useSession() {
-  const [session, setSession] = useState<Session>(() => createEmptySession());
-  const [isHydrated, setIsHydrated] = useState(false);
+  const {
+    session,
+    isHydrated,
+    setActiveMission: setCanonicalActiveMission,
+    completeMission,
+    recordMissionTime,
+    resetSession,
+  } = useSessionContext();
 
-  useEffect(() => {
-    setSession(loadSession());
-    setIsHydrated(true);
-  }, []);
+  const setActiveMission = useCallback(
+    (missionId: MissionId | null) => {
+      if (missionId) {
+        setCanonicalActiveMission(missionId);
+      } else if (session.activeMission) {
+        setCanonicalActiveMission(session.activeMission);
+      }
+    },
+    [setCanonicalActiveMission, session.activeMission]
+  );
 
-  const setActiveMission = useCallback((missionId: MissionId | null) => {
-    setSession(prev => {
-      const next: Session = { ...prev, activeMission: missionId ?? prev.activeMission };
-      saveSession(next);
-      return next;
-    });
-  }, []);
-
-  const completeMission = useCallback((missionId: MissionId) => {
-    setSession(prev => completeMissionInSession(prev, missionId));
-  }, []);
-
-  const recordTime = useCallback((missionId: MissionId, seconds: number) => {
-    setSession(prev => recordMissionTimeInSession(prev, missionId, seconds));
-  }, []);
-
-  const resetSession = useCallback(() => {
-    setSession(resetCanonicalSession());
-  }, []);
+  const recordTime = useCallback(
+    (missionId: MissionId, seconds: number) => {
+      recordMissionTime(missionId, seconds);
+    },
+    [recordMissionTime]
+  );
 
   const isUnlocked = useCallback(
     (missionId: MissionId): boolean => {
       if (!isMissionId(missionId)) return false;
-      if (missionId === 'superposition') return true;
-      if (missionId === 'entanglement') return session.completed.includes('superposition');
-      if (missionId === 'decoherence') return session.completed.includes('entanglement');
-      if (missionId === 'applications') return session.completed.includes('decoherence');
-      return true;
+      const index = MISSION_ORDER.indexOf(missionId);
+      if (index <= 0) return true;
+      const prevMission = MISSION_ORDER[index - 1];
+      return session.completed.includes(prevMission);
     },
     [session.completed]
   );

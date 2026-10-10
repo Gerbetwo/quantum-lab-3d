@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { getOrCreateUserId } from '@/features/session/lib/sessionService';
+import { useSession } from '@/features/session/components/SessionProvider';
 
 interface HeaderProps {
   title?: string;
@@ -20,7 +20,7 @@ export function Header({
   isRunning = false,
   onToggleTimer,
 }: HeaderProps) {
-  const userId = getOrCreateUserId();
+  const { session, isHydrated } = useSession();
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -46,9 +46,9 @@ export function Header({
             {isRunning ? 'Pausar' : 'Reanudar'}
           </button>
         )}
-        {userId ? (
+        {isHydrated && session.userId ? (
           <span data-testid="user-id-value" className="text-xs text-slate-400">
-            {userId}
+            {session.userId}
           </span>
         ) : (
           <div aria-busy="true" data-testid="user-id-skeleton" className="w-16 h-4 bg-slate-800 animate-pulse rounded" />

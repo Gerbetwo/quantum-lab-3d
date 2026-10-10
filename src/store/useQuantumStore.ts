@@ -20,16 +20,30 @@ export interface QuantumState {
   // Actions
   setAngles: (theta: number, phi: number) => void;
   setTemperature: (tempK: number) => void;
-  measureQubit: () => { outcome: 0 | 1; probability: number };
+  measureQubit: (rng?: () => number) => { outcome: 0 | 1; probability: number };
   completeMission: (missionId: number) => void;
   resetSession: () => void;
+}
+
+export function calculateCoherenceTime(temperatureK: number): number {
+  return Math.max(1, Math.round(250 * Math.exp(-temperatureK / 0.8)));
+}
+
+export function measureQubitState(
+  theta: number,
+  rng: () => number = Math.random
+): { outcome: 0 | 1; probability: number } {
+  const prob0 = Math.cos(theta / 2) ** 2;
+  const outcome: 0 | 1 = rng() < prob0 ? 0 : 1;
+  const probability = outcome === 0 ? prob0 : 1 - prob0;
+  return { outcome, probability };
 }
 
 const storeCreator: StateCreator<QuantumState> = (set, get) => ({
   theta: Math.PI / 2,
   phi: 0,
   temperatureK: 0.015,
-  coherenceTimeUs: 250,
+  coherenceTimeUs: calculateCoherenceTime(0.015),
 
   lastOutcome: null,
   lastProbability: null,
@@ -42,23 +56,21 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
   setAngles: (theta: number, phi: number) => set({ theta, phi }),
 
   setTemperature: (temperatureK: number) => {
-    const coherenceTimeUs = Math.max(1, Math.round(250 * Math.exp(-temperatureK / 0.8)));
+    const coherenceTimeUs = calculateCoherenceTime(temperatureK);
     set({ temperatureK, coherenceTimeUs });
   },
 
-  measureQubit: () => {
+  measureQubit: (rng = Math.random) => {
     const { theta, measurementCount } = get();
-    const prob0 = Math.cos(theta / 2) ** 2;
-    const outcome: 0 | 1 = Math.random() < prob0 ? 0 : 1;
-    const probability = outcome === 0 ? prob0 : 1 - prob0;
+    const result = measureQubitState(theta, rng);
 
     set({
-      lastOutcome: outcome,
-      lastProbability: probability,
+      lastOutcome: result.outcome,
+      lastProbability: result.probability,
       measurementCount: measurementCount + 1,
     });
 
-    return { outcome, probability };
+    return result;
   },
 
   completeMission: (missionId: number) => {
@@ -69,15 +81,16 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
     }
   },
 
-  resetSession: () => set({
-    theta: Math.PI / 2,
-    phi: 0,
-    temperatureK: 0.015,
-    coherenceTimeUs: 250,
-    lastOutcome: null,
-    lastProbability: null,
-    measurementCount: 0,
-  }),
+  resetSession: () =>
+    set({
+      theta: Math.PI / 2,
+      phi: 0,
+      temperatureK: 0.015,
+      coherenceTimeUs: calculateCoherenceTime(0.015),
+      lastOutcome: null,
+      lastProbability: null,
+      measurementCount: 0,
+    }),
 });
 
 export const useQuantumStore = create<QuantumState>(storeCreator);
