@@ -37,7 +37,7 @@ export function CircuitGrid({
   };
 
   return (
-    <div data-testid="circuit-grid" className="flex flex-col bg-slate-900 p-4 rounded-lg overflow-x-auto" role="grid">
+    <div data-testid="circuit-grid" className="flex flex-col bg-background p-4 rounded-lg overflow-x-auto" role="grid">
       <div className="flex space-x-2 mb-2">
         {steps.map((s) => {
           const isActive = playhead === s;
@@ -47,7 +47,7 @@ export function CircuitGrid({
               data-testid={`playhead-${s}`}
               {...(isActive ? { 'data-playhead': 'true' } : {})}
               onClick={() => onSetPlayhead && onSetPlayhead(Number(s))}
-              className={`px-3 py-1 cursor-pointer rounded text-xs ${isActive ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-300'}`}
+              className={`px-3 py-1 cursor-pointer rounded text-xs ${isActive ? 'bg-primary text-primary-foreground text-white' : 'bg-card text-muted-foreground'}`}
             >
               {String(s)}
             </div>
@@ -57,7 +57,7 @@ export function CircuitGrid({
       <div className="flex flex-col">
         {qubits.map((q) => (
           <div key={String(q)} role="row" className="flex items-center space-x-1 my-1">
-            <div className="w-10 text-right pr-2 text-slate-400 text-sm">q{String(q)}</div>
+            <div className="w-10 text-right pr-2 text-muted-foreground text-sm">q{String(q)}</div>
             {steps.map((s) => {
               const stepObj = circuit?.steps?.find((st) => st.step === s);
               const gate = stepObj?.gates?.find((g) => {
@@ -79,7 +79,7 @@ export function CircuitGrid({
                       onPlaceGate(Number(s), Number(q));
                     }
                   }}
-                  className="w-10 h-10 bg-slate-800 border border-slate-700 rounded flex items-center justify-center cursor-pointer hover:bg-slate-700 text-cyan-300 font-bold text-xs"
+                  className="w-10 h-10 bg-card border border-border rounded flex items-center justify-center cursor-pointer hover:bg-muted text-accent font-bold text-xs"
                 >
                   {gate ? String(gate.type || '') : ''}
                 </div>

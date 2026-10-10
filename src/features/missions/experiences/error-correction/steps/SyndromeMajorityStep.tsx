@@ -22,9 +22,9 @@ export const SyndromeMajorityStep: React.FC<SyndromeMajorityStepProps> = ({ onCo
   };
 
   return (
-    <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Syndrome and Majority Vote Step">
+    <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Syndrome and Majority Vote Step">
       <h3 className="text-xl font-bold mb-3">Syndrome Measurement & Majority-Vote Decision</h3>
-      <p className="text-sm text-slate-300 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Using the canonical domain API, syndrome extraction inspects parity checks across the three-bit repetition code word without collapsing logical superposition. A majority-vote decision then corrects the documented single-error case.
       </p>
 
@@ -32,17 +32,17 @@ export const SyndromeMajorityStep: React.FC<SyndromeMajorityStepProps> = ({ onCo
         ⚠️ <strong>Limitation Note:</strong> This mechanism corrects <em>only</em> the documented single-error case. Multiple simultaneous errors cause misidentification and decode into incorrect states.
       </div>
 
-      <div className="bg-slate-800 p-5 rounded-lg mb-6 border border-slate-700 space-y-3">
-        <div className="flex justify-between items-center text-xs border-b border-slate-700 pb-2">
-          <span className="text-slate-400">Three-Bit Word (Test Input):</span>
+      <div className="bg-card p-5 rounded-lg mb-6 border border-border space-y-3">
+        <div className="flex justify-between items-center text-xs border-b border-border pb-2">
+          <span className="text-muted-foreground">Three-Bit Word (Test Input):</span>
           <span className="font-mono text-amber-300 font-bold">{word.join('')}</span>
         </div>
-        <div className="flex justify-between items-center text-xs border-b border-slate-700 pb-2">
-          <span className="text-slate-400">Extracted Syndrome:</span>
+        <div className="flex justify-between items-center text-xs border-b border-border pb-2">
+          <span className="text-muted-foreground">Extracted Syndrome:</span>
           <span className="font-mono text-purple-300 font-bold">{evaluated ? syndromeStr : '10'}</span>
         </div>
         <div className="flex justify-between items-center text-xs">
-          <span className="text-slate-400">Majority-Vote Corrected Output:</span>
+          <span className="text-muted-foreground">Majority-Vote Corrected Output:</span>
           <span className="font-mono text-emerald-300 font-bold">{evaluated ? corrected : 'Pending Evaluation...'}</span>
         </div>
       </div>
@@ -52,12 +52,12 @@ export const SyndromeMajorityStep: React.FC<SyndromeMajorityStepProps> = ({ onCo
           type="button"
           onClick={handleEvaluate}
           disabled={evaluated}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${evaluated ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${evaluated ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
           aria-label="Evaluate syndrome and majority vote"
         >
           {evaluated ? 'Evaluated' : 'Run Syndrome & Majority Vote'}
         </button>
-        <span className="text-xs text-slate-400" aria-live="polite">
+        <span className="text-xs text-muted-foreground" aria-live="polite">
           {evaluated ? '✓ Step complete' : 'Awaiting evaluation action'}
         </span>
       </div>

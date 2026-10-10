@@ -19,11 +19,11 @@ export const MathDock: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
       <GlassCard title="Quantum State Vector" badge="LaTeX Pure">
-        <div className="p-2 hud-font-mono text-sm text-cyan-200 bg-slate-950/60 rounded border border-cyan-900/40 my-2">
+        <div className="p-2 hud-font-mono text-sm text-cyan-200 bg-background/60 rounded border border-cyan-900/40 my-2">
           |ψ⟩ = {alpha}|0⟩ + {beta}e^(i·{phi.toFixed(2)})|1⟩
         </div>
         <div className="mt-3 flex flex-col gap-2">
-          <label className="text-xs text-slate-400 flex justify-between">
+          <label className="text-xs text-muted-foreground flex justify-between">
             <span>Polar Angle (θ): {(theta * 180 / Math.PI).toFixed(0)}°</span>
           </label>
           <input
@@ -42,10 +42,10 @@ export const MathDock: React.FC = () => {
         <div className="space-y-3 my-1">
           <div>
             <div className="flex justify-between text-xs hud-font-mono mb-1">
-              <span className="text-cyan-400">P(|0⟩)</span>
+              <span className="text-accent">P(|0⟩)</span>
               <span>{prob0}%</span>
             </div>
-            <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-card rounded-full overflow-hidden">
               <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${prob0}%` }} />
             </div>
           </div>
@@ -54,7 +54,7 @@ export const MathDock: React.FC = () => {
               <span className="text-purple-400">P(|1⟩)</span>
               <span>{prob1}%</span>
             </div>
-            <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-card rounded-full overflow-hidden">
               <div className="h-full bg-purple-500 transition-all duration-300" style={{ width: `${prob1}%` }} />
             </div>
           </div>
@@ -70,15 +70,15 @@ export const MathDock: React.FC = () => {
       <GlassCard title="Cryogenic Environment" badge="Decoherence">
         <div className="space-y-2 text-xs hud-font-mono">
           <div className="flex justify-between">
-            <span className="text-slate-400">Temperature:</span>
+            <span className="text-muted-foreground">Temperature:</span>
             <span className="text-amber-400 font-bold">{temperatureK.toFixed(3)} K</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Coherence T₂:</span>
+            <span className="text-muted-foreground">Coherence T₂:</span>
             <span className="text-emerald-400 font-bold">{coherenceTimeUs} μs</span>
           </div>
           <div className="pt-2">
-            <label className="text-slate-400 block mb-1">Thermal Fluctuation Controller</label>
+            <label className="text-muted-foreground block mb-1">Thermal Fluctuation Controller</label>
             <input
               type="range"
               min="0.01"

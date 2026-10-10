@@ -82,12 +82,12 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
 
   if (isBasics) {
     return (
-      <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Gate Basics Step">
+      <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Gate Basics Step">
         <h3 className="text-xl font-bold mb-3">Quantum Gate Operations: Basics</h3>
-        <p className="text-sm text-slate-300 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Quantum gates are unitary transformations that manipulate qubit statevectors. Unlike classical logic gates, quantum gates are reversible and operate on complex probability amplitudes.
         </p>
-        <div className="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700 text-xs text-cyan-300 space-y-2">
+        <div className="bg-card p-4 rounded-lg mb-6 border border-border text-xs text-accent space-y-2">
           <div>• <strong>X Gate (Quantum NOT):</strong> Flips |0⟩ to |1⟩.</div>
           <div>• <strong>Z Gate (Phase Flip):</strong> Negates the phase of |1⟩ without altering computational basis measurement probabilities.</div>
           <div>• <strong>Hadamard (H) Gate:</strong> Creates equal superposition states ((|0⟩ + |1⟩)/√2).</div>
@@ -97,12 +97,12 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
             type="button"
             onClick={handleAcknowledge}
             disabled={acknowledged}
-            className={'px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ' + (acknowledged ? 'bg-emerald-700 text-white cursor-default' : 'bg-cyan-600 hover:bg-cyan-500 text-white')}
+            className={'px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ' + (acknowledged ? 'bg-emerald-700 text-white cursor-default' : 'bg-primary text-primary-foreground hover:opacity-90 text-white')}
             aria-label="Acknowledge gate basics"
           >
             {acknowledged ? '✓ Acknowledged' : 'Acknowledge Gate Basics'}
           </button>
-          <span className="text-xs text-slate-400" aria-live="polite">
+          <span className="text-xs text-muted-foreground" aria-live="polite">
             {acknowledged ? 'Step completed' : 'Review and acknowledge to proceed'}
           </span>
         </div>
@@ -111,27 +111,27 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
   }
 
   return (
-    <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Gate Operations Interactive Step">
+    <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Gate Operations Interactive Step">
       <h3 className="text-xl font-bold mb-3">Interactive Gate Operations</h3>
-      <p className="text-sm text-slate-300 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Apply quantum gates to a single qubit starting at |0⟩. Observe synchronized statevector ket notation and measurement probabilities.
       </p>
 
-      <div className="bg-slate-800 p-5 rounded-lg mb-6 border border-slate-700">
+      <div className="bg-card p-5 rounded-lg mb-6 border border-border">
         <div className="flex justify-between items-center mb-3">
-          <span className="text-xs uppercase tracking-wider text-slate-400">Current Statevector / Ket</span>
-          <span className="text-xs font-mono text-cyan-400">Last Gate: {lastGate || 'None'}</span>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Current Statevector / Ket</span>
+          <span className="text-xs font-mono text-accent">Last Gate: {lastGate || 'None'}</span>
         </div>
-        <div className="text-3xl font-mono font-bold text-cyan-300 mb-3" aria-live="polite">
+        <div className="text-3xl font-mono font-bold text-accent mb-3" aria-live="polite">
           |ψ⟩ = {ket}
         </div>
-        <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-700 text-xs">
+        <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border text-xs">
           <div>
-            <span className="text-slate-400 block mb-1">P(|0⟩) Probability</span>
+            <span className="text-muted-foreground block mb-1">P(|0⟩) Probability</span>
             <span className="font-mono text-lg text-emerald-300">{(p0 * 100).toFixed(0)}%</span>
           </div>
           <div>
-            <span className="text-slate-400 block mb-1">P(|1⟩) Probability</span>
+            <span className="text-muted-foreground block mb-1">P(|1⟩) Probability</span>
             <span className="font-mono text-lg text-emerald-300">{(p1 * 100).toFixed(0)}%</span>
           </div>
         </div>
@@ -146,7 +146,7 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
         <button
           type="button"
           onClick={() => applyGate('X')}
-          className="px-5 py-2.5 bg-cyan-700 hover:bg-cyan-600 active:bg-cyan-800 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-cyan-400"
+          className="px-5 py-2.5 bg-cyan-700 hover:bg-primary text-primary-foreground active:bg-cyan-800 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-cyan-400"
           aria-label="Apply Pauli-X gate"
         >
           Apply X Gate
@@ -170,14 +170,14 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
         <button
           type="button"
           onClick={() => applyGate('Reset')}
-          className="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-slate-400"
+          className="px-5 py-2.5 bg-muted hover:bg-slate-600 active:bg-card text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-slate-400"
           aria-label="Reset qubit to state 0"
         >
           Reset to |0⟩
         </button>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-slate-400">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>{gateApplied ? '✓ Gate applied and step completed.' : 'Apply any gate to complete step.'}</span>
         <span aria-live="polite">{gateApplied ? 'Completed' : 'Pending Action'}</span>
       </div>

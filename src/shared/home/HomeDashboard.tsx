@@ -24,7 +24,7 @@ export function HomeDashboard() {
           Quantum computing, through experimentation
         </h1>
         
-        <p className="text-xl sm:text-2xl text-slate-300 font-normal max-w-2xl mx-auto mt-6 leading-relaxed">
+        <p className="text-xl sm:text-2xl text-muted-foreground font-normal max-w-2xl mx-auto mt-6 leading-relaxed">
           Explore quantum states through interactive 3D simulations, superposition, entanglement, and thermal decoherence.
         </p>
 

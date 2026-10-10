@@ -31,8 +31,8 @@ const statusConfig = {
   },
   info: {
     icon: Info,
-    colorClass: 'bg-cyan-950/60 border-cyan-800 text-cyan-300',
-    iconColor: 'text-cyan-400',
+    colorClass: 'bg-cyan-950/60 border-cyan-800 text-accent',
+    iconColor: 'text-accent',
     label: 'Information:',
   },
 };

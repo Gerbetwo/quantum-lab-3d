@@ -13,8 +13,8 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         ref={ref}
         aria-label={ariaLabel}
         className={clsx(
-          'inline-flex items-center justify-center rounded-lg p-2 text-slate-300 hover:text-white',
-          'bg-slate-800/60 hover:bg-slate-700 border border-slate-700/60 transition-colors',
+          'inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-white',
+          'bg-card/60 hover:bg-muted border border-border/60 transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
           'min-w-[44px] min-h-[44px]', // Mobile touch target size requirement
           className

@@ -42,9 +42,9 @@ export function LeanLabLayout({
     if (savedTheme) {
       setTheme(savedTheme);
       if (savedTheme === "light") {
-        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
       } else {
-        document.documentElement.classList.remove("light");
+        document.documentElement.classList.add("dark");
       }
     }
   }, []);
@@ -54,9 +54,9 @@ export function LeanLabLayout({
     setTheme(nextTheme);
     localStorage.setItem("quantum_lab_theme", nextTheme);
     if (nextTheme === "light") {
-      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
     } else {
-      document.documentElement.classList.remove("light");
+      document.documentElement.classList.add("dark");
     }
   };
 
@@ -193,7 +193,7 @@ export function LeanLabLayout({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header
         title={missionTitle}
         timeLeft={formattedTime}

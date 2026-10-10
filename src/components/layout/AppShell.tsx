@@ -15,11 +15,11 @@ export const AppShell: React.FC<AppShellProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased ${className}`}>
+    <div className={`min-h-screen bg-background text-foreground flex flex-col font-sans antialiased ${className}`}>
       <div data-testid="app-shell-header">
         <Header title={title} />
         {subtitle && (
-          <div className="bg-slate-900/80 px-6 pb-2 text-xs text-slate-400 border-b border-slate-800">
+          <div className="bg-background/80 px-6 pb-2 text-xs text-muted-foreground border-b border-border">
             {subtitle}
           </div>
         )}

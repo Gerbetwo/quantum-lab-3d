@@ -36,22 +36,22 @@ export const ThermalPhotonStep: React.FC<ThermalPhotonStepProps> = ({
   };
 
   return (
-    <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Thermal Photon Step">
+    <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Thermal Photon Step">
       <h3 className="text-xl font-bold mb-3">Thermal Photon Bombardment & Decoherence</h3>
-      <p className="text-sm text-slate-300 mb-6">
+      <p className="text-sm text-muted-foreground mb-6">
         Stray thermal photons interact with quantum circuits, inducing environmental decoherence and collapsing superposition states. Trigger a perturbation to test thermal interaction.
       </p>
 
-      <div className="bg-slate-800 p-5 rounded-lg mb-6 border border-slate-700 flex items-center justify-between">
+      <div className="bg-card p-5 rounded-lg mb-6 border border-border flex items-center justify-between">
         <div>
-          <span className="text-xs uppercase tracking-wider text-slate-400 block">Thermal Photon Counter</span>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground block">Thermal Photon Counter</span>
           <span className="text-3xl font-mono font-bold text-amber-400" aria-live="polite">
             {photonCount} Photons Detected
           </span>
         </div>
         <div className="text-right">
-          <span className="text-xs uppercase tracking-wider text-slate-400 block">Metric Status</span>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded ${tested ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700' : 'bg-slate-700 text-slate-300'}`}>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground block">Metric Status</span>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded ${tested ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700' : 'bg-muted text-muted-foreground'}`}>
             {tested ? 'decoherenceTested Recorded' : 'Awaiting Perturbation'}
           </span>
         </div>
@@ -67,7 +67,7 @@ export const ThermalPhotonStep: React.FC<ThermalPhotonStepProps> = ({
         >
           {isPerturbing ? 'Perturbing...' : 'Perturb Thermal Field'}
         </button>
-        <span className="text-xs text-slate-400" aria-live="polite">
+        <span className="text-xs text-muted-foreground" aria-live="polite">
           {tested ? '✓ Step complete' : 'Click to perturb field'}
         </span>
       </div>

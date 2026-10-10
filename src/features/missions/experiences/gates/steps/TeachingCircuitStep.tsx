@@ -96,27 +96,27 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
   };
 
   return (
-    <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Teaching Circuit Step">
+    <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Teaching Circuit Step">
       <h3 className="text-xl font-bold mb-3">Teaching Circuit & Gate Sequence</h3>
-      <p className="text-sm text-slate-300 mb-6">
-        Construct a simple 3-slot gate sequence. Each slot cycles through <span className="font-mono text-cyan-400">— → X → Z → H → —</span>. Empty slots act as identity gates.
+      <p className="text-sm text-muted-foreground mb-6">
+        Construct a simple 3-slot gate sequence. Each slot cycles through <span className="font-mono text-accent">— → X → Z → H → —</span>. Empty slots act as identity gates.
       </p>
 
       {/* Exactly Three Labelled Slots */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {slots.map((gate, idx) => (
-          <div key={idx} className="bg-slate-800 p-4 rounded-lg border border-slate-700 text-center">
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 block mb-2">Slot {idx + 1}</span>
+          <div key={idx} className="bg-card p-4 rounded-lg border border-border text-center">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-2">Slot {idx + 1}</span>
             <button
               type="button"
               onClick={() => cycleGate(idx)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              className="w-full py-4 bg-slate-900 hover:bg-slate-700 text-cyan-300 font-mono text-2xl font-bold rounded border border-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              className="w-full py-4 bg-background hover:bg-muted text-accent font-mono text-2xl font-bold rounded border border-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
               aria-label={`Slot ${idx + 1}, current gate ${gate}. Click or press space to cycle gate.`}
             >
               {gate}
             </button>
-            <span className="text-[10px] text-slate-500 mt-2 block">Click to cycle gate</span>
+            <span className="text-[10px] text-muted-foreground mt-2 block">Click to cycle gate</span>
           </div>
         ))}
       </div>
@@ -127,7 +127,7 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
           <button
             type="button"
             onClick={handleRunCircuit}
-            className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-cyan-400"
+            className="px-5 py-2.5 bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-cyan-400"
             aria-label="Run teaching circuit simulation"
           >
             Run Circuit
@@ -141,15 +141,15 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
             Prepare Bell Pair
           </button>
         </div>
-        <span className="text-xs text-slate-400" aria-live="polite">
+        <span className="text-xs text-muted-foreground" aria-live="polite">
           {completed ? '✓ Step complete' : 'Configure slots & run to complete'}
         </span>
       </div>
 
       {/* Results Container with Stale Invalidation Notice */}
-      <div className="bg-slate-800 p-5 rounded-lg border border-slate-700">
+      <div className="bg-card p-5 rounded-lg border border-border">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-xs uppercase tracking-wider text-slate-400">Simulation Output</span>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Simulation Output</span>
           {isStale && (
             <span className="text-xs font-semibold text-amber-300 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-700" aria-live="polite">
               ⚠️ Circuit modified — results stale. Re-run required.
@@ -159,23 +159,23 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
 
         {result ? (
           <div>
-            <div className="text-2xl font-mono font-bold text-cyan-300 mb-2" aria-live="polite">
+            <div className="text-2xl font-mono font-bold text-accent mb-2" aria-live="polite">
               |ψ⟩ = {result.ket}
             </div>
-            <p className="text-xs text-slate-300 mb-3">{result.description}</p>
-            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-700 text-xs">
+            <p className="text-xs text-muted-foreground mb-3">{result.description}</p>
+            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border text-xs">
               <div>
-                <span className="text-slate-400 block">P(|0⟩) Probability</span>
+                <span className="text-muted-foreground block">P(|0⟩) Probability</span>
                 <span className="font-mono text-base text-emerald-300">{(result.p0 * 100).toFixed(0)}%</span>
               </div>
               <div>
-                <span className="text-slate-400 block">P(|1⟩) Probability</span>
+                <span className="text-muted-foreground block">P(|1⟩) Probability</span>
                 <span className="font-mono text-base text-emerald-300">{(result.p1 * 100).toFixed(0)}%</span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="text-sm text-slate-400 italic">
+          <div className="text-sm text-muted-foreground italic">
             Run the circuit or prepare a bell pair to inspect statevector and probabilities.
           </div>
         )}

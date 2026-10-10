@@ -71,16 +71,16 @@ export const FullGroverRunStep: React.FC<FullGroverRunStepProps> = ({
   };
 
   return (
-    <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Full Grover Run Step">
+    <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Full Grover Run Step">
       <h3 className="text-xl font-bold mb-3">Full Grover Search Execution & Measurement</h3>
-      <p className="text-sm text-slate-300 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Execute the full recommended Grover algorithm pipeline with optimal iteration counts. Measure the final state to retrieve the marked target. Note that quantum measurements are probabilistic; success is reported when the measured candidate matches the marked target.
       </p>
 
       {/* Execution Status & Results Box */}
-      <div className="bg-slate-800 p-5 rounded-lg mb-6 border border-slate-700 text-center">
-        <span className="text-xs uppercase tracking-wider text-slate-400 block mb-2">Pipeline Status</span>
-        <div className="text-2xl font-mono font-bold text-cyan-400 mb-2" aria-live="polite">
+      <div className="bg-card p-5 rounded-lg mb-6 border border-border text-center">
+        <span className="text-xs uppercase tracking-wider text-muted-foreground block mb-2">Pipeline Status</span>
+        <div className="text-2xl font-mono font-bold text-accent mb-2" aria-live="polite">
           {status === 'idle' && 'Ready to Run Algorithm'}
           {status === 'running' && 'Executing Oracle & Amplitude Amplification...'}
           {status === 'measured' && `Measured Candidate: Item #${measuredCandidate}`}
@@ -101,7 +101,7 @@ export const FullGroverRunStep: React.FC<FullGroverRunStepProps> = ({
             type="button"
             onClick={handleRunRecommended}
             disabled={loading}
-            className={`px-5 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${loading ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white'}`}
+            className={`px-5 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${loading ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
             aria-label="Run recommended Grover algorithm"
           >
             {loading ? 'Running...' : 'Run Recommended Algorithm'}
@@ -110,13 +110,13 @@ export const FullGroverRunStep: React.FC<FullGroverRunStepProps> = ({
             type="button"
             onClick={handleReset}
             disabled={loading}
-            className="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-slate-400"
+            className="px-5 py-2.5 bg-muted hover:bg-slate-600 active:bg-card text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-slate-400"
             aria-label="Reset Grover run state"
           >
             Reset
           </button>
         </div>
-        <span className="text-xs text-slate-400" aria-live="polite">
+        <span className="text-xs text-muted-foreground" aria-live="polite">
           {success ? '✓ Step complete' : 'Awaiting successful measurement'}
         </span>
       </div>

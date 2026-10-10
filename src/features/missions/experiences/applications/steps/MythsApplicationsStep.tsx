@@ -60,9 +60,9 @@ export const MythsApplicationsStep: React.FC<MythsApplicationsStepProps> = ({ on
   };
 
   return (
-    <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Myths and Applications Step">
+    <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Myths and Applications Step">
       <h3 className="text-xl font-bold mb-3">Quantum Myths vs. Real-World Applications</h3>
-      <p className="text-sm text-slate-300 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Explore and select application cards below. Note that quantum computers are not universal speedup devices for every task, but provide profound advantages for targeted scientific simulations and combinatorial challenges.
       </p>
 
@@ -76,27 +76,27 @@ export const MythsApplicationsStep: React.FC<MythsApplicationsStepProps> = ({ on
               type="button"
               onClick={() => handleSelect(card)}
               aria-pressed={isSelected}
-              className={`text-left p-4 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400 ${isSelected ? 'bg-slate-800 border-cyan-500 shadow-md ring-2 ring-cyan-500/50' : 'bg-slate-800/60 border-slate-700 hover:bg-slate-800'}`}
+              className={`text-left p-4 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400 ${isSelected ? 'bg-card border-cyan-500 shadow-md ring-2 ring-cyan-500/50' : 'bg-card/60 border-border hover:bg-card'}`}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded ${isPlausible ? 'bg-cyan-950 text-cyan-300 border border-cyan-700' : 'bg-amber-950 text-amber-300 border border-amber-700'}`}>
+                <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded ${isPlausible ? 'bg-cyan-950 text-accent border border-cyan-700' : 'bg-amber-950 text-amber-300 border border-amber-700'}`}>
                   {card.category}
                 </span>
-                {isSelected && <span className="text-xs text-cyan-400 font-bold">✓ Selected</span>}
+                {isSelected && <span className="text-xs text-accent font-bold">✓ Selected</span>}
               </div>
-              <h4 className="font-bold text-base mb-1 text-slate-100">{card.title}</h4>
-              <p className="text-xs text-slate-300 mb-2">{card.description}</p>
-              <p className="text-[11px] text-slate-400 italic border-t border-slate-700/60 pt-2">{card.detail}</p>
+              <h4 className="font-bold text-base mb-1 text-foreground">{card.title}</h4>
+              <p className="text-xs text-muted-foreground mb-2">{card.description}</p>
+              <p className="text-[11px] text-muted-foreground italic border-t border-border/60 pt-2">{card.detail}</p>
             </button>
           );
         })}
       </div>
 
-      <div className="flex items-center justify-between bg-slate-800 p-3 rounded-lg border border-slate-700">
-        <span className="text-xs text-slate-300">
+      <div className="flex items-center justify-between bg-card p-3 rounded-lg border border-border">
+        <span className="text-xs text-muted-foreground">
           {completed ? '✓ Card evaluated and persisted.' : 'Select any card to complete step.'}
         </span>
-        <span className="text-xs text-cyan-400 font-mono">
+        <span className="text-xs text-accent font-mono">
           {selectedId ? `Active Focus: ${selectedId}` : 'No selection'}
         </span>
       </div>

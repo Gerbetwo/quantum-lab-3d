@@ -89,7 +89,7 @@ export default function CommandPalette({
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-foreground/70 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -100,7 +100,7 @@ export default function CommandPalette({
         }
       }}
     >
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-lg bg-background border border-border rounded-2xl shadow-2xl overflow-hidden">
         <input
           ref={inputRef}
           type="text"
@@ -113,7 +113,7 @@ export default function CommandPalette({
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Escribe un comando…"
-          className="w-full px-4 py-3 bg-transparent border-b border-slate-800 text-sm text-slate-100 outline-none"
+          className="w-full px-4 py-3 bg-transparent border-b border-border text-sm text-foreground outline-none"
         />
         <ul
           id="command-palette-listbox"
@@ -122,7 +122,7 @@ export default function CommandPalette({
           className="max-h-80 overflow-y-auto py-1"
         >
           {filtered.length === 0 ? (
-            <li className="px-4 py-3 text-xs text-slate-500">Sin coincidencias</li>
+            <li className="px-4 py-3 text-xs text-muted-foreground">Sin coincidencias</li>
           ) : (
             filtered.map((c, i) => (
               <li
@@ -134,7 +134,7 @@ export default function CommandPalette({
                 onMouseEnter={() => setSelectedIndex(i)}
                 className={
                   'px-4 py-2.5 text-sm cursor-pointer transition-colors ' +
-                  (i === selectedIndex ? 'bg-cyan/15 text-cyan' : 'text-slate-300')
+                  (i === selectedIndex ? 'bg-cyan/15 text-cyan' : 'text-muted-foreground')
                 }
               >
                 {c.title}

@@ -34,33 +34,33 @@ export function MissionShell({
   const stepNum = currentStepIndex + 1;
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-950 text-slate-100 p-6 max-w-4xl mx-auto">
+    <div className="flex flex-col h-full w-full bg-background text-foreground p-6 max-w-4xl mx-auto">
       {/* Mission Header */}
-      <div className="mb-6 border-b border-slate-800 pb-4">
+      <div className="mb-6 border-b border-border pb-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold px-2.5 py-1 bg-cyan-950 text-cyan-400 border border-cyan-800 rounded-full">
+          <span className="text-xs font-semibold px-2.5 py-1 bg-cyan-950 text-accent border border-cyan-800 rounded-full">
             Misión {data?.order ?? ''}
           </span>
-          <span className="text-xs font-medium text-slate-400">
+          <span className="text-xs font-medium text-muted-foreground">
             Paso {stepNum} de {totalSteps} ({progress}%)
           </span>
         </div>
-        <h1 className="text-2xl font-bold text-cyan-400 tracking-tight">
+        <h1 className="text-2xl font-bold text-accent tracking-tight">
           {data?.title ?? 'Misión Cuántica'}
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {data?.description ?? data?.subtitle ?? ''}
         </p>
         {data?.learningObjective && (
-          <div className="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-lg text-xs text-slate-300">
-            <span className="font-semibold text-cyan-300">Objetivo de aprendizaje:</span>{' '}
+          <div className="mt-3 p-3 bg-background/80 border border-border rounded-lg text-xs text-muted-foreground">
+            <span className="font-semibold text-accent">Objetivo de aprendizaje:</span>{' '}
             {data.learningObjective}
           </div>
         )}
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-slate-900 h-1.5 rounded-full mb-6 overflow-hidden">
+      <div className="w-full bg-background h-1.5 rounded-full mb-6 overflow-hidden">
         <div
           className="bg-cyan-500 h-full transition-all duration-300"
           style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
@@ -69,11 +69,11 @@ export function MissionShell({
 
       {/* Current Step Instruction Area */}
       {currentStep && (
-        <div className="mb-6 p-4 bg-slate-900/60 border border-slate-800/80 rounded-xl">
-          <h2 className="text-sm font-semibold text-cyan-300 mb-1">
+        <div className="mb-6 p-4 bg-background/60 border border-border/80 rounded-xl">
+          <h2 className="text-sm font-semibold text-accent mb-1">
             {currentStep.title}
           </h2>
-          <p className="text-sm text-slate-200">{currentStep.instruction}</p>
+          <p className="text-sm text-foreground">{currentStep.instruction}</p>
         </div>
       )}
 
@@ -83,15 +83,15 @@ export function MissionShell({
       </div>
 
       {/* Footer Controls */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-800 mt-auto">
+      <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
         <button
           type="button"
           onClick={onPrevious}
           disabled={currentStepIndex <= 0}
           className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all ${
             currentStepIndex <= 0
-              ? 'opacity-40 cursor-not-allowed bg-slate-900 border-slate-800 text-slate-600'
-              : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-200 cursor-pointer'
+              ? 'opacity-40 cursor-not-allowed bg-background border-border text-slate-600'
+              : 'bg-background hover:bg-card border-border text-foreground cursor-pointer'
           }`}
         >
           ← Anterior
@@ -109,7 +109,7 @@ export function MissionShell({
           disabled={isContinueDisabled}
           className={`px-6 py-2 rounded-lg text-xs font-semibold transition-all ${
             isContinueDisabled
-              ? 'opacity-40 cursor-not-allowed bg-slate-800 text-slate-500 border border-slate-700'
+              ? 'opacity-40 cursor-not-allowed bg-card text-muted-foreground border border-border'
               : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 cursor-pointer shadow-lg shadow-cyan-500/20'
           }`}
         >

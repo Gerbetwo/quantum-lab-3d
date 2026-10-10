@@ -30,7 +30,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, className }
           role="tooltip"
           className={clsx(
             'absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1',
-            'bg-slate-900 text-slate-100 text-xs rounded shadow-lg border border-slate-700',
+            'bg-background text-foreground text-xs rounded shadow-lg border border-border',
             'whitespace-nowrap z-50 pointer-events-none',
             'motion-safe:transition-opacity motion-safe:duration-150'
           )}

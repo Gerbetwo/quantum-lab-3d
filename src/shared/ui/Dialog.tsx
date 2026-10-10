@@ -27,7 +27,7 @@ export const Dialog: React.FC<DialogProps> = ({ isOpen, title, onClose, children
     <dialog
       ref={dialogRef}
       onClose={onClose}
-      className="p-0 backdrop:bg-black/70 max-w-lg w-full rounded-2xl outline-none"
+      className="p-0 backdrop:bg-foreground/70 max-w-lg w-full rounded-2xl outline-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"

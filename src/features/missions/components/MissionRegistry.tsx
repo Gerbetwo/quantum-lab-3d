@@ -103,13 +103,13 @@ export function MissionRegistry({ missionId = 'superposition', ...props }: Missi
           <h2 className="text-xl font-semibold text-zinc-100 mb-2">Mission Locked</h2>
           <p className="text-zinc-400 mb-6 max-w-md">
             You must complete the prerequisite mission{' '}
-            <span className="font-medium text-cyan-400">{prereqMission?.title || prereqId || 'prior mission'}</span>{' '}
+            <span className="font-medium text-accent">{prereqMission?.title || prereqId || 'prior mission'}</span>{' '}
             before accessing this quantum module.
           </p>
           {prereqId && (
             <Link
               href={`/missions/${prereqId}`}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              className="px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
             >
               Go to Prerequisite Mission
             </Link>

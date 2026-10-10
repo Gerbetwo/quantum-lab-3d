@@ -31,13 +31,13 @@ export default function LearnPage() {
                 key={mission.id}
                 className={`group flex flex-col justify-between p-6 rounded-2xl border transition-all duration-350 ${
                   isUnlocked
-                    ? 'bg-slate-900/70 border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800/60'
-                    : 'bg-slate-950/40 border-slate-900/80 opacity-60'
+                    ? 'bg-background/70 border-border hover:border-cyan-500/50 hover:bg-card/60'
+                    : 'bg-background/40 border-border/80 opacity-60'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono px-2.5 py-1 bg-cyan-950/80 text-cyan-400 rounded-md border border-cyan-800/40">
+                    <span className="text-xs font-mono px-2.5 py-1 bg-cyan-950/80 text-accent rounded-md border border-cyan-800/40">
                       Mission {index + 1}
                     </span>
                     {isCompleted ? (
@@ -45,33 +45,33 @@ export default function LearnPage() {
                         <CheckCircle2 className="w-4 h-4" /> Completed
                       </span>
                     ) : isUnlocked ? (
-                      <span className="flex items-center gap-1 text-xs text-cyan-400 font-medium" role="status" aria-label="Available">
+                      <span className="flex items-center gap-1 text-xs text-accent font-medium" role="status" aria-label="Available">
                         <PlayCircle className="w-4 h-4" /> Available
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs text-slate-500 font-medium" role="status" aria-label="Locked">
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground font-medium" role="status" aria-label="Locked">
                         <Lock className="w-4 h-4" /> Locked
                       </span>
                     )}
                   </div>
-                  <h3 className="text-lg font-bold text-slate-100 mt-4 group-hover:text-cyan-300 transition-colors">
+                  <h3 className="text-lg font-bold text-foreground mt-4 group-hover:text-accent transition-colors">
                     {mission.title}
                   </h3>
-                  <p className="text-sm text-slate-400 mt-2 line-clamp-3 leading-relaxed">
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3 leading-relaxed">
                     {mission.description}
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-between">
                   {isUnlocked ? (
                     <Link
                       href={`/missions/${mission.id}`}
-                      className="text-xs font-semibold text-cyan-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded"
+                      className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded"
                     >
                       {isCompleted ? 'Review Mission' : 'Start Mission'} &rarr;
                     </Link>
                   ) : (
-                    <span className="text-xs font-semibold text-slate-500 flex items-center gap-1 cursor-not-allowed">
+                    <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1 cursor-not-allowed">
                       Prerequisite Required
                     </span>
                   )}

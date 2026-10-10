@@ -37,11 +37,11 @@ export const SuperpositionExperience: React.FC<SuperpositionExperienceProps> = (
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-slate-950 text-slate-100 rounded-2xl shadow-2xl border border-slate-800">
-      <div className="mb-8 border-b border-slate-800 pb-4">
-        <span className="text-xs uppercase tracking-widest text-cyan-400 font-semibold">Mission 1 Experience</span>
+    <div className="max-w-4xl mx-auto p-6 bg-background text-foreground rounded-2xl shadow-2xl border border-border">
+      <div className="mb-8 border-b border-border pb-4">
+        <span className="text-xs uppercase tracking-widest text-accent font-semibold">Mission 1 Experience</span>
         <h2 className="text-2xl font-bold mt-1">Superposition & Wavefunction Collapse</h2>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Explore classical vs quantum states, intuitive analogies, Bloch sphere geometry, and wavefunction collapse.
         </p>
 
@@ -57,7 +57,7 @@ export const SuperpositionExperience: React.FC<SuperpositionExperienceProps> = (
               key={step.id}
               type="button"
               onClick={() => setActiveStepId(step.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeStepId === step.id ? 'bg-cyan-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeStepId === step.id ? 'bg-primary text-primary-foreground text-white' : 'bg-background text-muted-foreground hover:bg-card'}`}
               aria-current={activeStepId === step.id ? 'step' : undefined}
             >
               {step.label} {completedSteps[step.id] ? '✓' : ''}

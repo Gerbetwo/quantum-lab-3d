@@ -33,9 +33,9 @@ export const CorrelatedMeasurementStep: React.FC<CorrelatedMeasurementStepProps>
   };
 
   return (
-    <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Correlated Measurement Step">
+    <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Correlated Measurement Step">
       <h3 className="text-xl font-bold mb-3">Correlated Measurement & Non-Signaling</h3>
-      <p className="text-sm text-slate-300 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Measure the entangled pair. Because the states are linked, Alice&apos;s measurement yields a random outcome, and Bob&apos;s measurement will <em>always perfectly match</em> Alice&apos;s result. However, Alice cannot choose or force the outcome to transmit a message.
       </p>
 
@@ -45,12 +45,12 @@ export const CorrelatedMeasurementStep: React.FC<CorrelatedMeasurementStepProps>
         </div>
       )}
 
-      <div className="bg-slate-800 p-5 rounded-lg mb-6 border border-slate-700 text-center">
-        <div className="text-xs uppercase tracking-wider text-slate-400 mb-2">Measurement Results Boundary</div>
-        <div className="text-2xl font-mono font-bold text-cyan-400 mb-2" aria-live="polite">
+      <div className="bg-card p-5 rounded-lg mb-6 border border-border text-center">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Measurement Results Boundary</div>
+        <div className="text-2xl font-mono font-bold text-accent mb-2" aria-live="polite">
           {measured && results ? `Alice: ${results.alice} | Bob: ${results.bob}` : 'Awaiting Measurement...'}
         </div>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-muted-foreground">
           {measured ? '✓ entanglementMeasurements recorded exactly once.' : 'Results are strictly randomized and perfectly correlated.'}
         </p>
       </div>
@@ -60,12 +60,12 @@ export const CorrelatedMeasurementStep: React.FC<CorrelatedMeasurementStepProps>
           type="button"
           onClick={handleMeasure}
           disabled={!isBellPrepared || measured}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${!isBellPrepared || measured ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${!isBellPrepared || measured ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
           aria-label="Perform correlated quantum measurement"
         >
           {measured ? 'Measured' : 'Measure Entangled Pair'}
         </button>
-        <span className="text-xs text-slate-400" aria-live="polite">
+        <span className="text-xs text-muted-foreground" aria-live="polite">
           {measured ? 'Step complete' : isBellPrepared ? 'Ready to measure' : 'Bell pair required'}
         </span>
       </div>

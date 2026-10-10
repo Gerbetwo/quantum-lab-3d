@@ -16,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="dark">
-      <body className="bg-slate-950 text-slate-100 antialiased min-h-screen">
+      <body className="bg-background text-foreground antialiased min-h-screen">
         <SessionProvider>
           <AppShell>
             {children}

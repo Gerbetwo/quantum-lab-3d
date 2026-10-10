@@ -38,44 +38,44 @@ export const BlochStateStep: React.FC<BlochStateStepProps> = ({ onComplete, onSt
   };
 
   return (
-    <div className="p-6 bg-slate-900 rounded-xl text-slate-100 shadow-lg border border-slate-800" role="region" aria-label="Bloch State Step">
+    <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Bloch State Step">
       <h3 className="text-xl font-bold mb-3">Bloch Sphere & State Parameterization</h3>
-      <p className="text-sm text-slate-300 mb-6">
+      <p className="text-sm text-muted-foreground mb-6">
         Explore quantum state parameterization using polar angle theta ($	heta$) and azimuthal angle phi ($phi$). Adjust theta to alter state probabilities.
       </p>
 
       {/* WebGL / Textual Workspace Fallback Container */}
-      <div className="bg-slate-800 p-5 rounded-lg mb-6 border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-card p-5 rounded-lg mb-6 border border-border flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="w-full md:w-1/2">
-          <div className="text-xs uppercase tracking-wider text-slate-400 mb-1">State Vector Coefficients</div>
-          <div className="font-mono text-sm bg-slate-900 p-3 rounded border border-slate-700 text-cyan-300">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">State Vector Coefficients</div>
+          <div className="font-mono text-sm bg-background p-3 rounded border border-border text-accent">
             <div>|ψ⟩ = cos(θ/2)|0⟩ + e^(iφ) sin(θ/2)|1⟩</div>
-            <div className="mt-2 text-xs text-slate-400">
+            <div className="mt-2 text-xs text-muted-foreground">
               Probabilities: P(|0⟩) = {(p0 * 100).toFixed(1)}% | P(|1⟩) = {(p1 * 100).toFixed(1)}%
             </div>
           </div>
         </div>
         <div className="w-full md:w-1/2 flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-wider text-slate-400">Canonical Presets</span>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Canonical Presets</span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => applyPreset(0.001, 0)}
-              className="flex-1 py-1.5 px-3 bg-slate-700 hover:bg-slate-600 rounded text-xs font-semibold"
+              className="flex-1 py-1.5 px-3 bg-muted hover:bg-slate-600 rounded text-xs font-semibold"
             >
               |0⟩ State
             </button>
             <button
               type="button"
               onClick={() => applyPreset(Math.PI / 2, 0)}
-              className="flex-1 py-1.5 px-3 bg-cyan-700 hover:bg-cyan-600 rounded text-xs font-semibold"
+              className="flex-1 py-1.5 px-3 bg-cyan-700 hover:bg-primary text-primary-foreground rounded text-xs font-semibold"
             >
               |+⟩ State
             </button>
             <button
               type="button"
               onClick={() => applyPreset(Math.PI - 0.001, 0)}
-              className="flex-1 py-1.5 px-3 bg-slate-700 hover:bg-slate-600 rounded text-xs font-semibold"
+              className="flex-1 py-1.5 px-3 bg-muted hover:bg-slate-600 rounded text-xs font-semibold"
             >
               |1⟩ State
             </button>
@@ -86,10 +86,10 @@ export const BlochStateStep: React.FC<BlochStateStepProps> = ({ onComplete, onSt
       {/* Theta Slider Control (Bounded from 0.001 to π - 0.001) */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
-          <label htmlFor="theta-slider" className="text-sm font-medium text-slate-300">
-            Polar Angle Theta ($	heta$): <span className="font-mono text-cyan-400">{theta.toFixed(3)} rad</span>
+          <label htmlFor="theta-slider" className="text-sm font-medium text-muted-foreground">
+            Polar Angle Theta ($	heta$): <span className="font-mono text-accent">{theta.toFixed(3)} rad</span>
           </label>
-          <span className="text-xs text-slate-400" aria-live="polite">
+          <span className="text-xs text-muted-foreground" aria-live="polite">
             {hasInteracted ? '✓ Parameterized' : 'Adjust slider to interact'}
           </span>
         </div>
@@ -101,7 +101,7 @@ export const BlochStateStep: React.FC<BlochStateStepProps> = ({ onComplete, onSt
           step={0.001}
           value={theta}
           onChange={(e) => handleThetaChange(parseFloat(e.target.value))}
-          className="w-full accent-cyan-500 cursor-pointer bg-slate-700 rounded-lg h-2"
+          className="w-full accent-cyan-500 cursor-pointer bg-muted rounded-lg h-2"
           aria-label="Theta angle slider"
         />
       </div>

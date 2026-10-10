@@ -49,7 +49,7 @@ export default function ViewModeSwitcher({ mode, onChange, available }: Props) {
               'inline-flex items-center gap-1.5',
               mode === m
                 ? 'bg-cyan/20 text-cyan border border-cyan/60'
-                : 'bg-surface-2 text-slate-400 border border-edge hover:bg-surface-3',
+                : 'bg-surface-2 text-muted-foreground border border-edge hover:bg-surface-3',
             )}
           >
             <Icon className="w-3.5 h-3.5" aria-hidden />

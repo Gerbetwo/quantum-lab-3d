@@ -13,7 +13,7 @@ export function CircuitWorkbench() {
   const finalState = evaluationResult?.final || [{ re: 1, im: 0 }];
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-900 text-slate-100 p-4">
+    <div className="flex flex-col h-full w-full bg-background text-foreground p-4">
       <div className="flex-1 flex items-center justify-center">
         {viewMode === 'phase-disk' && <PhaseDiskView evaluation={finalState} />}
         {viewMode === 'bloch' && <BlochPairView evaluation={finalState} />}
