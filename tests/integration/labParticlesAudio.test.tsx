@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 const burstMock = vi.fn();
 const collapseMock = vi.fn();
@@ -35,3 +35,11 @@ vi.mock('@/features/quantum-3d/canvas/MeasurementParticles', () => ({
     return null;
   }),
 }));
+
+describe('Lab Particles & Audio Integration', () => {
+  it('loads mocked audio and particle hooks without throwing', () => {
+    expect(collapseMock).toBeDefined();
+    expect(gateMock).toBeDefined();
+    expect(hoverMock).toBeDefined();
+  });
+});

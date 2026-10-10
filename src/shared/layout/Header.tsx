@@ -7,6 +7,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 
 interface HeaderProps {
   title?: string;
@@ -56,12 +57,13 @@ export function Header({
       )}
       <div className="flex items-center justify-between px-3 sm:px-6 py-3 min-h-14 gap-2 overflow-x-auto">
         <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-          <span 
-            className="font-bold tracking-wider text-accent text-xs sm:text-base truncate max-w-25 sm:max-w-xs" 
-            title={title}
+          <Link 
+            href="/"
+            className="font-bold tracking-wider text-accent text-xs sm:text-base truncate max-w-25 sm:max-w-xs hover:opacity-80 transition-opacity"
+            title="Ir al inicio"
           >
             {title}
-          </span>
+          </Link>
           {formattedTime !== undefined && (
             <span data-testid="timer-display" className="text-xs px-2 py-1 bg-card rounded font-mono shrink-0">
               {formattedTime}

@@ -1,17 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { MissionDefinition, StepDefinition } from '@/features/missions/config/missions';
 
 export interface MissionShellProps {
   mission?: MissionDefinition;
   config?: MissionDefinition;
   currentStep?: StepDefinition;
-  currentStepIndex?: number;
+  currentStepIndex?: number | null;
   totalSteps?: number;
   progress?: number;
   isCompleted?: boolean;
-  isContinueDisabled?: boolean;
+  isContinueDisabled?: boolean | null;
   onPrevious?: () => void;
   onContinue?: () => void;
   children?: React.ReactNode;
@@ -21,17 +21,32 @@ export function MissionShell({
   mission,
   config,
   currentStep,
-  currentStepIndex = 0,
+  currentStepIndex: rawStepIndex,
   totalSteps = 1,
   progress = 0,
   isCompleted = false,
-  isContinueDisabled = false,
+  isContinueDisabled: rawIsContinueDisabled,
   onPrevious,
   onContinue,
   children,
 }: MissionShellProps) {
+  // Guard against SSR/Client state rehydration mismatch
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const data = mission || config;
+
+  // Handle nullish prop values explicitly
+  const currentStepIndex = rawStepIndex ?? 0;
+  const isContinueDisabled = rawIsContinueDisabled ?? false;
   const stepNum = currentStepIndex + 1;
+
+  // Ensure strict boolean evaluation for disabled attributes
+  const isPreviousDisabled = !isMounted || currentStepIndex <= 0;
+  const isNextDisabled = !isMounted || Boolean(isContinueDisabled);
 
   return (
     <div className="flex flex-col h-full w-full bg-background text-foreground p-6 max-w-4xl mx-auto">
@@ -87,9 +102,9 @@ export function MissionShell({
         <button
           type="button"
           onClick={onPrevious}
-          disabled={currentStepIndex <= 0}
+          disabled={Boolean(isPreviousDisabled)}
           className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all ${
-            currentStepIndex <= 0
+            isPreviousDisabled
               ? 'opacity-40 cursor-not-allowed bg-background border-border text-slate-600'
               : 'bg-background hover:bg-card border-border text-foreground cursor-pointer'
           }`}
@@ -106,9 +121,9 @@ export function MissionShell({
         <button
           type="button"
           onClick={onContinue}
-          disabled={isContinueDisabled}
+          disabled={Boolean(isNextDisabled)}
           className={`px-6 py-2 rounded-lg text-xs font-semibold transition-all ${
-            isContinueDisabled
+            isNextDisabled
               ? 'opacity-40 cursor-not-allowed bg-card text-muted-foreground border border-border'
               : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 cursor-pointer shadow-lg shadow-cyan-500/20'
           }`}

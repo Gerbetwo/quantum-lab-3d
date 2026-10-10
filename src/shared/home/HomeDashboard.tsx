@@ -9,11 +9,11 @@ export function HomeDashboard() {
   const completedIds = session?.completed || [];
   const hasProgress = isHydrated && completedIds.length > 0;
 
-  let targetMissionId = session?.activeMission || MISSIONS[0].id;
+  let _targetMissionId = session?.activeMission || MISSIONS[0].id;
   if (isHydrated) {
     const nextIncomplete = MISSIONS.find((m) => !completedIds.includes(m.id));
     if (nextIncomplete) {
-      targetMissionId = nextIncomplete.id;
+      _targetMissionId = nextIncomplete.id;
     }
   }
 
@@ -30,7 +30,7 @@ export function HomeDashboard() {
 
         <div className="flex flex-wrap justify-center gap-4 pt-8">
           <Link
-            href={`/missions/${targetMissionId}`}
+            href={`/learn`}
             className="px-8 py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold shadow-xl shadow-cyan-500/25 transition-all transform hover:-translate-y-0.5 inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-300"
           >
             {hasProgress ? 'Continue Journey' : 'Start Journey'} &rarr;

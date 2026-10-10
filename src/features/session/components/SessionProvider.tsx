@@ -59,18 +59,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [isRunning, isHydrated]);
 
   const updateAndSave = useCallback((updater: (prev: UserSession) => UserSession) => {
-    let nextState!: UserSession;
     setSession(prev => {
-      nextState = toCanonicalSession(updater(prev), prev.userId);
+      const nextState = toCanonicalSession(updater(prev), prev.userId);
+      
+      // Save synchronously inside the updater function where nextState is defined
+      const outcome = saveSession(nextState);
+      
+      if (!outcome.success) {
+        setTimeout(() => {
+          setStorageWarning(outcome.error ?? 'Failed to persist session storage.');
+        }, 0);
+      } else {
+        setTimeout(() => {
+          setStorageWarning(null);
+        }, 0);
+      }
+
       return nextState;
     });
-
-    const outcome = saveSession(nextState);
-    if (!outcome.success) {
-      setStorageWarning(outcome.error ?? 'Failed to persist session storage.');
-    } else {
-      setStorageWarning(null);
-    }
   }, []);
 
   const setActiveMission = useCallback((missionId: string) => {

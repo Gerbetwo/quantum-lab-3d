@@ -309,8 +309,12 @@ export function saveSession(session: UserSession): SaveOutcome {
   if (typeof window === 'undefined') {
     return { success: false, error: 'SSR environment' };
   }
+  
+  if (!session) {
+    return { success: false, error: 'Session object is undefined' };
+  }
+
   try {
-    // Do not mutate the object passed to saveSession
     const sessionCopy = JSON.parse(JSON.stringify(session));
     const canonical = toCanonicalSession(sessionCopy, sessionCopy.userId);
     canonical.lastUpdated = Date.now();
@@ -321,9 +325,9 @@ export function saveSession(session: UserSession): SaveOutcome {
     } else {
       return { success: false, error: 'localStorage unavailable' };
     }
-    // Avoid duplicating a potentially large full session into a size-limited cookie.
     return { success: true };
-  } catch {
+  } catch (err) {
+    console.error('[Session Persistence Error]:', err);
     return { success: false, error: 'Persistence failure' };
   }
 }

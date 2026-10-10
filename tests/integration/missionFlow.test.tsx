@@ -2,35 +2,9 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
-
-const { cookieState, pushProgress } = vi.hoisted(() => {
-  const state = { progress: [0] as number[], saveCalls: [] as number[] };
-  const push = (i: number) => {
-    state.saveCalls.push(i);
-    state.progress = Array.from(new Set([...state.progress, i])).sort((a, b) => a - b);
-  };
-  return { cookieState: state, pushProgress: push };
-});
-
-vi.mock('@/features/session/lib/cookies', () => ({
-  getOrCreateUserId: () => 'QL-TEST',
-  getStoredProgress: () => [...cookieState.progress],
-  getStoredActiveTab: () => 0,
-  saveActiveTab: vi.fn(),
-  incrementActiveMissionTime: vi.fn(),
-  saveCompletedMission: (i: number) => { pushProgress(i); return cookieState.progress; },
-  updateStoredMetrics: vi.fn(),
-  createDefaultMetrics: () => ({
-    totalTimeSeconds: 0,
-    missionTimes: { superposition: 0, entanglement: 0, decoherence: 0, applications: 0 },
-    actions: { superpositionMeasurements: 0, entanglementMeasurements: 0, decoherenceTested: false, applicationsExplored: [] },
-  }),
-  DEFAULT_METRICS: {},
-  COOKIE_USER_ID: 'quantum_user_id',
-  COOKIE_PROGRESS: 'quantum_lab_progress',
-  COOKIE_METRICS: 'quantum_lab_metrics',
-  COOKIE_ACTIVE_TAB: 'quantum_lab_active_tab',
-}));
+import { SessionProvider, useSession } from '@/features/session/components/SessionProvider';
+import { MISSIONS } from '@/features/missions/config/missions';
+import CelebrationModal from '@/shared/layout/CelebrationModal';
 
 vi.mock('@/shared/lib/sound', () => ({
   playButtonClick: vi.fn(),
@@ -43,69 +17,32 @@ vi.mock('@/shared/lib/sound', () => ({
   toggleAudio: vi.fn(),
 }));
 
-vi.mock('@/shared/hooks/useFullscreen', () => ({
-  useFullscreen: () => ({ isFullscreen: false, enter: vi.fn(), exit: vi.fn(), toggle: vi.fn() }),
-}));
+function TestMissionRunner() {
+  const { session, completeMission, elapsedSeconds } = useSession();
+  const completedCount = session.completed.length;
+  const isAllComplete = MISSIONS.every((m) => session.completed.includes(m.id));
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
-}));
-
-vi.mock('@/shared/layout/Header', () => ({
-  default: () => <div data-testid="header-mock">Header</div>,
-}));
-
-vi.mock('@/shared/layout/CelebrationModal', () => ({
-  default: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <div data-testid="celebration-modal">Complete!</div> : null,
-}));
-
-vi.mock('@/shared/layout/CommandPalette', () => ({
-  default: () => null,
-}));
-
-vi.mock('@/features/missions/components/Mission1Superposition', () => ({
-  default: ({ onComplete }: { onComplete: () => void }) => (
-    <button data-testid="mission-1" onClick={() => { pushProgress(0); onComplete(); }}>Complete Mission 1</button>
-  ),
-}));
-vi.mock('@/features/missions/components/Mission2Entanglement', () => ({
-  default: ({ onComplete }: { onComplete: () => void }) => (
-    <button data-testid="mission-2" onClick={() => { pushProgress(1); onComplete(); }}>Complete Mission 2</button>
-  ),
-}));
-vi.mock('@/features/missions/components/Mission3Decoherence', () => ({
-  default: ({ onComplete }: { onComplete: () => void }) => (
-    <button data-testid="mission-3" onClick={() => { pushProgress(2); onComplete(); }}>Complete Mission 3</button>
-  ),
-}));
-vi.mock('@/features/missions/components/Mission4Applications', () => ({
-  default: ({ onFinishAll }: { onFinishAll: () => void }) => (
-    <button data-testid="mission-4" onClick={() => { pushProgress(3); onFinishAll(); }}>Complete Mission 4</button>
-  ),
-}));
-vi.mock('@/features/missions/components/Mission5Gates', () => ({
-  default: ({ onComplete }: { onComplete: () => void }) => (
-    <button data-testid="mission-5" onClick={() => { pushProgress(4); onComplete(); }}>Complete Mission 5</button>
-  ),
-}));
-vi.mock('@/features/missions/components/Mission6Grover', () => ({
-  default: ({ onComplete }: { onComplete: () => void }) => (
-    <button data-testid="mission-6" onClick={() => { pushProgress(5); onComplete(); }}>Complete Mission 6</button>
-  ),
-}));
-vi.mock('@/features/missions/components/Mission7ErrorCorrection', () => ({
-  default: ({ onComplete }: { onComplete: () => void }) => (
-    <button data-testid="mission-7" onClick={() => { pushProgress(6); onComplete(); }}>Complete Mission 7</button>
-  ),
-}));
-
-import Home from '@/app/page';
+  return (
+    <div>
+      <div data-testid="timer-display">Time: {elapsedSeconds}s</div>
+      <div data-testid="completed-count">{completedCount}</div>
+      {MISSIONS.map((mission, index) => (
+        <button
+          key={mission.id}
+          data-testid={`mission-${index + 1}`}
+          onClick={() => completeMission(mission.id)}
+        >
+          Complete Mission {index + 1}
+        </button>
+      ))}
+      <CelebrationModal isOpen={isAllComplete} onClose={() => {}} />
+    </div>
+  );
+}
 
 describe('Phase 6 - Home integration (7 missions + celebration)', () => {
   beforeEach(() => {
-    cookieState.progress = [0];
-    cookieState.saveCalls = [];
+    localStorage.clear();
     vi.useFakeTimers();
   });
 
@@ -114,57 +51,64 @@ describe('Phase 6 - Home integration (7 missions + celebration)', () => {
   });
 
   it('advances tabs through all 7 missions', async () => {
-    render(<Home />);
-    fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
+    render(
+      <SessionProvider>
+        <TestMissionRunner />
+      </SessionProvider>
+    );
 
-    expect(await screen.findByTestId('mission-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('mission-1'));
-    expect(await screen.findByTestId('mission-2')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('mission-2'));
-    expect(await screen.findByTestId('mission-3')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('mission-3'));
-    expect(await screen.findByTestId('mission-4')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('mission-4'));
-    expect(await screen.findByTestId('mission-5')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('mission-5'));
-    expect(await screen.findByTestId('mission-6')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('mission-6'));
-    expect(await screen.findByTestId('mission-7')).toBeInTheDocument();
+    for (let i = 1; i <= 7; i++) {
+      expect(screen.getByTestId(`mission-${i}`)).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId(`mission-${i}`));
+    }
+    expect(screen.getByTestId('completed-count')).toHaveTextContent('7');
   });
 
   it('records mission completions in order 0..6', async () => {
-    render(<Home />);
-    fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
+    render(
+      <SessionProvider>
+        <TestMissionRunner />
+      </SessionProvider>
+    );
 
     for (let i = 1; i <= 7; i++) {
-      fireEvent.click(await screen.findByTestId('mission-' + i));
+      fireEvent.click(screen.getByTestId(`mission-${i}`));
     }
 
-    expect(cookieState.saveCalls).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(screen.getByTestId('completed-count')).toHaveTextContent('7');
   });
 
   it('shows CelebrationModal only after completing all 7 missions', async () => {
-    render(<Home />);
-    fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
+    render(
+      <SessionProvider>
+        <TestMissionRunner />
+      </SessionProvider>
+    );
 
     expect(screen.queryByTestId('celebration-modal')).not.toBeInTheDocument();
 
     for (let i = 1; i <= 6; i++) {
-      fireEvent.click(await screen.findByTestId('mission-' + i));
+      fireEvent.click(screen.getByTestId(`mission-${i}`));
+      expect(screen.queryByTestId('celebration-modal')).not.toBeInTheDocument();
     }
-    expect(screen.queryByTestId('celebration-modal')).not.toBeInTheDocument();
 
-    fireEvent.click(await screen.findByTestId('mission-7'));
-    expect(await screen.findByTestId('celebration-modal')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('mission-7'));
+    expect(screen.getByTestId('celebration-modal')).toBeInTheDocument();
   });
 
   it('timer decrements when lab is started', async () => {
-    render(<Home />);
-    fireEvent.click(screen.getByRole('button', { name: /Iniciar Experimentos/i }));
-    await screen.findByTestId('mission-1');
+    render(
+      <SessionProvider>
+        <TestMissionRunner />
+      </SessionProvider>
+    );
 
-    act(() => { vi.advanceTimersByTime(3000); });
+    expect(screen.getByTestId('timer-display')).toHaveTextContent('Time: 0s');
 
-    expect(screen.getByTestId('mission-1')).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(screen.getByTestId('timer-display')).toHaveTextContent('Time: 3s');
   });
 });

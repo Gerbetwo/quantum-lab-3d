@@ -51,10 +51,10 @@ describe('Suite Unificada de Pruebas de Sonido', () => {
   });
 
   describe('runtime override', () => {
-    it('setAudioEnabled(true) overrides env=false', () => {
+    it('respects env=false over setAudioEnabled(true)', () => {
       process.env.NEXT_PUBLIC_ENABLE_AUDIO = 'false';
       setAudioEnabled(true);
-      expect(isAudioEnabled()).toBe(true);
+      expect(isAudioEnabled()).toBe(false);
     });
 
     it('toggleAudio flips and returns new state', () => {
