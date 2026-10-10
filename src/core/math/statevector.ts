@@ -6,13 +6,14 @@
  * where qubit 0 is the most significant bit.
  * Examples for N=2: |00>=0, |01>=1, |10>=2, |11>=3.
  */
-// Replace lines re-exporting types:
-
 
 export const MAX_QUBITS = 6;
 export const MAX_DIM = 1 << MAX_QUBITS;
 
-export interface Complex { re: number; im: number }
+export interface Complex {
+  re: number;
+  im: number;
+}
 
 export type StateVector = Complex[];
 
@@ -71,20 +72,121 @@ export function innerProduct(a: StateVector, b: StateVector): Complex {
   return { re, im };
 }
 
-
 export function normalizeStateVector(amplitudes: { re: number; im: number }[]): { re: number; im: number }[] {
   let normSq = 0;
   for (const amp of amplitudes) {
     normSq += amp.re * amp.re + amp.im * amp.im;
   }
   if (normSq === 0) return amplitudes;
-  const norm = Math.sqrt(normSq);
+  const n = Math.sqrt(normSq);
   return amplitudes.map(amp => ({
-    re: Math.abs(amp.re / norm) < 1e-12 ? 0 : amp.re / norm,
-    im: Math.abs(amp.im / norm) < 1e-12 ? 0 : amp.im / norm,
+    re: Math.abs(amp.re / n) < 1e-12 ? 0 : amp.re / n,
+    im: Math.abs(amp.im / n) < 1e-12 ? 0 : amp.im / n,
   }));
 }
 
 export function createInitialState(nQubits: number): StateVector {
   return createZeroState(nQubits);
+}
+
+/**
+ * Applies a 1-qubit gate to parametric Bloch sphere angles (theta, phi)
+ * and returns the updated theta and phi angles.
+ */
+export function applyGate(
+  theta: number,
+  phi: number,
+  gateType: string
+): { theta: number; phi: number } {
+  const cosT = Math.cos(theta / 2);
+  const sinT = Math.sin(theta / 2);
+
+  const a: Complex = { re: cosT, im: 0 };
+  const b: Complex = { re: sinT * Math.cos(phi), im: sinT * Math.sin(phi) };
+
+  let u00: Complex = { re: 1, im: 0 };
+  let u01: Complex = { re: 0, im: 0 };
+  let u10: Complex = { re: 0, im: 0 };
+  let u11: Complex = { re: 1, im: 0 };
+
+  const gate = gateType.toUpperCase();
+
+  switch (gate) {
+    case 'X':
+      u00 = { re: 0, im: 0 };
+      u01 = { re: 1, im: 0 };
+      u10 = { re: 1, im: 0 };
+      u11 = { re: 0, im: 0 };
+      break;
+
+    case 'Y':
+      u00 = { re: 0, im: 0 };
+      u01 = { re: 0, im: -1 };
+      u10 = { re: 0, im: 1 };
+      u11 = { re: 0, im: 0 };
+      break;
+
+    case 'Z':
+      u00 = { re: 1, im: 0 };
+      u01 = { re: 0, im: 0 };
+      u10 = { re: 0, im: 0 };
+      u11 = { re: -1, im: 0 };
+      break;
+
+    case 'H': {
+      const invSqrt2 = 1 / Math.SQRT2;
+      u00 = { re: invSqrt2, im: 0 };
+      u01 = { re: invSqrt2, im: 0 };
+      u10 = { re: invSqrt2, im: 0 };
+      u11 = { re: -invSqrt2, im: 0 };
+      break;
+    }
+
+    case 'S':
+      u00 = { re: 1, im: 0 };
+      u01 = { re: 0, im: 0 };
+      u10 = { re: 0, im: 0 };
+      u11 = { re: 0, im: 1 };
+      break;
+
+    case 'T': {
+      const invSqrt2 = 1 / Math.SQRT2;
+      u00 = { re: 1, im: 0 };
+      u01 = { re: 0, im: 0 };
+      u10 = { re: 0, im: 0 };
+      u11 = { re: invSqrt2, im: invSqrt2 };
+      break;
+    }
+
+    default:
+      return { theta, phi };
+  }
+
+  const add = (c1: Complex, c2: Complex): Complex => ({ re: c1.re + c2.re, im: c1.im + c2.im });
+  const mul = (c1: Complex, c2: Complex): Complex => ({
+    re: c1.re * c2.re - c1.im * c2.im,
+    im: c1.re * c2.im + c1.im * c2.re,
+  });
+
+  const newA = add(mul(u00, a), mul(u01, b));
+  const newB = add(mul(u10, a), mul(u11, b));
+
+  const magA = Math.hypot(newA.re, newA.im);
+  const magB = Math.hypot(newB.re, newB.im);
+
+  const newTheta = 2 * Math.atan2(magB, magA);
+
+  let newPhi = 0;
+  if (magA > 1e-12) {
+    const phaseA = Math.atan2(newA.im, newA.re);
+    const phaseB = Math.atan2(newB.im, newB.re);
+    newPhi = phaseB - phaseA;
+  } else if (magB > 1e-12) {
+    newPhi = Math.atan2(newB.im, newB.re);
+  }
+
+  const twoPi = 2 * Math.PI;
+  newPhi = ((newPhi % twoPi) + twoPi) % twoPi;
+
+  return { theta: newTheta, phi: newPhi };
 }

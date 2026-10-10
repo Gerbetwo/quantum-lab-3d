@@ -1,4 +1,14 @@
 import { create, StateCreator } from 'zustand';
+import {
+  canTransition,
+  transitionPhase,
+  verifyState,
+} from '../features/missions/domain/missionMachine';
+import {
+  MissionPhase,
+  MissionProgressState,
+} from '../features/missions/types/mission';
+import { applyGate } from '../core/math/statevector';
 
 export interface QuantumState {
   // Parametric Qubit State
@@ -17,12 +27,21 @@ export interface QuantumState {
   completedMissions: boolean[];
   sessionTimeRemaining: number;
 
+  // Mission FSM State
+  missionState: MissionProgressState;
+
   // Actions
   setAngles: (theta: number, phi: number) => void;
   setTemperature: (tempK: number) => void;
   measureQubit: (rng?: () => number) => { outcome: 0 | 1; probability: number };
   completeMission: (missionId: number) => void;
   resetSession: () => void;
+
+  // Mission FSM Actions
+  setPrediction: (prob0: number) => void;
+  transitionMissionPhase: (nextPhase: MissionPhase) => boolean;
+  applyGateToMission: (gateType: string) => void;
+  evaluateMissionStep: (targetTheta?: number, targetPhi?: number, tolerance?: number) => boolean;
 }
 
 export function calculateCoherenceTime(temperatureK: number): number {
@@ -39,6 +58,16 @@ export function measureQubitState(
   return { outcome, probability };
 }
 
+const initialMissionState: MissionProgressState = {
+  currentMissionId: 'mission-1',
+  activeStepIndex: 0,
+  currentPhase: 'BRIEFING',
+  userPredictionProb0: null,
+  appliedGatesHistory: [],
+  isVerified: false,
+  errorState: null,
+};
+
 const storeCreator: StateCreator<QuantumState> = (set, get) => ({
   theta: Math.PI / 2,
   phi: 0,
@@ -52,6 +81,8 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
   activeMissionId: 0,
   completedMissions: [false, false, false, false],
   sessionTimeRemaining: 600,
+
+  missionState: initialMissionState,
 
   setAngles: (theta: number, phi: number) => set({ theta, phi }),
 
@@ -90,7 +121,80 @@ const storeCreator: StateCreator<QuantumState> = (set, get) => ({
       lastOutcome: null,
       lastProbability: null,
       measurementCount: 0,
+      missionState: initialMissionState,
     }),
+
+  setPrediction: (prob0: number) => {
+    const currentState = get().missionState;
+    set({
+      missionState: {
+        ...currentState,
+        userPredictionProb0: prob0,
+      },
+    });
+  },
+
+  transitionMissionPhase: (nextPhase: MissionPhase): boolean => {
+    const { missionState } = get();
+    if (!canTransition(missionState, nextPhase)) {
+      set({
+        missionState: {
+          ...missionState,
+          errorState: `Cannot transition from ${missionState.currentPhase} to ${nextPhase}`,
+        },
+      });
+      return false;
+    }
+
+    try {
+      const updatedState = transitionPhase(missionState, nextPhase);
+      set({ missionState: updatedState });
+      return true;
+    } catch (error) {
+      set({
+        missionState: {
+          ...missionState,
+          errorState: (error as Error).message,
+        },
+      });
+      return false;
+    }
+  },
+
+  applyGateToMission: (gateType: string) => {
+    const { theta, phi, missionState } = get();
+
+    // Mutate state vector angles using quantum engine logic
+    const newAngles = applyGate(theta, phi, gateType);
+
+    // Update state vector and log the gate to appliedGatesHistory
+    set({
+      theta: newAngles.theta,
+      phi: newAngles.phi,
+      missionState: {
+        ...missionState,
+        appliedGatesHistory: [...missionState.appliedGatesHistory, gateType],
+      },
+    });
+  },
+
+  evaluateMissionStep: (
+    targetTheta: number = 0,
+    targetPhi: number = 0,
+    tolerance: number = 0.05
+  ): boolean => {
+    const { theta, phi, missionState } = get();
+    const isVerified = verifyState(theta, phi, targetTheta, targetPhi, tolerance);
+
+    set({
+      missionState: {
+        ...missionState,
+        isVerified,
+      },
+    });
+
+    return isVerified;
+  },
 });
 
 export const useQuantumStore = create<QuantumState>(storeCreator);

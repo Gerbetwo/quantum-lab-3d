@@ -31,27 +31,55 @@ export const MISSIONS: readonly MissionDefinition[] = [
     steps: [
       {
         id: 'classical-bit',
+        phase: 'BRIEFING',
         title: 'El bit clásico',
+        description:
+          'Un bit clásico siempre vale 0 o 1. Observa la diferencia con el qubit que verás a continuación.',
         instruction:
           'Un bit clásico siempre vale 0 o 1. Observa la diferencia con el qubit que verás a continuación.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'coin-analogy',
+        phase: 'BRIEFING',
         title: 'Analogía de la moneda',
+        description:
+          'Una moneda girando no es cara ni cruz hasta que aterriza. El qubit en superposición se comporta de manera análoga.',
         instruction:
           'Una moneda girando no es cara ni cruz hasta que aterriza. El qubit en superposición se comporta de manera análoga.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'bloch-state',
+        phase: 'BRIEFING',
         title: 'La esfera de Bloch',
+        description:
+          'Observa el qubit en la esfera de Bloch. El polo norte representa |0⟩ y el polo sur |1⟩; el ecuador es superposición perfecta.',
         instruction:
           'Observa el qubit en la esfera de Bloch. El polo norte representa |0⟩ y el polo sur |1⟩; el ecuador es superposición perfecta.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'measurement',
+        phase: 'BRIEFING',
         title: 'Medir el qubit',
+        description:
+          'Mide el qubit varias veces para observar el colapso estocástico: cada medición da 0 o 1 con la probabilidad que marca la amplitud.',
         instruction:
           'Mide el qubit varias veces para observar el colapso estocástico: cada medición da 0 o 1 con la probabilidad que marca la amplitud.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
     ],
     quiz: undefined,
@@ -71,32 +99,66 @@ export const MISSIONS: readonly MissionDefinition[] = [
     steps: [
       {
         id: 'independent-qubits',
+        phase: 'BRIEFING',
         title: 'Qubits independientes',
+        description:
+          'Inicializa dos qubits en |0⟩ por separado. Verifica que medir uno no afecta al otro.',
         instruction:
           'Inicializa dos qubits en |0⟩ por separado. Verifica que medir uno no afecta al otro.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'prepare-bell',
+        phase: 'BRIEFING',
         title: 'Crear el par Bell',
+        description:
+          'Aplica Hadamard al qubit A y luego CNOT con A como control y B como objetivo para crear el estado |Φ⁺⟩.',
         instruction:
           'Aplica Hadamard al qubit A y luego CNOT con A como control y B como objetivo para crear el estado |Φ⁺⟩.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'separation',
+        phase: 'BRIEFING',
         title: 'Separación espacial',
+        description:
+          'Observa que el estado entrelazado permanece aunque los qubits estén en regiones distintas del diagrama.',
         instruction:
           'Observa que el estado entrelazado permanece aunque los qubits estén en regiones distintas del diagrama.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'correlated-measurement',
+        phase: 'BRIEFING',
         title: 'Medición correlacionada',
+        description:
+          'Alice mide su qubit. Cuando obtiene |1⟩, el de Bob colapsa inmediatamente a |1⟩ en la misma base. Repite varias veces.',
         instruction:
           'Alice mide su qubit. Cuando obtiene |1⟩, el de Bob colapsa inmediatamente a |1⟩ en la misma base. Repite varias veces.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'knowledge-check',
+        phase: 'BRIEFING',
         title: 'Comprobación de conocimiento',
+        description: 'Responde la pregunta para completar la misión.',
         instruction: 'Responde la pregunta para completar la misión.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
     ],
     quiz: {
@@ -141,26 +203,53 @@ export const MISSIONS: readonly MissionDefinition[] = [
     steps: [
       {
         id: 'thermal-photon',
+        phase: 'BRIEFING',
         title: 'El fotón térmico',
+        description:
+          'Un fotón de radiación térmica golpea el qubit y le transfiere información del entorno. Observa el efecto sobre la coherencia.',
         instruction:
           'Un fotón de radiación térmica golpea el qubit y le transfiere información del entorno. Observa el efecto sobre la coherencia.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'temperature-coherence',
+        phase: 'BRIEFING',
         title: 'Temperatura y coherencia',
+        description:
+          'Arrastra el control de temperatura y observa cómo el tiempo de coherencia T₂ disminuye al aumentar la temperatura.',
         instruction:
           'Arrastra el control de temperatura y observa cómo el tiempo de coherencia T₂ disminuye al aumentar la temperatura.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'refrigerator',
+        phase: 'BRIEFING',
         title: 'Criostato de dilución',
+        description:
+          'Activa el refrigerador. A ~15 mK el número medio de fotones térmicos cae a ≪ 1, reduciendo drásticamente la decoherencia.',
         instruction:
           'Activa el refrigerador. A ~15 mK el número medio de fotones térmicos cae a ≪ 1, reduciendo drásticamente la decoherencia.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'knowledge-check',
+        phase: 'BRIEFING',
         title: 'Comprobación de conocimiento',
+        description: 'Responde la pregunta para completar la misión.',
         instruction: 'Responde la pregunta para completar la misión.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
     ],
     quiz: {
@@ -204,26 +293,53 @@ export const MISSIONS: readonly MissionDefinition[] = [
     steps: [
       {
         id: 'myths-applications',
+        phase: 'BRIEFING',
         title: 'Mitos y realidades',
+        description:
+          'Revisa qué tareas se aceleran con computación cuántica y cuáles no. No todo es más rápido en cuántico.',
         instruction:
           'Revisa qué tareas se aceleran con computación cuántica y cuáles no. No todo es más rápido en cuántico.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'molecular-comparison',
+        phase: 'BRIEFING',
         title: 'Simulación molecular',
+        description:
+          'Compara el coste de simular una molécula en un clásico vs. un procesador cuántico. Observa la diferencia exponencial de recursos.',
         instruction:
           'Compara el coste de simular una molécula en un clásico vs. un procesador cuántico. Observa la diferencia exponencial de recursos.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'shor-demo',
+        phase: 'BRIEFING',
         title: 'Algoritmo de Shor',
+        description:
+          'Ejecuta una versión simplificada del algoritmo de Shor para factorizar un número semi-primo y observa la ventaja cuadrática-exponencial.',
         instruction:
           'Ejecuta una versión simplificada del algoritmo de Shor para factorizar un número semi-primo y observa la ventaja cuadrática-exponencial.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'knowledge-check',
+        phase: 'BRIEFING',
         title: 'Comprobación de conocimiento',
+        description: 'Responde la pregunta para completar la misión.',
         instruction: 'Responde la pregunta para completar la misión.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
     ],
     quiz: {
@@ -268,26 +384,53 @@ export const MISSIONS: readonly MissionDefinition[] = [
     steps: [
       {
         id: 'gate-basics',
+        phase: 'BRIEFING',
         title: 'Fundamentos de puertas',
+        description:
+          'Una puerta cuántica es una rotación unitaria en el espacio de estados. Observa cómo X, Z y H mueven el vector de Bloch.',
         instruction:
           'Una puerta cuántica es una rotación unitaria en el espacio de estados. Observa cómo X, Z y H mueven el vector de Bloch.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'apply-gates',
+        phase: 'BRIEFING',
         title: 'Aplicar puertas',
+        description:
+          'Arrastra puertas X, Z y H al qubit y observa el resultado en la esfera de Bloch antes de medir.',
         instruction:
           'Arrastra puertas X, Z y H al qubit y observa el resultado en la esfera de Bloch antes de medir.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'teaching-circuit',
+        phase: 'BRIEFING',
         title: 'Circuito de tres ranuras',
+        description:
+          'Coloca exactamente tres puertas en el circuito de enseñanza: prueba H–X–H y comprueba que es equivalente a Z.',
         instruction:
           'Coloca exactamente tres puertas en el circuito de enseñanza: prueba H–X–H y comprueba que es equivalente a Z.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'knowledge-check',
+        phase: 'BRIEFING',
         title: 'Comprobación de conocimiento',
+        description: 'Responde la pregunta para completar la misión.',
         instruction: 'Responde la pregunta para completar la misión.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
     ],
     quiz: {
@@ -331,32 +474,66 @@ export const MISSIONS: readonly MissionDefinition[] = [
     steps: [
       {
         id: 'grover-basics',
+        phase: 'BRIEFING',
         title: 'Motivación del algoritmo',
+        description:
+          'Un ordenador clásico necesita O(N) consultas para encontrar un elemento en una lista no ordenada. Grover lo reduce a O(√N).',
         instruction:
           'Un ordenador clásico necesita O(N) consultas para encontrar un elemento en una lista no ordenada. Grover lo reduce a O(√N).',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'search-cost',
+        phase: 'BRIEFING',
         title: 'Coste de búsqueda',
+        description:
+          'Ajusta el tamaño N de la lista y compara el número de consultas clásicas vs. cuánticas necesarias.',
         instruction:
           'Ajusta el tamaño N de la lista y compara el número de consultas clásicas vs. cuánticas necesarias.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'single-iteration',
+        phase: 'BRIEFING',
         title: 'Una iteración de Grover',
+        description:
+          'Observa cómo el oráculo invierte la fase del elemento marcado y el operador de difusión amplifica esa amplitud respecto al promedio.',
         instruction:
           'Observa cómo el oráculo invierte la fase del elemento marcado y el operador de difusión amplifica esa amplitud respecto al promedio.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'full-run-measure',
+        phase: 'BRIEFING',
         title: 'Ejecución completa y medición',
+        description:
+          'Ejecuta ⌊π/4 · √N⌋ iteraciones y mide. La medición es estocástica: el elemento correcto aparece con alta probabilidad, no con certeza.',
         instruction:
           'Ejecuta ⌊π/4 · √N⌋ iteraciones y mide. La medición es estocástica: el elemento correcto aparece con alta probabilidad, no con certeza.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'knowledge-check',
+        phase: 'BRIEFING',
         title: 'Comprobación de conocimiento',
+        description: 'Responde la pregunta para completar la misión.',
         instruction: 'Responde la pregunta para completar la misión.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
     ],
     quiz: {
@@ -401,32 +578,66 @@ export const MISSIONS: readonly MissionDefinition[] = [
     steps: [
       {
         id: 'error-basics',
+        phase: 'BRIEFING',
         title: 'Por qué necesitamos corrección',
+        description:
+          'Los qubits físicos cometen errores. La corrección cuántica de errores codifica un qubit lógico en varios físicos para detectar y corregir fallos.',
         instruction:
           'Los qubits físicos cometen errores. La corrección cuántica de errores codifica un qubit lógico en varios físicos para detectar y corregir fallos.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'bit-flip',
+        phase: 'BRIEFING',
         title: 'Error de bit-flip',
+        description:
+          'Codifica |ψ⟩ en tres qubits (|000⟩ o |111⟩). Introduce un error X en uno de ellos y observa cómo el síndrome lo identifica.',
         instruction:
           'Codifica |ψ⟩ en tres qubits (|000⟩ o |111⟩). Introduce un error X en uno de ellos y observa cómo el síndrome lo identifica.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'phase-flip',
+        phase: 'BRIEFING',
         title: 'Error de phase-flip',
+        description:
+          'Aplica una puerta Hadamard para cambiar de base y observa un error Z (phase-flip) con el mismo mecanismo de síndrome.',
         instruction:
           'Aplica una puerta Hadamard para cambiar de base y observa un error Z (phase-flip) con el mismo mecanismo de síndrome.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'syndrome-majority',
+        phase: 'BRIEFING',
         title: 'Síndrome y votación mayoritaria',
+        description:
+          'Mide los ancilla para obtener el síndrome de error. La lógica de mayoría identifica qué qubit corregir sin colapsar el estado lógico.',
         instruction:
           'Mide los ancilla para obtener el síndrome de error. La lógica de mayoría identifica qué qubit corregir sin colapsar el estado lógico.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
       {
         id: 'knowledge-check',
+        phase: 'BRIEFING',
         title: 'Comprobación de conocimiento',
+        description: 'Responde la pregunta para completar la misión.',
         instruction: 'Responde la pregunta para completar la misión.',
+        targetTheta: 0,
+        targetPhi: 0,
+        allowedGates: ['X', 'Y', 'Z', 'H', 'S', 'T'],
+        expectedProbability0: 1,
       },
     ],
     quiz: {
@@ -458,32 +669,32 @@ export const MISSIONS: readonly MissionDefinition[] = [
   },
 ];
 
-export const CORE_MISSION_IDS: readonly MissionId[] = MISSIONS.map(m => m.id);
+export const CORE_MISSION_IDS: readonly MissionId[] = MISSIONS.map((m) => m.id);
 
 export function getCoreMissions(): MissionDefinition[] {
   return [...MISSIONS].sort((a, b) => a.order - b.order);
 }
 
 export function getMissionById(id: string): MissionDefinition | undefined {
-  return MISSIONS.find(m => m.id === id);
+  return MISSIONS.find((m) => m.id === id);
 }
 
 export function isMissionId(val: unknown): val is MissionId {
-  return typeof val === 'string' && MISSIONS.some(m => m.id === val);
+  return typeof val === 'string' && MISSIONS.some((m) => m.id === val);
 }
 
 export function isMainJourneyComplete(
-  completed: string[] | Set<string> | Record<string, boolean>,
+  completed: string[] | Set<string> | Record<string, boolean>
 ): boolean {
-  const coreIds = MISSIONS.map(m => m.id);
+  const coreIds = MISSIONS.map((m) => m.id);
   if (Array.isArray(completed)) {
-    return coreIds.every(id => completed.includes(id));
+    return coreIds.every((id) => completed.includes(id));
   }
   if (completed instanceof Set) {
-    return coreIds.every(id => completed.has(id));
+    return coreIds.every((id) => completed.has(id));
   }
   if (completed && typeof completed === 'object') {
-    return coreIds.every(id => Boolean(completed[id as keyof typeof completed]));
+    return coreIds.every((id) => Boolean(completed[id as keyof typeof completed]));
   }
   return false;
 }
