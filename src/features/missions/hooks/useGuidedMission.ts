@@ -85,7 +85,7 @@ export function useGuidedMission(missionId: MissionId | string = 'superposition'
     }
     return {
       id: "default-step",
-      phase: missionState.currentPhase,
+phase: missionState.currentPhase as any,
       title: mission?.title || "Mission Step",
       description: mission?.description || "",
       targetTheta: 0,
