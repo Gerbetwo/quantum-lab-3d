@@ -89,10 +89,34 @@ export function createInitialState(nQubits: number): StateVector {
   return createZeroState(nQubits);
 }
 
-/**
- * Applies a 1-qubit gate to parametric Bloch sphere angles (theta, phi)
- * and returns the updated theta and phi angles.
- */
+export function calculateAmplitudes(theta: number, phi: number) {
+  const alphaVal = Math.cos(theta / 2);
+  const betaMag = Math.sin(theta / 2);
+  return {
+    alpha: alphaVal,
+    beta: {
+      real: betaMag * Math.cos(phi),
+      imag: betaMag * Math.sin(phi),
+      magnitude: betaMag,
+      phase: phi,
+    },
+  };
+}
+
+export function calculateProbabilities(theta: number, _phi?: number) {
+  const prob0 = Math.cos(theta / 2) ** 2;
+  const prob1 = Math.sin(theta / 2) ** 2;
+  return { prob0, prob1 };
+}
+
+export function formatStateVectorLatex(theta: number, phi: number): string {
+  const alphaStr = Math.cos(theta / 2).toFixed(3);
+  const betaStr = Math.sin(theta / 2).toFixed(3);
+  const phiStr = phi.toFixed(2);
+  const betaTerm = Math.abs(phi) < 0.01 ? betaStr : `${betaStr}e^{i \cdot ${phiStr}}`;
+  return `|\\psi\\rangle = ${alphaStr}|0\\rangle + ${betaTerm}|1\\rangle`;
+}
+
 export function applyGate(
   theta: number,
   phi: number,

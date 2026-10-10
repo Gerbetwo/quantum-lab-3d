@@ -18,10 +18,9 @@ export interface MissionInternalState {
   [key: string]: unknown;
 }
 
-export function useGuidedMission(missionId: MissionId | string) {
+export function useGuidedMission(missionId: MissionId | string = 'superposition') {
   const { session, updateMissionState, completeMission } = useSession();
 
-  // 1. Connect Zustand store selectors
   const missionState = useQuantumStore((state) => state.missionState);
   const transitionMissionPhase = useQuantumStore(
     (state) => state.transitionMissionPhase
@@ -80,7 +79,6 @@ export function useGuidedMission(missionId: MissionId | string) {
   const steps = useMemo(() => mission?.steps || [], [mission?.steps]);
   const currentStep = steps[currentStepIndex];
 
-  // 2. Computed flags & Config
   const currentStepConfig = useMemo((): MissionStep => {
     if (currentStep) {
       return currentStep;
@@ -134,7 +132,6 @@ export function useGuidedMission(missionId: MissionId | string) {
     return Math.min(100, Math.round((uniqueCompleted / steps.length) * 100));
   }, [steps.length, completedSteps]);
 
-  // 3. FSM & Reactive Action Handlers
   const submitPrediction = useCallback(
     (prob: number) => {
       setPrediction(prob);

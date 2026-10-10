@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { GateType } from '@/core/math/circuit';
 import Tooltip from '@/shared/ui/Tooltip';
+import { useGuidedMission } from '@/features/missions/hooks/useGuidedMission';
 
 const DEFAULT_GATES: readonly GateType[] = ['H', 'X', 'Y', 'Z', 'S', 'T', 'CNOT', 'CZ', 'SWAP'];
 
@@ -41,14 +42,26 @@ const ICONS: Record<GateType, LucideIcon> = {
 };
 
 export default function GatePalette({ gates = DEFAULT_GATES, selected, onSelect, disabled = [] }: Props) {
+  const { isManipulationAllowed, currentStepConfig, executeGate } = useGuidedMission();
   const disabledSet = useMemo(() => new Set(disabled), [disabled]);
+
+  const handleGateSelect = useCallback(
+    (g: GateType) => {
+      if (disabledSet.has(g)) return;
+      if (isManipulationAllowed) {
+        executeGate?.(g);
+      }
+      onSelect(g);
+    },
+    [disabledSet, isManipulationAllowed, executeGate, onSelect],
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         const g = gates[index];
-        if (!disabledSet.has(g)) onSelect(g);
+        handleGateSelect(g);
         return;
       }
       const parent = e.currentTarget.parentElement;
@@ -62,7 +75,7 @@ export default function GatePalette({ gates = DEFAULT_GATES, selected, onSelect,
         children[(index - 1 + gates.length) % gates.length]?.focus();
       }
     },
-    [gates, onSelect, disabledSet],
+    [gates, handleGateSelect],
   );
 
   return (
@@ -75,7 +88,9 @@ export default function GatePalette({ gates = DEFAULT_GATES, selected, onSelect,
       {gates.map((g, i) => {
         const isDisabled = disabledSet.has(g);
         const isSelected = selected === g;
+        const isAllowed = Boolean(currentStepConfig?.allowedGates?.includes(g));
         const Icon = ICONS[g];
+
         return (
           <Tooltip key={g} content={LABELS[g]} delayDuration={200} side="right">
             <div
@@ -85,15 +100,19 @@ export default function GatePalette({ gates = DEFAULT_GATES, selected, onSelect,
               aria-label={LABELS[g]}
               tabIndex={isSelected ? 0 : -1}
               data-testid={'gate-option-' + g}
-              onClick={() => { if (!isDisabled) onSelect(g); }}
+              onClick={() => handleGateSelect(g)}
               onKeyDown={(e) => handleKeyDown(e, i)}
               className={clsx(
                 'px-2 py-1.5 rounded-lg text-xs font-orbitron font-bold text-center',
                 'cursor-pointer select-none border transition-all outline-none',
                 'focus:ring-2 focus:ring-cyan/40 flex items-center justify-center gap-1.5',
-                isSelected ? 'bg-cyan/20 border-cyan text-cyan'
-                  : isDisabled ? 'bg-surface-3 border-edge text-slate-600 opacity-50 cursor-not-allowed'
+                'active:scale-95 active:bg-cyan/30',
+                isSelected
+                  ? 'bg-cyan/20 border-cyan text-cyan'
+                  : isDisabled
+                  ? 'bg-surface-3 border-edge text-slate-600 opacity-50 cursor-not-allowed'
                   : 'bg-surface-3 border-edge text-muted-foreground hover:bg-muted',
+                !isDisabled && isAllowed && 'border-cyan-400 animate-pulse',
               )}
             >
               <Icon className="w-3.5 h-3.5" aria-hidden="true" />

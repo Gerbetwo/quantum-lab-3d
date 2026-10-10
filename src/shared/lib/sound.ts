@@ -22,8 +22,8 @@ export class QuantumAudioEngine {
         if (AudioContextClass) {
           this.ctx = new AudioContextClass();
         }
-      } catch (err) {
-        console.warn('AudioContext initialization failed safely:', err);
+      } catch (_err) {
+        console.warn('AudioContext initialization failed safely:', _err);
         return null;
       }
     }
@@ -39,8 +39,8 @@ export class QuantumAudioEngine {
     if (ctx && ctx.state === 'suspended') {
       try {
         await ctx.resume();
-      } catch (err) {
-        console.warn('AudioContext unlock failed safely:', err);
+      } catch (_err) {
+        console.warn('AudioContext unlock failed safely:', _err);
       }
     }
   }
@@ -78,8 +78,8 @@ export class QuantumAudioEngine {
         osc.disconnect();
         gain.disconnect();
       };
-    } catch (err) {
-      console.warn('playGateSound failed safely:', err);
+    } catch (_err) {
+      console.warn('playGateSound failed safely:', _err);
     }
   }
 
@@ -145,8 +145,8 @@ export class QuantumAudioEngine {
         noiseSource.disconnect();
         noiseGain.disconnect();
       };
-    } catch (err) {
-      console.warn('playMeasurementSound failed safely:', err);
+    } catch (_err) {
+      console.warn('playMeasurementSound failed safely:', _err);
     }
   }
 
@@ -185,8 +185,8 @@ export class QuantumAudioEngine {
           gain.disconnect();
         };
       });
-    } catch (err) {
-      console.warn('playSuccessSound failed safely:', err);
+    } catch (_err) {
+      console.warn('playSuccessSound failed safely:', _err);
     }
   }
 
@@ -221,8 +221,8 @@ export class QuantumAudioEngine {
         osc.disconnect();
         gain.disconnect();
       };
-    } catch (err) {
-      console.warn('playErrorSound failed safely:', err);
+    } catch (_err) {
+      console.warn('playErrorSound failed safely:', _err);
     }
   }
 }
@@ -233,7 +233,7 @@ export const audioEngine = new QuantumAudioEngine();
 // Legacy Standalone Exports & State Management (For Unit Tests and Consumers)
 // ============================================================================
 
-let userInteracted = false;
+let _userInteracted = false;
 let runtimeAudioEnabledOverride: boolean | null = null;
 
 export function isAudioEnabled(): boolean {
@@ -254,12 +254,12 @@ export function toggleAudio(): boolean {
 }
 
 export function __markUserInteracted(): void {
-  userInteracted = true;
+  _userInteracted = true;
 }
 
 export function __resetAudioOverride(): void {
   runtimeAudioEnabledOverride = null;
-  userInteracted = false;
+  _userInteracted = false;
 }
 
 // Standalone Helper Playback Functions
@@ -280,7 +280,7 @@ export function playNote(freq: number = 440, duration: number = 0.1): void {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + duration);
-  } catch (err) {
+  } catch (_err) {
     // Handled safely
   }
 }

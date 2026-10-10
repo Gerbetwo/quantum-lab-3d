@@ -14,7 +14,7 @@ import {
   deleteAllLocalProgress,
 } from '@/features/session/lib/sessionService';
 
-interface SessionContextType {
+export interface SessionContextType {
   session: UserSession;
   isHydrated: boolean;
   storageWarning: string | null;
@@ -38,8 +38,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<UserSession>(() => getDefaultSession());
   const [isHydrated, setIsHydrated] = useState(false);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
-  
-  // Single source of truth for elapsed time and run state at the provider level
+
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(true);
 
@@ -49,7 +48,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setIsHydrated(true);
   }, []);
 
-  // Centralized timer effect with clean disposal (no duplicate ticking)
   useEffect(() => {
     if (!isRunning || !isHydrated) return;
     const interval = setInterval(() => {
@@ -61,10 +59,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const updateAndSave = useCallback((updater: (prev: UserSession) => UserSession) => {
     setSession(prev => {
       const nextState = toCanonicalSession(updater(prev), prev.userId);
-      
-      // Save synchronously inside the updater function where nextState is defined
       const outcome = saveSession(nextState);
-      
+
       if (!outcome.success) {
         setTimeout(() => {
           setStorageWarning(outcome.error ?? 'Failed to persist session storage.');
@@ -171,10 +167,28 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useSession() {
+const DEFAULT_SESSION_CONTEXT: SessionContextType = {
+  session: getDefaultSession(),
+  isHydrated: true,
+  storageWarning: null,
+  elapsedSeconds: 0,
+  isRunning: false,
+  setActiveMission: () => {},
+  completeMission: () => {},
+  updateMissionState: () => {},
+  recordAction: () => {},
+  recordMissionTime: () => {},
+  pauseSession: () => {},
+  resumeSession: () => {},
+  incrementActionCount: () => {},
+  resetSession: () => {},
+  deleteAllProgress: () => {},
+};
+
+export function useSession(): SessionContextType {
   const context = useContext(SessionContext);
   if (!context) {
-    throw new Error('useSession must be used within a SessionProvider');
+    return DEFAULT_SESSION_CONTEXT;
   }
   return context;
 }
