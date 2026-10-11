@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 /**
  * Consolidated Unified Core Types
  * Merged from quantum/types.ts and quantum/algorithms/types.ts

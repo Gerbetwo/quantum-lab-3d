@@ -40,7 +40,6 @@
       "node",
       "@testing-library/jest-dom"
     ],
-    "baseUrl": "."
   },
   "include": [
     "src",

@@ -22,7 +22,24 @@ export interface AppShellProps {
 }
 
 export function AppShell({ children, header, footer, ...props }: AppShellProps) {
-  const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
+  const [isCelebrationOpen, setIsCelebrationOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const alreadyCelebrated = localStorage.getItem('quantum_lab_celebration_shown') === 'true';
+      if (alreadyCelebrated) return false;
+      const completedMissionsStr = localStorage.getItem('quantum_lab_completed_missions');
+      const completed: string[] = completedMissionsStr ? JSON.parse(completedMissionsStr) : [];
+      return CANONICAL_MISSIONS.every((id) => {
+        const inArray = completed.includes(id);
+        const byKey =
+          localStorage.getItem(`mission_completed_${id}`) === 'true' ||
+          localStorage.getItem(`quantum-lab-mission-${id}-completed`) === 'true';
+        return inArray || byKey;
+      });
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     // Web Audio API unlock handler for browser interaction policy
@@ -40,31 +57,6 @@ export function AppShell({ children, header, footer, ...props }: AppShellProps) 
 
     window.addEventListener('pointerdown', handleUnlock);
     window.addEventListener('keydown', handleUnlock);
-
-    // Idempotency check: if celebration was already shown/dismissed, do not re-trigger
-    const alreadyCelebrated = localStorage.getItem('quantum_lab_celebration_shown') === 'true';
-    if (!alreadyCelebrated) {
-      try {
-        // Check stored completion records for all 7 canonical missions
-        const completedMissionsStr = localStorage.getItem('quantum_lab_completed_missions');
-        const completed: string[] = completedMissionsStr ? JSON.parse(completedMissionsStr) : [];
-
-        // Ensure all seven canonical IDs are present (preventing partial triggers like missions 1-4)
-        const allSevenComplete = CANONICAL_MISSIONS.every((id) => {
-          const inArray = completed.includes(id);
-          const byKey =
-            localStorage.getItem(`mission_completed_${id}`) === 'true' ||
-            localStorage.getItem(`quantum-lab-mission-${id}-completed`) === 'true';
-          return inArray || byKey;
-        });
-
-        if (allSevenComplete) {
-          setIsCelebrationOpen(true);
-        }
-      } catch (error) {
-        console.error('Error evaluating mission completion status:', error);
-      }
-    }
 
     return () => {
       window.removeEventListener('pointerdown', handleUnlock);

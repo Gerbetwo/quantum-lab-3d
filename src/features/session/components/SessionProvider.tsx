@@ -35,19 +35,16 @@ interface SessionContextType {
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<UserSession>(() => getDefaultSession());
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [session, setSession] = useState<UserSession>(() => {
+    if (typeof window === 'undefined') return getDefaultSession();
+    return loadSession();
+  });
+  const [isHydrated] = useState(true);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   
   // Single source of truth for elapsed time and run state at the provider level
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(true);
-
-  useEffect(() => {
-    const loaded = loadSession();
-    setSession(loaded);
-    setIsHydrated(true);
-  }, []);
 
   // Centralized timer effect with clean disposal (no duplicate ticking)
   useEffect(() => {

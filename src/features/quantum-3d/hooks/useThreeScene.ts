@@ -41,13 +41,16 @@ export function useThreeScene(
 ): React.RefObject<HTMLDivElement | null> {
   const internalRef = useRef<HTMLDivElement | null>(null);
 
-  // Stabilize arguments and factory references via refs to avoid infinite re-render loops
+  // Stabilize arguments and factory references via refs using useEffect
   const argsRef = useRef(restArgs);
-  argsRef.current = restArgs;
   const optionsRef = useRef(optionsOrFirstArg);
-  optionsRef.current = optionsOrFirstArg;
   const factoryRef = useRef(containerOrFactory);
-  factoryRef.current = containerOrFactory;
+
+  useEffect(() => {
+    argsRef.current = restArgs;
+    optionsRef.current = optionsOrFirstArg;
+    factoryRef.current = containerOrFactory;
+  });
 
   useEffect(() => {
     const container = internalRef.current;

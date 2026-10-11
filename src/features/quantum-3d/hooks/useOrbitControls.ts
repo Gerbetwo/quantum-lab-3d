@@ -214,7 +214,10 @@ export function useOrbitControls(
   options?: OrbitControlsOptions
 ): RefObject<OrbitControlsHandle | null> {
   const ref = useRef<OrbitControlsHandle | null>(null);
-  const optsRef = useRef(options); optsRef.current = options;
+  const optsRef = useRef(options);
+  useEffect(() => {
+    optsRef.current = options;
+  });
 
   useEffect(() => {
     if (!camera || !domElement) return;

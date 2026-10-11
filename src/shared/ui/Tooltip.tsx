@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, cloneElement, ReactElement } from 'react';
+import React, { useState, useEffect, useRef, ReactNode } from 'react';
 
 interface TooltipProps {
   content: string;
   delayDuration?: number;
   side?: 'top' | 'right' | 'bottom' | 'left';
-  children: ReactElement;
+  children: ReactNode;
 }
 
 export default function Tooltip({
@@ -52,38 +52,16 @@ export default function Tooltip({
     };
   }, []);
 
-  const childProps: Record<string, unknown> = {
-    onMouseEnter: (e: React.MouseEvent) => {
-      const props = children.props as { onMouseEnter?: (event: React.MouseEvent) => void };
-      props.onMouseEnter?.(e);
-      handleMouseEnter();
-    },
-    onMouseLeave: (e: React.MouseEvent) => {
-      const props = children.props as { onMouseLeave?: (event: React.MouseEvent) => void };
-      props.onMouseLeave?.(e);
-      handleMouseLeave();
-    },
-    onFocus: (e: React.FocusEvent) => {
-      const props = children.props as { onFocus?: (event: React.FocusEvent) => void };
-      props.onFocus?.(e);
-      handleMouseEnter();
-    },
-    onBlur: (e: React.FocusEvent) => {
-      const props = children.props as { onBlur?: (event: React.FocusEvent) => void };
-      props.onBlur?.(e);
-      handleMouseLeave();
-    },
-  };
-
-  if (isOpen) {
-    childProps['aria-describedby'] = id;
-  }
-
-  const trigger = cloneElement(children, childProps);
-
   return (
-    <div className="relative inline-block">
-      {trigger}
+    <div
+      className="relative inline-block"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleMouseEnter}
+      onBlur={handleMouseLeave}
+      {...(isOpen ? { 'aria-describedby': id } : {})}
+    >
+      {children}
       {isOpen && (
         <div
           role="tooltip"

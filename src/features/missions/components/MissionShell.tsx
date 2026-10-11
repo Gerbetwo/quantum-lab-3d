@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { MissionDefinition, StepDefinition } from '@/features/missions/config/missions';
 
 export interface MissionShellProps {
@@ -31,11 +31,7 @@ export function MissionShell({
   children,
 }: MissionShellProps) {
   // Guard against SSR/Client state rehydration mismatch
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const [isMounted] = useState(true);
 
   const data = mission || config;
 

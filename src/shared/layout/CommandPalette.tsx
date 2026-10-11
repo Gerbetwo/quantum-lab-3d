@@ -42,15 +42,11 @@ export default function CommandPalette({
 
   useEffect(() => {
     if (!isOpen) return;
-    setQuery('');
-    setSelectedIndex(0);
     const id = setTimeout(() => inputRef.current?.focus(), 0);
     return () => clearTimeout(id);
   }, [isOpen]);
 
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
+
 
   if (!isOpen) return null;
 

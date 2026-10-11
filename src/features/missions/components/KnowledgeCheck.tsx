@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 export interface QuizOption {
   id: string;
@@ -45,10 +45,7 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
 
   const isCorrect = selectedOptionId === correctOptionId;
 
-  useEffect(() => {
-    setSubmitted(false);
-    setPassedCalled(false);
-  }, [selectedOptionId, correctOptionId]);
+  // Estado sincronizado durante render o mediante key en el componente contenedor para evitar cascade renders
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

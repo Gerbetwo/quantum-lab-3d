@@ -30,24 +30,17 @@ export function LeanLabLayout({
     useSessionTimer();
 
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // Initialize theme from localStorage without resetting mission state
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("quantum_lab_theme") as
-      | "dark"
-      | "light"
-      | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === "light") {
-        document.documentElement.classList.remove("dark");
-      } else {
-        document.documentElement.classList.add("dark");
-      }
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    const savedTheme = localStorage.getItem("quantum_lab_theme") as "dark" | "light" | null;
+    if (savedTheme === "light") {
+      document.documentElement.classList.remove("dark");
+      return "light";
     }
-  }, []);
+    document.documentElement.classList.add("dark");
+    return "dark";
+  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
