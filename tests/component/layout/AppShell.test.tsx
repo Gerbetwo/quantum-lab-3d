@@ -1,30 +1,36 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect } from 'vitest';
 import { AppShell } from '@/shared/layout/AppShell';
 
-vi.mock('@/features/session/components/SessionProvider', () => ({
-  useSession: () => ({
-    session: { userId: 'QL-ABCD', completed: [], missionState: {}, timerSeconds: 600, timerRunning: false },
-    updateMissionState: vi.fn(),
-    completeMission: vi.fn(),
-    updateTimer: vi.fn(),
-    toggleTimer: vi.fn(),
-  }),
-  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 describe('AppShell Component', () => {
-  test('renderiza el título y los hijos correctamente', () => {
+  test('renders header, main content, and footer slots correctly', () => {
     render(
-      <AppShell title="QuantumLab Test" subtitle="Subtítulo de prueba">
-        <div>Contenido Principal</div>
+      <AppShell
+        header={<header>Header Content</header>}
+        footer={<footer>Footer Content</footer>}
+      >
+        <div>Main Content Area</div>
       </AppShell>
     );
 
+    // Verify main landmark element exists
     const mainEl = screen.getByRole('main');
-    expect(mainEl).toHaveAttribute('title', 'QuantumLab Test');
-    expect(mainEl).toHaveAttribute('subtitle', 'Subtítulo de prueba');
-    expect(screen.getByText('Contenido Principal')).toBeInTheDocument();
+    expect(mainEl).toBeInTheDocument();
+
+    // Verify slot content rendering
+    expect(screen.getByText('Header Content')).toBeInTheDocument();
+    expect(screen.getByText('Main Content Area')).toBeInTheDocument();
+    expect(screen.getByText('Footer Content')).toBeInTheDocument();
+  });
+
+  test('applies custom className to the shell container', () => {
+    const { container } = render(
+      <AppShell className="custom-shell-class">
+        <div>Content</div>
+      </AppShell>
+    );
+
+    expect(container.firstChild).toHaveClass('custom-shell-class');
   });
 });
