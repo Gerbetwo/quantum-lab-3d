@@ -28,6 +28,7 @@ export const MISSIONS: readonly MissionDefinition[] = [
     requiresQuiz: false,
     order: 1,
     prerequisites: [],
+    unlocked: true,
     steps: [
       {
         id: 'classical-bit',
@@ -95,7 +96,8 @@ export const MISSIONS: readonly MissionDefinition[] = [
       'Crear un par de Bell y explicar por qué la correlación cuántica no permite transmitir información más rápido que la luz.',
     requiresQuiz: true,
     order: 2,
-    prerequisites: ['superposition'],
+    prerequisites: [],
+    unlocked: true,
     steps: [
       {
         id: 'independent-qubits',
@@ -199,7 +201,8 @@ export const MISSIONS: readonly MissionDefinition[] = [
       'Entender por qué el aislamiento térmico es esencial y cómo el enfriamiento extremo reduce las perturbaciones que colapsan los estados cuánticos.',
     requiresQuiz: true,
     order: 3,
-    prerequisites: ['entanglement'],
+    prerequisites: [],
+    unlocked: true,
     steps: [
       {
         id: 'thermal-photon',
@@ -289,7 +292,8 @@ export const MISSIONS: readonly MissionDefinition[] = [
       'Identificar las clases de problemas donde la computación cuántica puede ofrecer ventaja real, y distinguirlas de las tareas que siguen siendo más eficientes en clásico.',
     requiresQuiz: true,
     order: 4,
-    prerequisites: ['decoherence'],
+    prerequisites: [],
+    unlocked: true,
     steps: [
       {
         id: 'myths-applications',
@@ -380,7 +384,8 @@ export const MISSIONS: readonly MissionDefinition[] = [
       'Aplicar puertas elementales (X, Z, H, CNOT) a qubits y predecir el estado resultante, incluyendo el uso del circuito de tres ranuras de la misión.',
     requiresQuiz: true,
     order: 5,
-    prerequisites: ['applications'],
+    prerequisites: [],
+    unlocked: true,
     steps: [
       {
         id: 'gate-basics',
@@ -470,7 +475,8 @@ export const MISSIONS: readonly MissionDefinition[] = [
       'Explicar cómo el oráculo y el operador de difusión de Grover amplifican la amplitud del elemento buscado y qué ventaja complejidad-N tiene sobre la búsqueda clásica.',
     requiresQuiz: true,
     order: 6,
-    prerequisites: ['gates'],
+    prerequisites: [],
+    unlocked: true,
     steps: [
       {
         id: 'grover-basics',
@@ -574,7 +580,8 @@ export const MISSIONS: readonly MissionDefinition[] = [
       'Describir el código de repetición de tres qubits, distinguir la detección de síndrome de la medición directa, y enunciar el límite que impone el supuesto de error único.',
     requiresQuiz: true,
     order: 7,
-    prerequisites: ['grover'],
+    prerequisites: [],
+    unlocked: true,
     steps: [
       {
         id: 'error-basics',

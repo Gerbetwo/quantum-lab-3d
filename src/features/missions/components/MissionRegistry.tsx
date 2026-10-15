@@ -111,12 +111,13 @@ export function MissionRegistry({
 
   // src/features/missions/components/MissionRegistry.tsx
   const isQuizStep = guided.currentStep?.id === "knowledge-check";
+  const isMissionUnlocked = mission?.unlocked ?? guided.isUnlocked;
   const isContinueDisabled = Boolean(
-    !guided.isUnlocked || (isQuizStep && !guided.quizPassed),
+    !isMissionUnlocked || (isQuizStep && !guided.quizPassed),
   );
 
   // If the mission is locked, render an accessible prerequisite notice with a link
-  if (!guided.isUnlocked) {
+  if (!isMissionUnlocked) {
     const prereqId = Array.isArray(mission?.prerequisites)
       ? mission.prerequisites[0]
       : (mission?.prerequisites as unknown as string);

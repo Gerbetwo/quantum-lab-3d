@@ -84,6 +84,7 @@ export interface MissionDefinition {
   icon?: string;
   sceneType?: MissionSceneType;
   prerequisites: MissionId[];
+  unlocked?: boolean;
   steps: MissionStep[];
   quiz?: QuizDefinition;
 }
