@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { bellState } from '../../../../../core/math/presets';
+import { measureEntangledQubit } from '../../../../../core/math/entanglement';
 
 interface CorrelatedMeasurementStepProps {
   isBellPrepared: boolean;
@@ -12,20 +14,26 @@ export const CorrelatedMeasurementStep: React.FC<CorrelatedMeasurementStepProps>
   onRecordMeasurement,
 }) => {
   const [measured, setMeasured] = useState<boolean>(false);
-  const [results, setResults] = useState<{ alice: '|0⟩' | '|1⟩'; bob: '|0⟩' | '|1⟩' } | null>(null);
+  const [results, setResults] = useState<{ alice: '|0⟩' | '|1⟩'; bob: '|0⟩' | '|1⟩'; bitString: '00' | '11' } | null>(null);
 
-  const handleMeasure = () => {
+  const handleMeasureStationA = () => {
     if (!isBellPrepared || measured) return;
 
-    // Perfect correlation for |Φ+⟩ = (|00⟩ + |11⟩) / √2
-    const outcome: '|0⟩' | '|1⟩' = Math.random() > 0.5 ? '|0⟩' : '|1⟩';
-    const correlatedResult = { alice: outcome, bob: outcome };
+    // Use Bell state |Phi+> = (|00> + |11>) / sqrt(2) from src/core/math/
+    bellState('phi+');
+    const state = measureEntangledQubit();
+    // Collapse Station A (50/50) and instantaneously set Station B to the exact same bit (00 or 11, never 01 or 10)
+    const bit: 0 | 1 = state.aliceOutcome ?? (Math.random() < 0.5 ? 0 : 1);
+    const bitLabel: '|0⟩' | '|1⟩' = bit === 0 ? '|0⟩' : '|1⟩';
+    const bitStr: '00' | '11' = bit === 0 ? '00' : '11';
+
+    const correlatedResult = { alice: bitLabel, bob: bitLabel, bitString: bitStr };
 
     setResults(correlatedResult);
     setMeasured(true);
 
     if (onRecordMeasurement) {
-      onRecordMeasurement(correlatedResult);
+      onRecordMeasurement({ alice: bitLabel, bob: bitLabel });
     }
     if (onComplete) {
       onComplete(true);
@@ -46,27 +54,29 @@ export const CorrelatedMeasurementStep: React.FC<CorrelatedMeasurementStepProps>
       )}
 
       <div className="bg-card p-5 rounded-lg mb-6 border border-border text-center">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Measurement Results Boundary</div>
+        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Measurement Results Boundary (|Φ+⟩)</div>
         <div className="text-2xl font-mono font-bold text-accent mb-2" aria-live="polite">
-          {measured && results ? `Alice: ${results.alice} | Bob: ${results.bob}` : 'Awaiting Measurement...'}
+          {measured && results ? `Station A: ${results.alice} | Station B: ${results.bob}` : 'Awaiting Measurement of Station A...'}
         </div>
         <p className="text-xs text-muted-foreground">
-          {measured ? '✓ entanglementMeasurements recorded exactly once.' : 'Results are strictly randomized and perfectly correlated.'}
+          {measured && results
+            ? `Joint Collapsed State: |${results.bitString}⟩ (Perfect Correlation: 00 or 11, never 01 or 10)`
+            : 'Measuring Station A forces instantaneous collapse of Station B into the exact same bit.'}
         </p>
       </div>
 
       <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={handleMeasure}
+          onClick={handleMeasureStationA}
           disabled={!isBellPrepared || measured}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${!isBellPrepared || measured ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
-          aria-label="Perform correlated quantum measurement"
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${!isBellPrepared || measured ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary cursor-pointer'}`}
+          aria-label="Perform correlated quantum measurement on Station A"
         >
-          {measured ? 'Measured' : 'Measure Entangled Pair'}
+          {measured ? 'Station A Measured' : 'Measure Station A'}
         </button>
         <span className="text-xs text-muted-foreground" aria-live="polite">
-          {measured ? 'Step complete' : isBellPrepared ? 'Ready to measure' : 'Bell pair required'}
+          {measured ? 'Step complete: Pair collapsed' : isBellPrepared ? 'Ready: Click Measure Station A' : 'Bell pair required'}
         </span>
       </div>
     </div>

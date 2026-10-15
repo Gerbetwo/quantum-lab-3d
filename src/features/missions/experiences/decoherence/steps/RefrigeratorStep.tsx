@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuantumStore, calculateCoherenceTime } from '../../../../../store/useQuantumStore';
 
 interface RefrigeratorStepProps {
   onComplete?: (completed: boolean) => void;
@@ -6,19 +7,21 @@ interface RefrigeratorStepProps {
 }
 
 export const RefrigeratorStep: React.FC<RefrigeratorStepProps> = ({ onComplete, onStateChange }) => {
+  const setTemperature = useQuantumStore((s) => s.setTemperature);
   const [activated, setActivated] = useState<boolean>(false);
-  const [temperature, setTemperature] = useState<number>(300);
-  const [coherenceTimeUs, setCoherenceTimeUs] = useState<number>(50);
+  const [temperature, setLocalTemp] = useState<number>(300);
+  const [coherenceTimeUs, setLocalCoherence] = useState<number>(calculateCoherenceTime(300));
   const [_isCritical, setIsCritical] = useState<boolean>(true);
 
   const handleActivateRefrigerator = () => {
     if (activated) return;
     const targetTemp = 15; // 15 mK base dilution refrigerator activation
-    const targetCoherence = Number((15000 / targetTemp).toFixed(2));
+    const targetCoherence = calculateCoherenceTime(targetTemp);
     const targetCritical = targetTemp > 1200;
 
     setTemperature(targetTemp);
-    setCoherenceTimeUs(targetCoherence);
+    setLocalTemp(targetTemp);
+    setLocalCoherence(targetCoherence);
     setIsCritical(targetCritical);
     setActivated(true);
 

@@ -1,11 +1,14 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useMemo } from 'react';
-import * as THREE from 'three';
-import { createScene } from '@/features/quantum-3d/lib/sceneManager';
-import { createOrbitControls, OrbitControlsHandle } from '@/features/quantum-3d/hooks/useOrbitControls';
-import { useQuantumStore } from '@/store/useQuantumStore';
-import { calculateDecoherencePerturbation } from '@/core/math/decoherence';
+import React, { useEffect, useRef, useMemo } from "react";
+import * as THREE from "three";
+import { createScene } from "@/features/quantum-3d/lib/sceneManager";
+import {
+  createOrbitControls,
+  OrbitControlsHandle,
+} from "@/features/quantum-3d/hooks/useOrbitControls";
+import { useQuantumStore } from "@/store/useQuantumStore";
+import { calculateDecoherencePerturbation } from "@/core/math/decoherence";
 
 export const BlochSphereWorkspace: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,10 +34,14 @@ export const BlochSphereWorkspace: React.FC = () => {
     const handle = createScene(container);
     let controls: OrbitControlsHandle | null = null;
     if (handle.camera && handle.renderer?.domElement) {
-      controls = createOrbitControls(handle.camera, handle.renderer.domElement, {
-        enableDamping: true,
-        dampingFactor: 0.1,
-      });
+      controls = createOrbitControls(
+        handle.camera,
+        handle.renderer.domElement,
+        {
+          enableDamping: true,
+          dampingFactor: 0.1,
+        },
+      );
     }
 
     // Geometries and materials to explicitly dispose on unmount
@@ -91,7 +98,7 @@ export const BlochSphereWorkspace: React.FC = () => {
     const arrowDir = new THREE.Vector3(
       Math.sin(theta) * Math.cos(phi),
       Math.sin(theta) * Math.sin(phi),
-      Math.cos(theta)
+      Math.cos(theta),
     );
     if (arrowDir.lengthSq() < 1e-6) {
       arrowDir.set(0, 0, 1);
@@ -107,7 +114,7 @@ export const BlochSphereWorkspace: React.FC = () => {
       arrowLength,
       arrowColor,
       0.2,
-      0.08
+      0.08,
     );
     handle.scene.add(arrowHelper);
 
@@ -124,12 +131,13 @@ export const BlochSphereWorkspace: React.FC = () => {
       let targetLength = 1.3;
 
       if (state.temperatureK > 0.05) {
-        const { deltaTheta, deltaPhi, vectorLength } = calculateDecoherencePerturbation(
-          currentTheta,
-          currentPhi,
-          state.temperatureK,
-          state.coherenceTimeUs / 1000
-        );
+        const { deltaTheta, deltaPhi, vectorLength } =
+          calculateDecoherencePerturbation(
+            currentTheta,
+            currentPhi,
+            state.temperatureK,
+            state.coherenceTimeUs / 1000,
+          );
         currentTheta += deltaTheta;
         currentPhi += deltaPhi;
         targetLength = 1.3 * vectorLength;
@@ -188,12 +196,13 @@ export const BlochSphereWorkspace: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-full min-h-[400px] rounded-xl border border-accent-border bg-background-80 flex flex-col items-center justify-center p-4 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.08)_0%,transparent_70%)] pointer-events-none" />
+    <div className="relative w-full h-dvh min-h-0 rounded-xl border border-accent-border bg-background-80 flex overflow-hidden">
+      {/* 3D Viewport — fills ALL remaining space */}
+      <div className="relative flex-1 min-h-0">
+        <div ref={containerRef} className="absolute inset-0" />
 
-      {/* 3D Viewport Canvas Container */}
-      <div className="relative z-10 w-full flex-1 min-h-[300px]">
-        <div ref={containerRef} className="w-full h-full absolute inset-0" />
+        {/* Radial glow (behind the HUD labels, above the canvas) */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.08)_0%,transparent_70%)]" />
 
         {/* State Pole HUD Overlay */}
         <span className="absolute top-2 left-1/2 -translate-x-1/2 text-xs hud-font-mono text-accent pointer-events-none select-none bg-background-80 px-2 py-0.5 rounded border border-accent-border/40">
@@ -204,14 +213,24 @@ export const BlochSphereWorkspace: React.FC = () => {
         </span>
       </div>
 
-      {/* Coordinate & State Telemetry Dock */}
-      <div className="mt-2 z-10 flex flex-wrap gap-4 text-xs hud-font-mono text-muted-foreground bg-background-80 px-4 py-2 rounded-md border border-border">
-        <div><span className="text-accent font-bold">X:</span> {vectorCoords.x}</div>
-        <div><span className="text-axis-y font-bold">Y:</span> {vectorCoords.y}</div>
-        <div><span className="text-warning font-bold">Z:</span> {vectorCoords.z}</div>
+      {/* Telemetry dock — sits BELOW the viewport, stacked in rows */}
+      <div className="shrink-0 border-t border-border bg-background-80 px-4 py-3 text-xs hud-font-mono text-muted-foreground flex flex-col gap-1.5">
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          <div>
+            <span className="text-accent font-bold">X:</span> {vectorCoords.x}
+          </div>
+          <div>
+            <span className="text-axis-y font-bold">Y:</span> {vectorCoords.y}
+          </div>
+          <div>
+            <span className="text-warning font-bold">Z:</span> {vectorCoords.z}
+          </div>
+        </div>
+
         {lastOutcome !== null && (
-          <div className="border-l border-border pl-3">
-            <span className="text-success font-bold">COLLAPSED:</span> |{lastOutcome}⟩
+          <div className="pt-1.5 border-t border-border/60">
+            <span className="text-success font-bold">COLLAPSED:</span> |
+            {lastOutcome}⟩
           </div>
         )}
       </div>

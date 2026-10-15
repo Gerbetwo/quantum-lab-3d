@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import { useQuantumStore } from '../../../../../store/useQuantumStore';
 
 interface BlochStateStepProps {
   onComplete?: (completed: boolean) => void;
@@ -6,34 +7,40 @@ interface BlochStateStepProps {
 }
 
 export const BlochStateStep: React.FC<BlochStateStepProps> = ({ onComplete, onStateChange }) => {
-  const [theta, setTheta] = useState<number>(Math.PI / 4); // Default superposition angle
-  const [phi, setPhi] = useState<number>(0);
-  const [hasInteracted, setHasInteracted] = useState<boolean>(false);
+  const theta = useQuantumStore((s) => s.theta);
+  const phi = useQuantumStore((s) => s.phi);
+  const setAngles = useQuantumStore((s) => s.setAngles);
 
   // Canonical quantum probability calculations
   const p0 = useMemo(() => Math.cos(theta / 2) ** 2, [theta]);
   const p1 = useMemo(() => Math.sin(theta / 2) ** 2, [theta]);
 
   const handleThetaChange = (newTheta: number) => {
-    setTheta(newTheta);
-    if (!hasInteracted) {
-      setHasInteracted(true);
-      if (onComplete) onComplete(true);
-    }
+    setAngles(newTheta, phi);
+    if (onComplete) onComplete(true);
     if (onStateChange) {
-      onStateChange({ theta: newTheta, phi, p0, p1 });
+      onStateChange({ theta: newTheta, phi, p0: Math.cos(newTheta / 2) ** 2, p1: Math.sin(newTheta / 2) ** 2 });
+    }
+  };
+
+  const handlePhiChange = (newPhi: number) => {
+    setAngles(theta, newPhi);
+    if (onComplete) onComplete(true);
+    if (onStateChange) {
+      onStateChange({ theta, phi: newPhi, p0, p1 });
     }
   };
 
   const applyPreset = (presetTheta: number, presetPhi: number = 0) => {
-    setTheta(presetTheta);
-    setPhi(presetPhi);
-    if (!hasInteracted) {
-      setHasInteracted(true);
-      if (onComplete) onComplete(true);
-    }
+    setAngles(presetTheta, presetPhi);
+    if (onComplete) onComplete(true);
     if (onStateChange) {
-      onStateChange({ theta: presetTheta, phi: presetPhi, p0: Math.cos(presetTheta / 2) ** 2, p1: Math.sin(presetTheta / 2) ** 2 });
+      onStateChange({
+        theta: presetTheta,
+        phi: presetPhi,
+        p0: Math.cos(presetTheta / 2) ** 2,
+        p1: Math.sin(presetTheta / 2) ** 2,
+      });
     }
   };
 
@@ -60,50 +67,71 @@ export const BlochStateStep: React.FC<BlochStateStepProps> = ({ onComplete, onSt
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => applyPreset(0.001, 0)}
+              onClick={() => applyPreset(0, phi)}
               className="flex-1 py-1.5 px-3 bg-muted hover:bg-secondary rounded text-xs font-semibold"
             >
-              |0⟩ State
+              |0⟩
             </button>
             <button
               type="button"
-              onClick={() => applyPreset(Math.PI / 2, 0)}
+              onClick={() => applyPreset(Math.PI / 2, phi)}
               className="flex-1 py-1.5 px-3 bg-primary text-primary-foreground hover:bg-primary rounded text-xs font-semibold"
             >
-              |+⟩ State
+              |+⟩ (θ=π/2)
             </button>
             <button
               type="button"
-              onClick={() => applyPreset(Math.PI - 0.001, 0)}
+              onClick={() => applyPreset(Math.PI, phi)}
               className="flex-1 py-1.5 px-3 bg-muted hover:bg-secondary rounded text-xs font-semibold"
             >
-              |1⟩ State
+              |1⟩
             </button>
           </div>
         </div>
       </div>
 
-      {/* Theta Slider Control (Bounded from 0.001 to π - 0.001) */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <label htmlFor="theta-slider" className="text-sm font-medium text-muted-foreground">
-            Polar Angle Theta ($	heta$): <span className="font-mono text-accent">{theta.toFixed(3)} rad</span>
-          </label>
-          <span className="text-xs text-muted-foreground" aria-live="polite">
-            {hasInteracted ? '✓ Parameterized' : 'Adjust slider to interact'}
-          </span>
+      {/* Angle Sliders (theta, phi) */}
+      <div className="space-y-4 mb-6">
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label htmlFor="theta-slider" className="text-sm font-medium text-muted-foreground">
+              Polar Angle Theta (θ): <span className="font-mono text-accent">{theta.toFixed(3)} rad</span> ({(theta * 180 / Math.PI).toFixed(0)}°)
+            </label>
+            <span className="text-xs text-muted-foreground" aria-live="polite">
+              P(|0⟩): {(p0 * 100).toFixed(1)}% | P(|1⟩): {(p1 * 100).toFixed(1)}%
+            </span>
+          </div>
+          <input
+            id="theta-slider"
+            type="range"
+            min={0}
+            max={Math.PI}
+            step={0.01}
+            value={theta}
+            onChange={(e) => handleThetaChange(parseFloat(e.target.value))}
+            className="w-full accent-cyan-500 cursor-pointer bg-muted rounded-lg h-2"
+            aria-label="Theta angle slider"
+          />
         </div>
-        <input
-          id="theta-slider"
-          type="range"
-          min={0.001}
-          max={Math.PI - 0.001}
-          step={0.001}
-          value={theta}
-          onChange={(e) => handleThetaChange(parseFloat(e.target.value))}
-          className="w-full accent-cyan-500 cursor-pointer bg-muted rounded-lg h-2"
-          aria-label="Theta angle slider"
-        />
+
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label htmlFor="phi-slider" className="text-sm font-medium text-muted-foreground">
+              Azimuthal Angle Phi (φ): <span className="font-mono text-accent">{phi.toFixed(3)} rad</span> ({(phi * 180 / Math.PI).toFixed(0)}°)
+            </label>
+          </div>
+          <input
+            id="phi-slider"
+            type="range"
+            min={0}
+            max={2 * Math.PI}
+            step={0.01}
+            value={phi}
+            onChange={(e) => handlePhiChange(parseFloat(e.target.value))}
+            className="w-full accent-cyan-500 cursor-pointer bg-muted rounded-lg h-2"
+            aria-label="Phi angle slider"
+          />
+        </div>
       </div>
     </div>
   );
