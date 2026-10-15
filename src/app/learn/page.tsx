@@ -1,14 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { MISSIONS, type MissionDefinition } from '@/features/missions/config/missions';
-import LeanLabLayout from '@/shared/layout/LeanLabLayout';
-import { PageContainer } from '@/shared/layout/PageContainer';
-import { PageHeader } from '@/shared/layout/PageHeader';
-import { useSession } from '@/features/session/components/SessionProvider';
 import { CheckCircle2, Lock, PlayCircle } from 'lucide-react';
 
 import type { ReactNode } from 'react';
+import { LeanLabLayout, PageContainer, PageHeader } from '@/components/AppLayout';
+import { useSession } from '@/store/useQuantumStore';
+import { MISSIONS, MissionDefinition } from '@/features/quantum-core/quantum-missions-core';
 
 function CardWrapper({
   href,
@@ -46,7 +44,7 @@ export default function LearnPage() {
           {MISSIONS.map((mission: MissionDefinition, index: number) => {
             const isCompleted = isHydrated && completedIds.includes(mission.id);
             const prereqs = mission.prerequisites || [];
-            const isUnlocked = !isHydrated || index === 0 || prereqs.every((p) => completedIds.includes(p));
+            const isUnlocked = !isHydrated || index === 0 || prereqs.every((p: any) => completedIds.includes(p));
             const cardProps = isUnlocked ? { href: `/missions/${mission.id}` } : {};
 
             return (

@@ -1,7 +1,8 @@
+// WebGL Stub Setup
+(global as any).WebGLRenderingContext = class {};
 import '@testing-library/jest-dom/vitest';
  import { vi } from 'vitest';
- import { installWebStubs } from './tests/helpers/webgl-stub';
-
+ 
 // Mock de THREE.WebGLRenderer para evitar la inicializacion de contexto WebGL en JSDOM
 vi.mock('three', async () => {
   const actual = await vi.importActual<typeof import('three')>('three');

@@ -1,7 +1,9 @@
+import { LeanLabLayout } from '@/components/AppLayout';
+import { MISSIONS, MissionDefinition } from '@/features/quantum-core/quantum-missions-core';
+import { MissionRegistry } from '@/features/quantum-core/quantum-ui-components';
+import { isMissionId, getMissionById } from '@/store/useQuantumStore';
+
 import { notFound } from 'next/navigation';
-import { getMissionById, isMissionId, MISSIONS, type MissionDefinition } from '@/features/missions/config/missions';
-import { MissionRegistry } from '@/features/missions/components/MissionRegistry';
-import LeanLabLayout from '@/shared/layout/LeanLabLayout';
 
 interface MissionPageProps {
   params: Promise<{ id: string }>;

@@ -1,14 +1,18 @@
+import dynamic from 'next/dynamic';
 'use client';
 
 import React from 'react';
-import { AppShell } from '@/components/layout/AppShell';
-import { BlochSphereWorkspace } from '@/components/quantum/BlochSphereWorkspace';
-import { MathDock } from '@/components/quantum/MathDock';
+import { AppShell } from '@/components/AppLayout';
+const BlochSphereWorkspace = dynamic(
+  () => import('@/components/BlochCanvas'),
+  { ssr: false }
+);
+import { MathDock } from '@/components/MathHUD';
 import { useQuantumStore } from '@/store/useQuantumStore';
-import { MISSIONS } from '@/features/missions/config/missions';
+import { MISSIONS } from '@/store/useQuantumStore';
 
 export default function Page() {
-  const activeMissionId = useQuantumStore((s) => s.activeMissionId);
+  const activeMissionId = useQuantumStore((s: { activeMissionId: any; }) => s.activeMissionId);
   const currentMission = MISSIONS[activeMissionId] ?? MISSIONS[0];
 
   return (
@@ -49,7 +53,7 @@ export default function Page() {
               <div className="mt-1 flex flex-col gap-1.5">
                 <span className="text-xs font-mono text-muted-foreground uppercase">Steps:</span>
                 <div className="flex flex-col gap-1">
-                  {currentMission.steps.map((step, idx) => (
+                  {currentMission.steps.map((step: { id: any; title: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; phase: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; }, idx: number) => (
                     <div
                       key={step.id || idx}
                       className="text-xs px-2.5 py-1.5 rounded bg-background/50 border border-border/60 flex items-center justify-between"
