@@ -8,6 +8,28 @@ import { PageHeader } from '@/shared/layout/PageHeader';
 import { useSession } from '@/features/session/components/SessionProvider';
 import { CheckCircle2, Lock, PlayCircle } from 'lucide-react';
 
+import type { ReactNode } from 'react';
+
+function CardWrapper({
+  href,
+  className,
+  children,
+}: {
+  href?: string | undefined;
+  className?: string | undefined;
+  children: ReactNode;
+}) {
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return <div className={className}>{children}</div>;
+}
+
+
 export default function LearnPage() {
   const { session, isHydrated } = useSession();
   const completedIds = session?.completed || [];
@@ -25,14 +47,16 @@ export default function LearnPage() {
             const isCompleted = isHydrated && completedIds.includes(mission.id);
             const prereqs = mission.prerequisites || [];
             const isUnlocked = !isHydrated || index === 0 || prereqs.every((p) => completedIds.includes(p));
+            const cardProps = isUnlocked ? { href: `/missions/${mission.id}` } : {};
 
             return (
-              <div
+              <CardWrapper
                 key={mission.id}
-                className={`group flex flex-col justify-between p-6 rounded-2xl border transition-all duration-350 ${
+                {...cardProps}
+                className={`group flex flex-col justify-between p-6 rounded-2xl border transition-all duration-350 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${
                   isUnlocked
-                    ? 'bg-background/70 border-border hover:border-cyan-500/50 hover:bg-card/60'
-                    : 'bg-background/40 border-border/80 opacity-60'
+                    ? 'bg-background/70 border-border hover:border-cyan-500/50 hover:bg-card/60 cursor-pointer'
+                    : 'bg-background/40 border-border/80 opacity-60 cursor-not-allowed'
                 }`}
               >
                 <div>
@@ -64,19 +88,16 @@ export default function LearnPage() {
 
                 <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-between">
                   {isUnlocked ? (
-                    <Link
-                      href={`/missions/${mission.id}`}
-                      className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded"
-                    >
+                    <span className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                       {isCompleted ? 'Review Mission' : 'Start Mission'} &rarr;
-                    </Link>
+                    </span>
                   ) : (
-                    <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1 cursor-not-allowed">
+                    <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                       Prerequisite Required
                     </span>
                   )}
                 </div>
-              </div>
+              </CardWrapper>
             );
           })}
         </div>
