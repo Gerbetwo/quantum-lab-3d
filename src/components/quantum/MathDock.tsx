@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useQuantumStore } from '../../store/useQuantumStore';
 import { GlassCard } from '../ui/GlassCard';
@@ -11,21 +13,26 @@ export const MathDock: React.FC = () => {
   const setAngles = useQuantumStore((s) => s.setAngles);
   const setTemperature = useQuantumStore((s) => s.setTemperature);
 
-  const alpha = Math.cos(theta / 2).toFixed(3);
-  const beta = Math.sin(theta / 2).toFixed(3);
-  const prob0 = (Math.cos(theta / 2) ** 2 * 100).toFixed(1);
-  const prob1 = (Math.sin(theta / 2) ** 2 * 100).toFixed(1);
+  const alpha = Math.cos(theta / 2);
+  const beta = Math.sin(theta / 2);
+  const prob0 = (alpha ** 2 * 100).toFixed(1);
+  const prob1 = (beta ** 2 * 100).toFixed(1);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-      <GlassCard title="Quantum State Vector" badge="LaTeX Pure">
-        <div className="p-2 hud-font-mono text-sm text-accent-light bg-background-60 rounded border border-accent-border my-2">
-          |ψ⟩ = {alpha}|0⟩ + {beta}e^(i·{phi.toFixed(2)})|1⟩
+    <div className="flex flex-col gap-3 w-full">
+      <GlassCard title="Dirac State Vector" badge="|ψ⟩">
+        <div className="p-2 hud-font-mono text-sm text-accent-light bg-background-60 rounded border border-accent-border my-1">
+          |ψ⟩ = {alpha.toFixed(3)}|0⟩ + {beta.toFixed(3)}|1⟩
         </div>
-        <div className="mt-3 flex flex-col gap-2">
-          <label className="text-xs text-muted-foreground flex justify-between">
-            <span>Polar Angle (θ): {(theta * 180 / Math.PI).toFixed(0)}°</span>
-          </label>
+        <div className="mt-2 flex flex-col gap-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>α = Math.cos(θ/2) = {alpha.toFixed(3)}</span>
+            <span>β = Math.sin(θ/2) = {beta.toFixed(3)}</span>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <span>Polar (θ): {(theta * 180 / Math.PI).toFixed(0)}°</span>
+            <span>Azimuthal (φ): {(phi * 180 / Math.PI).toFixed(0)}°</span>
+          </div>
           <input
             type="range"
             min="0"
@@ -33,7 +40,7 @@ export const MathDock: React.FC = () => {
             step="0.01"
             value={theta}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAngles(parseFloat(e.target.value), phi)}
-            className="w-full accent-cyan-400 cursor-pointer"
+            className="w-full accent-cyan-400 cursor-pointer mt-1"
           />
         </div>
       </GlassCard>
@@ -42,7 +49,7 @@ export const MathDock: React.FC = () => {
         <div className="space-y-3 my-1">
           <div>
             <div className="flex justify-between text-xs hud-font-mono mb-1">
-              <span className="text-accent">P(|0⟩)</span>
+              <span className="text-accent font-semibold">P(|0⟩) = α²</span>
               <span>{prob0}%</span>
             </div>
             <div className="w-full h-2 bg-card rounded-full overflow-hidden">
@@ -51,7 +58,7 @@ export const MathDock: React.FC = () => {
           </div>
           <div>
             <div className="flex justify-between text-xs hud-font-mono mb-1">
-              <span className="text-axis-y">P(|1⟩)</span>
+              <span className="text-axis-y font-semibold">P(|1⟩) = β²</span>
               <span>{prob1}%</span>
             </div>
             <div className="w-full h-2 bg-card rounded-full overflow-hidden">
@@ -60,8 +67,9 @@ export const MathDock: React.FC = () => {
           </div>
         </div>
         <button
+          type="button"
           onClick={() => measureQubit()}
-          className="mt-3 w-full py-2 rounded bg-accent hover:bg-accent text-accent-foreground font-bold text-xs uppercase tracking-wider hud-font-mono transition-all shadow-[0_0_15px_rgba(0,240,255,0.3)]"
+          className="mt-3 w-full py-2 rounded bg-accent hover:bg-accent text-accent-foreground font-bold text-xs uppercase tracking-wider hud-font-mono transition-all shadow-[0_0_15px_rgba(0,240,255,0.3)] cursor-pointer"
         >
           Execute Wavefunction Collapse
         </button>
@@ -75,9 +83,9 @@ export const MathDock: React.FC = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Coherence T₂:</span>
-            <span className="text-success font-bold">{coherenceTimeUs} μs</span>
+            <span className="text-success font-bold">{coherenceTimeUs.toFixed(1)} μs</span>
           </div>
-          <div className="pt-2">
+          <div className="pt-1">
             <label className="text-muted-foreground block mb-1">Thermal Fluctuation Controller</label>
             <input
               type="range"
@@ -85,7 +93,7 @@ export const MathDock: React.FC = () => {
               max="2.0"
               step="0.01"
               value={temperatureK}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTemperature(parseFloat(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTemperature(parseFloat(e.target.value) * 1000)}
               className="w-full accent-amber-400 cursor-pointer"
             />
           </div>
