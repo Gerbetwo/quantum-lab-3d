@@ -59,7 +59,7 @@ export const SingleGroverIterationStep: React.FC<SingleGroverIterationStepProps>
               </span>
               <div className="w-full bg-card h-1.5 rounded-full mt-2 overflow-hidden">
                 <div 
-                  className={`h-full ${idx === targetIndex ? 'bg-cyan-400' : 'bg-slate-600'}`} 
+                  className={`h-full ${idx === targetIndex ? 'bg-accent' : 'bg-slate-600'}`} 
                   style={{ width: `${Math.min(prob * 100, 100)}%` }}
                 />
               </div>
@@ -76,7 +76,7 @@ export const SingleGroverIterationStep: React.FC<SingleGroverIterationStepProps>
           type="button"
           onClick={handleRunIteration}
           disabled={loading}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${loading ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${loading ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Run single Grover iteration"
         >
           {loading ? 'Running Iteration...' : executed ? 'Run Another Iteration' : 'Run Single Iteration'}

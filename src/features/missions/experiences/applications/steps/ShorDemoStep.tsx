@@ -65,7 +65,7 @@ export const ShorDemoStep: React.FC<ShorDemoStepProps> = ({
       </p>
 
       {/* Physics / Scope Safeguards */}
-      <div className="bg-card p-4 rounded-lg mb-6 border border-border text-xs text-amber-300 space-y-1">
+      <div className="bg-card p-4 rounded-lg mb-6 border border-border text-xs text-warning space-y-1">
         <div>⚠️ <strong>Educational Scope:</strong> Evaluates integer N=15 using educational simulator parameters.</div>
         <div>🔒 <strong>Hardware & Security Limit:</strong> Never claim RSA-2048 capability or real NISQ hardware runtime from this educational client demo.</div>
       </div>
@@ -92,17 +92,17 @@ export const ShorDemoStep: React.FC<ShorDemoStepProps> = ({
             </div>
             <div className="bg-background p-3 rounded border border-border">
               <span className="text-[10px] text-muted-foreground block uppercase">Factor 1 (p)</span>
-              <span className="font-mono text-emerald-300 text-lg">{resultData.p}</span>
+              <span className="font-mono text-success text-lg">{resultData.p}</span>
             </div>
             <div className="bg-background p-3 rounded border border-border">
               <span className="text-[10px] text-muted-foreground block uppercase">Factor 2 (q)</span>
-              <span className="font-mono text-emerald-300 text-lg">{resultData.q}</span>
+              <span className="font-mono text-success text-lg">{resultData.q}</span>
             </div>
           </div>
         )}
 
         {status === 'error' && errorMessage && (
-          <div className="mt-3 text-xs text-red-400 bg-red-950/40 p-2 rounded border border-red-800">
+          <div className="mt-3 text-xs text-destructive bg-destructive-subtle p-2 rounded border border-destructive-border">
             {errorMessage}
           </div>
         )}
@@ -113,7 +113,7 @@ export const ShorDemoStep: React.FC<ShorDemoStepProps> = ({
           type="button"
           onClick={handleRunShor}
           disabled={status === 'loading'}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${status === 'loading' ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${status === 'loading' ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Run Shor algorithm for N equals 15"
         >
           {status === 'loading' ? 'Executing...' : status === 'success' ? 'Re-run Shor Algorithm' : 'Run Shor (N=15)'}

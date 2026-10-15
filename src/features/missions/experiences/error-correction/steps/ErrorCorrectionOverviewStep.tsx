@@ -35,7 +35,7 @@ export const ErrorCorrectionOverviewStep: React.FC<ErrorCorrectionOverviewStepPr
         </div>
 
         <div className="bg-card p-4 rounded-lg border border-border">
-          <span className="text-[10px] uppercase tracking-wider text-purple-400 block mb-1">Syndrome & Majority Vote</span>
+          <span className="text-[10px] uppercase tracking-wider text-axis-y block mb-1">Syndrome & Majority Vote</span>
           <p className="text-xs text-muted-foreground">
             Syndrome measurements detect errors without destroying the encoded quantum superposition state, allowing a majority vote decoder to identify and correct single bit-flips.
           </p>
@@ -43,7 +43,7 @@ export const ErrorCorrectionOverviewStep: React.FC<ErrorCorrectionOverviewStepPr
       </div>
 
       {/* Limitations Warning */}
-      <div className="bg-amber-950/40 border border-amber-600/50 p-4 rounded-lg mb-6 text-xs text-amber-200">
+      <div className="bg-warning-subtle border border-warning-border p-4 rounded-lg mb-6 text-xs text-warning">
         ⚠️ <strong>Important Limitations:</strong> This simplified repetition code only protects against isolated single bit-flips. It <em>does not</em> correct phase errors or arbitrary multiple simultaneous bit-flips.
       </div>
 
@@ -52,7 +52,7 @@ export const ErrorCorrectionOverviewStep: React.FC<ErrorCorrectionOverviewStepPr
           type="button"
           onClick={handleAcknowledge}
           disabled={acknowledged}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${acknowledged ? 'bg-emerald-700 text-white cursor-default' : 'bg-primary text-primary-foreground hover:opacity-90 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${acknowledged ? 'bg-success-hover text-white cursor-default' : 'bg-primary text-primary-foreground hover:opacity-90 text-white'}`}
           aria-label="Acknowledge error correction overview"
         >
           {acknowledged ? '✓ Acknowledged & Understood' : 'Acknowledge Overview'}

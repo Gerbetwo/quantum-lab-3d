@@ -50,7 +50,7 @@ export const CoinAnalogyStep: React.FC<CoinAnalogyStepProps> = ({ onComplete, on
     <div className="p-6 bg-background rounded-xl text-foreground shadow-lg border border-border" role="region" aria-label="Coin Analogy Step">
       <h3 className="text-xl font-bold mb-3">The Coin Analogy & Limitations</h3>
       <p className="text-sm text-muted-foreground mb-4">
-        <strong className="text-amber-300">Intuition Aid Notice:</strong> Spinning a coin is a helpful analogy for superposition, but it is <em>not</em> a literal qubit. A spinning coin is always definitively heads or tails at any microscopic snapshot; true quantum superposition involves complex probability amplitudes before measurement.
+        <strong className="text-warning">Intuition Aid Notice:</strong> Spinning a coin is a helpful analogy for superposition, but it is <em>not</em> a literal qubit. A spinning coin is always definitively heads or tails at any microscopic snapshot; true quantum superposition involves complex probability amplitudes before measurement.
       </p>
 
       <div className="bg-card p-6 rounded-lg text-center mb-6 border border-border">
@@ -69,7 +69,7 @@ export const CoinAnalogyStep: React.FC<CoinAnalogyStepProps> = ({ onComplete, on
           type="button"
           onClick={handleLaunch}
           disabled={status === 'spinning'}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${status === 'spinning' ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${status === 'spinning' ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Launch coin simulation"
         >
           {status === 'spinning' ? 'Spinning...' : 'Launch Coin'}

@@ -97,14 +97,14 @@ export const GroverExperience: React.FC<GroverExperienceProps> = ({ onMissionCom
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   Quadratic speedup (proportional to the square root of N).
                 </button>
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   Universal exponential speedup for all computational problems. (Incorrect)
                 </button>

@@ -90,14 +90,14 @@ export const GatesExperience: React.FC<GatesExperienceProps> = ({ onMissionCompl
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   It creates an equal superposition state ((|0⟩ + |1⟩)/√2) with 50%/50% probabilities.
                 </button>
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   It forces the qubit into a deterministic |1⟩ state. (Incorrect)
                 </button>

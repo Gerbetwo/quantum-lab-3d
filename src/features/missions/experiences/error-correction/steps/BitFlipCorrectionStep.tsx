@@ -73,17 +73,17 @@ export const BitFlipCorrectionStep: React.FC<BitFlipCorrectionStepProps> = ({
 
         <div className="flex justify-between items-center text-xs border-b border-border pb-3">
           <span className="text-muted-foreground uppercase tracking-wider">Corrupted Word (After Error)</span>
-          <span className="font-mono text-amber-300 font-bold text-base">{corruptedWord}</span>
+          <span className="font-mono text-warning font-bold text-base">{corruptedWord}</span>
         </div>
 
         <div className="flex justify-between items-center text-xs border-b border-border pb-3">
           <span className="text-muted-foreground uppercase tracking-wider">Measured Syndrome</span>
-          <span className="font-mono text-purple-300 font-bold text-base">{syndrome}</span>
+          <span className="font-mono text-axis-y font-bold text-base">{syndrome}</span>
         </div>
 
         <div className="flex justify-between items-center text-xs">
           <span className="text-muted-foreground uppercase tracking-wider">Corrected Output State</span>
-          <span className="font-mono text-emerald-300 font-bold text-base">{isCorrected ? correctedWord : 'Awaiting Correction...'}</span>
+          <span className="font-mono text-success font-bold text-base">{isCorrected ? correctedWord : 'Awaiting Correction...'}</span>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export const BitFlipCorrectionStep: React.FC<BitFlipCorrectionStepProps> = ({
               key={idx}
               type="button"
               onClick={() => handleInjectError(idx)}
-              className={`flex-1 py-2.5 rounded font-mono font-bold text-sm transition-colors ${errorIndex === idx ? 'bg-amber-600 text-white' : 'bg-card hover:bg-muted text-foreground border border-border'}`}
+              className={`flex-1 py-2.5 rounded font-mono font-bold text-sm transition-colors ${errorIndex === idx ? 'bg-warning text-white' : 'bg-card hover:bg-muted text-foreground border border-border'}`}
               aria-label={`Inject bit error at physical qubit index ${idx}`}
             >
               Flip Qubit [{idx}]
@@ -112,7 +112,7 @@ export const BitFlipCorrectionStep: React.FC<BitFlipCorrectionStepProps> = ({
             type="button"
             onClick={handleCorrect}
             disabled={errorIndex === null || isCorrected}
-            className={`px-5 py-2.5 font-medium rounded-lg transition-colors focus:ring-2 focus:ring-cyan-400 ${errorIndex === null || isCorrected ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+            className={`px-5 py-2.5 font-medium rounded-lg transition-colors focus:ring-2 focus:ring-ring ${errorIndex === null || isCorrected ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
             aria-label="Apply error correction"
           >
             {isCorrected ? 'Corrected' : 'Apply Syndrome Correction'}
@@ -120,7 +120,7 @@ export const BitFlipCorrectionStep: React.FC<BitFlipCorrectionStepProps> = ({
           <button
             type="button"
             onClick={handleReset}
-            className="px-5 py-2.5 bg-muted hover:bg-slate-600 active:bg-card text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-slate-400"
+            className="px-5 py-2.5 bg-muted hover:bg-secondary active:bg-card text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-ring"
             aria-label="Reset error simulation"
           >
             Reset

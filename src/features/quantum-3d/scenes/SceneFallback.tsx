@@ -29,7 +29,7 @@ export const SceneFallback: React.FC<SceneFallbackProps> = ({
       <h3 className="text-base font-semibold text-foreground mb-1 text-center">{title}</h3>
       <p className="text-sm text-muted-foreground text-center max-w-md">{description}</p>
       {stateSummary && (
-        <div className="mt-4 p-3 bg-card/80 border border-border rounded-lg w-full max-w-md">
+        <div className="mt-4 p-3 bg-card-80 border border-border rounded-lg w-full max-w-md">
           <span className="text-xs font-mono uppercase tracking-wider text-accent block mb-1">Current Simulation State:</span>
           <p className="text-xs font-mono text-foreground">{stateSummary}</p>
         </div>

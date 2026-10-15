@@ -49,7 +49,7 @@ export function MissionShell({
       {/* Mission Header */}
       <div className="mb-6 border-b border-border pb-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold px-2.5 py-1 bg-cyan-950 text-accent border border-cyan-800 rounded-full">
+          <span className="text-xs font-semibold px-2.5 py-1 bg-accent-subtle text-accent border border-accent-border rounded-full">
             Misión {data?.order ?? ''}
           </span>
           <span className="text-xs font-medium text-muted-foreground">
@@ -63,7 +63,7 @@ export function MissionShell({
           {data?.description ?? data?.subtitle ?? ''}
         </p>
         {data?.learningObjective && (
-          <div className="mt-3 p-3 bg-background/80 border border-border rounded-lg text-xs text-muted-foreground">
+          <div className="mt-3 p-3 bg-background-80 border border-border rounded-lg text-xs text-muted-foreground">
             <span className="font-semibold text-accent">Objetivo de aprendizaje:</span>{' '}
             {data.learningObjective}
           </div>
@@ -73,14 +73,14 @@ export function MissionShell({
       {/* Progress Bar */}
       <div className="w-full bg-background h-1.5 rounded-full mb-6 overflow-hidden">
         <div
-          className="bg-cyan-500 h-full transition-all duration-300"
+          className="bg-accent h-full transition-all duration-300"
           style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
         />
       </div>
 
       {/* Current Step Instruction Area */}
       {currentStep && (
-        <div className="mb-6 p-4 bg-background/60 border border-border/80 rounded-xl">
+        <div className="mb-6 p-4 bg-background-60 border border-border-80 rounded-xl">
           <h2 className="text-sm font-semibold text-accent mb-1">
             {currentStep.title}
           </h2>
@@ -101,7 +101,7 @@ export function MissionShell({
           disabled={Boolean(isPreviousDisabled)}
           className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all ${
             isPreviousDisabled
-              ? 'opacity-40 cursor-not-allowed bg-background border-border text-slate-600'
+              ? 'opacity-40 cursor-not-allowed bg-background border-border text-muted-foreground'
               : 'bg-background hover:bg-card border-border text-foreground cursor-pointer'
           }`}
         >
@@ -109,7 +109,7 @@ export function MissionShell({
         </button>
 
         {isCompleted && (
-          <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-3 py-1.5 rounded-lg">
+          <span className="text-xs font-semibold text-success bg-success-subtle border border-success-border px-3 py-1.5 rounded-lg">
             ✨ Misión Completada
           </span>
         )}
@@ -121,7 +121,7 @@ export function MissionShell({
           className={`px-6 py-2 rounded-lg text-xs font-semibold transition-all ${
             isNextDisabled
               ? 'opacity-40 cursor-not-allowed bg-card text-muted-foreground border border-border'
-              : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 cursor-pointer shadow-lg shadow-cyan-500/20'
+              : 'bg-accent hover:bg-accent text-accent-foreground cursor-pointer shadow-lg shadow-hud-glow'
           }`}
         >
           {currentStepIndex >= totalSteps - 1 ? 'Finalizar Misión' : 'Continuar →'}

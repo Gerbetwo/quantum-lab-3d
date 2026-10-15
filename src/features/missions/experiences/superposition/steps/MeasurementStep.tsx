@@ -48,7 +48,7 @@ export const MeasurementStep: React.FC<MeasurementStepProps> = ({ onComplete, on
           type="button"
           onClick={handleMeasure}
           disabled={collapsed}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${collapsed ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${collapsed ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Perform quantum measurement collapse"
         >
           {collapsed ? 'Measurement Recorded' : 'Collapse Wavefunction'}

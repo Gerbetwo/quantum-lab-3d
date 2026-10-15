@@ -13,25 +13,25 @@ export interface StatusMessageProps {
 const statusConfig = {
   success: {
     icon: CheckCircle2,
-    colorClass: 'bg-emerald-950/60 border-emerald-800 text-emerald-300',
-    iconColor: 'text-emerald-400',
+    colorClass: 'bg-success-subtle border-success-border text-success',
+    iconColor: 'text-success',
     label: 'Success:',
   },
   error: {
     icon: AlertCircle,
-    colorClass: 'bg-rose-950/60 border-rose-800 text-rose-300',
-    iconColor: 'text-rose-400',
+    colorClass: 'bg-destructive-subtle border-destructive-border text-destructive',
+    iconColor: 'text-destructive',
     label: 'Error:',
   },
   warning: {
     icon: AlertTriangle,
-    colorClass: 'bg-amber-950/60 border-amber-800 text-amber-300',
-    iconColor: 'text-amber-400',
+    colorClass: 'bg-warning-subtle border-warning-border text-warning',
+    iconColor: 'text-warning',
     label: 'Warning:',
   },
   info: {
     icon: Info,
-    colorClass: 'bg-cyan-950/60 border-cyan-800 text-accent',
+    colorClass: 'bg-accent-subtle border-accent-border text-accent',
     iconColor: 'text-accent',
     label: 'Information:',
   },

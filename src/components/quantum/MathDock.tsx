@@ -19,7 +19,7 @@ export const MathDock: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
       <GlassCard title="Quantum State Vector" badge="LaTeX Pure">
-        <div className="p-2 hud-font-mono text-sm text-cyan-200 bg-background/60 rounded border border-cyan-900/40 my-2">
+        <div className="p-2 hud-font-mono text-sm text-accent-light bg-background-60 rounded border border-accent-border my-2">
           |ψ⟩ = {alpha}|0⟩ + {beta}e^(i·{phi.toFixed(2)})|1⟩
         </div>
         <div className="mt-3 flex flex-col gap-2">
@@ -46,22 +46,22 @@ export const MathDock: React.FC = () => {
               <span>{prob0}%</span>
             </div>
             <div className="w-full h-2 bg-card rounded-full overflow-hidden">
-              <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${prob0}%` }} />
+              <div className="h-full bg-accent transition-all duration-300" style={{ width: `${prob0}%` }} />
             </div>
           </div>
           <div>
             <div className="flex justify-between text-xs hud-font-mono mb-1">
-              <span className="text-purple-400">P(|1⟩)</span>
+              <span className="text-axis-y">P(|1⟩)</span>
               <span>{prob1}%</span>
             </div>
             <div className="w-full h-2 bg-card rounded-full overflow-hidden">
-              <div className="h-full bg-purple-500 transition-all duration-300" style={{ width: `${prob1}%` }} />
+              <div className="h-full bg-quantum-purple transition-all duration-300" style={{ width: `${prob1}%` }} />
             </div>
           </div>
         </div>
         <button
           onClick={() => measureQubit()}
-          className="mt-3 w-full py-2 rounded bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider hud-font-mono transition-all shadow-[0_0_15px_rgba(0,240,255,0.3)]"
+          className="mt-3 w-full py-2 rounded bg-accent hover:bg-accent text-accent-foreground font-bold text-xs uppercase tracking-wider hud-font-mono transition-all shadow-[0_0_15px_rgba(0,240,255,0.3)]"
         >
           Execute Wavefunction Collapse
         </button>
@@ -71,11 +71,11 @@ export const MathDock: React.FC = () => {
         <div className="space-y-2 text-xs hud-font-mono">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Temperature:</span>
-            <span className="text-amber-400 font-bold">{temperatureK.toFixed(3)} K</span>
+            <span className="text-warning font-bold">{temperatureK.toFixed(3)} K</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Coherence T₂:</span>
-            <span className="text-emerald-400 font-bold">{coherenceTimeUs} μs</span>
+            <span className="text-success font-bold">{coherenceTimeUs} μs</span>
           </div>
           <div className="pt-2">
             <label className="text-muted-foreground block mb-1">Thermal Fluctuation Controller</label>

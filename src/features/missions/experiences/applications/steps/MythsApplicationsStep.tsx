@@ -76,17 +76,17 @@ export const MythsApplicationsStep: React.FC<MythsApplicationsStepProps> = ({ on
               type="button"
               onClick={() => handleSelect(card)}
               aria-pressed={isSelected}
-              className={`text-left p-4 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400 ${isSelected ? 'bg-card border-cyan-500 shadow-md ring-2 ring-cyan-500/50' : 'bg-card/60 border-border hover:bg-card'}`}
+              className={`text-left p-4 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-ring ${isSelected ? 'bg-card border-accent-border shadow-md ring-2 focus:ring-ring-subtle' : 'bg-card-60 border-border hover:bg-card'}`}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded ${isPlausible ? 'bg-cyan-950 text-accent border border-cyan-700' : 'bg-amber-950 text-amber-300 border border-amber-700'}`}>
+                <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded ${isPlausible ? 'bg-accent-subtle text-accent border border-accent-border' : 'bg-warning-subtle text-warning border border-warning-border'}`}>
                   {card.category}
                 </span>
                 {isSelected && <span className="text-xs text-accent font-bold">✓ Selected</span>}
               </div>
               <h4 className="font-bold text-base mb-1 text-foreground">{card.title}</h4>
               <p className="text-xs text-muted-foreground mb-2">{card.description}</p>
-              <p className="text-[11px] text-muted-foreground italic border-t border-border/60 pt-2">{card.detail}</p>
+              <p className="text-[11px] text-muted-foreground italic border-t border-border-60 pt-2">{card.detail}</p>
             </button>
           );
         })}

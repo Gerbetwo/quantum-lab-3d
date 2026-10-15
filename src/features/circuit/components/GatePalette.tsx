@@ -92,7 +92,7 @@ export default function GatePalette({ gates = DEFAULT_GATES, selected, onSelect,
                 'cursor-pointer select-none border transition-all outline-none',
                 'focus:ring-2 focus:ring-cyan/40 flex items-center justify-center gap-1.5',
                 isSelected ? 'bg-cyan/20 border-cyan text-cyan'
-                  : isDisabled ? 'bg-surface-3 border-edge text-slate-600 opacity-50 cursor-not-allowed'
+                  : isDisabled ? 'bg-surface-3 border-edge text-muted-foreground opacity-50 cursor-not-allowed'
                   : 'bg-surface-3 border-edge text-muted-foreground hover:bg-muted',
               )}
             >

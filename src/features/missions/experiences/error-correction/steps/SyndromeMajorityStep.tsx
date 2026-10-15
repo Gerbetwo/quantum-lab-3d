@@ -28,22 +28,22 @@ export const SyndromeMajorityStep: React.FC<SyndromeMajorityStepProps> = ({ onCo
         Using the canonical domain API, syndrome extraction inspects parity checks across the three-bit repetition code word without collapsing logical superposition. A majority-vote decision then corrects the documented single-error case.
       </p>
 
-      <div className="bg-amber-950/40 border border-amber-600/50 p-4 rounded-lg mb-6 text-xs text-amber-200">
+      <div className="bg-warning-subtle border border-warning-border p-4 rounded-lg mb-6 text-xs text-warning">
         ⚠️ <strong>Limitation Note:</strong> This mechanism corrects <em>only</em> the documented single-error case. Multiple simultaneous errors cause misidentification and decode into incorrect states.
       </div>
 
       <div className="bg-card p-5 rounded-lg mb-6 border border-border space-y-3">
         <div className="flex justify-between items-center text-xs border-b border-border pb-2">
           <span className="text-muted-foreground">Three-Bit Word (Test Input):</span>
-          <span className="font-mono text-amber-300 font-bold">{word.join('')}</span>
+          <span className="font-mono text-warning font-bold">{word.join('')}</span>
         </div>
         <div className="flex justify-between items-center text-xs border-b border-border pb-2">
           <span className="text-muted-foreground">Extracted Syndrome:</span>
-          <span className="font-mono text-purple-300 font-bold">{evaluated ? syndromeStr : '10'}</span>
+          <span className="font-mono text-axis-y font-bold">{evaluated ? syndromeStr : '10'}</span>
         </div>
         <div className="flex justify-between items-center text-xs">
           <span className="text-muted-foreground">Majority-Vote Corrected Output:</span>
-          <span className="font-mono text-emerald-300 font-bold">{evaluated ? corrected : 'Pending Evaluation...'}</span>
+          <span className="font-mono text-success font-bold">{evaluated ? corrected : 'Pending Evaluation...'}</span>
         </div>
       </div>
 
@@ -52,7 +52,7 @@ export const SyndromeMajorityStep: React.FC<SyndromeMajorityStepProps> = ({ onCo
           type="button"
           onClick={handleEvaluate}
           disabled={evaluated}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${evaluated ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${evaluated ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Evaluate syndrome and majority vote"
         >
           {evaluated ? 'Evaluated' : 'Run Syndrome & Majority Vote'}

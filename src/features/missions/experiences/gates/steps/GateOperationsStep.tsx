@@ -97,7 +97,7 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
             type="button"
             onClick={handleAcknowledge}
             disabled={acknowledged}
-            className={'px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ' + (acknowledged ? 'bg-emerald-700 text-white cursor-default' : 'bg-primary text-primary-foreground hover:opacity-90 text-white')}
+            className={'px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ' + (acknowledged ? 'bg-success-hover text-white cursor-default' : 'bg-primary text-primary-foreground hover:opacity-90 text-white')}
             aria-label="Acknowledge gate basics"
           >
             {acknowledged ? '✓ Acknowledged' : 'Acknowledge Gate Basics'}
@@ -128,15 +128,15 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
         <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border text-xs">
           <div>
             <span className="text-muted-foreground block mb-1">P(|0⟩) Probability</span>
-            <span className="font-mono text-lg text-emerald-300">{(p0 * 100).toFixed(0)}%</span>
+            <span className="font-mono text-lg text-success">{(p0 * 100).toFixed(0)}%</span>
           </div>
           <div>
             <span className="text-muted-foreground block mb-1">P(|1⟩) Probability</span>
-            <span className="font-mono text-lg text-emerald-300">{(p1 * 100).toFixed(0)}%</span>
+            <span className="font-mono text-lg text-success">{(p1 * 100).toFixed(0)}%</span>
           </div>
         </div>
         {phaseNote && (
-          <div className="mt-3 text-xs text-amber-300 bg-amber-950/40 p-2.5 rounded border border-amber-800" aria-live="polite">
+          <div className="mt-3 text-xs text-warning bg-warning-subtle p-2.5 rounded border border-warning-border" aria-live="polite">
             {phaseNote}
           </div>
         )}
@@ -146,7 +146,7 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
         <button
           type="button"
           onClick={() => applyGate('X')}
-          className="px-5 py-2.5 bg-cyan-700 hover:bg-primary text-primary-foreground active:bg-cyan-800 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-cyan-400"
+          className="px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary active:bg-accent-border text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-ring"
           aria-label="Apply Pauli-X gate"
         >
           Apply X Gate
@@ -154,7 +154,7 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
         <button
           type="button"
           onClick={() => applyGate('Z')}
-          className="px-5 py-2.5 bg-indigo-700 hover:bg-indigo-600 active:bg-indigo-800 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-indigo-400"
+          className="px-5 py-2.5 bg-quantum-indigo hover:bg-quantum-indigo-hover active:bg-quantum-indigo-active text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-quantum-indigo"
           aria-label="Apply Pauli-Z gate"
         >
           Apply Z Gate
@@ -162,7 +162,7 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
         <button
           type="button"
           onClick={() => applyGate('H')}
-          className="px-5 py-2.5 bg-purple-700 hover:bg-purple-600 active:bg-purple-800 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-purple-400"
+          className="px-5 py-2.5 bg-quantum-purple hover:bg-quantum-purple active:bg-quantum-purple-active text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-axis-y"
           aria-label="Apply Hadamard gate"
         >
           Apply Hadamard (H)
@@ -170,7 +170,7 @@ export const GateOperationsStep: React.FC<GateOperationsStepProps> = ({
         <button
           type="button"
           onClick={() => applyGate('Reset')}
-          className="px-5 py-2.5 bg-muted hover:bg-slate-600 active:bg-card text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-slate-400"
+          className="px-5 py-2.5 bg-muted hover:bg-secondary active:bg-card text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-ring"
           aria-label="Reset qubit to state 0"
         >
           Reset to |0⟩

@@ -45,13 +45,13 @@ export const ThermalPhotonStep: React.FC<ThermalPhotonStepProps> = ({
       <div className="bg-card p-5 rounded-lg mb-6 border border-border flex items-center justify-between">
         <div>
           <span className="text-xs uppercase tracking-wider text-muted-foreground block">Thermal Photon Counter</span>
-          <span className="text-3xl font-mono font-bold text-amber-400" aria-live="polite">
+          <span className="text-3xl font-mono font-bold text-warning" aria-live="polite">
             {photonCount} Photons Detected
           </span>
         </div>
         <div className="text-right">
           <span className="text-xs uppercase tracking-wider text-muted-foreground block">Metric Status</span>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded ${tested ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700' : 'bg-muted text-muted-foreground'}`}>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded ${tested ? 'bg-success-subtle text-success border border-success-border' : 'bg-muted text-muted-foreground'}`}>
             {tested ? 'decoherenceTested Recorded' : 'Awaiting Perturbation'}
           </span>
         </div>
@@ -62,7 +62,7 @@ export const ThermalPhotonStep: React.FC<ThermalPhotonStepProps> = ({
           type="button"
           onClick={handlePerturb}
           disabled={isPerturbing}
-          className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-50"
+          className="px-6 py-2.5 bg-warning hover:bg-warning-hover active:bg-warning-active text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-warning disabled:opacity-50"
           aria-label="Perturb thermal field"
         >
           {isPerturbing ? 'Perturbing...' : 'Perturb Thermal Field'}

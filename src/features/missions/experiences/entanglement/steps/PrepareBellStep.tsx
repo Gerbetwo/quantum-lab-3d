@@ -23,7 +23,7 @@ export const PrepareBellStep: React.FC<PrepareBellStepProps> = ({ onComplete, on
       </p>
 
       {/* Physics Safeguard: Explicitly disclaim FTL messaging */}
-      <div className="bg-amber-950/40 border border-amber-600/50 p-4 rounded-lg mb-6 text-xs text-amber-200">
+      <div className="bg-warning-subtle border border-warning-border p-4 rounded-lg mb-6 text-xs text-warning">
         <strong>Important Physics Note:</strong> Entanglement creates non-local correlations, but it does <em>not</em> allow faster-than-light (FTL) communication or messaging. Measuring one qubit instantaneously correlates with the other, but no signals travel between Alice and Bob faster than light.
       </div>
 
@@ -42,7 +42,7 @@ export const PrepareBellStep: React.FC<PrepareBellStepProps> = ({ onComplete, on
           type="button"
           onClick={handlePrepareBell}
           disabled={prepared}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${prepared ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${prepared ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Prepare Bell pair entanglement"
         >
           {prepared ? 'Bell Pair Prepared' : 'Prepare Bell Pair'}

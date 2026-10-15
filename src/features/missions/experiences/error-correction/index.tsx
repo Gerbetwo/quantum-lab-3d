@@ -97,14 +97,14 @@ export const ErrorCorrectionExperience: React.FC<ErrorCorrectionExperienceProps>
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   It corrects only isolated single bit-flips and does not protect against phase errors or multiple simultaneous errors.
                 </button>
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   It corrects all arbitrary multi-qubit phase and bit-flip errors simultaneously. (Incorrect)
                 </button>

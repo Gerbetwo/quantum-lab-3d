@@ -116,14 +116,14 @@ export const EntanglementExperience: React.FC<EntanglementExperienceProps> = ({ 
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   No. While outcomes are correlated, individual results are random and cannot transmit controlled signals.
                 </button>
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   Yes, instant correlation implies faster-than-light communication. (Incorrect)
                 </button>

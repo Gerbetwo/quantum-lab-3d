@@ -41,7 +41,7 @@ export const ClassicalBitStep: React.FC<ClassicalBitStepProps> = ({ onComplete, 
           </span>
         </div>
         <div 
-          className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-colors duration-300 ${bitValue === 1 ? 'bg-cyan-500 text-slate-950' : 'bg-muted text-muted-foreground'}`}
+          className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-colors duration-300 ${bitValue === 1 ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}
           aria-hidden="true"
         >
           {bitValue}
@@ -52,7 +52,7 @@ export const ClassicalBitStep: React.FC<ClassicalBitStepProps> = ({ onComplete, 
         <button
           type="button"
           onClick={handleToggle}
-          className="px-5 py-2.5 bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          className="px-5 py-2.5 bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           aria-label={`Toggle bit value from ${label} to ${bitValue === 0 ? 'HIGH' : 'LOW'}`}
         >
           Toggle Bit

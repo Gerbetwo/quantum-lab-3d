@@ -37,7 +37,7 @@ export const PhaseFlipStep: React.FC<PhaseFlipStepProps> = ({ onComplete, onStat
           type="button"
           onClick={handlePhaseFlip}
           disabled={flipped}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${flipped ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${flipped ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Apply phase flip error"
         >
           {flipped ? 'Phase Flip Applied' : 'Apply Phase Flip Error'}

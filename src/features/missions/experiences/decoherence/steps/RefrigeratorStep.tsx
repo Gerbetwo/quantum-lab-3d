@@ -49,13 +49,13 @@ export const RefrigeratorStep: React.FC<RefrigeratorStepProps> = ({ onComplete, 
         </div>
         <div>
           <span className="text-xs uppercase tracking-wider text-muted-foreground block">Coherence Lifetime</span>
-          <span className="text-2xl font-mono font-bold text-emerald-400" aria-live="polite">
+          <span className="text-2xl font-mono font-bold text-success" aria-live="polite">
             {coherenceTimeUs} us
           </span>
         </div>
         <div className="text-right">
           <span className="text-xs uppercase tracking-wider text-muted-foreground block">Status</span>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded border ${activated ? 'bg-cyan-950/50 text-accent border-cyan-700' : 'bg-muted text-muted-foreground'}`}>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded border ${activated ? 'bg-accent-subtle text-accent border-accent-border' : 'bg-muted text-muted-foreground'}`}>
             {activated ? 'Refrigerator Active (15 mK)' : 'Standby / Warm'}
           </span>
         </div>
@@ -66,7 +66,7 @@ export const RefrigeratorStep: React.FC<RefrigeratorStepProps> = ({ onComplete, 
           type="button"
           onClick={handleActivateRefrigerator}
           disabled={activated}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${activated ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${activated ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Activate cryogenic refrigerator"
         >
           {activated ? 'Refrigerator Active' : 'Activate Refrigerator'}

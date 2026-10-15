@@ -50,7 +50,7 @@ export function Header({
         <div 
           role="alert" 
           aria-live="polite" 
-          className="bg-amber-500/10 border-b border-amber-500/20 px-3 sm:px-6 py-2 text-xs text-amber-300 flex items-center justify-between"
+          className="bg-warning/10 border-b border-warning-border px-3 sm:px-6 py-2 text-xs text-warning flex items-center justify-between"
         >
           <span className="truncate">⚠️ Storage Notice: {storageWarning}</span>
         </div>

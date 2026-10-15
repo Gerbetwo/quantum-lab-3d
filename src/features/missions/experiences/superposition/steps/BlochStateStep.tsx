@@ -61,21 +61,21 @@ export const BlochStateStep: React.FC<BlochStateStepProps> = ({ onComplete, onSt
             <button
               type="button"
               onClick={() => applyPreset(0.001, 0)}
-              className="flex-1 py-1.5 px-3 bg-muted hover:bg-slate-600 rounded text-xs font-semibold"
+              className="flex-1 py-1.5 px-3 bg-muted hover:bg-secondary rounded text-xs font-semibold"
             >
               |0⟩ State
             </button>
             <button
               type="button"
               onClick={() => applyPreset(Math.PI / 2, 0)}
-              className="flex-1 py-1.5 px-3 bg-cyan-700 hover:bg-primary text-primary-foreground rounded text-xs font-semibold"
+              className="flex-1 py-1.5 px-3 bg-primary text-primary-foreground hover:bg-primary rounded text-xs font-semibold"
             >
               |+⟩ State
             </button>
             <button
               type="button"
               onClick={() => applyPreset(Math.PI - 0.001, 0)}
-              className="flex-1 py-1.5 px-3 bg-muted hover:bg-slate-600 rounded text-xs font-semibold"
+              className="flex-1 py-1.5 px-3 bg-muted hover:bg-secondary rounded text-xs font-semibold"
             >
               |1⟩ State
             </button>

@@ -107,7 +107,7 @@ export const BlochSphereWorkspace: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-95 rounded-xl border border-cyan-500/20 bg-background/80 flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div className="relative w-full h-95 rounded-xl border border-accent-border bg-background-80 flex flex-col items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.08)_0%,transparent_70%)] pointer-events-none" />
 
       {/* 3D Viewport Canvas Container */}
@@ -118,19 +118,19 @@ export const BlochSphereWorkspace: React.FC = () => {
         <span className="absolute top-1 left-1/2 -translate-x-1/2 text-xs hud-font-mono text-accent pointer-events-none">
           |0⟩ (Z+)
         </span>
-        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs hud-font-mono text-purple-300 pointer-events-none">
+        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs hud-font-mono text-axis-y pointer-events-none">
           |1⟩ (Z-)
         </span>
       </div>
 
       {/* Coordinate & State Telemetry Dock */}
-      <div className="mt-4 z-10 flex gap-4 text-xs hud-font-mono text-muted-foreground bg-background/80 px-4 py-2 rounded-md border border-border">
+      <div className="mt-4 z-10 flex gap-4 text-xs hud-font-mono text-muted-foreground bg-background-80 px-4 py-2 rounded-md border border-border">
         <div><span className="text-accent font-bold">X:</span> {vectorCoords.x}</div>
-        <div><span className="text-purple-400 font-bold">Y:</span> {vectorCoords.y}</div>
-        <div><span className="text-amber-400 font-bold">Z:</span> {vectorCoords.z}</div>
+        <div><span className="text-axis-y font-bold">Y:</span> {vectorCoords.y}</div>
+        <div><span className="text-warning font-bold">Z:</span> {vectorCoords.z}</div>
         {lastOutcome !== null && (
           <div className="border-l border-border pl-3">
-            <span className="text-emerald-400 font-bold">COLLAPSED:</span> |{lastOutcome}⟩
+            <span className="text-success font-bold">COLLAPSED:</span> |{lastOutcome}⟩
           </div>
         )}
       </div>

@@ -88,7 +88,7 @@ export const FullGroverRunStep: React.FC<FullGroverRunStepProps> = ({
         </div>
 
         {status === 'measured' && (
-          <div className={`mt-3 p-3 rounded border text-xs ${success ? 'bg-emerald-950/40 border-emerald-700 text-emerald-200' : 'bg-amber-950/40 border-amber-700 text-amber-200'}`}>
+          <div className={`mt-3 p-3 rounded border text-xs ${success ? 'bg-success-subtle border-success-border text-success' : 'bg-warning-subtle border-warning-border text-warning'}`}>
             {success ? '✓ Success! Measured candidate matches marked target item #3.' : '⚠️ Measurement yielded non-target state (stochastic variance). Try re-running.'}
           </div>
         )}
@@ -101,7 +101,7 @@ export const FullGroverRunStep: React.FC<FullGroverRunStepProps> = ({
             type="button"
             onClick={handleRunRecommended}
             disabled={loading}
-            className={`px-5 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${loading ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+            className={`px-5 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${loading ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
             aria-label="Run recommended Grover algorithm"
           >
             {loading ? 'Running...' : 'Run Recommended Algorithm'}
@@ -110,7 +110,7 @@ export const FullGroverRunStep: React.FC<FullGroverRunStepProps> = ({
             type="button"
             onClick={handleReset}
             disabled={loading}
-            className="px-5 py-2.5 bg-muted hover:bg-slate-600 active:bg-card text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-slate-400"
+            className="px-5 py-2.5 bg-muted hover:bg-secondary active:bg-card text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-ring"
             aria-label="Reset Grover run state"
           >
             Reset

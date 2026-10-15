@@ -67,7 +67,7 @@ export const SearchCostStep: React.FC<SearchCostStepProps> = ({ onComplete, onSt
       {/* Comparison Output Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="bg-card p-4 rounded-lg border border-border">
-          <span className="text-[10px] uppercase tracking-wider text-amber-400 block mb-1">Classical Average-Case Query Cost</span>
+          <span className="text-[10px] uppercase tracking-wider text-warning block mb-1">Classical Average-Case Query Cost</span>
           <span className="text-3xl font-mono font-bold text-foreground" aria-live="polite">
             {classicalQueries} Queries
           </span>

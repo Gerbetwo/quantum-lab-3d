@@ -40,7 +40,7 @@ export const CorrelatedMeasurementStep: React.FC<CorrelatedMeasurementStepProps>
       </p>
 
       {!isBellPrepared && (
-        <div className="bg-amber-950/40 border border-amber-600/50 p-4 rounded-lg mb-6 text-xs text-amber-200">
+        <div className="bg-warning-subtle border border-warning-border p-4 rounded-lg mb-6 text-xs text-warning">
           ⚠️ <strong>Action Required:</strong> You must prepare a Bell pair in the previous step before performing a correlated measurement.
         </div>
       )}
@@ -60,7 +60,7 @@ export const CorrelatedMeasurementStep: React.FC<CorrelatedMeasurementStepProps>
           type="button"
           onClick={handleMeasure}
           disabled={!isBellPrepared || measured}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${!isBellPrepared || measured ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${!isBellPrepared || measured ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-primary-foreground text-white'}`}
           aria-label="Perform correlated quantum measurement"
         >
           {measured ? 'Measured' : 'Measure Entangled Pair'}

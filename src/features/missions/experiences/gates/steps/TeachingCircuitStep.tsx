@@ -111,7 +111,7 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
               type="button"
               onClick={() => cycleGate(idx)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              className="w-full py-4 bg-background hover:bg-muted text-accent font-mono text-2xl font-bold rounded border border-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              className="w-full py-4 bg-background hover:bg-muted text-accent font-mono text-2xl font-bold rounded border border-border-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
               aria-label={`Slot ${idx + 1}, current gate ${gate}. Click or press space to cycle gate.`}
             >
               {gate}
@@ -127,7 +127,7 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
           <button
             type="button"
             onClick={handleRunCircuit}
-            className="px-5 py-2.5 bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-cyan-400"
+            className="px-5 py-2.5 bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-ring"
             aria-label="Run teaching circuit simulation"
           >
             Run Circuit
@@ -135,7 +135,7 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
           <button
             type="button"
             onClick={handlePrepareBell}
-            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-purple-400"
+            className="px-5 py-2.5 bg-quantum-purple hover:bg-quantum-purple active:bg-quantum-purple text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-axis-y"
             aria-label="Prepare Bell pair using canonical helper"
           >
             Prepare Bell Pair
@@ -151,7 +151,7 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs uppercase tracking-wider text-muted-foreground">Simulation Output</span>
           {isStale && (
-            <span className="text-xs font-semibold text-amber-300 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-700" aria-live="polite">
+            <span className="text-xs font-semibold text-warning bg-warning-subtle px-2 py-0.5 rounded border border-warning-border" aria-live="polite">
               ⚠️ Circuit modified — results stale. Re-run required.
             </span>
           )}
@@ -166,11 +166,11 @@ export const TeachingCircuitStep: React.FC<TeachingCircuitStepProps> = ({ onComp
             <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border text-xs">
               <div>
                 <span className="text-muted-foreground block">P(|0⟩) Probability</span>
-                <span className="font-mono text-base text-emerald-300">{(result.p0 * 100).toFixed(0)}%</span>
+                <span className="font-mono text-base text-success">{(result.p0 * 100).toFixed(0)}%</span>
               </div>
               <div>
                 <span className="text-muted-foreground block">P(|1⟩) Probability</span>
-                <span className="font-mono text-base text-emerald-300">{(result.p1 * 100).toFixed(0)}%</span>
+                <span className="font-mono text-base text-success">{(result.p1 * 100).toFixed(0)}%</span>
               </div>
             </div>
           </div>

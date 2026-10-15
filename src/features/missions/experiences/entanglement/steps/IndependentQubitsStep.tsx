@@ -46,7 +46,7 @@ export const IndependentQubitsStep: React.FC<IndependentQubitsStepProps> = ({ on
           <button
             type="button"
             onClick={handleAliceToggle}
-            className="px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 active:bg-cyan-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            className="px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 active:bg-primary text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
             aria-label="Toggle Alice qubit state independently"
           >
             Toggle Alice
@@ -55,12 +55,12 @@ export const IndependentQubitsStep: React.FC<IndependentQubitsStepProps> = ({ on
 
         {/* Station Bob */}
         <div className="bg-card p-4 rounded-lg border border-border">
-          <div className="text-xs uppercase tracking-wider text-purple-400 font-semibold mb-2">Station Bob</div>
+          <div className="text-xs uppercase tracking-wider text-axis-y font-semibold mb-2">Station Bob</div>
           <div className="text-2xl font-mono font-bold mb-4" aria-live="polite">State: |{bobState}⟩</div>
           <button
             type="button"
             onClick={handleBobToggle}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="px-4 py-2 bg-quantum-purple hover:bg-quantum-purple active:bg-quantum-purple text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-axis-y"
             aria-label="Toggle Bob qubit state independently"
           >
             Toggle Bob
@@ -69,7 +69,7 @@ export const IndependentQubitsStep: React.FC<IndependentQubitsStepProps> = ({ on
       </div>
 
       <div className="flex items-center justify-between bg-card p-3 rounded-lg border border-border">
-        <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">System Link Status: Not Entangled</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-warning">System Link Status: Not Entangled</span>
         <span className="text-xs text-muted-foreground" aria-live="polite">
           {interacted ? '✓ Independent interaction verified' : 'Modify individual qubit states to proceed'}
         </span>

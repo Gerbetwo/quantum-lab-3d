@@ -85,7 +85,7 @@ export default function CommandPalette({
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-foreground/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-overlay-70 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

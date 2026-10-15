@@ -104,14 +104,14 @@ export const ApplicationsExperience: React.FC<ApplicationsExperienceProps> = ({ 
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   Simulating molecular quantum states and chemical bond interactions.
                 </button>
                 <button
                   type="button"
                   onClick={handleKnowledgeCheckComplete}
-                  className="w-full text-left p-3 rounded bg-muted hover:bg-slate-600 text-sm transition-colors"
+                  className="w-full text-left p-3 rounded bg-muted hover:bg-secondary text-sm transition-colors"
                 >
                   Accelerating everyday operating system file searches. (Incorrect)
                 </button>

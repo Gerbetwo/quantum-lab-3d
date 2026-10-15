@@ -130,7 +130,7 @@ export function BlochSphereScene({ theta: propTheta, phi: propPhi }: BlochSphere
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-70 rounded-xl overflow-hidden relative bg-background/80"
+      className="w-full h-full min-h-70 rounded-xl overflow-hidden relative bg-background-80"
       role="img"
       aria-label="Representación 3D interactiva de la Esfera de Bloch"
     >

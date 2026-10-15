@@ -15,7 +15,7 @@ import { useGuidedMission } from "@/features/missions/hooks/useGuidedMission";
 // Accessible loading and error states for heavy 3D/mission modules
 const MissionLoader = () => (
   <div
-    className="flex items-center justify-center p-12 text-zinc-400"
+    className="flex items-center justify-center p-12 text-muted-foreground"
     role="status"
     aria-live="polite"
   >
@@ -138,14 +138,14 @@ export function MissionRegistry({
         {...props}
       >
         <div
-          className="flex flex-col items-center justify-center p-8 text-center bg-zinc-900/50 rounded-xl border border-zinc-800"
+          className="flex flex-col items-center justify-center p-8 text-center bg-card rounded-xl border border-border"
           role="region"
           aria-label="Mission Locked"
         >
-          <h2 className="text-xl font-semibold text-zinc-100 mb-2">
+          <h2 className="text-xl font-semibold text-foreground mb-2">
             Mission Locked
           </h2>
-          <p className="text-zinc-400 mb-6 max-w-md">
+          <p className="text-muted-foreground mb-6 max-w-md">
             You must complete the prerequisite mission{" "}
             <span className="font-medium text-accent">
               {prereqMission?.title || prereqId || "prior mission"}
@@ -155,7 +155,7 @@ export function MissionRegistry({
           {prereqId && (
             <Link
               href={`/missions/${prereqId}`}
-              className="px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              className="px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
             >
               Go to Prerequisite Mission
             </Link>

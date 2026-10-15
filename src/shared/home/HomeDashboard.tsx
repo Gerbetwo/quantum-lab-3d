@@ -31,7 +31,7 @@ export function HomeDashboard() {
         <div className="flex flex-wrap justify-center gap-4 pt-8">
           <Link
             href={`/learn`}
-            className="px-8 py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold shadow-xl shadow-cyan-500/25 transition-all transform hover:-translate-y-0.5 inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-300"
+            className="px-8 py-4 rounded-xl bg-accent hover:bg-accent text-accent-foreground font-bold shadow-xl shadow-hud-glow transition-all transform hover:-translate-y-0.5 inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {hasProgress ? 'Continue Journey' : 'Start Journey'} &rarr;
           </Link>

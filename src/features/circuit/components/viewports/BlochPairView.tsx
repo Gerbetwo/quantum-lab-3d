@@ -152,7 +152,7 @@ export function BlochPairView(_props: ViewportProps) {
   }, []);
 
   return (
-    <div className="flex items-center justify-center h-full w-full relative bg-background/90 rounded-xl overflow-hidden">
+    <div className="flex items-center justify-center h-full w-full relative bg-background-90 rounded-xl overflow-hidden">
       <div ref={containerRef} className="w-full h-full" />
     </div>
   );

@@ -25,7 +25,7 @@ export function SandboxDashboard() {
   return (
     <div className="flex flex-col h-screen w-full bg-background text-foreground overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 border-r border-border bg-background/50 p-4 flex flex-col space-y-6 overflow-y-auto">
+        <aside className="w-64 border-r border-border bg-background-50 p-4 flex flex-col space-y-6 overflow-y-auto">
           <div>
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Circuitos Predefinidos
@@ -70,12 +70,12 @@ export function SandboxDashboard() {
         </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden bg-background">
-          <div className="h-1/2 border-b border-border p-4 overflow-x-auto bg-background/20">
+          <div className="h-1/2 border-b border-border p-4 overflow-x-auto bg-background-20">
             <CircuitWorkbench />
           </div>
 
           <div className="h-1/2 flex flex-col relative">
-            <div className="flex items-center justify-between px-4 py-2 bg-background/60 border-b border-border">
+            <div className="flex items-center justify-between px-4 py-2 bg-background-60 border-b border-border">
               <span className="text-xs font-mono text-muted-foreground">VISUALIZADOR CUÁNTICO</span>
               <ViewModeSwitcher
                 mode={viewMode as unknown as Parameters<typeof ViewModeSwitcher>[0]['mode']}
@@ -83,7 +83,7 @@ export function SandboxDashboard() {
               />
             </div>
 
-            <div className="flex-1 relative overflow-hidden bg-background/80 flex items-center justify-center">
+            <div className="flex-1 relative overflow-hidden bg-background-80 flex items-center justify-center">
               {isMeasuring && <MeasurementParticles sceneRef={dummySceneRef} />}
 
               {viewMode === '2d-bloch' && <BlochPairView evaluation={stateVector} />}

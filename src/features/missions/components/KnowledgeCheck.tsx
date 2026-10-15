@@ -68,7 +68,7 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
   return (
     <section
       aria-labelledby="quiz-heading"
-      className="bg-background/90 border border-border rounded-xl p-6 shadow-xl flex flex-col gap-4 text-foreground"
+      className="bg-background-90 border border-border rounded-xl p-6 shadow-xl flex flex-col gap-4 text-foreground"
     >
       <div className="flex items-center gap-2 border-b border-border pb-3">
         <span className="text-xl" aria-hidden="true">🧠</span>
@@ -88,8 +88,8 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
                 key={opt.id}
                 className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all cursor-pointer ${
                   isSelected
-                    ? 'border-cyan-400 bg-cyan-950/40 ring-1 ring-cyan-400'
-                    : 'border-border bg-background/50 hover:border-border hover:bg-card/50'
+                    ? 'border-accent-border bg-accent-subtle ring-1 ring-ring'
+                    : 'border-border bg-background-50 hover:border-border hover:bg-card-50'
                 } ${submitted ? 'cursor-default' : ''}`}
               >
                 <input
@@ -99,7 +99,7 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
                   checked={isSelected}
                   disabled={submitted}
                   onChange={() => !submitted && onSelectOption(opt.id)}
-                  className="mt-1 text-accent focus:ring-cyan-400 focus:ring-offset-slate-900"
+                  className="mt-1 text-accent focus:ring-ring focus:ring-offset-slate-900"
                 />
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-foreground">{opt.text}</span>
@@ -117,8 +117,8 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
             <div
               className={`p-4 rounded-lg border text-sm flex flex-col gap-2 ${
                 isCorrect
-                  ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-200'
-                  : 'bg-rose-950/80 border-rose-500/50 text-rose-200'
+                  ? 'bg-success-subtle border-success-border text-success'
+                  : 'bg-destructive-subtle border-destructive-border text-destructive'
               }`}
             >
               <div className="flex items-center gap-2 font-bold">
@@ -141,7 +141,7 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
               className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 !selectedOptionId
                   ? 'opacity-40 cursor-not-allowed bg-card text-muted-foreground border border-border'
-                  : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 cursor-pointer shadow-lg shadow-cyan-500/20'
+                  : 'bg-accent hover:bg-accent text-accent-foreground cursor-pointer shadow-lg shadow-hud-glow'
               }`}
             >
               Validar Respuesta

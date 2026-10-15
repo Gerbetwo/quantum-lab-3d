@@ -23,7 +23,7 @@ export const GroverOverviewStep: React.FC<GroverOverviewStepProps> = ({ onComple
       </p>
 
       {/* Scope and Performance Safeguard */}
-      <div className="bg-card p-4 rounded-lg mb-6 border border-border text-xs text-amber-300 space-y-2">
+      <div className="bg-card p-4 rounded-lg mb-6 border border-border text-xs text-warning space-y-2">
         <div>🔍 <strong>Marked Item & Oracle:</strong> The oracle identifies and flips the phase of the target solution state without revealing its location beforehand.</div>
         <div>📈 <strong>Amplitude Amplification:</strong> The diffusion operator reflects amplitudes about the average, boosting the success probability with each iteration.</div>
         <div>⚠️ <strong>Scope Limit:</strong> This provides a quadratic speedup, not a universal exponential speedup for all computational problems.</div>
@@ -46,7 +46,7 @@ export const GroverOverviewStep: React.FC<GroverOverviewStepProps> = ({ onComple
           type="button"
           onClick={handleAcknowledge}
           disabled={acknowledged}
-          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 ${acknowledged ? 'bg-emerald-700 text-white cursor-default' : 'bg-primary text-primary-foreground hover:opacity-90 text-white'}`}
+          className={`px-6 py-2.5 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${acknowledged ? 'bg-success-hover text-white cursor-default' : 'bg-primary text-primary-foreground hover:opacity-90 text-white'}`}
           aria-label="Acknowledge Grover overview concepts"
         >
           {acknowledged ? '✓ Acknowledged & Understood' : 'Acknowledge Overview'}

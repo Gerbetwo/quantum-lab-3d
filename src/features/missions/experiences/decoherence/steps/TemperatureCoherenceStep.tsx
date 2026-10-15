@@ -48,7 +48,7 @@ export const TemperatureCoherenceStep: React.FC<TemperatureCoherenceStepProps> =
         </div>
         <div className="text-right">
           <span className="text-xs uppercase tracking-wider text-muted-foreground block">Thermal Status</span>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded border ${isCritical ? 'bg-red-950/50 text-red-300 border-red-700' : 'bg-emerald-950/50 text-emerald-300 border-emerald-700'}`}>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded border ${isCritical ? 'bg-destructive-subtle text-destructive border-destructive-border' : 'bg-success-subtle text-success border-success-border'}`}>
             {isCritical ? 'Critical (T > 1,200 mK)' : 'Stable Cryogenic Range'}
           </span>
         </div>

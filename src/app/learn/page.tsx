@@ -53,19 +53,19 @@ export default function LearnPage() {
               <CardWrapper
                 key={mission.id}
                 {...cardProps}
-                className={`group flex flex-col justify-between p-6 rounded-2xl border transition-all duration-350 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${
+                className={`group flex flex-col justify-between p-6 rounded-2xl border transition-all duration-350 focus:outline-none focus:ring-2 focus:ring-ring-subtle ${
                   isUnlocked
-                    ? 'bg-background/70 border-border hover:border-cyan-500/50 hover:bg-card/60 cursor-pointer'
-                    : 'bg-background/40 border-border/80 opacity-60 cursor-not-allowed'
+                    ? 'bg-background-70 border-border hover:border-accent-glow hover:bg-card-60 cursor-pointer'
+                    : 'bg-background-40 border-border-80 opacity-60 cursor-not-allowed'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono px-2.5 py-1 bg-cyan-950/80 text-accent rounded-md border border-cyan-800/40">
+                    <span className="text-xs font-mono px-2.5 py-1 bg-accent-subtle text-accent rounded-md border border-accent-border">
                       Mission {index + 1}
                     </span>
                     {isCompleted ? (
-                      <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium" role="status" aria-label="Completed">
+                      <span className="flex items-center gap-1 text-xs text-success font-medium" role="status" aria-label="Completed">
                         <CheckCircle2 className="w-4 h-4" /> Completed
                       </span>
                     ) : isUnlocked ? (
@@ -86,7 +86,7 @@ export default function LearnPage() {
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-between">
+                <div className="mt-6 pt-4 border-t border-border-60 flex items-center justify-between">
                   {isUnlocked ? (
                     <span className="text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                       {isCompleted ? 'Review Mission' : 'Start Mission'} &rarr;
