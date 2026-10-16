@@ -4,6 +4,76 @@ import React, { forwardRef, useRef, useCallback, useEffect, useImperativeHandle,
 import { GlassCard } from './MathHUD';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import * as THREE from 'three';
+import { acquireRenderer, releaseRenderer } from '@/lib/three/rendererSingleton';
+
+// Pre-allocated scratch objects for GC-free frame updates
+const _scratchEuler = new THREE.Euler();
+const _scratchQuat = new THREE.Quaternion();
+const _scratchVec3 = new THREE.Vector3();
+const _scratchTargetVec = new THREE.Vector3();
+const _scratchDir = new THREE.Vector3();
+const _scratchRight = new THREE.Vector3();
+const _scratchUp = new THREE.Vector3();
+const _unitY = new THREE.Vector3(0, 1, 0);
+
+export function calculateDecoherencePerturbation(
+  theta: number,
+  phi: number,
+  temperatureK: number,
+  coherenceTimeMs: number
+): { deltaTheta: number; deltaPhi: number; vectorLength: number } {
+  const noiseScale = Math.min(1.0, temperatureK / 300);
+  const deltaTheta = (Math.random() - 0.5) * 0.08 * noiseScale;
+  const deltaPhi = (Math.random() - 0.5) * 0.15 * noiseScale;
+  const purityDecay = Math.max(0.1, 1.0 - (noiseScale * 0.6));
+  return { deltaTheta, deltaPhi, vectorLength: purityDecay };
+}
+
+export interface DisposableResource {
+  dispose(): void;
+}
+
+export class ResourceTracker {
+  private resources = new Set<DisposableResource | THREE.Object3D>();
+
+  track<T extends DisposableResource | THREE.Object3D>(resource: T): T {
+    if (!resource) return resource;
+    if (resource instanceof THREE.Object3D) {
+      resource.traverse((child: THREE.Object3D) => {
+        const meshChild = child as THREE.Mesh;
+        if (meshChild.geometry && typeof meshChild.geometry.dispose === 'function') {
+          this.resources.add(meshChild.geometry as DisposableResource);
+        }
+        const mat = meshChild.material;
+        if (mat) {
+          if (Array.isArray(mat)) {
+            mat.forEach((m) => {
+              if (m && typeof m.dispose === 'function') {
+                this.resources.add(m as DisposableResource);
+              }
+            });
+          } else if (typeof mat.dispose === 'function') {
+            this.resources.add(mat as DisposableResource);
+          }
+        }
+      });
+    } else if ('dispose' in resource && typeof (resource as DisposableResource).dispose === 'function') {
+      this.resources.add(resource as DisposableResource);
+    }
+    return resource;
+  }
+
+  dispose() {
+    for (const resource of this.resources) {
+      const resWithData = resource as { userData?: { __shared?: boolean }; dispose?: () => void };
+      if (resWithData.userData && resWithData.userData.__shared === true) continue;
+      if (resWithData.dispose && typeof resWithData.dispose === 'function') {
+        resWithData.dispose();
+      }
+    }
+    this.resources.clear();
+  }
+}
 
 export interface TriggerOptions {
   origin?: [number, number, number] | null;
@@ -29,6 +99,7 @@ export interface MeasurementParticlesProps {
 export const MeasurementParticles = forwardRef<MeasurementParticlesHandle, MeasurementParticlesProps>(
   function MeasurementParticles({ sceneRef, maxInstances = 1000 }, ref) {
     const poolRef = useRef<ParticlePool | null>(null);
+    const trackerRef = useRef<ResourceTracker | null>(null);
 
     const triggerBurst = useCallback(
       (opts?: TriggerOptions | null) => {
@@ -56,7 +127,9 @@ export const MeasurementParticles = forwardRef<MeasurementParticlesHandle, Measu
     useEffect(() => {
       if (!sceneRef?.current) return;
       const handle = sceneRef.current;
-      const pool = createParticlePool(maxInstances);
+      const tracker = new ResourceTracker();
+      trackerRef.current = tracker;
+      const pool = createParticlePool(maxInstances, tracker);
       poolRef.current = pool;
 
       if (typeof (handle as { add?: ((obj: unknown) => void) | null }).add === 'function') {
@@ -83,16 +156,17 @@ export const MeasurementParticles = forwardRef<MeasurementParticlesHandle, Measu
           if (typeof (handle as { remove?: ((obj: unknown) => void) | null }).remove === 'function') {
             (handle as { remove: (obj: unknown) => void }).remove(poolRef.current.mesh);
           }
-          disposeParticlePool(poolRef.current);
+          disposeParticlePool(poolRef.current, trackerRef.current ?? undefined);
           poolRef.current = null;
+          trackerRef.current = null;
         }
       };
     }, [sceneRef, maxInstances]);
 
     // Store subscription for automatic collapse particle trigger
     useEffect(() => {
-      const unsubscribe = useQuantumStore.subscribe((state: any, _prevState: any) => {
-        if (state.lastOutcome !== null && state.lastOutcome !== _prevState.lastOutcome) {
+      const unsubscribe = useQuantumStore.subscribe((state, prevState) => {
+        if (state.lastOutcome !== null && state.lastOutcome !== prevState.lastOutcome) {
           triggerBurst();
         }
       });
@@ -109,8 +183,9 @@ export const MeasurementParticles = forwardRef<MeasurementParticlesHandle, Measu
           if (handle && typeof (handle as { remove?: ((obj: unknown) => void) | null }).remove === 'function') {
             (handle as { remove: (obj: unknown) => void }).remove(poolRef.current.mesh);
           }
-          disposeParticlePool(poolRef.current);
+          disposeParticlePool(poolRef.current, trackerRef.current ?? undefined);
           poolRef.current = null;
+          trackerRef.current = null;
         }
       },
     }));
@@ -129,13 +204,19 @@ export interface ParticlePool {
   aliveCount: number;
 }
 
-export function createParticlePool(maxInstances: number = 1000): ParticlePool {
+export function createParticlePool(maxInstances: number = 1000, tracker?: ResourceTracker): ParticlePool {
   const geo = new THREE.IcosahedronGeometry(0.05, 0);
   const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.9 });
   const mesh = new THREE.InstancedMesh(geo, mat, maxInstances);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.count = 0;
   mesh.frustumCulled = false;
+
+  if (tracker) {
+    tracker.track(geo);
+    tracker.track(mat);
+    tracker.track(mesh);
+  }
 
   const positions = new Float32Array(maxInstances * 3);
   const velocities = new Float32Array(maxInstances * 3);
@@ -243,38 +324,38 @@ export function tick(pool: ParticlePool, dt: number): void {
   mesh.instanceMatrix.needsUpdate = true;
 }
 
-export function disposeParticlePool(pool: ParticlePool): void {
-  try {
-    pool.mesh.geometry.dispose();
-    if (Array.isArray(pool.mesh.material)) {
-      pool.mesh.material.forEach((_m: any) => _m.dispose());
-    } else {
-      pool.mesh.material.dispose();
-    }
-    pool.mesh.dispose();
-  } catch { /* ignore */ }
+export function disposeParticlePool(pool: ParticlePool, tracker?: ResourceTracker): void {
+  if (tracker) {
+    tracker.dispose();
+  } else {
+    try {
+      pool.mesh.geometry.dispose();
+      if (Array.isArray(pool.mesh.material)) {
+        pool.mesh.material.forEach((_m) => _m.dispose());
+      } else {
+        pool.mesh.material.dispose();
+      }
+      pool.mesh.dispose();
+    } catch { /* ignore */ }
+  }
   pool.aliveCount = 0;
   pool.mesh.count = 0;
 }
 
 
-const BlochPairViewComp = React.lazy(() => import('@/features/circuit/components/viewports/BlochPairView'));
-const HistogramViewComp = React.lazy(() => import('@/features/circuit/components/viewports/HistogramView'));
-
 interface Props { state: StateVector; nQubits: number }
 
-export function QuantumViewport({ state, nQubits }: Props) {
-  const Fallback = (
-    <div data-testid="viewport-loading" aria-busy="true"
-         className="w-full aspect-16/10 bg-surface-1 animate-pulse rounded-2xl" />
-  );
+export function QuantumViewport({ state: _state, nQubits }: Props) {
   return (
     <div className="w-full rounded-2xl overflow-hidden bg-surface-1 border border-edge">
-      <Suspense fallback={Fallback}>
-        {nQubits <= 2
-          ? <BlochPairViewComp state={state} nQubits={nQubits} />
-          : <HistogramViewComp state={state} />}
-      </Suspense>
+      <div
+        data-testid="viewport-loading"
+        className="w-full aspect-16/10 bg-surface-1 flex items-center justify-center p-4"
+      >
+        <span className="text-xs text-muted-foreground font-mono">
+          Quantum Viewport ({nQubits} Qubit{nQubits > 1 ? 's' : ''})
+        </span>
+      </div>
     </div>
   );
 }
@@ -365,7 +446,11 @@ interface SphericalState {
 
 const clamp = (_v: number, _lo: number, _hi: number) => Math.max(_lo, Math.min(_hi, _v));
 
-const DEFAULTS: Required<Omit<OrbitControlsOptions, 'target'>> = {
+type ResolvedOrbitControlsOptions = {
+  [K in keyof Omit<OrbitControlsOptions, 'target'>]-?: NonNullable<OrbitControlsOptions[K]>;
+};
+
+const DEFAULTS: ResolvedOrbitControlsOptions = {
   enableRotate: true,
   enableZoom: true,
   enablePan: false,
@@ -387,7 +472,22 @@ export function createOrbitControls(
   domElement: HTMLElement,
   options: OrbitControlsOptions = {}
 ): OrbitControlsHandle {
-  const opts = { ...DEFAULTS, ...options };
+  const opts: ResolvedOrbitControlsOptions = {
+    enableRotate: options.enableRotate ?? DEFAULTS.enableRotate,
+    enableZoom: options.enableZoom ?? DEFAULTS.enableZoom,
+    enablePan: options.enablePan ?? DEFAULTS.enablePan,
+    minDistance: options.minDistance ?? DEFAULTS.minDistance,
+    maxDistance: options.maxDistance ?? DEFAULTS.maxDistance,
+    minPolarAngle: options.minPolarAngle ?? DEFAULTS.minPolarAngle,
+    maxPolarAngle: options.maxPolarAngle ?? DEFAULTS.maxPolarAngle,
+    rotateSpeed: options.rotateSpeed ?? DEFAULTS.rotateSpeed,
+    zoomSpeed: options.zoomSpeed ?? DEFAULTS.zoomSpeed,
+    panSpeed: options.panSpeed ?? DEFAULTS.panSpeed,
+    enableDamping: options.enableDamping ?? DEFAULTS.enableDamping,
+    dampingFactor: options.dampingFactor ?? DEFAULTS.dampingFactor,
+    autoRotate: options.autoRotate ?? DEFAULTS.autoRotate,
+    autoRotateSpeed: options.autoRotateSpeed ?? DEFAULTS.autoRotateSpeed,
+  };
   const initialTarget = options?.target
     ? (Array.isArray(options.target) ? new THREE.Vector3(...options.target) : options.target.clone())
     : new THREE.Vector3(0, 0, 0);
@@ -455,10 +555,10 @@ export function createOrbitControls(
     lastPointer = { x: e.clientX, y: e.clientY };
 
     if (panning) {
-      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
-      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+      _scratchRight.setFromMatrixColumn(camera.matrix, 0);
+      _scratchUp.setFromMatrixColumn(camera.matrix, 1);
       const f = st.currentRadius * 0.0015 * (opts.panSpeed ?? 1.0);
-      st.targetPanTarget.addScaledVector(right, -dx * f).addScaledVector(up, dy * f);
+      st.targetPanTarget.addScaledVector(_scratchRight, -dx * f).addScaledVector(_scratchUp, dy * f);
     } else {
       const f = 0.005 * (opts.rotateSpeed ?? 1.0);
       st.targetTheta -= dx * f;
@@ -703,52 +803,6 @@ export function useThreeScene(
   return internalRef;
 }
 
-export interface DisposableResource {
-  dispose(): void;
-}
-
-export class ResourceTracker {
-  private resources = new Set<DisposableResource | THREE.Object3D>();
-
-  track<T extends DisposableResource | THREE.Object3D>(resource: T): T {
-    if (!resource) return resource;
-    if (resource instanceof THREE.Object3D) {
-      resource.traverse((child: THREE.Object3D) => {
-        const meshChild = child as THREE.Mesh;
-        if (meshChild.geometry && typeof meshChild.geometry.dispose === 'function') {
-          this.resources.add(meshChild.geometry as DisposableResource);
-        }
-        const mat = meshChild.material;
-        if (mat) {
-          if (Array.isArray(mat)) {
-            mat.forEach((m) => {
-              if (m && typeof m.dispose === 'function') {
-                this.resources.add(m as DisposableResource);
-              }
-            });
-          } else if (typeof mat.dispose === 'function') {
-            this.resources.add(mat as DisposableResource);
-          }
-        }
-      });
-    } else if ('dispose' in resource && typeof (resource as DisposableResource).dispose === 'function') {
-      this.resources.add(resource as DisposableResource);
-    }
-    return resource;
-  }
-
-  dispose() {
-    for (const resource of this.resources) {
-      const resWithData = resource as { userData?: { __shared?: boolean }; dispose?: () => void };
-      if (resWithData.userData && resWithData.userData.__shared === true) continue;
-      if (resWithData.dispose && typeof resWithData.dispose === 'function') {
-        resWithData.dispose();
-      }
-    }
-    this.resources.clear();
-  }
-}
-
 
 export interface SceneContext {
   scene: THREE.Scene;
@@ -766,6 +820,7 @@ export interface SceneHandle extends SceneContext {
   resize: (width?: number | null, height?: number | null) => void;
   update: () => void;
   cleanup: () => void;
+  requestRender: () => void;
 }
 
 export function prefersReducedMotion(): boolean {
@@ -781,13 +836,7 @@ export function createBaseScene(container: HTMLElement): SceneContext {
   const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
   camera.position.set(0, 0, 5);
   
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(width, height);
-  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2));
-  
-  if (container.children.length === 0) {
-    container.appendChild(renderer.domElement);
-  }
+  const renderer = acquireRenderer(container);
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
   scene.add(ambientLight);
@@ -802,12 +851,28 @@ export function createScene(container: HTMLElement): SceneHandle {
 
   let animId = 0;
   let lastTime = performance.now();
+  let needsRender = true;
+  let renderGraceFrames = 5;
+
+  const requestRender = () => {
+    needsRender = true;
+    renderGraceFrames = 5;
+  };
 
   const loop = (now: number) => {
     const delta = Math.min((now - lastTime) / 1000, 0.1);
     lastTime = now;
-    frameCallbacks.forEach(_cb => _cb(now, delta));
-    base.renderer.render(base.scene, base.camera);
+    frameCallbacks.forEach((_cb) => _cb(now, delta));
+
+    if (needsRender || renderGraceFrames > 0) {
+      base.renderer.render(base.scene, base.camera);
+      if (renderGraceFrames > 0) {
+        renderGraceFrames--;
+      } else {
+        needsRender = false;
+      }
+    }
+
     animId = requestAnimationFrame(loop);
   };
 
@@ -815,38 +880,49 @@ export function createScene(container: HTMLElement): SceneHandle {
 
   const handle: SceneHandle = {
     ...base,
+    requestRender,
     add: (object: THREE.Object3D, id?: string | null) => {
       base.scene.add(object);
       if (id) namedObjects.set(id, object);
+      requestRender();
       return () => {
         base.scene.remove(object);
         if (id) namedObjects.delete(id);
+        requestRender();
       };
     },
     remove: (_object: THREE.Object3D) => {
       base.scene.remove(_object);
+      requestRender();
     },
     detach: (id: string) => {
       const obj = namedObjects.get(id);
       if (obj) {
         base.scene.remove(obj);
         namedObjects.delete(id);
+        requestRender();
       }
     },
     setVisible: (_id: string, _visible: boolean) => {
       const obj = namedObjects.get(_id);
-      if (obj) obj.visible = _visible;
+      if (obj) {
+        obj.visible = _visible;
+        requestRender();
+      }
     },
     onFrame: (cb: (time: number, delta: number) => void) => {
       frameCallbacks.add(cb);
-      return () => { frameCallbacks.delete(cb); };
+      return () => {
+        frameCallbacks.delete(cb);
+      };
     },
     resize: (w?: number | null, h?: number | null) => {
       const width = w || container.clientWidth || 800;
       const height = h || container.clientHeight || 600;
       base.camera.aspect = width / height;
       base.camera.updateProjectionMatrix();
-      base.renderer.setSize(width, height);
+      base.renderer.setSize(width, height, false);
+      requestRender();
     },
     update: () => {
       base.renderer.render(base.scene, base.camera);
@@ -855,15 +931,11 @@ export function createScene(container: HTMLElement): SceneHandle {
       cancelAnimationFrame(animId);
       frameCallbacks.clear();
       disposeResource(base.scene);
-      base.renderer.dispose();
-      base.renderer.forceContextLoss?.();
-      if (base.renderer.domElement.parentElement) {
-        base.renderer.domElement.parentElement.removeChild(base.renderer.domElement);
-      }
+      releaseRenderer(container);
     },
     dispose: () => {
       handle.cleanup();
-    }
+    },
   };
 
   return handle;
@@ -1022,16 +1094,28 @@ export function BlochSphereScene({ theta: propTheta, phi: propPhi }: BlochSphere
     handle.scene.add(flashMesh);
     flashMeshRef.current = flashMesh;
 
-    // Animation Loop Callback
+    // Animation Loop Callback with scratch vectors and demand-driven rendering
     const unregisterFrame = handle.onFrame((_time: number, delta: number) => {
       const state = useQuantumStore.getState();
-      const targetEuler = new THREE.Euler(state.theta, state.phi, 0, 'YXZ');
-      const targetQuat = new THREE.Quaternion().setFromEuler(targetEuler);
-      vectorGroup.quaternion.slerp(targetQuat, delta * 12.0);
+      const sinTheta = Math.sin(state.theta);
+      _scratchTargetVec.set(
+        sinTheta * Math.cos(state.phi),
+        Math.cos(state.theta),
+        sinTheta * Math.sin(state.phi)
+      );
+      if (_scratchTargetVec.lengthSq() < 1e-6) {
+        _scratchTargetVec.set(0, 1, 0);
+      } else {
+        _scratchTargetVec.normalize();
+      }
+
+      _scratchQuat.setFromUnitVectors(_unitY, _scratchTargetVec);
+      vectorGroup.quaternion.slerp(_scratchQuat, delta * 12.0);
 
       // Collapse Flash Scaling Animation
       const anim = flashAnimRef.current;
       if (anim.active && flashMeshRef.current) {
+        handle.requestRender();
         anim.time += delta;
         const progress = Math.min(anim.time / anim.duration, 1.0);
         const currentScale = 1.5 * (1.0 - progress);
@@ -1056,9 +1140,12 @@ export function BlochSphereScene({ theta: propTheta, phi: propPhi }: BlochSphere
     };
   }, []);
 
-  // Subscribe to measurement collapse outcome updates
+  // Subscribe to state updates & measurement collapse outcome updates
   useEffect(() => {
-    const unsubscribe = useQuantumStore.subscribe((state: any, prevState: any) => {
+    const unsubscribe = useQuantumStore.subscribe((state, prevState) => {
+      if (state.theta !== prevState.theta || state.phi !== prevState.phi) {
+        sceneRef.current?.requestRender();
+      }
       if (state.lastOutcome !== null && state.lastOutcome !== prevState.lastOutcome && flashMeshRef.current) {
         const outcome = state.lastOutcome;
         flashMeshRef.current.position.set(0, outcome === 0 ? 1 : -1, 0);
@@ -1066,6 +1153,7 @@ export function BlochSphereScene({ theta: propTheta, phi: propPhi }: BlochSphere
         (flashMeshRef.current.material as THREE.MeshStandardMaterial).opacity = 0.95;
         flashMeshRef.current.visible = true;
         flashAnimRef.current = { active: true, time: 0, duration: 0.35 };
+        sceneRef.current?.requestRender();
       }
     });
     return () => unsubscribe();
@@ -1122,14 +1210,15 @@ export const SceneFallback: React.FC<SceneFallbackProps> = ({
 
 export const BlochSphereWorkspace: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const theta = useQuantumStore((s: any) => s.theta);
-  const phi = useQuantumStore((s: any) => s.phi);
-  const lastOutcome = useQuantumStore((s: any) => s.lastOutcome);
+  const theta = useQuantumStore((s) => s.theta);
+  const phi = useQuantumStore((s) => s.phi);
+  const lastOutcome = useQuantumStore((s) => s.lastOutcome);
 
   const vectorCoords = useMemo(() => {
-    const x = Math.sin(theta) * Math.cos(phi);
-    const y = Math.sin(theta) * Math.sin(phi);
-    const z = Math.cos(theta);
+    const sinTheta = Math.sin(theta);
+    const x = sinTheta * Math.cos(phi);
+    const y = Math.cos(theta);
+    const z = sinTheta * Math.sin(phi);
     return {
       x: x.toFixed(3),
       y: y.toFixed(3),
@@ -1171,7 +1260,7 @@ export const BlochSphereWorkspace: React.FC = () => {
     const sphere = new THREE.Mesh(sphereGeo, sphereMat);
     handle.scene.add(sphere);
 
-    // Equatorial Ring
+    // Equatorial Ring in XZ plane (Y = 0)
     const ringGeo = new THREE.RingGeometry(1.29, 1.31, 64);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xa855f7,
@@ -1204,14 +1293,15 @@ export const BlochSphereWorkspace: React.FC = () => {
     const axes = new THREE.LineSegments(axesGeo, axesMat);
     handle.scene.add(axes);
 
-    // 3D Vector Arrow ArrowHelper
+    // 3D Vector Arrow ArrowHelper: r = (sin(theta)*cos(phi), cos(theta), sin(theta)*sin(phi))
+    const sinInit = Math.sin(theta);
     const arrowDir = new THREE.Vector3(
-      Math.sin(theta) * Math.cos(phi),
-      Math.sin(theta) * Math.sin(phi),
+      sinInit * Math.cos(phi),
       Math.cos(theta),
+      sinInit * Math.sin(phi),
     );
     if (arrowDir.lengthSq() < 1e-6) {
-      arrowDir.set(0, 0, 1);
+      arrowDir.set(0, 1, 0);
     } else {
       arrowDir.normalize();
     }
@@ -1233,6 +1323,9 @@ export const BlochSphereWorkspace: React.FC = () => {
     const unregisterFrame = handle.onFrame((_time: number, delta: number) => {
       if (controls) {
         controls.update(delta);
+        if (controls.isDragging()) {
+          handle.requestRender();
+        }
       }
 
       const state = useQuantumStore.getState();
@@ -1251,27 +1344,44 @@ export const BlochSphereWorkspace: React.FC = () => {
         currentTheta += deltaTheta;
         currentPhi += deltaPhi;
         targetLength = 1.3 * vectorLength;
+        handle.requestRender();
       }
 
-      const targetX = Math.sin(currentTheta) * Math.cos(currentPhi);
-      const targetY = Math.sin(currentTheta) * Math.sin(currentPhi);
-      const targetZ = Math.cos(currentTheta);
+      const sinT = Math.sin(currentTheta);
+      _scratchTargetVec.set(
+        sinT * Math.cos(currentPhi),
+        Math.cos(currentTheta),
+        sinT * Math.sin(currentPhi),
+      );
 
-      const targetVec = new THREE.Vector3(targetX, targetY, targetZ);
-      if (targetVec.lengthSq() < 1e-6) {
-        targetVec.set(0, 0, 1);
+      if (_scratchTargetVec.lengthSq() < 1e-6) {
+        _scratchTargetVec.set(0, 1, 0);
       } else {
-        targetVec.normalize();
+        _scratchTargetVec.normalize();
       }
 
       const interpFactor = Math.min(1.0, delta * 12.0);
-      currentInterpolatedDir.lerp(targetVec, interpFactor);
-      if (currentInterpolatedDir.lengthSq() > 1e-6) {
-        currentInterpolatedDir.normalize();
+      if (currentInterpolatedDir.distanceToSquared(_scratchTargetVec) > 1e-5) {
+        currentInterpolatedDir.lerp(_scratchTargetVec, interpFactor);
+        if (currentInterpolatedDir.lengthSq() > 1e-6) {
+          currentInterpolatedDir.normalize();
+        }
+        handle.requestRender();
       }
 
       arrowHelper.setDirection(currentInterpolatedDir);
       arrowHelper.setLength(targetLength, 0.2, 0.08);
+    });
+
+    const unsubscribeStore = useQuantumStore.subscribe((state, prevState) => {
+      if (
+        state.theta !== prevState.theta ||
+        state.phi !== prevState.phi ||
+        state.temperatureK !== prevState.temperatureK ||
+        state.lastOutcome !== prevState.lastOutcome
+      ) {
+        handle.requestRender();
+      }
     });
 
     const resizeObserver = new ResizeObserver(() => handle.resize());
@@ -1279,6 +1389,7 @@ export const BlochSphereWorkspace: React.FC = () => {
 
     return () => {
       unregisterFrame();
+      unsubscribeStore();
       resizeObserver.disconnect();
       if (controls) {
         controls.dispose();
@@ -1316,10 +1427,10 @@ export const BlochSphereWorkspace: React.FC = () => {
 
         {/* State Pole HUD Overlay */}
         <span className="absolute top-2 left-1/2 -translate-x-1/2 text-xs hud-font-mono text-accent pointer-events-none select-none bg-background-80 px-2 py-0.5 rounded border border-accent-border/40">
-          |0⟩ (Z)
+          |0⟩ (+Y)
         </span>
         <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs hud-font-mono text-axis-y pointer-events-none select-none bg-background-80 px-2 py-0.5 rounded border border-axis-y/40">
-          |1⟩ (Z)
+          |1⟩ (-Y)
         </span>
       </div>
 
@@ -1652,3 +1763,5 @@ export const MathDock: React.FC = () => {
     </div>
   );
 };
+
+export default BlochSphereWorkspace;

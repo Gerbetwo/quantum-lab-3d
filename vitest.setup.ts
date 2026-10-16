@@ -20,5 +20,3 @@ vi.mock('three', async () => {
     WebGLRenderer: MockWebGLRenderer,
   };
 });
-
-installWebStubs();

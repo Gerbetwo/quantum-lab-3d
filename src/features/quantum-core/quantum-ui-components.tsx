@@ -168,6 +168,7 @@ import {
   getMissionById,
   isMissionId,
   MissionId,
+  useQuantumStore,
 } from '@/store/useQuantumStore';
 import clsx from 'clsx';
 import { Hash } from 'crypto';
@@ -570,6 +571,12 @@ const LABELS: Record<GateType, string> = {
   S: 'Phase S', T: 'Phase T',
   CNOT: 'Controlled-NOT', CZ: 'Controlled-Z', SWAP: 'SWAP',
   CS: 'Controlled-S', CT: 'Controlled-T',
+  I: '',
+  CPHASE: '',
+  CR: '',
+  TOFFOLI: '',
+  MEASURE: '',
+  CUSTOM: ''
 };
 
 const ICONS: Record<GateType, LucideIcon> = {
