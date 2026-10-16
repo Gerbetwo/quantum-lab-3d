@@ -2,10 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
-
-import { SessionProvider, useSession } from '@/features/session/components/SessionProvider';
-import { MISSIONS } from '@/features/missions/config/missions';
-import CelebrationModal from '@/shared/layout/CelebrationModal';
+import { CelebrationModal } from '@/components/AppLayout';
+import { useSession, MISSIONS, SessionProvider } from '@/store/useQuantumStore';
 
 
 const burstMock = vi.fn();

@@ -1,4 +1,7 @@
+'use client';
+
 import * as THREE from 'three';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 // --- Section: src/features/missions/components/KnowledgeCheck.tsx ---
 export interface QuizOption {
   id: string;
@@ -164,18 +167,34 @@ import { createScene } from '@/components/BlochCanvas';
 import { Tooltip } from '@/components/MathHUD';
 import { QuantumCircuit, QubitIndex, createEmptyCircuit, StateVectorHistory, evaluateFullCircuit, GateType, StateVector } from '@/lib/quantumCore';
 // --- Section: src/features/missions/components/MissionRegistry.tsx ---
+import { useQuantumStore } from '@/store/useQuantumStore';
+import clsx from 'clsx';
+import Link from 'next/link';
+import {
+  X as XIcon,
+  Link as LinkIcon,
+  Hash,
+  Activity,
+  type LucideIcon,
+  Sparkles,
+  Zap,
+  Sigma,
+  Triangle,
+  Snowflake,
+  RefreshCw,
+  Atom,
+  BarChart3,
+  Circle,
+} from 'lucide-react';
+import dynamic from 'next/dynamic';
 import {
   getMissionById,
   isMissionId,
-  MissionId,
-  useQuantumStore,
-} from '@/store/useQuantumStore';
-import clsx from 'clsx';
-import { Hash } from 'crypto';
-import { Link, LucideIcon, XIcon, Sparkles, Zap, Sigma, Triangle, LinkIcon, Snowflake, RefreshCw, Atom, BarChart3, Circle } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import { useState, Activity, useMemo, useCallback, useRef, useEffect } from 'react';
-import { useGuidedMission, MissionDefinition, StepDefinition } from './quantum-missions-core';
+  type MissionId,
+  useGuidedMission,
+  type MissionDefinition,
+  type StepDefinition,
+} from './quantum-missions-core';
 
 const MissionLoader = () => (
   <div
@@ -188,37 +207,37 @@ const MissionLoader = () => (
 );
 
 const SuperpositionExperience = dynamic(
-  () => import("@/features/missions/experiences/superposition"),
+  () => import('@/features/quantum-core/mission-experiences').then((m) => m.SuperpositionExperience),
   { loading: () => <MissionLoader />, ssr: false }
 );
 
 const EntanglementExperience = dynamic(
-  () => import("@/features/missions/experiences/entanglement"),
+  () => import('@/features/quantum-core/mission-experiences').then((m) => m.EntanglementExperience),
   { loading: () => <MissionLoader />, ssr: false }
 );
 
 const ErrorCorrectionExperience = dynamic(
-  () => import("@/features/missions/experiences/error-correction"),
+  () => import('@/features/quantum-core/mission-experiences').then((m) => m.ErrorCorrectionExperience),
   { loading: () => <MissionLoader />, ssr: false }
 );
 
 const GatesExperience = dynamic(
-  () => import("@/features/missions/experiences/gates"),
+  () => import('@/features/quantum-core/mission-experiences').then((m) => m.GatesExperience),
   { loading: () => <MissionLoader />, ssr: false }
 );
 
 const DecoherenceExperience = dynamic(
-  () => import("@/features/missions/experiences/decoherence"),
+  () => import('@/features/quantum-core/mission-experiences').then((m) => m.DecoherenceExperience),
   { loading: () => <MissionLoader />, ssr: false }
 );
 
 const GroverExperience = dynamic(
-  () => import("@/features/missions/experiences/grover"),
+  () => import('@/features/quantum-core/mission-experiences').then((m) => m.GroverExperience),
   { loading: () => <MissionLoader />, ssr: false }
 );
 
 const ApplicationsExperience = dynamic(
-  () => import("@/features/missions/experiences/applications"),
+  () => import('@/features/quantum-core/mission-experiences').then((m) => m.ApplicationsExperience),
   { loading: () => <MissionLoader />, ssr: false }
 );
 
@@ -591,6 +610,12 @@ const ICONS: Record<GateType, LucideIcon> = {
   SWAP: RefreshCw,
   CS: Activity,
   CT: Activity,
+  I: Circle,
+  CPHASE: Activity,
+  CR: Activity,
+  TOFFOLI: LinkIcon,
+  MEASURE: BarChart3,
+  CUSTOM: Atom,
 };
 
 export function GatePalette({ gates = DEFAULT_GATES, selected, onSelect, disabled = [] }: GatePaletteProps) {
@@ -629,7 +654,7 @@ export function GatePalette({ gates = DEFAULT_GATES, selected, onSelect, disable
         const isSelected = selected === g;
         const Icon = ICONS[g];
         return (
-          <Tooltip key={g} content={LABELS[g]} delayDuration={200} side="right">
+          <Tooltip key={g} content={LABELS[g]}>
             <div
               role="option"
               aria-selected={isSelected}

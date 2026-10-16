@@ -1,4 +1,4 @@
-import { useQuantumStore, useSession } from "@/store/useQuantumStore";
+import { useQuantumStore, useSession, type MissionPhase } from "@/store/useQuantumStore";
 import { useMemo, useCallback, useSyncExternalStore, useEffect } from "react";
 
 // --- Section: src/features/missions/config/missions.ts ---
@@ -10,8 +10,6 @@ export type MissionId =
   | 'gates'
   | 'grover'
   | 'error-correction';
-
-export type { MissionDefinition, StepDefinition };
 
 export const MISSIONS: readonly MissionDefinition[] = [
   {
@@ -582,17 +580,15 @@ export function isMainJourneyComplete(
 export const missions = MISSIONS;
 
 // --- Section: src/features/missions/domain/missionMachine.ts ---
-export type MissionPhase =
-  | 'BRIEFING'
-  | 'PREDICTION'
-  | 'MANIPULATION'
-  | 'MEASUREMENT'
-  | 'VERIFICATION'
-  | 'SUCCESS';
+export type { MissionPhase };
 
 export const MISSION_PHASES: readonly MissionPhase[] = [
   'BRIEFING',
   'PREDICTION',
+  'EXPERIMENT',
+  'OBSERVATION',
+  'ANALYSIS',
+  'COMPLETED',
   'MANIPULATION',
   'MEASUREMENT',
   'VERIFICATION',
@@ -728,7 +724,11 @@ export const createInitialMissionProgressState = (
 
 export const VALID_TRANSITIONS: Record<MissionPhase, MissionPhase[]> = {
   BRIEFING: ['PREDICTION'],
-  PREDICTION: ['MANIPULATION'],
+  PREDICTION: ['MANIPULATION', 'EXPERIMENT'],
+  EXPERIMENT: ['OBSERVATION', 'MEASUREMENT'],
+  OBSERVATION: ['ANALYSIS', 'VERIFICATION'],
+  ANALYSIS: ['COMPLETED', 'SUCCESS'],
+  COMPLETED: ['BRIEFING'],
   MANIPULATION: ['MEASUREMENT'],
   MEASUREMENT: ['VERIFICATION'],
   VERIFICATION: ['SUCCESS', 'MANIPULATION'],
@@ -898,7 +898,8 @@ export interface MissionInternalState {
 export function useGuidedMission(missionId: MissionId | string) {
   const { session, updateMissionState, completeMission } = useSession();
 
-  const missionState = useQuantumStore((state) => state.missionState);
+  const currentPhase = useQuantumStore((state) => state.currentPhase);
+  const missionState = useMemo(() => ({ currentPhase }), [currentPhase]);
   const transitionMissionPhase = useQuantumStore(
     (state) => state.transitionMissionPhase
   );

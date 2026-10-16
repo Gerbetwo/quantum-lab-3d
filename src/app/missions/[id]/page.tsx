@@ -1,7 +1,11 @@
 import { LeanLabLayout } from '@/components/AppLayout';
-import { MISSIONS, MissionDefinition } from '@/features/quantum-core/quantum-missions-core';
+import {
+  MISSIONS,
+  type MissionDefinition,
+  isMissionId,
+  getMissionById,
+} from '@/features/quantum-core/quantum-missions-core';
 import { MissionRegistry } from '@/features/quantum-core/quantum-ui-components';
-import { isMissionId, getMissionById } from '@/store/useQuantumStore';
 
 import { notFound } from 'next/navigation';
 

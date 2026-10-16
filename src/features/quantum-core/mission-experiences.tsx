@@ -1,3 +1,5 @@
+'use client';
+
 import React, {
   useState,
   useEffect,
@@ -460,6 +462,13 @@ export const ShorDemoStep: React.FC<ShorDemoStepProps> = ({
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [exploredRecorded, setExploredRecorded] = useState<boolean>(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const demoData = useMemo(() => {
     const result = runShorDemo(selectedBase);
@@ -486,7 +495,8 @@ export const ShorDemoStep: React.FC<ShorDemoStepProps> = ({
 
   const handleRunShor = () => {
     setStatus("loading");
-    setTimeout(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
       setStatus("success");
       if (!exploredRecorded) {
         setExploredRecorded(true);
@@ -1053,6 +1063,13 @@ export const ThermalPhotonStep: React.FC<ThermalPhotonStepProps> = ({
   const [photonCount, setPhotonCount] = useState<number>(0);
   const [tested, setTested] = useState<boolean>(false);
   const [isPerturbing, setIsPerturbing] = useState<boolean>(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const handlePerturb = () => {
     if (isPerturbing) return;
@@ -1071,7 +1088,8 @@ export const ThermalPhotonStep: React.FC<ThermalPhotonStepProps> = ({
       onStateChange({ photonCount: nextCount, tested: true });
     }
 
-    setTimeout(() => setIsPerturbing(false), 300);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setIsPerturbing(false), 300);
   };
 
   return (

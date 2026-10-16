@@ -1,20 +1,22 @@
-import dynamic from 'next/dynamic';
 'use client';
 
 import React from 'react';
 import { AppShell } from '@/components/AppLayout';
-const BlochSphereWorkspace = dynamic(
-  () => import('@/components/BlochCanvas'),
-  { ssr: false }
-);
-
+import { BlochSphereWorkspace, MathDock } from '@/components/BlochCanvas';
 import { useQuantumStore } from '@/store/useQuantumStore';
-import { MISSIONS } from '@/store/useQuantumStore';
-import { MathDock } from '@/components/BlochCanvas';
+import {
+  MISSIONS,
+  getMissionById,
+  type MissionDefinition,
+  type StepDefinition,
+} from '@/features/quantum-core/quantum-missions-core';
 
 export default function Page() {
-  const activeMissionId = useQuantumStore((s: { activeMissionId: any; }) => s.activeMissionId);
-  const currentMission = MISSIONS[activeMissionId] ?? MISSIONS[0];
+  const activeMissionId = useQuantumStore(
+    (s) => s.currentMissionId ?? s.activeMissionId ?? 'superposition'
+  );
+  const currentMission: MissionDefinition =
+    (activeMissionId ? getMissionById(activeMissionId) : undefined) ?? MISSIONS[0];
 
   return (
     <AppShell>
@@ -54,7 +56,7 @@ export default function Page() {
               <div className="mt-1 flex flex-col gap-1.5">
                 <span className="text-xs font-mono text-muted-foreground uppercase">Steps:</span>
                 <div className="flex flex-col gap-1">
-                  {currentMission.steps.map((step: { id: any; title: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; phase: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; }, idx: number) => (
+                  {currentMission.steps.map((step: StepDefinition, idx: number) => (
                     <div
                       key={step.id || idx}
                       className="text-xs px-2.5 py-1.5 rounded bg-background/50 border border-border/60 flex items-center justify-between"

@@ -738,7 +738,11 @@ export type MissionPhase =
   | "EXPERIMENT"
   | "OBSERVATION"
   | "ANALYSIS"
-  | "COMPLETED";
+  | "COMPLETED"
+  | "MANIPULATION"
+  | "MEASUREMENT"
+  | "VERIFICATION"
+  | "SUCCESS";
 
 export const INITIAL_MISSION_RUN = {
   currentMissionId: "superposition" as MissionId,
@@ -780,7 +784,7 @@ export interface MissionRunSlice {
   transitionPhase: (phase: MissionPhase) => void;
   transitionMissionPhase: (phase: MissionPhase) => void;
   applyGateToMission: (gate: string) => void;
-  evaluateMissionStep: () => void;
+  evaluateMissionStep: (targetTheta?: number, targetPhi?: number) => boolean;
   resetState: () => void;
 }
 
@@ -894,8 +898,18 @@ export const useQuantumStore = create<QuantumStore>()(
         set((state) => ({ appliedGates: [...state.appliedGates, gate] }));
         get().applyGate(gate);
       },
-      evaluateMissionStep: () => {
+      evaluateMissionStep: (targetTheta?: number, targetPhi?: number): boolean => {
         set((state) => ({ activeStepIndex: state.activeStepIndex + 1 }));
+        if (targetTheta !== undefined && targetPhi !== undefined) {
+          const { theta, phi } = get();
+          const thetaDiff = Math.abs(theta - targetTheta);
+          const normPhiActual = ((phi % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+          const normPhiTarget = ((targetPhi % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+          const rawPhiDiff = Math.abs(normPhiActual - normPhiTarget);
+          const phiDiff = Math.min(rawPhiDiff, 2 * Math.PI - rawPhiDiff);
+          return thetaDiff <= 0.05 && phiDiff <= 0.05;
+        }
+        return true;
       },
       resetState: () => {
         set({

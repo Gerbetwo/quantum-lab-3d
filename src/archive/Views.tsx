@@ -8,6 +8,7 @@ import type { StateVector } from '@/lib/quantumCore';
 import * as PresetsModule from '@/lib/quantumCore';
 import * as DecoherenceModule from '@/lib/quantumCore';
 import { useSession } from '@/store/useQuantumStore';
+import * as SoundModule from '@/lib/audio/audioEngine';
 import { Link } from 'lucide-react';
 import { useRef, useState, useMemo, useCallback } from 'react';
 

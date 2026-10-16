@@ -3,29 +3,12 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as THREE from 'three';
 import '@testing-library/jest-dom';
-
-import CelebrationModal from '@/shared/layout/CelebrationModal';
-import CircuitGrid from '@/features/circuit/components/CircuitGrid';
-import CommandPalette, { type Command } from '@/shared/layout/CommandPalette';
-import GatePalette from '@/features/circuit/components/GatePalette';
-import { Header } from '@/shared/layout/Header';
-import {
-  MeasurementParticles,
-  MeasurementParticlesHandle,
-} from '@/features/quantum-3d/canvas/MeasurementParticles';
-import { MissionShell } from '@/features/missions/components/MissionShell';
-import { MISSIONS } from '@/features/missions/config/missions';
-import PhaseDiskView from '@/features/circuit/components/viewports/PhaseDiskView';
-import Tooltip from '@/shared/ui/Tooltip';
-import { AppShell } from '@/shared/layout/AppShell';
-import { SceneStage } from '@/features/quantum-3d/components/SceneStage';
-import { BlochSphereScene } from '@/features/quantum-3d/scenes/BlochSphereScene';
-import { Button } from '@/shared/ui/Button';
-import { RangeControl } from '@/shared/ui/RangeControl';
-import { StatusMessage } from '@/shared/ui/StatusMessage';
-
-import { createEmptyCircuit, placeGate } from '@/core/math/circuit';
-import { createZeroState } from '@/core/math/statevector';
+import { CelebrationModal, Command, CommandPalette, Header, AppShell } from '@/components/AppLayout';
+import { MeasurementParticlesHandle, MeasurementParticles, SceneStage, BlochSphereScene } from '@/components/BlochCanvas';
+import { Tooltip, Button, RangeControl, StatusMessage } from '@/components/MathHUD';
+import { CircuitGrid, GatePalette, MissionShell, PhaseDiskView } from '@/features/quantum-core/quantum-ui-components';
+import { createEmptyCircuit, placeGate, createZeroState } from '@/lib/quantumCore';
+import { MISSIONS } from '@/store/useQuantumStore';
 
 vi.mock('@/features/session/components/SessionProvider', () => ({
   useSession: () => ({
@@ -168,7 +151,11 @@ describe('CircuitGrid', () => {
   });
   it('invokes onRemoveGate on Delete key over an occupied cell', () => {
     let circuit = createEmptyCircuit(2, 4);
-    circuit = placeGate(circuit, { type: 'H', step: 0, targets: [0] });
+    circuit = placeGate(circuit, {
+      type: 'H', step: 0, targets: [0],
+      id: '',
+      targetQubit: 0
+    });
     const onRemoveGate = vi.fn();
     render(
       <CircuitGrid
