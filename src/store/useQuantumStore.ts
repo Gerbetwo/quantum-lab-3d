@@ -18,11 +18,17 @@ export interface QuantumStore {
   elapsedSeconds: number; isRunning: boolean;
 
   setAngles: (theta: number, phi: number) => void;
+  setTheta: (theta: number) => void;
+  setPhi: (phi: number) => void;
   setTemperature: (temperatureK: number) => void;
+  setTemperatureK: (temperatureK: number) => void;
+  setEntangled: (isEntangled: boolean) => void;
+  setLastOutcome: (outcome: 0 | 1 | null) => void;
   applyGate: (gate: string) => void;
   applyGateToMission: (gate: string) => void;
   measure: () => 0 | 1;
   setPrediction: (prob0: number) => void;
+  setUserPrediction: (prob0: number) => void;
   transitionPhase: (phase: MissionPhase) => void;
   transitionMissionPhase: (phase: MissionPhase) => void;
   evaluateMissionStep: (targetTheta?: number, targetPhi?: number) => boolean;
@@ -62,8 +68,13 @@ export const useQuantumStore = create<QuantumStore>()(
       isRunning: true,
 
       setAngles: (theta, phi) => set({ theta, phi }),
+      setTheta: (theta) => set({ theta }),
+      setPhi: (phi) => set({ phi }),
       setTemperature: (temperatureK) =>
         set({ temperatureK, coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(temperatureK)) }),
+      setTemperatureK: (temperatureK) => get().setTemperature(temperatureK),
+      setEntangled: (isEntangled) => set({ isEntangled, entanglementDegree: isEntangled ? 1 : 0 }),
+      setLastOutcome: (lastOutcome) => set({ lastOutcome }),
 
       applyGate: (gate) => {
         const { theta, phi } = get();
@@ -91,6 +102,7 @@ export const useQuantumStore = create<QuantumStore>()(
       },
 
       setPrediction: (prob0) => set({ userPredictionProb0: prob0 }),
+      setUserPrediction: (prob0) => set({ userPredictionProb0: prob0 }),
       transitionPhase: (phase) => set({ currentPhase: phase }),
       transitionMissionPhase: (phase) => set({ currentPhase: phase }),
 

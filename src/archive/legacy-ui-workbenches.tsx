@@ -2,6 +2,97 @@
 /* eslint-disable */
 // Archived from src/features/quantum-core/quantum-ui-components.tsx
 
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import * as THREE from 'three';
+import clsx from 'clsx';
+import {
+  X as XIcon,
+  Link as LinkIcon,
+  Hash,
+  Activity,
+  type LucideIcon,
+  Sparkles,
+  Zap,
+  Sigma,
+  Triangle,
+  Snowflake,
+  RefreshCw,
+  Atom,
+  BarChart3,
+  Circle,
+} from 'lucide-react';
+import { useQuantumStore } from '@/store/useQuantumStore';
+import {
+  QuantumCircuit,
+  QubitIndex,
+  createEmptyCircuit,
+  StateVectorHistory,
+  evaluateFullCircuit,
+  GateType,
+  StateVector,
+} from '@/core/qubitMath';
+
+// Symbol: KnowledgeCheck
+export function KnowledgeCheck({
+  quiz,
+  question: propQuestion,
+  options: propOptions,
+  correctOptionId: propCorrectOptionId,
+  selectedOptionId,
+  onSelectOption,
+  onPass,
+  title = 'Comprobación de Conocimiento',
+}: any) {
+  const question = quiz?.question ?? propQuestion ?? '';
+  const options = quiz?.options ?? propOptions ?? [];
+  const correctOptionId = quiz?.correctOptionId ?? propCorrectOptionId ?? '';
+
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [passedCalled, setPassedCalled] = useState<boolean>(false);
+
+  const isCorrect = selectedOptionId === correctOptionId;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOptionId) return;
+    setSubmitted(true);
+    if (selectedOptionId === correctOptionId && !passedCalled) {
+      setPassedCalled(true);
+      onPass?.();
+    }
+  };
+
+  return (
+    <section className="bg-background-90 border border-border rounded-xl p-6 shadow-xl flex flex-col gap-4 text-foreground">
+      <div className="flex items-center gap-2 border-b border-border pb-3">
+        <span className="text-xl">🧠</span>
+        <h2 className="text-lg font-bold text-accent">{title}</h2>
+      </div>
+      <p className="text-base font-medium">{question}</p>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 mt-2">
+        <div className="flex flex-col gap-2">
+          {options.map((opt: any) => (
+            <label key={opt.id} className="flex items-start gap-3 p-3 rounded-lg border border-border cursor-pointer">
+              <input
+                type="radio"
+                name="quiz-option"
+                value={opt.id}
+                checked={selectedOptionId === opt.id}
+                disabled={submitted}
+                onChange={() => !submitted && onSelectOption?.(opt.id)}
+              />
+              <span>{opt.text}</span>
+            </label>
+          ))}
+        </div>
+        <button type="submit" disabled={!selectedOptionId} className="px-6 py-2 rounded-lg bg-accent text-accent-foreground font-semibold">
+          Validar Respuesta
+        </button>
+      </form>
+    </section>
+  );
+}
+
 // Symbol: CircuitWorkbench
 export function CircuitWorkbench() {
   const [circuit] = useState<QuantumCircuit>(() => createEmptyCircuit(3));
@@ -22,128 +113,50 @@ export function CircuitWorkbench() {
 }
 
 // Symbol: ViewModeSwitcher
-export function ViewModeSwitcher({ mode, onChange, available }: ViewModeSwitcherProps) {
-  const modes: readonly ViewMode[] = available ?? ['bloch', 'histogram', 'phase-disk'];
+export function ViewModeSwitcher({ mode, onChange, available }: any) {
+  const modes = available ?? ['bloch', 'histogram', 'phase-disk'];
   return (
-    <div
-      role="tablist"
-      aria-label="Modo de visualizacion"
-      data-testid="view-mode-switcher"
-      className="flex gap-1.5 mb-3 flex-wrap"
-    >
-      {modes.map((m) => {
-        const Icon = VIEW_ICONS[m];
-        return (
-          <button
-            key={m}
-            type="button"
-            role="tab"
-            aria-selected={mode === m}
-            aria-label={VIEW_LABELS[m]}
-            data-testid={'view-mode-' + m}
-            onClick={() => onChange(m)}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-xs font-mono transition-colors',
-              'inline-flex items-center gap-1.5',
-              mode === m
-                ? 'bg-cyan/20 text-cyan border border-cyan/60'
-                : 'bg-surface-2 text-muted-foreground border border-edge hover:bg-surface-3',
-            )}
-          >
-            <Icon className="w-3.5 h-3.5" aria-hidden />
-            <span>{VIEW_LABELS[m]}</span>
-          </button>
-        );
-      })}
+    <div role="tablist" className="flex gap-1.5 mb-3 flex-wrap">
+      {modes.map((m: any) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => onChange?.(m)}
+          className={clsx(
+            'px-3 py-1.5 rounded-lg text-xs font-mono transition-colors',
+            mode === m ? 'bg-cyan/20 text-cyan border border-cyan/60' : 'bg-surface-2 text-muted-foreground'
+          )}
+        >
+          <span>{m}</span>
+        </button>
+      ))}
     </div>
   );
 }
 
 // Symbol: BlochPairView
-export function BlochPairView(_props: ViewportProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handle = createScene(container);
-
-    const qubit0Pos: [number, number, number] = [-1.8, 0, 0];
-    const qubit1Pos: [number, number, number] = [1.8, 0, 0];
-
-    handle.scene.add(createQubitSphere(qubit0Pos));
-    handle.scene.add(createQubitSphere(qubit1Pos));
-
-    const v0 = new THREE.Vector3(...qubit0Pos);
-    const v1 = new THREE.Vector3(...qubit1Pos);
-    const mid = new THREE.Vector3().addVectors(v0, v1).multiplyScalar(0.5);
-    const dist = v0.distanceTo(v1);
-
-    const beamGeo = new THREE.CylinderGeometry(0.08, 0.08, dist, 32, 1, true);
-    const beamMat = new THREE.ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      uniforms: {
-        uTime: { value: 0 },
-        uColor: { value: new THREE.Color('#00f0ff') },
-        uIntensity: { value: 0 },
-      },
-      transparent: true,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-    });
-
-    const beamMesh = new THREE.Mesh(beamGeo, beamMat);
-    beamMesh.position.copy(mid);
-
-    const dir = new THREE.Vector3().subVectors(v1, v0).normalize();
-    const orientation = new THREE.Matrix4();
-    if (Math.abs(dir.y) > 0.999) {
-      orientation.lookAt(v0, v1, new THREE.Vector3(0, 0, 1));
-    } else {
-      orientation.lookAt(v0, v1, new THREE.Vector3(0, 1, 0));
-    }
-    const rot = new THREE.Euler().setFromRotationMatrix(orientation);
-    beamMesh.rotation.set(rot.x + Math.PI / 2, rot.y, rot.z);
-
-    handle.scene.add(beamMesh);
-
-    const unregisterFrame = handle.onFrame((_time: number, delta: number) => {
-      const state = useQuantumStore.getState();
-      const entanglementDegree = state.entanglementDegree ?? (state.isEntangled ? 1.0 : 0.0);
-      const isVisible = entanglementDegree > 0;
-
-      beamMesh.visible = isVisible;
-      if (isVisible) {
-        beamMat.uniforms.uTime.value += delta;
-        beamMat.uniforms.uIntensity.value = entanglementDegree;
-      }
-    });
-
-    const resizeObserver = new ResizeObserver(() => handle.resize());
-    resizeObserver.observe(container);
-
-    return () => {
-      unregisterFrame();
-      resizeObserver.disconnect();
-      handle.dispose();
-    };
-  }, []);
-
+export function BlochPairView(_props: any) {
   return (
-    <div className="flex items-center justify-center h-full w-full relative bg-background-90 rounded-xl overflow-hidden">
-      <div ref={containerRef} className="w-full h-full" />
+    <div className="flex items-center justify-center h-full w-full bg-background-90 rounded-xl overflow-hidden p-4">
+      <span className="text-xs text-muted-foreground font-mono">Legacy Bloch Pair View</span>
     </div>
   );
 }
 
 // Symbol: HistogramView
-export function HistogramView(_props: ViewportProps) {
+export function HistogramView(_props: any) {
   return (
     <div className="flex items-center justify-center h-full w-full">
       <canvas role="img" aria-label="Histogram View" className="w-full h-full" />
+    </div>
+  );
+}
+
+// Symbol: PhaseDiskView
+export function PhaseDiskView(_props: any) {
+  return (
+    <div className="flex items-center justify-center h-full w-full">
+      <canvas role="img" aria-label="Phase Disk View" className="w-full h-full" />
     </div>
   );
 }

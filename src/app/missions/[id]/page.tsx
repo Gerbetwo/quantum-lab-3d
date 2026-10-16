@@ -1,12 +1,11 @@
-import { LeanLabLayout } from '@/components/AppLayout';
+import { LeanLabLayout } from '@/components/layout/AppShell';
 import {
   MISSIONS,
   type MissionDefinition,
   isMissionId,
   getMissionById,
-} from '@/features/quantum-core/quantum-missions-core';
-import { MissionRegistry } from '@/features/quantum-core/quantum-ui-components';
-
+} from '@/features/missions/missionRegistry';
+import { MissionWorkspace } from '@/features/missions/MissionWorkspace';
 import { notFound } from 'next/navigation';
 
 interface MissionPageProps {
@@ -48,7 +47,9 @@ export default async function MissionPage({ params }: MissionPageProps) {
 
   return (
     <LeanLabLayout>
-      <MissionRegistry missionId={id} />
+      <div className="flex-1 p-6 max-w-4xl mx-auto w-full">
+        <MissionWorkspace missionId={id} />
+      </div>
     </LeanLabLayout>
   );
 }

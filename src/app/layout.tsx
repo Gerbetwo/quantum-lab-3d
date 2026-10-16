@@ -1,9 +1,8 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
-import { AppShell } from '@/components/AppLayout';
+import { AppShell } from '@/components/layout/AppShell';
 import { SessionProvider } from '@/archive/legacy-store-telemetry';
-
 
 export const metadata: Metadata = {
   title: 'QuantumLab 3D',
