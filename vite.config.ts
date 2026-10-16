@@ -10,6 +10,7 @@ export default defineConfig({
     }
   },
   test: {
+    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
