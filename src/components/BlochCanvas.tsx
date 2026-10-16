@@ -2,6 +2,8 @@ import { StateVector, bellState, measureEntangledQubit } from '@/lib/quantumCore
 import clsx from 'clsx';
 import React, { forwardRef, useRef, useCallback, useEffect, useImperativeHandle, Suspense, MutableRefObject, RefObject, useMemo, useState } from 'react';
 import { GlassCard } from './MathHUD';
+import { useQuantumStore } from '@/store/useQuantumStore';
+import * as THREE from 'three';
 
 export interface TriggerOptions {
   origin?: [number, number, number] | null;

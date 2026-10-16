@@ -1,5 +1,6 @@
 'use client';
 
+import { MeasurementParticles, QuantumViewport } from '@/components/BlochCanvas';
 import { MISSIONS } from '@/features/quantum-core/quantum-missions-core';
 import { CircuitWorkbench, ViewModeSwitcher, BlochPairView, PhaseDiskView, HistogramView } from '@/features/quantum-core/quantum-ui-components';
 import { createEmptyCircuit, placeGate, removeGate, evaluateFullCircuit } from '@/lib/quantumCore';
@@ -9,7 +10,7 @@ import * as DecoherenceModule from '@/lib/quantumCore';
 import { useSession } from '@/store/useQuantumStore';
 import { Link } from 'lucide-react';
 import { useRef, useState, useMemo, useCallback } from 'react';
-import { MeasurementParticles, QuantumViewport } from './BlochCanvas';
+
 
 export function SandboxDashboard() {
   const dummySceneRef = useRef(null);

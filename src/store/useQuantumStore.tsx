@@ -1,24 +1,61 @@
-export type MissionId = 'superposition' | 'entanglement' | 'error-correction' | 'gates' | 'decoherence' | 'grover' | 'applications';
-
-export function isMissionId(id: string): id is MissionId {
-  return ['superposition', 'entanglement', 'error-correction', 'gates', 'decoherence', 'grover', 'applications'].includes(id);
-}
-
-export function getMissionById(id: MissionId) {
-  return { id };
-}
-
 'use client';
 
-// ============================================================================
-// SOURCE MODULE: src/features/session/lib/sessionService.ts
-
-import { MissionId, CORE_MISSION_IDS, isMissionId, isMainJourneyComplete } from "@/features/MissionControls";
-import clsx, { ClassValue } from "clsx";
+import React, { useCallback, useMemo, useEffect } from "react";
 import Cookies from "js-cookie";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import clsx, { ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { createContext } from "vm";
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  calculateCoherenceTime,
+  stateToBlochAngles,
+  applyGate,
+  StandardGates,
+  H,
+  c,
+  type StateVector,
+  type GateMatrix,
+  type GateType,
+} from "@/lib/quantumCore";
+import { audioEngine, isAudioEnabled } from "@/lib/audio/audioEngine";
+
+export type MissionId =
+  | "superposition"
+  | "entanglement"
+  | "error-correction"
+  | "gates"
+  | "decoherence"
+  | "grover"
+  | "applications";
+
+export const CORE_MISSION_IDS: readonly MissionId[] = [
+  "superposition",
+  "entanglement",
+  "error-correction",
+  "gates",
+  "decoherence",
+  "grover",
+  "applications",
+];
+
+export function isMissionId(id: string): id is MissionId {
+  return CORE_MISSION_IDS.includes(id as MissionId);
+}
+
+export function isMainJourneyComplete(
+  completed: MissionId[] | readonly MissionId[]
+): boolean {
+  return CORE_MISSION_IDS.every((id) => completed.includes(id));
+}
+
+export function getMissionById(id: MissionId | string) {
+  return { id: id as MissionId };
+}
+
+export const MISSIONS: any = Object.assign(
+  CORE_MISSION_IDS.map((id) => ({ id })),
+  Object.fromEntries(CORE_MISSION_IDS.map((id) => [id, { id }]))
+);
 
 // ============================================================================
 export const SESSION_VERSION = 2;
@@ -396,8 +433,6 @@ export function completeMissionInSession(
   return { ...session, completed, lastUpdated: Date.now() };
 }
 
-export { isMainJourneyComplete };
-
 export function recordMissionTimeInSession(
   session: UserSession,
   _missionId: string,
@@ -683,7 +718,283 @@ export function downloadSessionExport(
   downloadSessionJSON(undefined, _filename);
 }
 
-("use client");
+// ============================================================================
+// ZUSTAND QUANTUM STORE & MODERN SLICES
+// ============================================================================
+
+export const INITIAL_PHYSICS = {
+  theta: 0,
+  phi: 0,
+  temperatureK: 0.015,
+  coherenceTimeUs: 4347.83,
+  entanglementDegree: 0,
+  isEntangled: false,
+  lastOutcome: null as 0 | 1 | null,
+};
+
+export type MissionPhase =
+  | "BRIEFING"
+  | "PREDICTION"
+  | "EXPERIMENT"
+  | "OBSERVATION"
+  | "ANALYSIS"
+  | "COMPLETED";
+
+export const INITIAL_MISSION_RUN = {
+  currentMissionId: "superposition" as MissionId,
+  activeMissionId: "superposition" as MissionId,
+  activeMission: "superposition" as MissionId,
+  activeStepIndex: 0,
+  currentPhase: "BRIEFING" as MissionPhase,
+  userPredictionProb0: null as number | null,
+  appliedGates: [] as string[],
+  missionState: {} as Record<string, unknown>,
+};
+
+export interface PhysicsSlice {
+  theta: number;
+  phi: number;
+  temperatureK: number;
+  coherenceTimeUs: number;
+  entanglementDegree: number;
+  isEntangled: boolean;
+  lastOutcome: 0 | 1 | null;
+  setAngles: (theta: number, phi: number) => void;
+  applyGate: (gate: string | GateMatrix | GateType) => void;
+  setTemperature: (temperatureK: number) => void;
+  measure: () => 0 | 1;
+}
+
+export interface MissionRunSlice {
+  currentMissionId: MissionId | null;
+  activeMissionId: MissionId | null;
+  activeMission: MissionId | null;
+  activeStepIndex: number;
+  currentPhase: MissionPhase;
+  userPredictionProb0: number | null;
+  appliedGates: string[];
+  missionState: Record<string, unknown>;
+  startMission: (id: MissionId) => void;
+  selectMission: (id: MissionId) => void;
+  setPrediction: (prob0: number) => void;
+  transitionPhase: (phase: MissionPhase) => void;
+  transitionMissionPhase: (phase: MissionPhase) => void;
+  applyGateToMission: (gate: string) => void;
+  evaluateMissionStep: () => void;
+  resetState: () => void;
+}
+
+export interface ProgressSlice {
+  userId: string;
+  completedMissions: MissionId[];
+  completed: MissionId[];
+  missionTimes: Record<MissionId, number>;
+  missionTime: Partial<Record<MissionId, number>>;
+  progress: number[];
+  metrics: UserMetrics;
+  completeMission: (id: MissionId | string) => void;
+  recordMissionTime: (id: MissionId | string, durationSeconds: number) => void;
+  resetProgress: () => void;
+}
+
+export interface TimerSlice {
+  elapsedSeconds: number;
+  isRunning: boolean;
+  tick: () => void;
+  pause: () => void;
+  resume: () => void;
+  resetTimer: () => void;
+  pauseTimer: () => void;
+  resumeTimer: () => void;
+  pauseSession: () => void;
+  resumeSession: () => void;
+}
+
+export type QuantumStore = PhysicsSlice &
+  MissionRunSlice &
+  ProgressSlice &
+  TimerSlice;
+
+export const useQuantumStore = create<QuantumStore>()(
+  persist(
+    (set, get) => ({
+      // --- PhysicsSlice ---
+      ...INITIAL_PHYSICS,
+      setAngles: (theta: number, phi: number) => {
+        set({ theta, phi });
+      },
+      applyGate: (gate: string | GateMatrix | GateType) => {
+        const { theta, phi } = get();
+        // Construct single-qubit state: |psi> = cos(theta/2)|0> + e^(i phi) sin(theta/2)|1>
+        const alpha = Math.cos(theta / 2);
+        const betaMag = Math.sin(theta / 2);
+        const betaRe = betaMag * Math.cos(phi);
+        const betaIm = betaMag * Math.sin(phi);
+        const stateVector: StateVector = [c(alpha, 0), c(betaRe, betaIm)];
+
+        let gateMatrix: GateMatrix;
+        let gateName = "GATE";
+        if (typeof gate === "string") {
+          gateName = gate;
+          gateMatrix =
+            (StandardGates as Record<string, GateMatrix>)[gate] ?? H;
+        } else {
+          gateMatrix = gate;
+        }
+
+        const nextState = applyGate(stateVector, gateMatrix);
+        const nextAngles = stateToBlochAngles(nextState);
+        set({ theta: nextAngles.theta, phi: nextAngles.phi });
+        audioEngine.playGateSound(gateName);
+      },
+      setTemperature: (temperatureK: number) => {
+        const coherenceTimeUs = calculateCoherenceTime(temperatureK);
+        set({ temperatureK, coherenceTimeUs });
+      },
+      measure: () => {
+        const { theta } = get();
+        const p0 = Math.cos(theta / 2) ** 2;
+        const outcome: 0 | 1 = Math.random() < p0 ? 0 : 1;
+        if (outcome === 0) {
+          set({ theta: 0, phi: 0, lastOutcome: 0 });
+        } else {
+          set({ theta: Math.PI, phi: 0, lastOutcome: 1 });
+        }
+        audioEngine.playMeasurementSound();
+        return outcome;
+      },
+
+      // --- MissionRunSlice ---
+      ...INITIAL_MISSION_RUN,
+      startMission: (id: MissionId) => {
+        set({
+          ...INITIAL_PHYSICS,
+          currentMissionId: id,
+          activeMissionId: id,
+          activeMission: id,
+          activeStepIndex: 0,
+          currentPhase: "BRIEFING",
+          userPredictionProb0: null,
+          appliedGates: [],
+        });
+      },
+      selectMission: (id: MissionId) => {
+        get().startMission(id);
+      },
+      setPrediction: (prob0: number) => {
+        set({ userPredictionProb0: prob0 });
+      },
+      transitionPhase: (phase: MissionPhase) => {
+        set({ currentPhase: phase });
+      },
+      transitionMissionPhase: (phase: MissionPhase) => {
+        set({ currentPhase: phase });
+      },
+      applyGateToMission: (gate: string) => {
+        set((state) => ({ appliedGates: [...state.appliedGates, gate] }));
+        get().applyGate(gate);
+      },
+      evaluateMissionStep: () => {
+        set((state) => ({ activeStepIndex: state.activeStepIndex + 1 }));
+      },
+      resetState: () => {
+        set({
+          ...INITIAL_PHYSICS,
+          ...INITIAL_MISSION_RUN,
+        });
+      },
+
+      // --- ProgressSlice ---
+      userId: getOrCreateUserId(),
+      completedMissions: [],
+      completed: [],
+      missionTimes: emptyMissionTimes(),
+      missionTime: {},
+      progress: [0],
+      metrics: DEFAULT_METRICS,
+      completeMission: (id: MissionId | string) => {
+        const canonical = toCanonicalMissionId(id);
+        if (!canonical) return;
+        const currentCompleted = get().completedMissions;
+        if (!currentCompleted.includes(canonical)) {
+          const updated = [...currentCompleted, canonical];
+          set((state) => ({
+            completedMissions: updated,
+            completed: updated,
+            progress: Array.from(new Set([...state.progress, updated.length])),
+          }));
+          audioEngine.playSuccessSound();
+        }
+      },
+      recordMissionTime: (id: MissionId | string, durationSeconds: number) => {
+        const canonical = toCanonicalMissionId(id);
+        if (!canonical) return;
+        set((state) => {
+          const prevTime = state.missionTimes[canonical] || 0;
+          const nextTimes = {
+            ...state.missionTimes,
+            [canonical]: prevTime + durationSeconds,
+          };
+          return {
+            missionTimes: nextTimes,
+            missionTime: nextTimes,
+          };
+        });
+      },
+      resetProgress: () => {
+        set({
+          completedMissions: [],
+          completed: [],
+          missionTimes: emptyMissionTimes(),
+          missionTime: {},
+          progress: [0],
+        });
+      },
+
+      // --- TimerSlice ---
+      elapsedSeconds: 0,
+      isRunning: true,
+      tick: () => {
+        if (get().isRunning) {
+          set((state) => ({ elapsedSeconds: state.elapsedSeconds + 1 }));
+        }
+      },
+      pause: () => set({ isRunning: false }),
+      resume: () => set({ isRunning: true }),
+      resetTimer: () => set({ elapsedSeconds: 0 }),
+      pauseTimer: () => set({ isRunning: false }),
+      resumeTimer: () => set({ isRunning: true }),
+      pauseSession: () => set({ isRunning: false }),
+      resumeSession: () => set({ isRunning: true }),
+    }),
+    {
+      name: STORAGE_KEY,
+      storage: createJSONStorage(() => {
+        if (typeof window !== "undefined" && window.localStorage) {
+          return window.localStorage;
+        }
+        return {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        };
+      }),
+      partialize: (state) => ({
+        userId: state.userId,
+        completedMissions: state.completedMissions,
+        completed: state.completed,
+        missionTimes: state.missionTimes,
+        missionTime: state.missionTime,
+        progress: state.progress,
+        metrics: state.metrics,
+      }),
+    }
+  )
+);
+
+// ============================================================================
+// BACKWARD COMPATIBILITY ADAPTERS
+// ============================================================================
 
 const MISSION_ORDER: MissionId[] = [
   "superposition",
@@ -696,31 +1007,95 @@ const MISSION_ORDER: MissionId[] = [
 ];
 
 export function useSession() {
-  const {
-    session,
-    isHydrated,
-    setActiveMission: setCanonicalActiveMission,
-    completeMission,
-    recordMissionTime,
-    resetSession,
-  } = useSessionContext();
+  const userId = useQuantumStore((s) => s.userId);
+  const activeMission = useQuantumStore(
+    (s) => s.currentMissionId ?? "superposition"
+  );
+  const completed = useQuantumStore((s) => s.completedMissions);
+  const missionTime = useQuantumStore((s) => s.missionTimes);
+  const missionState = useQuantumStore((s) => s.missionState);
+  const elapsedSeconds = useQuantumStore((s) => s.elapsedSeconds);
+  const isRunning = useQuantumStore((s) => s.isRunning);
+  const metrics = useQuantumStore((s) => s.metrics);
+  const progress = useQuantumStore((s) => s.progress);
+
+  const startMission = useQuantumStore((s) => s.startMission);
+  const completeMissionStore = useQuantumStore((s) => s.completeMission);
+  const recordMissionTimeStore = useQuantumStore((s) => s.recordMissionTime);
+  const resetState = useQuantumStore((s) => s.resetState);
+  const pause = useQuantumStore((s) => s.pause);
+  const resume = useQuantumStore((s) => s.resume);
+
+  const session: UserSession = useMemo(
+    () => ({
+      userId,
+      activeMission: activeMission as MissionId,
+      completed,
+      missionTime,
+      missionState,
+      events: [],
+      lastUpdated: Date.now(),
+      metrics,
+      progress,
+      activeTab: 0,
+      elapsedSeconds,
+      isRunning,
+      version: SESSION_VERSION,
+    }),
+    [
+      userId,
+      activeMission,
+      completed,
+      missionTime,
+      missionState,
+      metrics,
+      progress,
+      elapsedSeconds,
+      isRunning,
+    ]
+  );
 
   const setActiveMission = useCallback(
     (missionId: MissionId | null) => {
-      if (missionId) {
-        setCanonicalActiveMission(missionId);
-      } else if (session.activeMission) {
-        setCanonicalActiveMission(session.activeMission);
-      }
+      if (missionId) startMission(missionId);
     },
-    [setCanonicalActiveMission, session.activeMission],
+    [startMission]
+  );
+
+  const completeMission = useCallback(
+    (missionId: string) => {
+      completeMissionStore(missionId);
+    },
+    [completeMissionStore]
   );
 
   const recordTime = useCallback(
     (_missionId: MissionId, _seconds: number) => {
-      recordMissionTime(_missionId, _seconds);
+      recordMissionTimeStore(_missionId, _seconds);
     },
-    [recordMissionTime],
+    [recordMissionTimeStore]
+  );
+
+  const recordMissionTime = useCallback(
+    (missionId: string, durationMs: number) => {
+      recordMissionTimeStore(missionId, Math.round(durationMs / 1000));
+    },
+    [recordMissionTimeStore]
+  );
+
+  const updateMissionState = useCallback(
+    (missionId: string, state: Record<string, unknown>) => {
+      useQuantumStore.setState((prev) => ({
+        missionState: {
+          ...prev.missionState,
+          [missionId]: {
+            ...((prev.missionState[missionId] as Record<string, unknown>) || {}),
+            ...state,
+          },
+        },
+      }));
+    },
+    []
   );
 
   const isUnlocked = useCallback(
@@ -729,28 +1104,29 @@ export function useSession() {
       const index = MISSION_ORDER.indexOf(missionId);
       if (index <= 0) return true;
       const prevMission = MISSION_ORDER[index - 1];
-      return session.completed.includes(prevMission);
+      return completed.includes(prevMission);
     },
-    [session.completed],
+    [completed]
   );
 
   return {
     session,
-    isHydrated,
+    isHydrated: true,
+    storageWarning: null,
     setActiveMission,
     completeMission,
     recordTime,
-    resetSession,
+    recordMissionTime,
+    updateMissionState,
+    resetSession: resetState,
     isUnlocked,
+    elapsedSeconds,
+    isRunning,
+    pauseSession: pause,
+    resumeSession: resume,
+    incrementActionCount: () => {},
   };
 }
-
-/**
-- Canonical Session Timer Hook
-- Provides synchronized elapsed time in seconds, pause/resume controls, 
-- action tracking, and formatted representation for header consumption.
- */
-("use client");
 
 export interface UseSessionTimerResult {
   elapsedSeconds: number;
@@ -762,22 +1138,16 @@ export interface UseSessionTimerResult {
 }
 
 export function useSessionTimer(): UseSessionTimerResult {
-  const {
-    elapsedSeconds,
-    isRunning,
-    pauseSession,
-    resumeSession,
-    incrementActionCount,
-  } = useSession();
+  const elapsedSeconds = useQuantumStore((s) => s.elapsedSeconds);
+  const isRunning = useQuantumStore((s) => s.isRunning);
+  const pause = useQuantumStore((s) => s.pause);
+  const resume = useQuantumStore((s) => s.resume);
 
-  // Format elapsed seconds into MM:SS or HH:MM:SS for header consumption
   const formattedTime = useMemo(() => {
     const hrs = Math.floor(elapsedSeconds / 3600);
     const mins = Math.floor((elapsedSeconds % 3600) / 60);
     const secs = elapsedSeconds % 60;
-
     const pad = (_n: number) => _n.toString().padStart(2, "0");
-
     if (hrs > 0) {
       return `${hrs}:${pad(mins)}:${pad(secs)}`;
     }
@@ -788,526 +1158,44 @@ export function useSessionTimer(): UseSessionTimerResult {
     elapsedSeconds,
     formattedTime,
     isRunning,
-    pauseTimer: pauseSession,
-    resumeTimer: resumeSession,
-    recordAction: incrementActionCount,
+    pauseTimer: pause,
+    resumeTimer: resume,
+    recordAction: () => {},
   };
 }
 
-("use client");
-
-interface SessionContextType {
-  session: UserSession;
-  isHydrated: boolean;
-  storageWarning: string | null;
-  elapsedSeconds: number;
-  isRunning: boolean;
-  setActiveMission: (missionId: MissionId | null) => void;
-  completeMission: (missionId: string) => void;
-  updateMissionState: (
-    missionId: string,
-    state: Record<string, unknown>,
-  ) => void;
-  recordAction: (actionName: string, payload?: unknown) => void;
-  recordMissionTime: (missionId: string, durationMs: number) => void;
-  pauseSession: () => void;
-  resumeSession: () => void;
-  incrementActionCount: (actionType: string) => void;
-  resetSession: () => void;
-  deleteAllProgress: () => void;
-}
-
-const SessionContext = createContext<SessionContextType | undefined>(undefined);
-
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<UserSession>(() => {
-    if (typeof window === "undefined") return getDefaultSession();
-    return loadSession();
-  });
-  const [isHydrated] = useState(true);
-  const [storageWarning, setStorageWarning] = useState<string | null>(null);
-
-  // Single source of truth for elapsed time and run state at the provider level
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [isRunning, setIsRunning] = useState<boolean>(true);
-
-  // Centralized timer effect with clean disposal (no duplicate ticking)
   useEffect(() => {
-    if (!isRunning || !isHydrated) return;
     const interval = setInterval(() => {
-      setElapsedSeconds((_prev) => _prev + 1);
+      useQuantumStore.getState().tick();
     }, 1000);
     return () => clearInterval(interval);
-  }, [isRunning, isHydrated]);
-
-  const updateAndSave = useCallback(
-    (_updater: (prev: UserSession) => UserSession) => {
-      setSession((prev) => {
-        const nextState = toCanonicalSession(_updater(prev), prev.userId);
-
-        // Save synchronously inside the updater function where nextState is defined
-        const outcome = saveSession(nextState);
-
-        if (!outcome.success) {
-          setTimeout(() => {
-            setStorageWarning(
-              outcome.error ?? "Failed to persist session storage.",
-            );
-          }, 0);
-        } else {
-          setTimeout(() => {
-            setStorageWarning(null);
-          }, 0);
-        }
-
-        return nextState;
-      });
-    },
-    [],
-  );
-
-  const setActiveMission = useCallback(
-    (_missionId: string) => {
-      const canonical = toCanonicalMissionId(_missionId);
-      if (!canonical) return;
-      updateAndSave((_prev) => ({ ..._prev, activeMission: canonical }));
-    },
-    [updateAndSave],
-  );
-
-  const completeMission = useCallback(
-    (_missionId: string) => {
-      updateAndSave((_prev) => completeMissionInSession(_prev, _missionId));
-    },
-    [updateAndSave],
-  );
-
-  const updateMissionState = useCallback(
-    (_missionId: string, state: Record<string, unknown>) => {
-      const canonical = toCanonicalMissionId(_missionId);
-      if (!canonical) return;
-      updateAndSave((prev) => ({
-        ...prev,
-        missionState: {
-          ...prev.missionState,
-          [canonical]: {
-            ...((prev.missionState[canonical] as
-              | Record<string, unknown>
-              | undefined) || {}),
-            ...state,
-          },
-        },
-      }));
-    },
-    [updateAndSave],
-  );
-
-  const recordAction = useCallback(
-    (actionName: string, payload?: unknown) => {
-      updateAndSave((prev) => ({
-        ...prev,
-        events: [
-          ...prev.events,
-          { type: actionName, timestamp: Date.now(), payload },
-        ],
-      }));
-    },
-    [updateAndSave],
-  );
-
-  const recordMissionTime = useCallback(
-    (missionId: string, durationMs: number) => {
-      updateAndSave((prev) =>
-        recordMissionTimeInSession(prev, missionId, durationMs),
-      );
-    },
-    [updateAndSave],
-  );
-
-  const pauseSession = useCallback(() => {
-    setIsRunning(false);
   }, []);
 
-  const resumeSession = useCallback(() => {
-    setIsRunning(true);
-  }, []);
-
-  const incrementActionCount = useCallback(
-    (actionType: string) => {
-      recordAction(actionType);
-    },
-    [recordAction],
-  );
-
-  const resetSession = useCallback(() => {
-    const fresh = resetCanonicalSession();
-    setSession(fresh);
-    setElapsedSeconds(0);
-    setIsRunning(true);
-    const outcome = saveSession(fresh);
-    if (!outcome.success) {
-      setStorageWarning(outcome.error ?? "Failed to persist session storage.");
-    } else {
-      setStorageWarning(null);
-    }
-  }, []);
-
-  const deleteAllProgress = useCallback(() => {
-    deleteAllLocalProgress();
-    const fresh = resetCanonicalSession();
-    setSession(fresh);
-    setElapsedSeconds(0);
-    setIsRunning(true);
-    setStorageWarning(null);
-  }, []);
-
-  return (
-    <SessionContext.Provider
-      value={{
-        session,
-        isHydrated,
-        storageWarning,
-        elapsedSeconds,
-        isRunning,
-        setActiveMission,
-        completeMission,
-        updateMissionState,
-        recordAction,
-        recordMissionTime,
-        pauseSession,
-        resumeSession,
-        incrementActionCount,
-        resetSession,
-        deleteAllProgress,
-      }}
-    >
-      {children}
-    </SessionContext.Provider>
-  );
+  return <>{children}</>;
 }
 
-/**
-- QuantumLab 3D - Web Audio API Sound Engine
-- Dual-layer API supporting both object-oriented QuantumAudioEngine singleton
-- and legacy exported audio helper functions for standard/test suite compatibility.
- */
-
-export class QuantumAudioEngine {
-  private ctx: AudioContext | null = null;
-
-  /**
-- Lazy initialization for AudioContext.
-- Prevents premature instantiation before user gestures or during SSR.
-   */
-  private getContext(): AudioContext | null {
-    if (typeof window === "undefined") return null;
-
-    if (!this.ctx) {
-      try {
-        const AudioContextClass =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext })
-            .webkitAudioContext;
-        if (AudioContextClass) {
-          this.ctx = new AudioContextClass();
-        }
-      } catch (_err) {
-        console.warn("AudioContext initialization failed safely:", _err);
-        return null;
-      }
-    }
-
-    return this.ctx;
-  }
-
-  /**
-- Resumes the suspended AudioContext.
-   */
-  public async unlock(): Promise<void> {
-    const ctx = this.getContext();
-    if (ctx && ctx.state === "suspended") {
-      try {
-        await ctx.resume();
-      } catch (_err) {
-        console.warn("AudioContext unlock failed safely:", _err);
-      }
-    }
-  }
-
-  /**
-- Plays a gate sound effect: Oscillator sine sweep from 440 Hz to 880 Hz over 0.15s.
-- 
-- @param gateTypeType of quantum gate being executed.
-   */
-  public playGateSound(_gateType: string): void {
-    if (!isAudioEnabled()) return;
-    const ctx = this.getContext();
-    if (!ctx || ctx.state !== "running") return;
-
-    try {
-      const now = ctx.currentTime;
-      const duration = 0.15;
-
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(440, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + duration);
-
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + duration);
-
-      osc.onended = () => {
-        osc.disconnect();
-        gain.disconnect();
-      };
-    } catch (_err) {
-      console.warn("playGateSound failed safely:", _err);
-    }
-  }
-
-  /**
-- Plays a measurement collapse sound effect: Low frequency impact (120 Hz to 30 Hz) with a noise buffer burst.
-   */
-  public playMeasurementSound(): void {
-    if (!isAudioEnabled()) return;
-    const ctx = this.getContext();
-    if (!ctx || ctx.state !== "running") return;
-
-    try {
-      const now = ctx.currentTime;
-      const duration = 0.25;
-
-      // Low-frequency impact sweep (120 Hz -> 30 Hz)
-      const osc = ctx.createOscillator();
-      const oscGain = ctx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(120, now);
-      osc.frequency.exponentialRampToValueAtTime(30, now + duration);
-
-      oscGain.gain.setValueAtTime(0.3, now);
-      oscGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-      osc.connect(oscGain);
-      oscGain.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + duration);
-
-      osc.onended = () => {
-        osc.disconnect();
-        oscGain.disconnect();
-      };
-
-      // White noise buffer burst
-      const noiseDuration = 0.1;
-      const bufferSize = Math.floor(ctx.sampleRate * noiseDuration);
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
-      }
-
-      const noiseSource = ctx.createBufferSource();
-      const noiseGain = ctx.createGain();
-
-      noiseSource.buffer = buffer;
-
-      noiseGain.gain.setValueAtTime(0.12, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + noiseDuration);
-
-      noiseSource.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-
-      noiseSource.start(now);
-      noiseSource.stop(now + noiseDuration);
-
-      noiseSource.onended = () => {
-        noiseSource.disconnect();
-        noiseGain.disconnect();
-      };
-    } catch (_err) {
-      console.warn("playMeasurementSound failed safely:", _err);
-    }
-  }
-
-  /**
-- Plays a success sound effect: Harmonic triad chord (C5, E5, G5).
-   */
-  public playSuccessSound(): void {
-    if (!isAudioEnabled()) return;
-    const ctx = this.getContext();
-    if (!ctx || ctx.state !== "running") return;
-
-    try {
-      const now = ctx.currentTime;
-      const duration = 0.4;
-      const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
-
-      frequencies.forEach((_freq) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(_freq, now);
-
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + duration);
-
-        osc.onended = () => {
-          osc.disconnect();
-          gain.disconnect();
-        };
-      });
-    } catch (_err) {
-      console.warn("playSuccessSound failed safely:", _err);
-    }
-  }
-
-  /**
-- Plays an error sound effect: Sawtooth buzz at 150 Hz.
-   */
-  public playErrorSound(): void {
-    if (!isAudioEnabled()) return;
-    const ctx = this.getContext();
-    if (!ctx || ctx.state !== "running") return;
-
-    try {
-      const now = ctx.currentTime;
-      const duration = 0.25;
-
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(150, now);
-
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + duration);
-
-      osc.onended = () => {
-        osc.disconnect();
-        gain.disconnect();
-      };
-    } catch (_err) {
-      console.warn("playErrorSound failed safely:", _err);
-    }
-  }
-}
-
-export const audioEngine = new QuantumAudioEngine();
-
-let _userInteracted = false;
-let runtimeAudioEnabledOverride: boolean | null = null;
-
-export function isAudioEnabled(): boolean {
-  const env = process.env.NEXT_PUBLIC_ENABLE_AUDIO;
-  if (env === "false" || env === "0") return false;
-  if (runtimeAudioEnabledOverride !== null) return runtimeAudioEnabledOverride;
-  return true;
-}
-
-export function setAudioEnabled(_enabled: boolean): void {
-  runtimeAudioEnabledOverride = _enabled;
-}
-
-export function toggleAudio(): boolean {
-  const nextState = !isAudioEnabled();
-  setAudioEnabled(nextState);
-  return nextState;
-}
-
-export function __markUserInteracted(): void {
-  _userInteracted = true;
-}
-
-export function __resetAudioOverride(): void {
-  runtimeAudioEnabledOverride = null;
-  _userInteracted = false;
-}
-
-// Standalone Helper Playback Functions
-
-export function playNote(_freq: number = 440, _duration: number = 0.1): void {
-  if (!isAudioEnabled()) return;
-  try {
-    const AudioContextClass =
-      typeof window !== "undefined"
-        ? window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext })
-            .webkitAudioContext
-        : null;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = _freq;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + _duration);
-  } catch (_err) {
-    // Handled safely
-  }
-}
-
-export function playChimeSuccess(): void {
-  audioEngine.playSuccessSound();
-}
-
-export function playQuantumCollapse(): void {
-  audioEngine.playMeasurementSound();
-}
-
-export function playMeasurementCollapse(_numQubits?: number): void {
-  audioEngine.playMeasurementSound();
-}
-
-export function playGateForQubit(
-  _qubitIndex?: number,
-  _gateType: string = "H",
-): void {
-  audioEngine.playGateSound(_gateType);
-}
-
-export function playDecoherenceAlert(): void {
-  audioEngine.playErrorSound();
-}
-
-export function playLaserScan(): void {
-  audioEngine.playGateSound("LASER");
-}
-
-export function playButtonClick(): void {
-  playNote(600, 0.05);
-}
-
-export function playHover(): void {
-  playNote(300, 0.02);
-}
+// Re-export Audio Engine and sound helpers from audioEngine.ts
+export {
+  QuantumAudioEngine,
+  audioEngine,
+  isAudioEnabled,
+  setAudioEnabled,
+  toggleAudio,
+  __markUserInteracted,
+  __resetAudioOverride,
+  playNote,
+  playChimeSuccess,
+  playQuantumCollapse,
+  playMeasurementCollapse,
+  playGateForQubit,
+  playDecoherenceAlert,
+  playLaserScan,
+  playButtonClick,
+  playHover,
+} from "@/lib/audio/audioEngine";
 
 export function cn(..._inputs: ClassValue[]) {
   return twMerge(clsx(_inputs));
 }
+

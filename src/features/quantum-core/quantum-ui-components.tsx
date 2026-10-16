@@ -1,26 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import clsx from 'clsx';
 import * as THREE from 'three';
-import {
-  Hash,
-  X as XIcon,
-  Sparkles,
-  Zap,
-  Sigma,
-  Triangle,
-  Link as LinkIcon,
-  Snowflake,
-  RefreshCw,
-  Activity,
-  Atom,
-  BarChart3,
-  Circle,
-} from 'lucide-react';
-import { useQuantumStore } from '@/store/useQuantumStore';
-import { StateVector, QuantumCircuit, QubitIndex, GateType, StateVectorHistory, createEmptyCircuit, evaluateFullCircuit } from '@/lib/quantumCore';
-import { Tooltip } from '@/shared/ui/Tooltip';
-import { Link } from '@/shared/ui/Link';
 // --- Section: src/features/missions/components/KnowledgeCheck.tsx ---
 export interface QuizOption {
   id: string;

@@ -7,9 +7,10 @@ const BlochSphereWorkspace = dynamic(
   () => import('@/components/BlochCanvas'),
   { ssr: false }
 );
-import { MathDock } from '@/components/MathHUD';
+
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { MISSIONS } from '@/store/useQuantumStore';
+import { MathDock } from '@/components/BlochCanvas';
 
 export default function Page() {
   const activeMissionId = useQuantumStore((s: { activeMissionId: any; }) => s.activeMissionId);
