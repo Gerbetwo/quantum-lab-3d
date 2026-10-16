@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { BlochSphereWorkspace, MathDock } from '@/components/BlochCanvas';
+import { BlochSphereWorkspace } from '@/features/quantum-core/BlochViewport';
+import { MathDock } from '@/features/quantum-core/MathDock';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import {
   MISSIONS,

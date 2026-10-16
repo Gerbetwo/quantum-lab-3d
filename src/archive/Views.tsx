@@ -1,13 +1,13 @@
 'use client';
 
-import { MeasurementParticles, QuantumViewport } from '@/components/BlochCanvas';
+import { BlochViewport as QuantumViewport } from '@/features/quantum-core/BlochViewport';
 import { MISSIONS } from '@/features/quantum-core/quantum-missions-core';
 import { CircuitWorkbench, ViewModeSwitcher, BlochPairView, PhaseDiskView, HistogramView } from '@/features/quantum-core/quantum-ui-components';
 import { createEmptyCircuit, placeGate, removeGate, evaluateFullCircuit } from '@/core/qubitMath';
 import type { StateVector } from '@/core/qubitMath';
 import * as PresetsModule from '@/core/qubitMath';
 import * as DecoherenceModule from '@/core/qubitMath';
-import { useSession } from '@/store/useQuantumStore';
+import { useSession } from '@/archive/legacy-store-telemetry';
 import * as SoundModule from '@/lib/audio/audioEngine';
 import { Link } from 'lucide-react';
 import { useRef, useState, useMemo, useCallback } from 'react';

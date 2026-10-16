@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import { Award, ExternalLink, CheckCircle2 } from 'lucide-react';
 
-import { prefersReducedMotion } from './BlochCanvas';
+import { prefersReducedMotion } from '@/features/quantum-core/BlochViewport';
 import { MISSIONS } from '@/features/quantum-core/quantum-missions-core';
 import { useSession, useSessionTimer } from '@/archive/legacy-store-telemetry';
 import { playChimeSuccess } from '@/lib/audio/audioEngine';
