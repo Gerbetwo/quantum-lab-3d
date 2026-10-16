@@ -3,10 +3,10 @@
 import { MeasurementParticles, QuantumViewport } from '@/components/BlochCanvas';
 import { MISSIONS } from '@/features/quantum-core/quantum-missions-core';
 import { CircuitWorkbench, ViewModeSwitcher, BlochPairView, PhaseDiskView, HistogramView } from '@/features/quantum-core/quantum-ui-components';
-import { createEmptyCircuit, placeGate, removeGate, evaluateFullCircuit } from '@/lib/quantumCore';
-import type { StateVector } from '@/lib/quantumCore';
-import * as PresetsModule from '@/lib/quantumCore';
-import * as DecoherenceModule from '@/lib/quantumCore';
+import { createEmptyCircuit, placeGate, removeGate, evaluateFullCircuit } from '@/core/qubitMath';
+import type { StateVector } from '@/core/qubitMath';
+import * as PresetsModule from '@/core/qubitMath';
+import * as DecoherenceModule from '@/core/qubitMath';
 import { useSession } from '@/store/useQuantumStore';
 import * as SoundModule from '@/lib/audio/audioEngine';
 import { Link } from 'lucide-react';

@@ -1,4 +1,4 @@
-import { StateVector, bellState, measureEntangledQubit } from '@/lib/quantumCore';
+import { StateVector, bellState, measureEntangledQubit } from '@/core/qubitMath';
 import clsx from 'clsx';
 import React, { forwardRef, useRef, useCallback, useEffect, useImperativeHandle, MutableRefObject, RefObject, useMemo, useState } from 'react';
 import { GlassCard } from './MathHUD';

@@ -165,7 +165,7 @@ const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
 
 import { createScene } from '@/components/BlochCanvas';
 import { Tooltip } from '@/components/MathHUD';
-import { QuantumCircuit, QubitIndex, createEmptyCircuit, StateVectorHistory, evaluateFullCircuit, GateType, StateVector } from '@/lib/quantumCore';
+import { QuantumCircuit, QubitIndex, createEmptyCircuit, StateVectorHistory, evaluateFullCircuit, GateType, StateVector } from '@/core/qubitMath';
 // --- Section: src/features/missions/components/MissionRegistry.tsx ---
 import { useQuantumStore } from '@/store/useQuantumStore';
 import clsx from 'clsx';

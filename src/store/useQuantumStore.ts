@@ -16,7 +16,7 @@ import {
   type StateVector,
   type GateMatrix,
   type GateType,
-} from "@/lib/quantumCore";
+} from "@/core/qubitMath";
 import { audioEngine } from "@/lib/audio/audioEngine";
 
 type MissionId =

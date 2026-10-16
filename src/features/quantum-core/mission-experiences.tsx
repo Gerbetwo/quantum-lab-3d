@@ -20,7 +20,7 @@ import {
   measureAmplitude,
   groverIterations,
   BitTriple,
-} from "@/lib/quantumCore";
+} from "@/core/qubitMath";
 
 // --- Section: src/features/missions/experiences/applications/index.tsx ---
 interface ApplicationsExperienceProps {

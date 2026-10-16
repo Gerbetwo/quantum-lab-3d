@@ -7,7 +7,7 @@ import { CelebrationModal, Command, CommandPalette, Header, AppShell } from '@/c
 import { MeasurementParticlesHandle, MeasurementParticles, SceneStage, BlochSphereScene } from '@/components/BlochCanvas';
 import { Tooltip, Button, RangeControl, StatusMessage } from '@/components/MathHUD';
 import { CircuitGrid, GatePalette, MissionShell, PhaseDiskView } from '@/features/quantum-core/quantum-ui-components';
-import { createEmptyCircuit, placeGate, createZeroState } from '@/lib/quantumCore';
+import { createEmptyCircuit, placeGate, createZeroState } from '@/core/qubitMath';
 import { MISSIONS } from '@/store/useQuantumStore';
 
 vi.mock('@/store/useQuantumStore', async (importOriginal) => {
