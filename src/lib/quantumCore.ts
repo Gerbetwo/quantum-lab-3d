@@ -3,9 +3,16 @@ export interface Complex { re: number; im: number; }
 export type Matrix = Complex[][];
 export type GateMatrix = Matrix;
 export type StateVector = Complex[];
-export type StateVectorHistory = StateVector[];
+export interface StateVectorHistoryDetails {
+  steps: StateVector[];
+  stepStates: StateVector[];
+  afterEachStep: StateVector[];
+  final: StateVector;
+}
 
-export type GateType = 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T' | 'CNOT' | 'CZ' | 'SWAP' | 'TOFFOLI' | 'MEASURE' | 'CUSTOM';
+export type StateVectorHistory = StateVector[] & StateVectorHistoryDetails;
+
+export type GateType = 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T' | 'I' | 'CNOT' | 'CZ' | 'SWAP' | 'CPHASE' | 'CR' | 'CS' | 'CT' | 'TOFFOLI' | 'MEASURE' | 'CUSTOM';
 
 export interface PlacedGate {
   id: string;
@@ -26,21 +33,22 @@ export interface CircuitStep {
 
 export interface QuantumCircuit {
   numQubits: number;
+  nQubits?: number;
   steps: CircuitStep[];
+  maxDepth?: number;
 }
 
 export interface ValidationResult {
   valid: boolean;
   errors?: string[];
   ok?: boolean;
-  errors?: string[];
 }
 
 export interface QubitMeasurementResult {
   qubit: number;
   outcome: 0 | 1;
   probability: number;
-  collapsed?: boolean;
+  collapsed?: StateVector;
   collapsedBit?: 0 | 1;
 }
 
@@ -117,17 +125,23 @@ export function injectPhaseFlip(
 
 export function applyRepetitionCode3(
   bit: 0 | 1,
-  errorType: 'none' | 'bit' | 'phase'
+  errorType: 'none' | 'bit' | 'phase',
+  errorIndex: 0 | 1 | 2 = 0
 ): { corrected: 0 | 1; detected: boolean; syndrome: number } {
   if (errorType === 'none') {
     return { corrected: bit, detected: false, syndrome: 0 };
   }
   if (errorType === 'bit') {
     const encoded = bitFlipEncode(bit);
-    const corrupted = injectBitFlip(encoded, 0);
+    const corrupted = injectBitFlip(encoded, errorIndex);
     const syn = detectBitFlipSyndrome(corrupted);
-    return { corrected: bitFlipDecode(syn.corrected), detected: true, syndrome: syn.syndrome };
+    return {
+      corrected: bitFlipDecode(syn.corrected),
+      detected: syn.errorIndex !== -1,
+      syndrome: syn.syndrome,
+    };
   }
+  // Phase errors: standard 3-qubit bit flip repetition code cannot detect or correct phase flips in computational basis
   return { corrected: bit, detected: false, syndrome: 0 };
 }
 
@@ -144,12 +158,16 @@ export function uniformAmplitudes(N: number): number[] {
   return new Array(N).fill(amp);
 }
 
-export function simulateGroverStep(amplitudes: number[], _markedIndex: number): number[] {
+export function executeGroverStep(amplitudes: number[], markedIndex: number): number[] {
   const N = amplitudes.length;
-  const oracleState = amplitudes.map((amp, _idx) => (_idx === _markedIndex ? -amp : amp));
-  const mean = oracleState.reduce((_sum, _val) => _sum + _val, 0) / N;
-  return oracleState.map((_val) => 2 * mean - _val);
+  // Step 1: Deterministic Oracle phase inversion
+  const oracleState = amplitudes.map((amp, idx) => (idx === markedIndex ? -amp : amp));
+  // Step 2: Diffusion inversion about the mean
+  const mean = oracleState.reduce((sum, val) => sum + val, 0) / N;
+  return oracleState.map((val) => 2 * mean - val);
 }
+
+export const simulateGroverStep = executeGroverStep;
 
 export function measureAmplitude(amplitudes: number[], _rng: () => number = Math.random): number {
   const probs = amplitudes.map((a) => a * a);
@@ -167,11 +185,6 @@ export function groverSuccessProbability(N: number, iterations: number): number 
   const theta = Math.asin(1 / Math.sqrt(N));
   return Math.sin((2 * iterations + 1) * theta) ** 2;
 }
-
-export * from './types';
-export * from './grover';
-export * from './shor';
-export * from './errorCorrection';
 
 export interface ShorResult {
   isSuccess: boolean;
@@ -210,21 +223,23 @@ export interface ShorDemoResult {
 }
 
 export function runShorDemo(base: number): ShorDemoResult {
-  const validBases: Record<number, { seq: number[]; r: number; factors: [number, number] }> = {
-    2: { seq: [1, 2, 4, 8], r: 4, factors: [3, 5] },
-    7: { seq: [1, 7, 4, 13], r: 4, factors: [3, 5] },
-    8: { seq: [1, 8, 4, 2], r: 4, factors: [3, 5] },
-    11: { seq: [1, 11], r: 2, factors: [3, 5] },
-    13: { seq: [1, 13, 4, 7], r: 4, factors: [3, 5] }
-  };
+  const shor = factorizeShorN15(base);
+  const period = shor.period ?? 4;
+  const factors: [number, number] = shor.factors ?? [3, 5];
 
-  const demo = validBases[base] || validBases[2];
+  const sequence: number[] = [];
+  let val = 1;
+  for (let i = 0; i < period; i++) {
+    sequence.push(val);
+    val = (val * base) % 15;
+  }
+
   return {
     base,
-    sequence: demo.seq,
-    period: demo.r,
-    factors: demo.factors,
-    explanation: `Para N = 15 y base a = ${base}, la secuencia modular revela un período r = ${demo.r}. Usando el cálculo cuántico de período, extraemos los factores primos ${demo.factors[0]} y ${demo.factors[1]}.`
+    sequence,
+    period,
+    factors,
+    explanation: `Para N = 15 y base a = ${base}, la secuencia modular revela un período r = ${period}. Usando el cálculo cuántico de período, extraemos los factores primos ${factors[0]} y ${factors[1]}.`
   };
 }
 
@@ -241,15 +256,38 @@ export interface BlochProbabilities {
   prob1: number;
 }
 
-export function calculateBlochVector(theta: number, _phi: number = 0): BlochVector {
-  const x = Math.sin(theta) * Math.cos(_phi);
-  const y = Math.sin(theta) * Math.sin(_phi);
+export function calculateBlochVector(theta: number, phi: number = 0): BlochVector {
+  const x = Math.sin(theta) * Math.cos(phi);
+  const y = Math.sin(theta) * Math.sin(phi);
   const z = Math.cos(theta);
   return {
-    x: Math.round(x * 1000) / 1000,
-    y: Math.round(y * 1000) / 1000,
-    z: Math.round(z * 1000) / 1000,
+    x: Math.abs(x) < 1e-12 ? 0 : Math.round(x * 1000) / 1000,
+    y: Math.abs(y) < 1e-12 ? 0 : Math.round(y * 1000) / 1000,
+    z: Math.abs(z) < 1e-12 ? 0 : Math.round(z * 1000) / 1000,
   };
+}
+
+export function blochAnglesMatch(
+  actualTheta: number,
+  actualPhi: number,
+  targetTheta: number,
+  targetPhi: number,
+  tolerance: number = 0.05
+): boolean {
+  const dTheta = Math.abs(actualTheta - targetTheta);
+  if (dTheta > tolerance) return false;
+
+  // At the poles (|0> or |1>), phi is degenerate
+  const isPole = (theta: number) => theta <= tolerance || theta >= Math.PI - tolerance;
+  if (isPole(targetTheta) || isPole(actualTheta)) {
+    return true;
+  }
+
+  let dPhi = Math.abs(actualPhi - targetPhi) % (2 * Math.PI);
+  if (dPhi > Math.PI) {
+    dPhi = 2 * Math.PI - dPhi;
+  }
+  return dPhi <= tolerance;
 }
 
 export function calculateBlochProbabilities(theta: number): BlochProbabilities {
@@ -267,8 +305,6 @@ export function formatStateVector(theta: number, _phi: number = 0): string {
   if (cos === 0) return `|ψ⟩ = ${sin}|1⟩`;
   return `|ψ⟩ = ${cos}|0⟩ + ${sin}|1⟩`;
 }
-
-export type { QuantumCircuit, CircuitStep, PlacedGate, StateVectorHistory, StateVector, ValidationResult, GateType, QubitIndex };
 
 export const MAX_DEPTH = 32;
 
@@ -328,8 +364,8 @@ export function clearStep(circuit: QuantumCircuit, _stepIndex: number): QuantumC
 
 export function validateCircuit(_circuit: unknown): ValidationResult {
   const errors: string[] = [];
-  const c = _circuit as { numQubits?: number; numQubits?: number; steps?: CircuitStep[]; gates?: PlacedGate[] };
-  const nQ = c?.numQubits ?? c?.numQubits;
+  const c = _circuit as { numQubits?: number; steps?: CircuitStep[]; gates?: PlacedGate[] };
+  const nQ = c?.numQubits;
   if (!c || typeof nQ !== 'number' || nQ <= 0) {
     errors.push('Invalid number of qubits');
   } else {
@@ -396,12 +432,14 @@ export function evaluateUpToStep(circuit: QuantumCircuit, _maxStep: number): Sta
     stepStates.push(currentState);
   }
 
-  return {
+  const history = Object.assign([...stepStates], {
     steps: stepStates,
     stepStates,
     afterEachStep: stepStates,
-    final: currentState
-  };
+    final: currentState,
+  }) as StateVectorHistory;
+
+  return history;
 }
 
 export function evaluateFullCircuit(circuit: QuantumCircuit): StateVectorHistory {
@@ -455,7 +493,6 @@ export function measureEntangledQubit(
   };
 }
 
-export type { GateMatrix, StateVector, Complex, Matrix };
 
 export const c = (re: number, im: number = 0): Complex => ({
   re: Math.abs(re) < 1e-12 ? 0 : re,
@@ -590,9 +627,15 @@ export function evaluateCircuit(_gates: GateMatrix[], _initialState: StateVector
 export function stateToBlochAngles(state: StateVector): { theta: number; phi: number } {
   const a = state[0] || c(1, 0);
   const b = state[1] || c(0, 0);
-  const rA = Math.sqrt(a.re * a.re + a.im * a.im);
-  const theta = 2 * Math.acos(Math.min(1, Math.max(0, rA)));
-  const phi = Math.atan2(b.im, b.re) - Math.atan2(a.im, a.re);
+  const normSq = a.re * a.re + a.im * a.im + b.re * b.re + b.im * b.im;
+  const normVal = normSq > 0 ? Math.sqrt(normSq) : 1;
+  const alphaMag = Math.sqrt(a.re * a.re + a.im * a.im) / normVal;
+  const theta = 2 * Math.acos(Math.min(1, Math.max(0, alphaMag)));
+  let phi = Math.atan2(b.im, b.re) - Math.atan2(a.im, a.re);
+  phi = (phi % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+  if (Math.abs(theta) < 1e-6 || Math.abs(theta - Math.PI) < 1e-6) {
+    phi = 0;
+  }
   return { theta, phi };
 }
 
@@ -645,11 +688,17 @@ export function applyGateN(state: StateVector, gate: GateMatrix, targetQubit: nu
   return result;
 }
 
-export function applyCNOT_N(_state: StateVector, _controlQubit: number, _targetQubit: number, numQubits: number): StateVector {
+export function applyCNOT_N(state: StateVector, controlQubit: number, targetQubit: number, numQubits: number): StateVector {
   const dim = 1 << numQubits;
-  const result: StateVector = [..._state];
-  const cBit = 1 << (numQubits - 1 - _controlQubit);
-  const tBit = 1 << (numQubits - 1 - _targetQubit);
+  if (state.length !== dim) {
+    throw new Error(`State length mismatch: expected ${dim}, got ${state.length}`);
+  }
+  if (controlQubit < 0 || controlQubit >= numQubits || targetQubit < 0 || targetQubit >= numQubits) {
+    throw new Error('Qubit out of range');
+  }
+  const result: StateVector = [...state];
+  const cBit = 1 << (numQubits - 1 - controlQubit);
+  const tBit = 1 << (numQubits - 1 - targetQubit);
 
   for (let i = 0; i < dim; i++) {
     if ((i & cBit) !== 0 && (i & tBit) === 0) {
@@ -663,11 +712,17 @@ export function applyCNOT_N(_state: StateVector, _controlQubit: number, _targetQ
   return result;
 }
 
-export function applyCZ_N(_state: StateVector, _controlQubit: number, _targetQubit: number, numQubits: number): StateVector {
+export function applyCZ_N(state: StateVector, controlQubit: number, targetQubit: number, numQubits: number): StateVector {
   const dim = 1 << numQubits;
-  const result: StateVector = [..._state];
-  const cBit = 1 << (numQubits - 1 - _controlQubit);
-  const tBit = 1 << (numQubits - 1 - _targetQubit);
+  if (state.length !== dim) {
+    throw new Error(`State length mismatch: expected ${dim}, got ${state.length}`);
+  }
+  if (controlQubit < 0 || controlQubit >= numQubits || targetQubit < 0 || targetQubit >= numQubits) {
+    throw new Error('Qubit out of range');
+  }
+  const result: StateVector = [...state];
+  const cBit = 1 << (numQubits - 1 - controlQubit);
+  const tBit = 1 << (numQubits - 1 - targetQubit);
 
   for (let i = 0; i < dim; i++) {
     if ((i & cBit) !== 0 && (i & tBit) !== 0) {
@@ -677,11 +732,17 @@ export function applyCZ_N(_state: StateVector, _controlQubit: number, _targetQub
   return result;
 }
 
-export function applySWAP_N(_state: StateVector, _q1: number, _q2: number, numQubits: number): StateVector {
+export function applySWAP_N(state: StateVector, q1: number, q2: number, numQubits: number): StateVector {
   const dim = 1 << numQubits;
-  const result: StateVector = [..._state];
-  const bit1 = 1 << (numQubits - 1 - _q1);
-  const bit2 = 1 << (numQubits - 1 - _q2);
+  if (state.length !== dim) {
+    throw new Error(`State length mismatch: expected ${dim}, got ${state.length}`);
+  }
+  if (q1 < 0 || q1 >= numQubits || q2 < 0 || q2 >= numQubits) {
+    throw new Error('Qubit out of range');
+  }
+  const result: StateVector = [...state];
+  const bit1 = 1 << (numQubits - 1 - q1);
+  const bit2 = 1 << (numQubits - 1 - q2);
 
   for (let i = 0; i < dim; i++) {
     const b1 = (i & bit1) !== 0 ? 1 : 0;
@@ -696,11 +757,17 @@ export function applySWAP_N(_state: StateVector, _q1: number, _q2: number, numQu
   return result;
 }
 
-export function applyControlledPhaseN(_state: StateVector, _controlQubit: number, _targetQubit: number, phi: number, numQubits: number): StateVector {
+export function applyControlledPhaseN(state: StateVector, controlQubit: number, targetQubit: number, phi: number, numQubits: number): StateVector {
   const dim = 1 << numQubits;
-  const result: StateVector = [..._state];
-  const cBit = 1 << (numQubits - 1 - _controlQubit);
-  const tBit = 1 << (numQubits - 1 - _targetQubit);
+  if (state.length !== dim) {
+    throw new Error(`State length mismatch: expected ${dim}, got ${state.length}`);
+  }
+  if (controlQubit < 0 || controlQubit >= numQubits || targetQubit < 0 || targetQubit >= numQubits) {
+    throw new Error('Qubit out of range');
+  }
+  const result: StateVector = [...state];
+  const cBit = 1 << (numQubits - 1 - controlQubit);
+  const tBit = 1 << (numQubits - 1 - targetQubit);
   const phaseVal = c(Math.cos(phi), Math.sin(phi));
 
   for (let i = 0; i < dim; i++) {
@@ -710,8 +777,6 @@ export function applyControlledPhaseN(_state: StateVector, _controlQubit: number
   }
   return result;
 }
-
-export type { QubitMeasurementResult, MeasurementResult };
 
 export function measureQubit(theta: number, rng?: () => number): 0 | 1 {
   const p0 = Math.cos(theta / 2) ** 2;
@@ -729,10 +794,12 @@ export function measureQubitN(
     throw new Error('Qubit out of range');
   }
   const bitMask = 1 << (numQubits - 1 - qubitIndex);
+  const probs = probabilities(state);
+
   let prob1 = 0;
-  for (let i = 0; i < state.length; i++) {
+  for (let i = 0; i < probs.length; i++) {
     if ((i & bitMask) !== 0) {
-      prob1 += (state[i]?.re ?? 0) ** 2 + (state[i]?.im ?? 0) ** 2;
+      prob1 += probs[i];
     }
   }
   const p0 = 1 - prob1;
@@ -753,6 +820,7 @@ export function measureQubitN(
   }
 
   return {
+    qubit: qubitIndex,
     outcome,
     collapsedBit: outcome,
     collapsed,
@@ -761,14 +829,14 @@ export function measureQubitN(
 }
 
 export function measureAll(state: StateVector, rng?: () => number): number {
-  const probs = state.map(amp => (amp.re ?? 0) ** 2 + (amp.im ?? 0) ** 2);
+  const probs = probabilities(state);
   const random = rng ? rng() : Math.random();
   let cumulative = 0;
   for (let i = 0; i < probs.length; i++) {
     cumulative += probs[i];
     if (random <= cumulative) return i;
   }
-  return 0;
+  return probs.length - 1;
 }
 
 export function calculateMeasurementDistribution(thetaOrState: unknown, shots: number = 100, rng?: () => number): unknown {
@@ -782,7 +850,7 @@ export function calculateMeasurementDistribution(thetaOrState: unknown, shots: n
     return { zeros, ones: shots - zeros };
   }
   if (Array.isArray(thetaOrState)) {
-    return thetaOrState.map((c: Complex) => (c.re || 0) ** 2 + (c.im || 0) ** 2);
+    return probabilities(thetaOrState as StateVector);
   }
   return { zeros: shots, ones: 0 };
 }
@@ -893,67 +961,15 @@ export const QUANTUM_PRESETS = {
   qft3: qft3Circuit,
 };
 
-export type ScaleName = 'pentatonic-major' | 'pentatonic-minor' | 'microtonal-quarter';
-
-const SCALE_RATIOS: Record<ScaleName, readonly number[]> = {
-  'pentatonic-major': [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3],
-  'pentatonic-minor': [1, 6 / 5, 3 / 2, 9 / 5, 5 / 2],
-  'microtonal-quarter': [1, 17 / 16, 9 / 8, 19 / 16, 5 / 4, 21 / 16],
-};
-
-const DEFAULT_BASE_HZ = 220;
-
-function ratioFor(qubitIndex: number, _scale: ScaleName): number {
-  const ratios = SCALE_RATIOS[_scale];
-  const octave = Math.floor(qubitIndex / ratios.length);
-  const idx = qubitIndex % ratios.length;
-  return ratios[idx] * Math.pow(2, octave);
-}
-
-export function qubitToFrequency(
-  qubitIndex: number,
-  baseHz: number = DEFAULT_BASE_HZ,
-  scale: ScaleName = 'pentatonic-major'
-): number {
-  if (!Number.isInteger(qubitIndex) || qubitIndex < 0) {
-    throw new RangeError('qubitIndex must be a non-negative integer, got ' + qubitIndex);
-  }
-  if (!Number.isFinite(baseHz) || baseHz <= 0) {
-    throw new RangeError('baseHz must be a positive finite number, got ' + baseHz);
-  }
-  if (!(scale in SCALE_RATIOS)) {
-    throw new RangeError('Unknown scale: ' + String(scale));
-  }
-  return baseHz * ratioFor(qubitIndex, scale);
-}
-
-const MULTI_QUBIT_GATES = new Set(['CNOT', 'CZ', 'SWAP', 'CS', 'CT']);
-const SINGLE_QUBIT_DURATION_MS = 140;
-const MULTI_QUBIT_DURATION_MS = 260;
-
-export function gateDurationMs(_gateType: string): number {
-  return MULTI_QUBIT_GATES.has(_gateType) ? MULTI_QUBIT_DURATION_MS : SINGLE_QUBIT_DURATION_MS;
-}
-
-export interface AdsrEnvelope {
-  attack: number;
-  decay: number;
-  sustain: number;
-  release: number;
-}
-
-const ENVELOPES: Record<'pluck' | 'pad' | 'chirp', AdsrEnvelope> = {
-  pluck: { attack: 0.005, decay: 0.06, sustain: 0.15, release: 0.12 },
-  pad:   { attack: 0.15,  decay: 0.3,  sustain: 0.6,  release: 0.4  },
-  chirp: { attack: 0.01,  decay: 0.1,  sustain: 0.25, release: 0.25 },
-};
-
-export function adsrEnvelope(_type: 'pluck' | 'pad' | 'chirp'): AdsrEnvelope {
-  const e = ENVELOPES[_type];
-  return { attack: e.attack, decay: e.decay, sustain: e.sustain, release: e.release };
-}
+export {
+  qubitToFrequency,
+  gateDurationMs,
+  adsrEnvelope,
+} from './audio/sonification';
+export type { ScaleName, AdsrEnvelope } from './audio/sonification';
 
 export const MAX_QUBITS_SV = 6;
+export const MAX_QUBITS = MAX_QUBITS_SV;
 export const MAX_DIM = 1 << MAX_QUBITS_SV;
 
 export function dimOf(numQubits: number): number {
