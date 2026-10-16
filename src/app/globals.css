@@ -1,321 +1,178 @@
-/* ==========================================================================
-   QUANTUM TELEMETRY — UNIFIED DESIGN SYSTEM
-   --------------------------------------------------------------------------
-   Two modes, one grammar.
-
-     LIGHT  "Laboratory Instrument"
-            Cool, clinical, precise. Off-white canvas, deep-navy ink,
-            saturated accents tuned for AA contrast on white.
-
-     DARK   "Quantum Void"
-            Deep-space navy, layered surfaces, luminous accents tuned
-            for long telemetry sessions without halation.
-
-   Structure:
-     1. Variant registration
-     2. Semantic tokens      (:root = light, .dark = dark)
-     3. Tailwind theme bridge
-     4. Utilities
-   ========================================================================== */
-
 @import "tailwindcss";
 
-/* --------------------------------------------------------------------------
-   1. DARK VARIANT
-   Class-based so a `.dark` on <html> flips the entire system at runtime.
-   -------------------------------------------------------------------------- */
 @custom-variant dark (&:where(.dark, .dark *));
 
-
 /* ==========================================================================
-   2. SEMANTIC TOKENS
+   1. SEMANTIC THEME TOKENS
    ========================================================================== */
-@layer base {
+:root {
+  color-scheme: light;
 
-  /* ------------------------------------------------------------------------
-     LIGHT MODE — "Laboratory Instrument"
-     Hue family: 210–224 (cool blue) · Accent hue: 187 (cyan)
-     ------------------------------------------------------------------------ */
-  :root {
-    color-scheme: light;
+  /* Canvas & Surfaces */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
 
-    /* --- Canvas & Surfaces --------------------------------------------- */
-    --background: 210 40% 98%;          /* cool off-white, not stark #fff   */
-    --foreground: 224 71% 8%;           /* deep navy ink                    */
-    --card: 0 0% 100%;                  /* pure white pops off tinted bg    */
-    --card-foreground: 224 71% 8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 8%;
-
-    /* --- Interactive Actions ------------------------------------------- */
-    --primary: 187 100% 28%;            /* deep cyan · 4.8:1 on white       */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 94%;
-    --secondary-foreground: 224 71% 12%;
-    --muted: 210 40% 92%;
-    --muted-foreground: 215 22% 42%;    /* 4.6:1 on background              */
-    --accent: 187 100% 28%;
-    --accent-foreground: 0 0% 100%;
-
-    /* --- Borders & Focus ----------------------------------------------- */
-    --border: 214 32% 88%;
-    --input: 214 32% 88%;
-    --ring: 187 100% 28%;
-
-    /* --- Telemetry Axes ------------------------------------------------ */
-    --axis-x: 187 100% 28%;             /* Cyan   */
-    --axis-y: 270 70% 45%;              /* Purple */
-    --axis-z: 38 92% 38%;               /* Amber  */
-
-    /* --- Subsystem Accents --------------------------------------------- */
-    --quantum-purple: 270 70% 45%;
-    --quantum-purple-hover: 270 70% 38%;
-    --quantum-purple-active: 270 70% 32%;
-    --quantum-indigo: 235 65% 45%;
-    --quantum-indigo-hover: 235 65% 38%;
-    --quantum-indigo-active: 235 65% 32%;
-
-    /* --- Accent Surfaces & Glow ---------------------------------------- */
-    --accent-subtle: 187 80% 94%;
-    --accent-border: 187 55% 78%;
-    --accent-light: 187 80% 88%;
-    --accent-glow: hsl(187 100% 28% / 0.30);
-
-    /* --- Status: Success ----------------------------------------------- */
-    --success: 152 70% 30%;
-    --success-subtle: 152 60% 94%;
-    --success-border: 152 45% 74%;
-    --success-hover: 152 70% 24%;
-
-    /* --- Status: Destructive ------------------------------------------- */
-    --destructive: 350 84% 45%;
-    --destructive-subtle: 350 80% 96%;
-    --destructive-border: 350 60% 84%;
-    --destructive-hover: 350 84% 38%;
-
-    /* --- Status: Warning ----------------------------------------------- */
-    --warning: 38 92% 38%;
-    --warning-subtle: 38 90% 94%;
-    --warning-border: 38 70% 76%;
-    --warning-hover: 38 92% 32%;
-    --warning-active: 38 92% 26%;
-
-    /* --- Alpha Layers (derived from tokens — auto-adapt to mode) ------- */
-    --background-90: hsl(210 40% 98% / 0.90);
-    --background-80: hsl(210 40% 98% / 0.80);
-    --background-70: hsl(210 40% 98% / 0.70);
-    --background-60: hsl(210 40% 98% / 0.60);
-    --background-50: hsl(210 40% 98% / 0.50);
-    --background-40: hsl(210 40% 98% / 0.40);
-    --background-20: hsl(210 40% 98% / 0.20);
-
-    --card-80: hsl(0 0% 100% / 0.80);
-    --card-60: hsl(0 0% 100% / 0.60);
-    --card-50: hsl(0 0% 100% / 0.50);
-    --card-hover: hsl(210 40% 96% / 0.80);
-
-    --overlay-80: hsl(224 71% 4% / 0.80);   /* dark scrim on light canvas */
-    --overlay-70: hsl(224 71% 4% / 0.70);
-
-    --border-80: hsl(214 32% 88% / 0.80);
-    --border-60: hsl(214 32% 88% / 0.60);
-    --border-subtle: hsl(214 32% 88% / 0.50);
-
-    --ring-subtle: hsl(187 100% 28% / 0.40);
-  }
-
-  /* ------------------------------------------------------------------------
-     DARK MODE — "Quantum Void"
-     Hue family: 217–224 (deep space) · Accent hue: 187 (cyan)
-     ------------------------------------------------------------------------ */
-  .dark {
-    color-scheme: dark;
-
-    /* --- Canvas & Surfaces --------------------------------------------- */
-    --background: 224 71% 4%;           /* deep-space navy, not black       */
-    --foreground: 210 40% 98%;
-    --card: 222 47% 7%;                 /* +3% lift for elevation           */
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 6%;              /* sits above card                  */
-    --popover-foreground: 210 40% 98%;
-
-    /* --- Interactive Actions ------------------------------------------- */
-    --primary: 187 94% 55%;             /* luminous cyan · 12.5:1 on bg     */
-    --primary-foreground: 224 71% 4%;
-    --secondary: 217 33% 14%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 11%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 187 94% 55%;
-    --accent-foreground: 224 71% 4%;
-
-    /* --- Borders & Focus ----------------------------------------------- */
-    --border: 217 33% 14%;
-    --input: 217 33% 14%;
-    --ring: 187 94% 55%;
-
-    /* --- Telemetry Axes ------------------------------------------------ */
-    --axis-x: 187 94% 55%;              /* Cyan   */
-    --axis-y: 270 91% 68%;              /* Purple */
-    --axis-z: 38 92% 55%;               /* Amber  */
-
-    /* --- Subsystem Accents --------------------------------------------- */
-    --quantum-purple: 270 70% 58%;
-    --quantum-purple-hover: 270 70% 68%;
-    --quantum-purple-active: 270 70% 48%;
-    --quantum-indigo: 235 65% 58%;
-    --quantum-indigo-hover: 235 65% 68%;
-    --quantum-indigo-active: 235 65% 48%;
-
-    /* --- Accent Surfaces & Glow ---------------------------------------- */
-    --accent-subtle: 187 100% 8%;
-    --accent-border: 187 100% 20%;
-    --accent-light: 187 100% 85%;
-    --accent-glow: hsl(187 94% 55% / 0.50);
-
-    /* --- Status: Success ----------------------------------------------- */
-    --success: 152 70% 45%;
-    --success-subtle: 152 80% 8%;
-    --success-border: 152 60% 20%;
-    --success-hover: 152 70% 35%;
-
-    /* --- Status: Destructive ------------------------------------------- */
-    --destructive: 350 84% 60%;
-    --destructive-subtle: 350 80% 8%;
-    --destructive-border: 350 60% 20%;
-    --destructive-hover: 350 84% 50%;
-
-    /* --- Status: Warning ----------------------------------------------- */
-    --warning: 38 92% 50%;
-    --warning-subtle: 38 80% 8%;
-    --warning-border: 38 60% 20%;
-    --warning-hover: 38 92% 60%;
-    --warning-active: 38 92% 40%;
-
-    /* --- Alpha Layers (derived from tokens — auto-adapt to mode) ------- */
-    --background-90: hsl(224 71% 4% / 0.90);
-    --background-80: hsl(224 71% 4% / 0.80);
-    --background-70: hsl(224 71% 4% / 0.70);
-    --background-60: hsl(224 71% 4% / 0.60);
-    --background-50: hsl(224 71% 4% / 0.50);
-    --background-40: hsl(224 71% 4% / 0.40);
-    --background-20: hsl(224 71% 4% / 0.20);
-
-    --card-80: hsl(222 47% 7% / 0.80);
-    --card-60: hsl(222 47% 7% / 0.60);
-    --card-50: hsl(222 47% 7% / 0.50);
-    --card-hover: hsl(217 33% 15% / 0.70);
-
-    --overlay-80: hsl(210 40% 98% / 0.80);  /* light frost on dark canvas */
-    --overlay-70: hsl(210 40% 98% / 0.70);
-
-    --border-80: hsl(217 33% 14% / 0.80);
-    --border-60: hsl(217 33% 14% / 0.60);
-    --border-subtle: hsl(217 33% 14% / 0.50);
-
-    --ring-subtle: hsl(187 94% 55% / 0.50);
-  }
-}
-
-
-/* ==========================================================================
-   3. TAILWIND THEME BRIDGE
-   `inline` keeps the runtime theming path direct (no double indirection),
-   and produces the leanest possible CSS.
-   ========================================================================== */
-@theme inline {
-
-  /* Core Surfaces */
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-
-  /* Interactive Actions */
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
+  /* Interactive & Accent States */
+  --primary: #0891b2;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #0284c7;
+  --accent-foreground: #ffffff;
 
   /* Borders & Focus */
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0891b2;
 
-  /* Axis Telemetry */
-  --color-axis-x: hsl(var(--axis-x));
-  --color-axis-y: hsl(var(--axis-y));
-  --color-axis-z: hsl(var(--axis-z));
+  /* Status & Telemetry */
+  --success: #059669;
+  --warning: #d97706;
+  --destructive: #dc2626;
 
-  /* Quantum Domain Accents */
-  --color-quantum-purple: hsl(var(--quantum-purple));
-  --color-quantum-purple-hover: hsl(var(--quantum-purple-hover));
-  --color-quantum-purple-active: hsl(var(--quantum-purple-active));
-  --color-quantum-indigo: hsl(var(--quantum-indigo));
-  --color-quantum-indigo-hover: hsl(var(--quantum-indigo-hover));
-  --color-quantum-indigo-active: hsl(var(--quantum-indigo-active));
-
-  /* Accent Surfaces */
-  --color-accent-subtle: hsl(var(--accent-subtle));
-  --color-accent-border: hsl(var(--accent-border));
-  --color-accent-light: hsl(var(--accent-light));
-  --color-accent-glow: var(--accent-glow);
-
-  /* Status: Success */
-  --color-success: hsl(var(--success));
-  --color-success-subtle: hsl(var(--success-subtle));
-  --color-success-border: hsl(var(--success-border));
-  --color-success-hover: hsl(var(--success-hover));
-
-  /* Status: Destructive */
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-subtle: hsl(var(--destructive-subtle));
-  --color-destructive-border: hsl(var(--destructive-border));
-  --color-destructive-hover: hsl(var(--destructive-hover));
-
-  /* Status: Warning */
-  --color-warning: hsl(var(--warning));
-  --color-warning-subtle: hsl(var(--warning-subtle));
-  --color-warning-border: hsl(var(--warning-border));
-  --color-warning-hover: hsl(var(--warning-hover));
-  --color-warning-active: hsl(var(--warning-active));
-
-  /* Alpha Layers: Background */
-  --color-background-90: var(--background-90);
-  --color-background-80: var(--background-80);
-  --color-background-70: var(--background-70);
-  --color-background-60: var(--background-60);
-  --color-background-50: var(--background-50);
-  --color-background-40: var(--background-40);
-  --color-background-20: var(--background-20);
-
-  /* Alpha Layers: Card */
-  --color-card-80: var(--card-80);
-  --color-card-60: var(--card-60);
-  --color-card-50: var(--card-50);
-  --color-card-hover: var(--card-hover);
-
-  /* Alpha Layers: Overlay */
-  --color-overlay-80: var(--overlay-80);
-  --color-overlay-70: var(--overlay-70);
-
-  /* Alpha Layers: Border / Ring */
-  --color-border-80: var(--border-80);
-  --color-border-60: var(--border-60);
-  --color-border-subtle: var(--border-subtle);
-  --color-ring-subtle: var(--ring-subtle);
+  /* Telemetry Axes & Quantum Accents */
+  --axis-x: #0891b2;
+  --axis-y: #7c3aed;
+  --axis-z: #d97706;
+  --quantum-cyan: #0891b2;
+  --quantum-purple: #7c3aed;
+  --quantum-emerald: #059669;
 }
 
+.dark {
+  color-scheme: dark;
+
+  /* Canvas & Surfaces (Cyber-Academic Void) */
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --card: #111827;
+  --card-foreground: #f8fafc;
+  --popover: #111827;
+  --popover-foreground: #f8fafc;
+
+  /* Interactive & Accent States (Electric Neon) */
+  --primary: #00f3ff;
+  --primary-foreground: #090d16;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #00f3ff;
+  --accent-foreground: #090d16;
+
+  /* Borders & Focus */
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #00f3ff;
+
+  /* Status & Telemetry */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --destructive: #ef4444;
+
+  /* Telemetry Axes & Quantum Accents */
+  --axis-x: #00f3ff;
+  --axis-y: #a855f7;
+  --axis-z: #f59e0b;
+  --quantum-cyan: #00f3ff;
+  --quantum-purple: #a855f7;
+  --quantum-emerald: #10b981;
+}
 
 /* ==========================================================================
-   4. CENTRALIZED NON-STANDARD UTILITIES
+   2. TAILWIND THEME BRIDGE
+   ========================================================================== */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --color-axis-x: var(--axis-x);
+  --color-axis-y: var(--axis-y);
+  --color-axis-z: var(--axis-z);
+  --color-quantum-purple: var(--quantum-purple);
+  --color-quantum-cyan: var(--quantum-cyan);
+  --color-quantum-emerald: var(--quantum-emerald);
+}
+
+/* ==========================================================================
+   3. GLASSMORPHISM & GLOW UTILITIES
+   ========================================================================== */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+:root:not(.dark) .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+}
+
+/* ==========================================================================
+   4. BACKGROUND GRADIENT UTILITIES
+   ========================================================================== */
+.bg-quantum-void {
+  background: radial-gradient(circle at 50% 20%, rgba(0, 243, 255, 0.06) 0%, rgba(9, 13, 22, 1) 70%);
+}
+
+.bg-radial-glow {
+  background: radial-gradient(circle at center, rgba(0, 243, 255, 0.12) 0%, transparent 70%);
+}
+
+.bg-quantum-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ==========================================================================
+   5. SPECIAL UTILITIES & BASE STYLING
    ========================================================================== */
 @utility duration-350 {
   transition-duration: 350ms;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
