@@ -179,3 +179,23 @@ export function getMissionById(id: string | number): MissionConfig | undefined {
   }
   return MISSION_CONFIGS.find((m) => m.id === id);
 }
+
+export const TOTAL_MISSIONS = MISSION_CONFIGS.length;
+
+export function getMissionIndex(id: string | number): number {
+  if (typeof id === 'number') {
+    return id >= 0 && id < MISSION_CONFIGS.length ? id : -1;
+  }
+  const config = getMissionById(id);
+  return config ? config.index : -1;
+}
+
+export function isMissionUnlocked(missionIndex: number, completedMissions: readonly number[]): boolean {
+  if (missionIndex === 0) return true;
+  const config = getMissionById(missionIndex);
+  if (!config) return false;
+  return config.prerequisites.every((prereqId) => {
+    const prereqIndex = getMissionIndex(prereqId);
+    return completedMissions.includes(prereqIndex);
+  });
+}

@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import Cookies from "js-cookie";
 import { calculateT2CoherenceTime, kelvinToMilliKelvin } from "@/core/decoherenceMath";
-import { audioEngine } from "@/lib/audio/audioEngine";
-import { type MissionId, getMissionById } from "@/features/missions/missionRegistry";
+import { soundEngine } from "@/lib/soundEngine";
+import { type MissionId, getMissionById, getMissionIndex, TOTAL_MISSIONS } from "@/features/missions/missionRegistry";
 
 export type MissionPhase =
   | "BRIEFING" | "PREDICTION" | "EXPERIMENT" | "OBSERVATION" | "ANALYSIS"
@@ -14,7 +15,9 @@ export interface QuantumStore {
   currentMissionId: MissionId; activeMissionId: MissionId; activeMission: MissionId;
   activeStepIndex: number; currentPhase: MissionPhase; userPredictionProb0: number | null;
   appliedGates: string[]; missionState: Record<string, unknown>;
-  completedMissions: MissionId[]; completed: MissionId[]; progress: number[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  completedMissions: number[] & any; completed: any; progress: number[];
+  isSandboxUnlocked: boolean;
   elapsedSeconds: number; isRunning: boolean;
 
   setAngles: (theta: number, phi: number) => void;
@@ -32,11 +35,15 @@ export interface QuantumStore {
   transitionPhase: (phase: MissionPhase) => void;
   transitionMissionPhase: (phase: MissionPhase) => void;
   evaluateMissionStep: (targetTheta?: number, targetPhi?: number) => boolean;
-  completeMission: (id: MissionId | string) => void;
+  markMissionCompleted: (id: number | MissionId | string) => void;
+  completeMission: (id: number | MissionId | string) => void;
+  setSandboxUnlocked: (unlocked: boolean) => void;
+  unlockSandbox: () => void;
+  resetProgress: () => void;
   recordMissionTime: (id: MissionId | string, durationSeconds: number) => void;
   jumpToMission: (id: MissionId | number) => void;
-  startMission: (id: MissionId) => void;
-  selectMission: (id: MissionId) => void;
+  startMission: (id: MissionId | number) => void;
+  selectMission: (id: MissionId | number) => void;
   resetState: () => void;
   tick: () => void;
   pause: () => void;
@@ -44,28 +51,44 @@ export interface QuantumStore {
   resetTimer: () => void;
 }
 
+const COOKIE_COMPLETED = "quantum_completed_missions";
+const COOKIE_SANDBOX = "quantum_sandbox_unlocked";
+
+function syncCookies(completed: number[], isSandboxUnlocked: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    Cookies.set(COOKIE_COMPLETED, JSON.stringify(completed), { expires: 365 });
+    Cookies.set(COOKIE_SANDBOX, String(isSandboxUnlocked), { expires: 365 });
+  } catch (_e) { /* Safe */ }
+}
+
+function getInitialPersisted(): { completedMissions: number[]; isSandboxUnlocked: boolean } {
+  if (typeof window === "undefined") return { completedMissions: [], isSandboxUnlocked: false };
+  try {
+    const c = Cookies.get(COOKIE_COMPLETED);
+    const s = Cookies.get(COOKIE_SANDBOX);
+    const completedMissions: number[] = c ? JSON.parse(c) : [];
+    return { completedMissions, isSandboxUnlocked: s === "true" || completedMissions.length >= TOTAL_MISSIONS };
+  } catch (_e) {
+    return { completedMissions: [], isSandboxUnlocked: false };
+  }
+}
+
 const INITIAL_PHYSICS = {
   theta: 0, phi: 0, temperatureK: 0.015, coherenceTimeUs: calculateT2CoherenceTime(15),
   entanglementDegree: 0, isEntangled: false, lastOutcome: null as 0 | 1 | null,
 };
+const init = getInitialPersisted();
 
 export const useQuantumStore = create<QuantumStore>()(
   persist(
     (set, get) => ({
       ...INITIAL_PHYSICS,
-      currentMissionId: "superposition",
-      activeMissionId: "superposition",
-      activeMission: "superposition",
-      activeStepIndex: 0,
-      currentPhase: "BRIEFING",
-      userPredictionProb0: null,
-      appliedGates: [],
-      missionState: {},
-      completedMissions: [],
-      completed: [],
-      progress: [0],
-      elapsedSeconds: 0,
-      isRunning: true,
+      currentMissionId: "superposition", activeMissionId: "superposition", activeMission: "superposition",
+      activeStepIndex: 0, currentPhase: "BRIEFING", userPredictionProb0: null, appliedGates: [], missionState: {},
+      completedMissions: init.completedMissions, completed: init.completedMissions,
+      progress: init.completedMissions.length ? [init.completedMissions.length] : [0],
+      isSandboxUnlocked: init.isSandboxUnlocked, elapsedSeconds: 0, isRunning: true,
 
       setAngles: (theta, phi) => set({ theta, phi }),
       setTheta: (theta) => set({ theta }),
@@ -84,7 +107,7 @@ export const useQuantumStore = create<QuantumStore>()(
         else if (gate === "Z") nextPhi = (phi + Math.PI) % (2 * Math.PI);
         else if (gate === "H") nextTheta = Math.abs(theta - Math.PI / 2) < 0.1 ? 0 : Math.PI / 2;
         set({ theta: nextTheta, phi: nextPhi });
-        audioEngine.playGateSound(gate);
+        soundEngine.playGateSound(gate);
       },
 
       applyGateToMission: (gate) => {
@@ -97,7 +120,7 @@ export const useQuantumStore = create<QuantumStore>()(
         const p0 = Math.cos(theta / 2) ** 2;
         const outcome: 0 | 1 = Math.random() < p0 ? 0 : 1;
         set({ theta: outcome === 0 ? 0 : Math.PI, phi: 0, lastOutcome: outcome });
-        audioEngine.playMeasurementSound();
+        soundEngine.playMeasurementSound();
         return outcome;
       },
 
@@ -115,14 +138,34 @@ export const useQuantumStore = create<QuantumStore>()(
         return true;
       },
 
-      completeMission: (id) => {
-        const mId = id as MissionId;
+      markMissionCompleted: (id) => {
+        const idx = typeof id === "number" ? id : getMissionIndex(id);
+        if (idx < 0) return;
         const current = get().completedMissions;
-        if (!current.includes(mId)) {
-          const updated = [...current, mId];
-          set({ completedMissions: updated, completed: updated, progress: Array.from(new Set([...get().progress, updated.length])) });
-          audioEngine.playSuccessSound();
+        if (!current.includes(idx)) {
+          const updated = Array.from(new Set([...current, idx])).sort((a, b) => a - b);
+          const unlocked = updated.length >= TOTAL_MISSIONS || get().isSandboxUnlocked;
+          set({ completedMissions: updated, completed: updated, progress: updated, isSandboxUnlocked: unlocked });
+          syncCookies(updated, unlocked);
+          soundEngine.playSuccessSound();
         }
+      },
+
+      completeMission: (id) => get().markMissionCompleted(id),
+      setSandboxUnlocked: (unlocked) => {
+        set({ isSandboxUnlocked: unlocked });
+        syncCookies(get().completedMissions, unlocked);
+      },
+      unlockSandbox: () => get().setSandboxUnlocked(true),
+
+      resetProgress: () => {
+        if (typeof window !== "undefined") {
+          try {
+            Cookies.remove(COOKIE_COMPLETED);
+            Cookies.remove(COOKIE_SANDBOX);
+          } catch (_e) { /* Safe */ }
+        }
+        set({ completedMissions: [], completed: [], progress: [0], isSandboxUnlocked: false });
       },
 
       recordMissionTime: () => {},
@@ -131,20 +174,11 @@ export const useQuantumStore = create<QuantumStore>()(
         const config = getMissionById(id) ?? getMissionById(0)!;
         const tempK = config.initialTemperatureK;
         set({
-          currentMissionId: config.id,
-          activeMissionId: config.id,
-          activeMission: config.id,
-          theta: config.initialTheta,
-          phi: config.initialPhi,
-          temperatureK: tempK,
+          currentMissionId: config.id, activeMissionId: config.id, activeMission: config.id,
+          theta: config.initialTheta, phi: config.initialPhi, temperatureK: tempK,
           coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(tempK)),
-          isEntangled: config.id === "entanglement",
-          entanglementDegree: config.id === "entanglement" ? 1 : 0,
-          lastOutcome: null,
-          userPredictionProb0: null,
-          currentPhase: "BRIEFING",
-          activeStepIndex: 0,
-          appliedGates: [],
+          isEntangled: config.id === "entanglement", entanglementDegree: config.id === "entanglement" ? 1 : 0,
+          lastOutcome: null, userPredictionProb0: null, currentPhase: "BRIEFING", activeStepIndex: 0, appliedGates: [],
         });
       },
 
@@ -178,6 +212,7 @@ export const useQuantumStore = create<QuantumStore>()(
         completedMissions: s.completedMissions,
         completed: s.completed,
         progress: s.progress,
+        isSandboxUnlocked: s.isSandboxUnlocked,
       }),
     }
   )
