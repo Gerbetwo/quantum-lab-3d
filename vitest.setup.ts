@@ -1,5 +1,5 @@
 // WebGL Stub Setup
-(global as any).WebGLRenderingContext = class {};
+(globalThis as unknown as { WebGLRenderingContext: unknown }).WebGLRenderingContext = class {};
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 import { installWebStubs } from './src/tests/helpers/webgl-stub';
@@ -27,8 +27,8 @@ if (typeof window !== 'undefined' && typeof window.matchMedia === 'undefined') {
   }));
 }
 
-if (typeof window !== 'undefined' && typeof (window as any).AudioContext === 'undefined') {
-  (window as any).AudioContext = class {
+if (typeof window !== 'undefined' && typeof (window as unknown as { AudioContext: unknown }).AudioContext === 'undefined') {
+  (window as unknown as { AudioContext: unknown }).AudioContext = class {
     createOscillator = vi.fn(() => ({
       connect: vi.fn(),
       start: vi.fn(),
