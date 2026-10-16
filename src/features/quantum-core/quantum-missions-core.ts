@@ -547,12 +547,6 @@ export const MISSIONS: readonly MissionDefinition[] = [
   },
 ];
 
-export const CORE_MISSION_IDS: readonly MissionId[] = MISSIONS.map((_m) => _m.id);
-
-export function getCoreMissions(): MissionDefinition[] {
-  return [...MISSIONS].sort((_a, _b) => _a.order - _b.order);
-}
-
 export function getMissionById(_id: string): MissionDefinition | undefined {
   return MISSIONS.find((_m) => _m.id === _id);
 }
@@ -561,28 +555,10 @@ export function isMissionId(val: unknown): val is MissionId {
   return typeof val === 'string' && MISSIONS.some((_m) => _m.id === val);
 }
 
-export function isMainJourneyComplete(
-  completed: string[] | Set<string> | Record<string, boolean>
-): boolean {
-  const coreIds = MISSIONS.map((_m) => _m.id);
-  if (Array.isArray(completed)) {
-    return coreIds.every((_id) => completed.includes(_id));
-  }
-  if (completed instanceof Set) {
-    return coreIds.every((_id) => completed.has(_id));
-  }
-  if (completed && typeof completed === 'object') {
-    return coreIds.every((_id) => Boolean(completed[_id as keyof typeof completed]));
-  }
-  return false;
-}
-
-export const missions = MISSIONS;
-
 // --- Section: src/features/missions/domain/missionMachine.ts ---
 export type { MissionPhase };
 
-export const MISSION_PHASES: readonly MissionPhase[] = [
+const MISSION_PHASES: readonly MissionPhase[] = [
   'BRIEFING',
   'PREDICTION',
   'EXPERIMENT',
@@ -594,13 +570,9 @@ export const MISSION_PHASES: readonly MissionPhase[] = [
   'VERIFICATION',
   'SUCCESS',
 ] as const;
+type MissionState = 'not_started' | 'in_progress' | 'assessment' | 'completed';
 
-export const isMissionPhase = (value: unknown): value is MissionPhase =>
-  typeof value === 'string' && (MISSION_PHASES as readonly string[]).includes(value);
-
-export type MissionState = 'not_started' | 'in_progress' | 'assessment' | 'completed';
-
-export interface MissionProgress {
+interface MissionProgress {
   state: MissionState;
   currentStep: number;
   maxUnlockedStep: number;
@@ -679,28 +651,12 @@ export function previousStep(
   return { ...progress, currentStep: currentStep - 1 };
 }
 
-export function navigateToStep(
-  targetStep: number,
-  _totalSteps: number,
-  progress: MissionProgress,
-  _stepRequirements: Record<number, boolean> = {},
-): MissionProgress {
-  if (!canNavigateToStep(targetStep, _totalSteps, progress, _stepRequirements)) {
-    return progress;
-  }
-  return { ...progress, currentStep: targetStep };
-}
-
 export function completeQuiz(progress: MissionProgress): MissionProgress {
   if (progress.quizPassed && progress.state === 'completed') return progress;
   return { ...progress, quizPassed: true, state: 'completed' };
 }
 
-export function isMissionComplete(_progress: MissionProgress): boolean {
-  return _progress.state === 'completed';
-}
-
-export interface MissionProgressState {
+interface MissionProgressState {
   currentMissionId: string | null;
   activeStepIndex: number;
   currentPhase: MissionPhase;
@@ -710,19 +666,7 @@ export interface MissionProgressState {
   errorState: string | null;
 }
 
-export const createInitialMissionProgressState = (
-  _missionId: string | null = null,
-): MissionProgressState => ({
-  currentMissionId: _missionId,
-  activeStepIndex: 0,
-  currentPhase: 'BRIEFING',
-  userPredictionProb0: null,
-  appliedGatesHistory: [],
-  isVerified: false,
-  errorState: null,
-});
-
-export const VALID_TRANSITIONS: Record<MissionPhase, MissionPhase[]> = {
+const VALID_TRANSITIONS: Record<MissionPhase, MissionPhase[]> = {
   BRIEFING: ['PREDICTION'],
   PREDICTION: ['MANIPULATION', 'EXPERIMENT'],
   EXPERIMENT: ['OBSERVATION', 'MEASUREMENT'],
@@ -735,7 +679,7 @@ export const VALID_TRANSITIONS: Record<MissionPhase, MissionPhase[]> = {
   SUCCESS: ['BRIEFING'],
 };
 
-export function canTransition(
+function canTransition(
   currentState: MissionProgressState,
   nextPhase: MissionPhase,
 ): boolean {
@@ -770,49 +714,7 @@ export function canTransition(
   return true;
 }
 
-export function transitionPhase(
-  currentState: MissionProgressState,
-  nextPhase: MissionPhase,
-): MissionProgressState {
-  if (!canTransition(currentState, nextPhase)) {
-    throw new Error(
-      `Invalid phase transition from '${currentState.currentPhase}' to '${nextPhase}'.`,
-    );
-  }
-
-  return {
-    ...currentState,
-    currentPhase: nextPhase,
-    errorState: null,
-  };
-}
-
-export function verifyState(
-  _actualTheta: number,
-  _actualPhi: number,
-  targetTheta: number,
-  _targetPhi: number,
-  tolerance: number = 0.05,
-): boolean {
-  const thetaDiff = Math.abs(_actualTheta - targetTheta);
-
-  const isAtPole =
-    Math.abs(targetTheta) <= tolerance ||
-    Math.abs(targetTheta - Math.PI) <= tolerance;
-
-  if (isAtPole) {
-    return thetaDiff <= tolerance;
-  }
-
-  const normPhiActual = ((_actualPhi % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-  const normPhiTarget = ((_targetPhi % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-  const rawPhiDiff = Math.abs(normPhiActual - normPhiTarget);
-  const phiDiff = Math.min(rawPhiDiff, 2 * Math.PI - rawPhiDiff);
-
-  return thetaDiff <= tolerance && phiDiff <= tolerance;
-}
-
-export interface MissionStep {
+interface MissionStep {
   id: string;
   phase: MissionPhase;
   title: string;
@@ -826,13 +728,13 @@ export interface MissionStep {
 
 export type StepDefinition = MissionStep;
 
-export interface QuizOptionDefinition {
+interface QuizOptionDefinition {
   id: string;
   text: string;
   explanation?: string;
 }
 
-export interface QuizDefinition {
+interface QuizDefinition {
   id: string;
   question: string;
   options: QuizOptionDefinition[];
@@ -840,7 +742,7 @@ export interface QuizDefinition {
   explanation?: string;
 }
 
-export type MissionSceneType = 'bloch' | 'cryostat' | 'entanglement' | 'shor';
+type MissionSceneType = 'bloch' | 'cryostat' | 'entanglement' | 'shor';
 
 export interface MissionDefinition {
   id: MissionId;
@@ -858,10 +760,7 @@ export interface MissionDefinition {
   quiz?: QuizDefinition;
 }
 
-export type Mission = MissionDefinition;
-export type MissionConfig = MissionDefinition;
-
-export interface MissionExperienceProps<
+interface MissionExperienceProps<
   TState extends Record<string, unknown> = Record<string, unknown>,
 > {
   missionId: MissionId;
@@ -872,22 +771,8 @@ export interface MissionExperienceProps<
   onAction: (actionName: string, payload?: unknown) => void;
 }
 
-export type MissionStepProps<
-  TState extends Record<string, unknown> = Record<string, unknown>,
-> = MissionExperienceProps<TState>;
-
-export const getStepPhase = (_step: MissionStep): MissionPhase => _step.phase;
-
-export const isGateAllowed = (_step: MissionStep, _gateId: string): boolean =>
-  _step.allowedGates.includes(_gateId);
-
-export const findStepIndexById = (
-  _steps: readonly MissionStep[],
-  _stepId: string,
-): number => _steps.findIndex((_step) => _step.id === _stepId);
-
 // --- Section: src/features/missions/hooks/useGuidedMission.ts ---
-export interface MissionInternalState {
+interface MissionInternalState {
   currentStepIndex: number;
   completedSteps: string[];
   quizPassed: boolean;
@@ -1239,12 +1124,4 @@ function setMissionTitle(next: string): void {
   if (next === currentTitle) return;
   currentTitle = next;
   for (const cb of listeners) cb();
-}
-
-export function useMissionTitleState(): string {
-  return currentTitle;
-}
-
-export function useMissionTitle(title: string): void {
-  setMissionTitle(title);
 }

@@ -3,7 +3,7 @@
 import React, { useState, useId, useRef, useEffect } from 'react';
 import { clsx } from 'clsx';
 import { AlertCircle, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
 }
@@ -62,12 +62,12 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, className = '', 
 };
 
 
-export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   'aria-label': string;
   icon: React.ReactNode;
 }
 
-export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
+const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ className, 'aria-label': ariaLabel, icon, ...props }, _ref) => {
     return (
       <button
@@ -93,7 +93,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
 IconButton.displayName = 'IconButton';
 
 
-export interface RangeControlProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface RangeControlProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   valueDisplay?: string | number;
   unit?: string;
@@ -150,9 +150,9 @@ export const RangeControl: React.FC<RangeControlProps> = ({
 };
 
 
-export type StatusType = 'success' | 'error' | 'warning' | 'info';
+type StatusType = 'success' | 'error' | 'warning' | 'info';
 
-export interface StatusMessageProps {
+interface StatusMessageProps {
   type?: StatusType;
   variant?: StatusType;
   message?: string;
@@ -219,7 +219,7 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
 };
 
 
-export interface TooltipProps {
+interface TooltipProps {
   content: string;
   children: React.ReactElement;
   delayDuration?: number;

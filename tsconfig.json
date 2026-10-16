@@ -51,7 +51,7 @@
   ],
   "exclude": [
     "node_modules",
-    "src/archive",
+    "src/archive/**",
     "vite.config.ts",
     "playwright.config.ts"
   ]

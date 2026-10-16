@@ -1,9 +1,9 @@
 export type QubitIndex = number;
 export interface Complex { re: number; im: number; }
-export type Matrix = Complex[][];
+type Matrix = Complex[][];
 export type GateMatrix = Matrix;
 export type StateVector = Complex[];
-export interface StateVectorHistoryDetails {
+interface StateVectorHistoryDetails {
   steps: StateVector[];
   stepStates: StateVector[];
   afterEachStep: StateVector[];
@@ -14,7 +14,7 @@ export type StateVectorHistory = StateVector[] & StateVectorHistoryDetails;
 
 export type GateType = 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T' | 'I' | 'CNOT' | 'CZ' | 'SWAP' | 'CPHASE' | 'CR' | 'CS' | 'CT' | 'TOFFOLI' | 'MEASURE' | 'CUSTOM';
 
-export interface PlacedGate {
+interface PlacedGate {
   id: string;
   type: GateType;
   targetQubit: number;
@@ -26,7 +26,7 @@ export interface PlacedGate {
   phi?: number;
 }
 
-export interface CircuitStep {
+interface CircuitStep {
   step: number;
   gates: PlacedGate[];
 }
@@ -38,13 +38,13 @@ export interface QuantumCircuit {
   maxDepth?: number;
 }
 
-export interface ValidationResult {
+interface ValidationResult {
   valid: boolean;
   errors?: string[];
   ok?: boolean;
 }
 
-export interface QubitMeasurementResult {
+interface QubitMeasurementResult {
   qubit: number;
   outcome: 0 | 1;
   probability: number;
@@ -52,15 +52,13 @@ export interface QubitMeasurementResult {
   collapsedBit?: 0 | 1;
 }
 
-export type MeasurementResult = QubitMeasurementResult[];
-
-export interface LabSnapshot {
+interface LabSnapshot {
   timestamp: number;
   stateVector: StateVector;
   circuit: QuantumCircuit;
 }
 
-export interface LabEvent {
+interface LabEvent {
   id: string;
   type: string;
   payload: Record<string, unknown>;
@@ -158,7 +156,7 @@ export function uniformAmplitudes(N: number): number[] {
   return new Array(N).fill(amp);
 }
 
-export function executeGroverStep(amplitudes: number[], markedIndex: number): number[] {
+function executeGroverStep(amplitudes: number[], markedIndex: number): number[] {
   const N = amplitudes.length;
   // Step 1: Deterministic Oracle phase inversion
   const oracleState = amplitudes.map((amp, idx) => (idx === markedIndex ? -amp : amp));
@@ -186,7 +184,7 @@ export function groverSuccessProbability(N: number, iterations: number): number 
   return Math.sin((2 * iterations + 1) * theta) ** 2;
 }
 
-export interface ShorResult {
+interface ShorResult {
   isSuccess: boolean;
   period: number | null;
   factors: [number, number] | null;
@@ -208,13 +206,7 @@ export function factorizeShorN15(a: number): ShorResult {
   return { isSuccess: false, period: r, factors: null };
 }
 
-export interface QuantumAlgorithmStrategy<TInput, TOutput> {
-  name: string;
-  execute(params: TInput): TOutput;
-  getCircuitState(): StateVector;
-}
-
-export interface ShorDemoResult {
+interface ShorDemoResult {
   base: number;
   sequence: number[];
   period: number;
@@ -243,13 +235,13 @@ export function runShorDemo(base: number): ShorDemoResult {
   };
 }
 
-export interface BlochVector {
+interface BlochVector {
   x: number;
   y: number;
   z: number;
 }
 
-export interface BlochProbabilities {
+interface BlochProbabilities {
   alpha: number;
   beta: number;
   prob0: number;
@@ -265,29 +257,6 @@ export function calculateBlochVector(theta: number, phi: number = 0): BlochVecto
     y: Math.abs(y) < 1e-12 ? 0 : Math.round(y * 1000) / 1000,
     z: Math.abs(z) < 1e-12 ? 0 : Math.round(z * 1000) / 1000,
   };
-}
-
-export function blochAnglesMatch(
-  actualTheta: number,
-  actualPhi: number,
-  targetTheta: number,
-  targetPhi: number,
-  tolerance: number = 0.05
-): boolean {
-  const dTheta = Math.abs(actualTheta - targetTheta);
-  if (dTheta > tolerance) return false;
-
-  // At the poles (|0> or |1>), phi is degenerate
-  const isPole = (theta: number) => theta <= tolerance || theta >= Math.PI - tolerance;
-  if (isPole(targetTheta) || isPole(actualTheta)) {
-    return true;
-  }
-
-  let dPhi = Math.abs(actualPhi - targetPhi) % (2 * Math.PI);
-  if (dPhi > Math.PI) {
-    dPhi = 2 * Math.PI - dPhi;
-  }
-  return dPhi <= tolerance;
 }
 
 export function calculateBlochProbabilities(theta: number): BlochProbabilities {
@@ -306,7 +275,7 @@ export function formatStateVector(theta: number, _phi: number = 0): string {
   return `|ψ⟩ = ${cos}|0⟩ + ${sin}|1⟩`;
 }
 
-export const MAX_DEPTH = 32;
+const MAX_DEPTH = 32;
 
 export function createEmptyCircuit(numQubits: number, maxDepth: number = MAX_DEPTH): QuantumCircuit {
   if (numQubits <= 0 || maxDepth <= 0 || maxDepth > 64) {
@@ -357,11 +326,6 @@ export function removeGate(circuit: QuantumCircuit, _gateId: string): QuantumCir
   return { ...circuit, steps: newSteps };
 }
 
-export function clearStep(circuit: QuantumCircuit, _stepIndex: number): QuantumCircuit {
-  const newSteps = circuit.steps.map(s => (s.step === _stepIndex ? { ...s, gates: [] } : s));
-  return { ...circuit, steps: newSteps };
-}
-
 export function validateCircuit(_circuit: unknown): ValidationResult {
   const errors: string[] = [];
   const c = _circuit as { numQubits?: number; steps?: CircuitStep[]; gates?: PlacedGate[] };
@@ -387,7 +351,7 @@ export function validateCircuit(_circuit: unknown): ValidationResult {
   return { valid: isOk, ok: isOk, errors };
 }
 
-export function evaluateCircuitStep(_state: StateVector, _step: CircuitStep, numQubits: number): StateVector {
+function evaluateCircuitStep(_state: StateVector, _step: CircuitStep, numQubits: number): StateVector {
   let currentState = [..._state];
   for (const gate of _step.gates || []) {
     const type = gate.type;
@@ -422,7 +386,7 @@ export function evaluateCircuitStep(_state: StateVector, _step: CircuitStep, num
   return currentState;
 }
 
-export function evaluateUpToStep(circuit: QuantumCircuit, _maxStep: number): StateVectorHistory {
+function evaluateUpToStep(circuit: QuantumCircuit, _maxStep: number): StateVectorHistory {
   const size = 1 << circuit.numQubits;
   let currentState: StateVector = new Array(size).fill(0).map((_, _i) => ({ re: _i === 0 ? 1 : 0, im: 0 }));
   const stepStates: StateVector[] = [currentState];
@@ -447,32 +411,13 @@ export function evaluateFullCircuit(circuit: QuantumCircuit): StateVectorHistory
   return evaluateUpToStep(circuit, maxStep);
 }
 
-export function getStateAtStep(history: StateVectorHistory, _stepIndex: number): StateVector {
-  const states = history.stepStates || history.steps || [];
-  if (states.length === 0) return history.final;
-  const clamped = Math.max(0, Math.min(_stepIndex, states.length - 1));
-  return states[clamped] ?? history.final;
-}
-
 export function calculateCoherenceTime(temperatureKelvin: number): number {
   if (temperatureKelvin <= 0) return 1000;
   const t2 = Math.max(1, 500 / (temperatureKelvin + 0.1));
   return parseFloat(t2.toFixed(2));
 }
 
-export function isCriticalDecoherence(_coherenceTime: number, _threshold: number = 20): boolean {
-  return _coherenceTime < _threshold;
-}
-
-export function applyDecoherenceToState(_state: Array<{ re: number; im: number }>, _factor: number): Array<{ re: number; im: number }> {
-  const clampedFactor = Math.max(0, Math.min(1, _factor));
-  return _state.map(amp => ({
-    re: amp.re * clampedFactor,
-    im: amp.im * clampedFactor,
-  }));
-}
-
-export interface EntanglementState {
+interface EntanglementState {
   aliceOutcome: 0 | 1 | null;
   bobOutcome: 0 | 1 | null;
   correlated: boolean;
@@ -499,9 +444,8 @@ export const c = (re: number, im: number = 0): Complex => ({
   im: Math.abs(im) < 1e-12 ? 0 : im,
 });
 
-export const add = (a: Complex, b: Complex): Complex => c(a.re + b.re, a.im + b.im);
-export const sub = (a: Complex, b: Complex): Complex => c(a.re - b.re, a.im - b.im);
-export const mul = (a: Complex, b: Complex): Complex => c(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+const add = (a: Complex, b: Complex): Complex => c(a.re + b.re, a.im + b.im);
+const mul = (a: Complex, b: Complex): Complex => c(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
 
 export const H: GateMatrix = [
   [c(1 / Math.SQRT2), c(1 / Math.SQRT2)],
@@ -540,13 +484,12 @@ export const I: GateMatrix = [
 
 export const H_GATE = H;
 export const X_GATE = X;
-export const Y_GATE = Y;
 export const Z_GATE = Z;
 export const I_GATE = I;
 
 export const StandardGates = { H, X, Y, Z, S, T, I };
 
-export function kroneckerProduct(m1: GateMatrix, m2: GateMatrix): GateMatrix {
+function kroneckerProduct(m1: GateMatrix, m2: GateMatrix): GateMatrix {
   const r1 = m1.length;
   const c1 = m1[0].length;
   const r2 = m2.length;
@@ -566,17 +509,6 @@ export function kroneckerProduct(m1: GateMatrix, m2: GateMatrix): GateMatrix {
     }
   }
   return result;
-}
-
-export function createMultiQubitGate(_gateMatrix: GateMatrix, _targetQubit: number, _totalQubits: number): GateMatrix {
-  let fullMatrix: GateMatrix = [[c(1)]];
-  for (let q = 0; q < _totalQubits; q++) {
-    const currentGate = q === _targetQubit ? _gateMatrix : I;
-    fullMatrix = fullMatrix.length === 1 && fullMatrix[0].length === 1 
-      ? currentGate 
-      : kroneckerProduct(fullMatrix, currentGate);
-  }
-  return fullMatrix;
 }
 
 export function applyGate(state: StateVector, gate: GateMatrix): StateVector {
@@ -757,7 +689,7 @@ export function applySWAP_N(state: StateVector, q1: number, q2: number, numQubit
   return result;
 }
 
-export function applyControlledPhaseN(state: StateVector, controlQubit: number, targetQubit: number, phi: number, numQubits: number): StateVector {
+function applyControlledPhaseN(state: StateVector, controlQubit: number, targetQubit: number, phi: number, numQubits: number): StateVector {
   const dim = 1 << numQubits;
   if (state.length !== dim) {
     throw new Error(`State length mismatch: expected ${dim}, got ${state.length}`);
@@ -876,7 +808,7 @@ export function measureQubitState(qubitOrTheta: unknown, stateOrRng?: unknown, r
 }
 
 const presetC = (_re: number, _im = 0): { re: number; im: number } => ({ re: _re, im: _im });
-export const MAX_QUBITS_LIMIT = 6;
+const MAX_QUBITS_LIMIT = 6;
 
 export function bellState(type: string = 'phi+'): StateVector {
   const invSqrt2 = Math.SQRT1_2;
@@ -935,7 +867,7 @@ export function ghz6Circuit(): QuantumCircuit {
   return circuit;
 }
 
-export function teleportation3Circuit(): QuantumCircuit {
+function teleportation3Circuit(): QuantumCircuit {
   let circuit = createEmptyCircuit(3);
   circuit = placeGate(circuit, { id: 't1', type: 'H', targetQubit: 1, targets: [1], step: 0 }, 0);
   circuit = placeGate(circuit, { id: 't2', type: 'CNOT', targetQubit: 2, controlQubit: 1, targets: [2], controls: [1], step: 1 }, 1);
@@ -944,22 +876,13 @@ export function teleportation3Circuit(): QuantumCircuit {
   return circuit;
 }
 
-export function qft3Circuit(): QuantumCircuit {
+function qft3Circuit(): QuantumCircuit {
   let circuit = createEmptyCircuit(3);
   circuit = placeGate(circuit, { id: 'q1', type: 'H', targetQubit: 0, targets: [0], step: 0 }, 0);
   circuit = placeGate(circuit, { id: 'q2', type: 'H', targetQubit: 1, targets: [1], step: 1 }, 1);
   circuit = placeGate(circuit, { id: 'q3', type: 'H', targetQubit: 2, targets: [2], step: 2 }, 2);
   return circuit;
 }
-
-export const QUANTUM_PRESETS = {
-  bell: bellState,
-  ghz: ghzState,
-  w: wState,
-  ghz6: ghz6Circuit,
-  teleportation3: teleportation3Circuit,
-  qft3: qft3Circuit,
-};
 
 export {
   qubitToFrequency,
@@ -968,7 +891,7 @@ export {
 } from './audio/sonification';
 export type { ScaleName, AdsrEnvelope } from './audio/sonification';
 
-export const MAX_QUBITS_SV = 6;
+const MAX_QUBITS_SV = 6;
 export const MAX_QUBITS = MAX_QUBITS_SV;
 export const MAX_DIM = 1 << MAX_QUBITS_SV;
 
@@ -1027,51 +950,22 @@ export function innerProduct(a: StateVector, b: StateVector): Complex {
   return { re, im };
 }
 
-export function normalizeStateVector(amplitudes: { re: number; im: number }[]): { re: number; im: number }[] {
-  let normSq = 0;
-  for (const amp of amplitudes) {
-    normSq += amp.re * amp.re + amp.im * amp.im;
-  }
-  if (normSq === 0) return amplitudes;
-  const normVal = Math.sqrt(normSq);
-  return amplitudes.map(amp => ({
-    re: Math.abs(amp.re / normVal) < 1e-12 ? 0 : amp.re / normVal,
-    im: Math.abs(amp.im / normVal) < 1e-12 ? 0 : amp.im / normVal,
-  }));
-}
-
 export function createInitialState(_nQubits: number): StateVector {
   return createZeroState(_nQubits);
 }
 
-export interface ComplexType {
-  re: number;
-  im: number;
-}
-
-export interface QuantumState {
-  vector: StateVector;
-  numQubits: number;
-}
-
-export interface LabState {
-  readonly snapshot: Readonly<LabSnapshot>;
-  dispatch(event: LabEvent): void;
-  reset(): void;
-}
-
-export interface BasisProbability {
+interface BasisProbability {
   basisState: string;
   probability: number;
 }
 
-export interface PhaseAmplitudeData {
+interface PhaseAmplitudeData {
   basisState: string;
   amplitude: number;
   phase: number;
 }
 
-export interface QubitBlochState {
+interface QubitBlochState {
   qubitIndex: number;
   x: number;
   y: number;

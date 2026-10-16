@@ -16,6 +16,7 @@ const eslintConfig = [
       "**/*.min.js",
       "script*.ts",
       "script-*.ts",
+      "src/archive/**",
       "code*.txt"
     ]
   },

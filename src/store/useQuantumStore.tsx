@@ -19,7 +19,7 @@ import {
 } from "@/lib/quantumCore";
 import { audioEngine } from "@/lib/audio/audioEngine";
 
-export type MissionId =
+type MissionId =
   | "superposition"
   | "entanglement"
   | "error-correction"
@@ -28,7 +28,7 @@ export type MissionId =
   | "grover"
   | "applications";
 
-export const CORE_MISSION_IDS: readonly MissionId[] = [
+const CORE_MISSION_IDS: readonly MissionId[] = [
   "superposition",
   "entanglement",
   "error-correction",
@@ -38,11 +38,11 @@ export const CORE_MISSION_IDS: readonly MissionId[] = [
   "applications",
 ];
 
-export function isMissionId(id: string): id is MissionId {
+function isMissionId(id: string): id is MissionId {
   return CORE_MISSION_IDS.includes(id as MissionId);
 }
 
-export const MAIN_JOURNEY_MISSION_IDS: readonly MissionId[] = [
+const MAIN_JOURNEY_MISSION_IDS: readonly MissionId[] = [
   "superposition",
   "entanglement",
   "decoherence",
@@ -55,10 +55,6 @@ export function isMainJourneyComplete(
   return MAIN_JOURNEY_MISSION_IDS.every((id) => completed.includes(id));
 }
 
-export function getMissionById(id: MissionId | string) {
-  return { id: id as MissionId };
-}
-
 export const MISSIONS: any = Object.assign(
   CORE_MISSION_IDS.map((id) => ({ id })),
   Object.fromEntries(CORE_MISSION_IDS.map((id) => [id, { id }]))
@@ -67,14 +63,14 @@ export const MISSIONS: any = Object.assign(
 // ============================================================================
 export const SESSION_VERSION = 2;
 export const STORAGE_KEY = "quantum_lab_session_v2";
-export const COOKIE_SESSION = "quantum_lab_session_v2";
+const COOKIE_SESSION = "quantum_lab_session_v2";
 
-export const RENDER_SAFE_USER_ID = "QL-TEST-USER";
-export const DEFAULT_ACTIVE_MISSION: MissionId = "superposition";
+const RENDER_SAFE_USER_ID = "QL-TEST-USER";
+const DEFAULT_ACTIVE_MISSION: MissionId = "superposition";
 
-export const CANONICAL_MISSION_IDS: readonly MissionId[] = CORE_MISSION_IDS;
+const CANONICAL_MISSION_IDS: readonly MissionId[] = CORE_MISSION_IDS;
 
-export const LEGACY_MISSION_ID_MAP: Readonly<Record<string, MissionId>> = {
+const LEGACY_MISSION_ID_MAP: Readonly<Record<string, MissionId>> = {
   "mission-1": "superposition",
   "mission-2": "entanglement",
   "mission-3": "decoherence",
@@ -82,45 +78,29 @@ export const LEGACY_MISSION_ID_MAP: Readonly<Record<string, MissionId>> = {
 };
 
 export const COOKIE_USER_ID = "ql_user_id";
-export const COOKIE_PROGRESS = "ql_progress";
+const COOKIE_PROGRESS = "ql_progress";
 export const COOKIE_METRICS = "ql_metrics";
-export const COOKIE_ACTIVE_TAB = "ql_active_tab";
+const COOKIE_ACTIVE_TAB = "ql_active_tab";
 export const COOKIE_MISSION_STATE = "ql_mission_state";
-
-export const USER_ID_COOKIE_KEY = COOKIE_USER_ID;
-export const PROGRESS_COOKIE_KEY = COOKIE_PROGRESS;
-export const METRICS_COOKIE_KEY = COOKIE_METRICS;
-export const ACTIVE_TAB_COOKIE_KEY = COOKIE_ACTIVE_TAB;
-
-export const TOTAL_MISSIONS = 7;
+const TOTAL_MISSIONS = 7;
 export const MAX_COOKIE_SIZE_BYTES = 3000;
 
-export const TAB_INDEX_MAP: Record<string, number> = {
+const TAB_INDEX_MAP: Record<string, number> = {
   superposition: 0,
   entanglement: 1,
   decoherence: 2,
   applications: 3,
 };
+type MissionTimes = Record<MissionId, number>;
 
-export const TAB_NAME_MAP: Record<number, string> = {
-  0: "superposition",
-  1: "entanglement",
-  2: "decoherence",
-  3: "applications",
-};
-
-export const VALID_TABS = [0, 1, 2, 3];
-
-export type MissionTimes = Record<MissionId, number>;
-
-export interface UserActions {
+interface UserActions {
   superpositionMeasurements: number;
   entanglementMeasurements: number;
   decoherenceTested: boolean;
   applicationsExplored: string[];
 }
 
-export interface UserMetrics {
+interface UserMetrics {
   totalTimeSeconds: number;
   completedMissions?: number[];
   missionTimes: MissionTimes;
@@ -129,7 +109,7 @@ export interface UserMetrics {
   [key: string]: unknown;
 }
 
-export interface UserSession {
+interface UserSession {
   elapsedSeconds: number;
   isRunning: boolean;
   version: number | string;
@@ -146,14 +126,12 @@ export interface UserSession {
   exportedAt?: string;
 }
 
-export type Session = UserSession;
-
-export interface SaveOutcome {
+interface SaveOutcome {
   success: boolean;
   error?: string;
 }
 
-export function toCanonicalMissionId(id: unknown): MissionId | null {
+function toCanonicalMissionId(id: unknown): MissionId | null {
   if (typeof id !== "string") return null;
   if (isMissionId(id)) return id;
   return LEGACY_MISSION_ID_MAP[id] ?? null;
@@ -188,7 +166,7 @@ export function createDefaultMetrics(): UserMetrics {
   };
 }
 
-export const DEFAULT_METRICS = createDefaultMetrics();
+const DEFAULT_METRICS = createDefaultMetrics();
 
 function safeSetCookie(_key: string, value: string): boolean {
   if (value.length > MAX_COOKIE_SIZE_BYTES) return false;
@@ -200,7 +178,7 @@ function safeSetCookie(_key: string, value: string): boolean {
   }
 }
 
-export function getOrCreateUserId(): string {
+function getOrCreateUserId(): string {
   if (typeof window === "undefined") return RENDER_SAFE_USER_ID;
   try {
     const existing = Cookies.get(COOKIE_USER_ID);
@@ -315,7 +293,7 @@ function coerceMetrics(raw: unknown): UserMetrics {
   return metrics;
 }
 
-export function toCanonicalSession(
+function toCanonicalSession(
   raw: unknown,
   userId = RENDER_SAFE_USER_ID,
 ): UserSession {
@@ -440,29 +418,7 @@ export function completeMissionInSession(
   return { ...session, completed, lastUpdated: Date.now() };
 }
 
-export function recordMissionTimeInSession(
-  session: UserSession,
-  _missionId: string,
-  _durationMs: number,
-): UserSession {
-  const canonical = toCanonicalMissionId(_missionId);
-  if (!canonical) return session;
-  return {
-    ...session,
-    missionTime: {
-      ...session.missionTime,
-      [canonical]: (session.missionTime[canonical] || 0) + _durationMs,
-    },
-    lastUpdated: Date.now(),
-  };
-}
-
-export function resetCanonicalSession(): UserSession {
-  if (typeof window === "undefined") return createEmptySession();
-  return createEmptySession(getOrCreateUserId());
-}
-
-export function getStoredProgress(): number[] {
+function getStoredProgress(): number[] {
   const raw = Cookies.get(COOKIE_PROGRESS);
   if (!raw) return [0];
   try {
@@ -512,7 +468,7 @@ export function getStoredMetrics(): UserMetrics {
   }
 }
 
-export function updateStoredMetrics(
+function updateStoredMetrics(
   updater: Partial<UserMetrics> | ((prev: UserMetrics) => Partial<UserMetrics>),
 ): boolean {
   const current = getStoredMetrics();
@@ -539,30 +495,6 @@ export function updateStoredMetrics(
       partial.completedMissions || current.completedMissions;
   }
   return safeSetCookie(COOKIE_METRICS, JSON.stringify(updated));
-}
-
-export function incrementActiveMissionTime(
-  tabInput: number | string,
-  deltaSeconds: number = 1,
-): void {
-  let tabKey: keyof MissionTimes | null = null;
-  if (typeof tabInput === "number" && tabInput >= 0 && tabInput <= 3) {
-    tabKey = TAB_NAME_MAP[tabInput] as keyof MissionTimes;
-  } else if (typeof tabInput === "string" && tabInput in TAB_INDEX_MAP) {
-    tabKey = tabInput as keyof MissionTimes;
-  }
-
-  if (!tabKey) return;
-
-  const metrics = getStoredMetrics();
-  const currentMissionTime = metrics.missionTimes[tabKey] || 0;
-  updateStoredMetrics({
-    totalTimeSeconds: metrics.totalTimeSeconds + deltaSeconds,
-    missionTimes: {
-      ...metrics.missionTimes,
-      [tabKey]: currentMissionTime + deltaSeconds,
-    },
-  });
 }
 
 export function getStoredActiveTab(): number {
@@ -620,7 +552,7 @@ export function saveMissionState(
   return safeSetCookie(COOKIE_MISSION_STATE, serialized);
 }
 
-export function deleteAllLocalProgress(): void {
+function deleteAllLocalProgress(): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(STORAGE_KEY);
@@ -634,17 +566,6 @@ export function deleteAllLocalProgress(): void {
   Cookies.remove(COOKIE_ACTIVE_TAB);
   Cookies.remove(COOKIE_MISSION_STATE);
   Cookies.remove(COOKIE_SESSION);
-}
-
-export function deleteAllUserData(): void {
-  deleteAllLocalProgress();
-}
-
-export function areAllMissionsCompleted(): boolean {
-  const progress = getStoredProgress();
-  return Array.from({ length: TOTAL_MISSIONS }, (_, _index) => _index).every(
-    (_index) => progress.includes(_index),
-  );
 }
 
 export function exportSessionJSON(_sessionData?: unknown): string {
@@ -694,10 +615,6 @@ export function exportSessionJSON(_sessionData?: unknown): string {
   return JSON.stringify(payload, null, 2);
 }
 
-export function exportCanonicalSessionData(): string {
-  return exportSessionJSON(loadSession());
-}
-
 export function downloadSessionJSON(
   sessionData?: unknown,
   _filename = "quantum-lab-session.json",
@@ -719,17 +636,11 @@ export function downloadSessionJSON(
   }
 }
 
-export function downloadSessionExport(
-  _filename = "quantumlab_session.json",
-): void {
-  downloadSessionJSON(undefined, _filename);
-}
-
 // ============================================================================
 // ZUSTAND QUANTUM STORE & MODERN SLICES
 // ============================================================================
 
-export const INITIAL_PHYSICS = {
+const INITIAL_PHYSICS = {
   theta: 0,
   phi: 0,
   temperatureK: 0.015,
@@ -751,7 +662,7 @@ export type MissionPhase =
   | "VERIFICATION"
   | "SUCCESS";
 
-export const INITIAL_MISSION_RUN = {
+const INITIAL_MISSION_RUN = {
   currentMissionId: "superposition" as MissionId,
   activeMissionId: "superposition" as MissionId,
   activeMission: "superposition" as MissionId,
@@ -762,7 +673,7 @@ export const INITIAL_MISSION_RUN = {
   missionState: {} as Record<string, unknown>,
 };
 
-export interface PhysicsSlice {
+interface PhysicsSlice {
   theta: number;
   phi: number;
   temperatureK: number;
@@ -776,7 +687,7 @@ export interface PhysicsSlice {
   measure: () => 0 | 1;
 }
 
-export interface MissionRunSlice {
+interface MissionRunSlice {
   currentMissionId: MissionId | null;
   activeMissionId: MissionId | null;
   activeMission: MissionId | null;
@@ -795,7 +706,7 @@ export interface MissionRunSlice {
   resetState: () => void;
 }
 
-export interface ProgressSlice {
+interface ProgressSlice {
   userId: string;
   completedMissions: MissionId[];
   completed: MissionId[];
@@ -808,7 +719,7 @@ export interface ProgressSlice {
   resetProgress: () => void;
 }
 
-export interface TimerSlice {
+interface TimerSlice {
   elapsedSeconds: number;
   isRunning: boolean;
   tick: () => void;
@@ -821,7 +732,7 @@ export interface TimerSlice {
   resumeSession: () => void;
 }
 
-export type QuantumStore = PhysicsSlice &
+type QuantumStore = PhysicsSlice &
   MissionRunSlice &
   ProgressSlice &
   TimerSlice;
@@ -1152,7 +1063,7 @@ export function useSession() {
   };
 }
 
-export interface UseSessionTimerResult {
+interface UseSessionTimerResult {
   elapsedSeconds: number;
   formattedTime: string;
   isRunning: boolean;
@@ -1218,8 +1129,3 @@ export {
   playButtonClick,
   playHover,
 } from "@/lib/audio/audioEngine";
-
-export function cn(..._inputs: ClassValue[]) {
-  return twMerge(clsx(_inputs));
-}
-
