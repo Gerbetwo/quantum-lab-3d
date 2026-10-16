@@ -10,22 +10,26 @@ import { CircuitGrid, GatePalette, MissionShell, PhaseDiskView } from '@/feature
 import { createEmptyCircuit, placeGate, createZeroState } from '@/lib/quantumCore';
 import { MISSIONS } from '@/store/useQuantumStore';
 
-vi.mock('@/features/session/components/SessionProvider', () => ({
-  useSession: () => ({
-    session: {
-      userId: 'QL-ABCD',
-      completed: [],
-      missionState: {},
-      timerSeconds: 600,
-      timerRunning: false,
-    },
-    updateMissionState: vi.fn(),
-    completeMission: vi.fn(),
-    updateTimer: vi.fn(),
-    toggleTimer: vi.fn(),
-  }),
-  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('@/store/useQuantumStore', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/store/useQuantumStore')>();
+  return {
+    ...actual,
+    useSession: () => ({
+      session: {
+        userId: 'QL-ABCD',
+        completed: [],
+        missionState: {},
+        timerSeconds: 600,
+        timerRunning: false,
+      },
+      updateMissionState: vi.fn(),
+      completeMission: vi.fn(),
+      updateTimer: vi.fn(),
+      toggleTimer: vi.fn(),
+    }),
+    getOrCreateUserId: vi.fn(() => 'QL-ABCD'),
+  };
+});
 
 vi.mock('@/shared/lib/sound', () => ({ playChimeSuccess: vi.fn() }));
 vi.mock('@/features/session/lib/sessionService', () => ({
@@ -575,9 +579,10 @@ describe('Phase 3 - MeasurementParticles', () => {
 describe('Suite de Integración Parametrizada de Misiones', () => {
   test.each(MISSIONS)(
     'renderiza correctamente la misión $id ($title)',
-    (mission) => {
+    (...args: any[]) => {
+      const mission = args[0];
       render(<MissionShell mission={mission} />);
-      expect(screen.getByText(new RegExp(mission.title, 'i'))).toBeInTheDocument();
+      expect(screen.getAllByText(new RegExp(mission.title, 'i'))[0]).toBeInTheDocument();
     }
   );
 });

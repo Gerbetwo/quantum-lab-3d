@@ -5,16 +5,82 @@ import * as THREE from 'three';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { runShorDemo } from '@/core/quantum/applications';
-import { CircuitVisualizationModel } from '../core/quantum/visualizationModel';
 import {
+  runShorDemo,
+  type CircuitVisualizationModel,
   createEmptyCircuit,
   placeGate,
   removeGate,
   evaluateFullCircuit,
-} from '../core/quantum/circuit';
-import { calculateCoherenceTime } from '@/core/math/decoherence';
-import { measureEntangledQubit } from '@/core/math/entanglement';
+  calculateCoherenceTime,
+  measureEntangledQubit,
+  createZeroState,
+  probability,
+  probabilities,
+  norm,
+  MAX_QUBITS,
+  MAX_DIM,
+  normalize,
+  innerProduct,
+  dimOf,
+  type StateVector,
+  type Complex,
+  applyGateN,
+  applyCNOT_N,
+  applyCZ_N,
+  applySWAP_N,
+  H,
+  X,
+  Y,
+  Z,
+  S,
+  T,
+  I,
+  I_GATE,
+  X_GATE,
+  Z_GATE,
+  H_GATE,
+  applyGate,
+  matrixMultiply,
+  applyCNOT,
+  evaluateCircuit,
+  stateToBlochAngles,
+  gatesApproxEqual,
+  stateLabel,
+  measureAll,
+  measureQubitN,
+  calculateMeasurementDistribution,
+  measureQubit,
+  bellState,
+  ghzState,
+  wState,
+  ghz6Circuit,
+  measureQubitState,
+  validateCircuit,
+  createInitialState,
+  factorizeShorN15,
+  calculateBlochVector,
+  calculateBlochProbabilities,
+  formatStateVector,
+  bitFlipEncode,
+  bitFlipDecode,
+  detectBitFlipSyndrome,
+  injectBitFlip,
+  phaseFlipEncode,
+  injectPhaseFlip,
+  applyRepetitionCode3,
+  type BitTriple,
+  uniformAmplitudes,
+  groverIterations,
+  classicalExpectedTrials,
+  simulateGroverStep,
+  measureAmplitude,
+  groverSuccessProbability,
+  qubitToFrequency,
+  gateDurationMs,
+  adsrEnvelope,
+  type ScaleName,
+} from '@/lib/quantumCore';
 import {
   exportSessionJSON,
   downloadSessionJSON,
@@ -38,95 +104,16 @@ import {
   isMainJourneyComplete,
   STORAGE_KEY,
   SESSION_VERSION,
-} from '@/features/session/lib/sessionService';
-import {
-  createZeroState,
-  probability,
-  probabilities,
-  norm,
-  MAX_QUBITS,
-  MAX_DIM,
-  normalize,
-  innerProduct,
-  dimOf,
-  type StateVector,
-  type Complex,
-} from '@/core/math/statevector';
-import {
-  applyGateN,
-  applyCNOT_N,
-  applyCZ_N,
-  applySWAP_N,
-  H,
-  X,
-  Y,
-  Z,
-  S,
-  T,
-  I,
-  I_GATE,
-  X_GATE,
-  Z_GATE,
-  H_GATE,
-  applyGate,
-  matrixMultiply,
-  applyCNOT,
-  evaluateCircuit,
-  stateToBlochAngles,
-  gatesApproxEqual,
-  stateLabel,
-} from '@/core/math/gates';
-import { measureAll, measureQubitN } from '@/core/math/measurement';
-import {
-  calculateMeasurementDistribution,
-  measureQubit,
-} from '../core/quantum/measurement';
-import { bellState, ghzState, wState, ghz6Circuit } from '@/core/math/presets';
-import { measureQubitState, validateCircuit, createInitialState } from '@/core';
-import { factorizeShorN15 } from '@/core/quantum/algorithms/shor';
-import { playNote } from '@/shared/lib/sound';
-import { ResourceTracker } from '@/features/quantum-3d/lib/resourceTracker';
-import {
-  createOrbitControls,
-  type OrbitControlsHandle,
-} from '@/features/quantum-3d/hooks/useOrbitControls';
-import {
-  calculateBlochVector,
-  calculateBlochProbabilities,
-  formatStateVector,
-} from '@/core/math/bloch';
-import {
-  bitFlipEncode,
-  bitFlipDecode,
-  detectBitFlipSyndrome,
-  injectBitFlip,
-  phaseFlipEncode,
-  injectPhaseFlip,
-  applyRepetitionCode3,
-  type BitTriple,
-} from '@/core/quantum/algorithms/errorCorrection';
-import {
-  uniformAmplitudes,
-  groverIterations,
-  classicalExpectedTrials,
-  simulateGroverStep,
-  measureAmplitude,
-  groverSuccessProbability,
-} from '@/core/quantum/algorithms/grover';
+} from '@/store/useQuantumStore';
 import {
   createInitialMissionState,
   advanceStep,
   canNavigateToStep,
   previousStep,
   completeQuiz,
-} from '../../src/features/missions/domain/missionMachine';
+} from '@/features/quantum-core/quantum-missions-core';
 import {
-  qubitToFrequency,
-  gateDurationMs,
-  adsrEnvelope,
-  type ScaleName,
-} from '@/core/math/scales';
-import {
+  playNote,
   isAudioEnabled,
   setAudioEnabled,
   toggleAudio,
@@ -140,14 +127,17 @@ import {
   playMeasurementCollapse,
   __markUserInteracted,
   __resetAudioOverride,
-} from '@/shared/lib/sound';
-import '../helpers/webgl-stub';
+} from '@/lib/audio/audioEngine';
 import {
+  ResourceTracker,
+  createOrbitControls,
+  type OrbitControlsHandle,
   disposeResource,
   cached,
   clearResourceCache,
   clearSpriteMaterialCache,
-} from '@/features/quantum-3d/lib/sceneManager';
+} from '@/components/BlochCanvas';
+import './helpers/webgl-stub';
 
 describe('Shor Applications Domain', () => {
   test('correctly finds period and factors for base 2', () => {
@@ -225,7 +215,7 @@ describe('HU-Sandbox-Visualizations — Contratos Científicos', () => {
 describe('Circuit Unit Tests', () => {
   it('should create and modify circuit', () => {
     let c = createEmptyCircuit(2);
-    c = placeGate(c, { id: 'g1', type: 'H', step: 0, targets: [0] }, 0);
+    c = placeGate(c, { id: 'g1', type: 'H', step: 0, targets: [0], targetQubit: 0 }, 0);
     expect(c.steps.length).toBe(1);
     c = removeGate(c, 'g1');
     expect(c.steps[0].gates.length).toBe(0);
@@ -667,7 +657,7 @@ describe('HU-27..HU-31 - Grover Search Algorithm', () => {
       expect(uniformAmplitudes(4)).toEqual([0.5, 0.5, 0.5, 0.5]);
     });
     it('probabilities sum to 1 for N=16', () => {
-      const total = uniformAmplitudes(16).reduce((s, a) => s + a * a, 0);
+      const total = uniformAmplitudes(16).reduce((s: number, a: number) => s + a * a, 0);
       expect(total).toBeCloseTo(1);
     });
   });
@@ -683,8 +673,8 @@ describe('HU-27..HU-31 - Grover Search Algorithm', () => {
 
     it('preserves norm (unitarity) for N=8', () => {
       const amps = uniformAmplitudes(8);
-      const before = amps.reduce((s, a) => s + a * a, 0);
-      const after = simulateGroverStep(amps, 3).reduce((s, a) => s + a * a, 0);
+      const before = amps.reduce((s: number, a: number) => s + a * a, 0);
+      const after = simulateGroverStep(amps, 3).reduce((s: number, a: number) => s + a * a, 0);
       expect(after).toBeCloseTo(before);
     });
 
@@ -760,8 +750,8 @@ describe('Phase1 - N-qubit Measurement (injectable RNG)', () => {
     // rng = 0.9 > P(0) = 0.5  =>  outcome 1, collapse to |11> (index 3)
     const r = measureQubitN(s, 0, 2, () => 0.9);
     expect(r.outcome).toBe(1);
-    expect(r.collapsed[3].re).toBeCloseTo(1);
-    expect(r.collapsed[0].re).toBeCloseTo(0);
+    expect(r.collapsed![3].re).toBeCloseTo(1);
+    expect(r.collapsed![0].re).toBeCloseTo(0);
   });
   it('measureQubitN measuring LSB preserves MSB superposition', () => {
     // H on qubit 0 (MSB) produces |+> (x) |0>
@@ -770,10 +760,10 @@ describe('Phase1 - N-qubit Measurement (injectable RNG)', () => {
     // Measure LSB (qubit 1); it is always 0.
     const r = measureQubitN(s, 1, 2, () => 0.1);
     expect(r.outcome).toBe(0);
-    expect(r.collapsed[0].re).toBeCloseTo(Math.SQRT1_2);
-    expect(r.collapsed[2].re).toBeCloseTo(Math.SQRT1_2);
-    expect(r.collapsed[1].re).toBeCloseTo(0);
-    expect(r.collapsed[3].re).toBeCloseTo(0);
+    expect(r.collapsed![0].re).toBeCloseTo(Math.SQRT1_2);
+    expect(r.collapsed![2].re).toBeCloseTo(Math.SQRT1_2);
+    expect(r.collapsed![1].re).toBeCloseTo(0);
+    expect(r.collapsed![3].re).toBeCloseTo(0);
   });
   it('rejects out-of-range qubit in measureQubitN', () => {
     expect(() => measureQubitN(createZeroState(2), 2, 2, () => 0.5)).toThrow();
@@ -977,7 +967,7 @@ describe('Phase1 - LUT Presets (Bell, GHZ, W)', () => {
     expect(g).toHaveLength(8);
     expect(g[0].re).toBeCloseTo(Math.SQRT1_2);
     expect(g[7].re).toBeCloseTo(Math.SQRT1_2);
-    expect(probabilities(g).slice(1, 7).every((p) => p === 0)).toBe(true);
+    expect(probabilities(g).slice(1, 7).every((p: number) => p === 0)).toBe(true);
   });
   it('ghzState(6) uniform on 2 outcomes', () => {
     const g = ghzState(6);

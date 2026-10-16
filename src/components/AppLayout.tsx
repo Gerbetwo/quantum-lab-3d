@@ -66,9 +66,6 @@ export function AppShell({ children, header, footer, className = '' }: AppShellP
 }
 
 
-'use client';
-
-
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -210,9 +207,6 @@ export function CelebrationModal({ isOpen, onClose, formUrl }: Props) {
     </div>
   );
 }
-
-
-'use client';
 
 
 export interface CommandItem {
@@ -361,7 +355,6 @@ export function CommandPalette({
 - stable user ID, non-blocking storage warnings, theme toggle, and fullscreen control.
 - Optimized for 375px mobile viewports using Tailwind v4 semantic variables.
  */
-'use client';
 
 
 interface HeaderProps {
@@ -483,7 +476,6 @@ export function Header({
 - Active route shell connecting session state, timer, command palette,
 - light/dark theme persistence, and accessible fullscreen toggle.
  */
-"use client";
 
 
 interface LeanLabLayoutProps {
@@ -718,9 +710,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, description }) =>
 };
 
 
-'use client';
-
-
 const CANONICAL_MISSIONS = [
   'superposition',
   'entanglement',
@@ -793,9 +782,6 @@ export function GlobalListeners() {
 
 
 // src/components/layout/AppShell.tsx
-'use client';
-
-
 export interface AppShellComponentProps {
   children?: React.ReactNode | null;
   header?: React.ReactNode | null;

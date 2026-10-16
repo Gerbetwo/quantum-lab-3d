@@ -488,7 +488,7 @@ export function CircuitGrid({
   onPlaceGate,
   onRemoveGate,
 }: CircuitGridProps) {
-  const numQubits = totalQubits ?? circuit?.nQubits ?? 3;
+  const numQubits = totalQubits ?? circuit?.numQubits ?? (circuit as any)?.nQubits ?? 3;
   const gridDepth = depth ?? circuit?.maxDepth ?? 16;
 
   const qubits = Array.from({ length: Number(numQubits) }, (_, i) => i as QubitIndex);

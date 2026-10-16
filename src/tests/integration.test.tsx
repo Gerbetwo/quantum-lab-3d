@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { describe, it, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
 import { CelebrationModal } from '@/components/AppLayout';
-import { useSession, MISSIONS, SessionProvider } from '@/store/useQuantumStore';
+import { useSession, MISSIONS, SessionProvider, useQuantumStore } from '@/store/useQuantumStore';
 
 
 const burstMock = vi.fn();
@@ -63,13 +63,13 @@ vi.mock('@/shared/lib/sound', () => ({
 function TestMissionRunner() {
   const { session, completeMission, elapsedSeconds } = useSession();
   const completedCount = session.completed.length;
-  const isAllComplete = MISSIONS.every((m) => session.completed.includes(m.id));
+  const isAllComplete = MISSIONS.every((m: { id: string }) => session.completed.includes(m.id as any));
 
   return (
     <div>
       <div data-testid="timer-display">Time: {elapsedSeconds}s</div>
       <div data-testid="completed-count">{completedCount}</div>
-      {MISSIONS.map((mission, index) => (
+      {MISSIONS.map((mission: { id: string }, index: number) => (
         <button
           key={mission.id}
           data-testid={`mission-${index + 1}`}
@@ -86,6 +86,7 @@ function TestMissionRunner() {
 describe('Phase 6 - Home integration (7 missions + celebration)', () => {
   beforeEach(() => {
     localStorage.clear();
+    useQuantumStore.getState().resetState();
     vi.useFakeTimers();
   });
 

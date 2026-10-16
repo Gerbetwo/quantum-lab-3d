@@ -1,6 +1,6 @@
 import { StateVector, bellState, measureEntangledQubit } from '@/lib/quantumCore';
 import clsx from 'clsx';
-import React, { forwardRef, useRef, useCallback, useEffect, useImperativeHandle, Suspense, MutableRefObject, RefObject, useMemo, useState } from 'react';
+import React, { forwardRef, useRef, useCallback, useEffect, useImperativeHandle, MutableRefObject, RefObject, useMemo, useState } from 'react';
 import { GlassCard } from './MathHUD';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import * as THREE from 'three';
@@ -20,7 +20,7 @@ export function calculateDecoherencePerturbation(
   theta: number,
   phi: number,
   temperatureK: number,
-  coherenceTimeMs: number
+  _coherenceTimeMs: number
 ): { deltaTheta: number; deltaPhi: number; vectorLength: number } {
   const noiseScale = Math.min(1.0, temperatureK / 300);
   const deltaTheta = (Math.random() - 0.5) * 0.08 * noiseScale;
@@ -824,7 +824,7 @@ export interface SceneHandle extends SceneContext {
 }
 
 export function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
@@ -1294,11 +1294,14 @@ export const BlochSphereWorkspace: React.FC = () => {
     handle.scene.add(axes);
 
     // 3D Vector Arrow ArrowHelper: r = (sin(theta)*cos(phi), cos(theta), sin(theta)*sin(phi))
-    const sinInit = Math.sin(theta);
+    const initialStore = useQuantumStore.getState();
+    const initTheta = initialStore.theta;
+    const initPhi = initialStore.phi;
+    const sinInit = Math.sin(initTheta);
     const arrowDir = new THREE.Vector3(
-      sinInit * Math.cos(phi),
-      Math.cos(theta),
-      sinInit * Math.sin(phi),
+      sinInit * Math.cos(initPhi),
+      Math.cos(initTheta),
+      sinInit * Math.sin(initPhi),
     );
     if (arrowDir.lengthSq() < 1e-6) {
       arrowDir.set(0, 1, 0);
@@ -1565,10 +1568,8 @@ export interface MeasurementCardProps {
 
 export const MeasurementCard: React.FC<MeasurementCardProps> = ({ className }) => {
   const theta = useQuantumStore((s) => s.theta);
-  const phi = useQuantumStore((s) => s.phi);
   const currentPhase = useQuantumStore((s) => s.currentPhase);
   const activeMission = useQuantumStore((s) => s.activeMission ?? s.currentMissionId);
-  const lastOutcome = useQuantumStore((s) => s.lastOutcome);
   const measure = useQuantumStore((s) => s.measure);
   const setPrediction = useQuantumStore((s) => s.setPrediction);
   const transitionPhase = useQuantumStore((s) => s.transitionPhase);

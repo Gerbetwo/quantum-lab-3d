@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useId } from 'react';
+import React, { useState, useId, useRef, useEffect } from 'react';
 import { clsx } from 'clsx';
 import { AlertCircle, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -96,11 +96,13 @@ IconButton.displayName = 'IconButton';
 export interface RangeControlProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   valueDisplay?: string | number;
+  unit?: string;
 }
 
 export const RangeControl: React.FC<RangeControlProps> = ({
   label,
   valueDisplay,
+  unit,
   className,
   min = 0,
   max = 100,
@@ -108,6 +110,12 @@ export const RangeControl: React.FC<RangeControlProps> = ({
   ...props
 }) => {
   const id = useId();
+  const display =
+    valueDisplay !== undefined
+      ? valueDisplay
+      : unit && value !== undefined
+        ? `${value} ${unit}`
+        : value;
 
   return (
     <div className={clsx('flex flex-col gap-1.5 w-full', className)}>
@@ -115,9 +123,9 @@ export const RangeControl: React.FC<RangeControlProps> = ({
         <label htmlFor={id} className="cursor-pointer">
           {label}
         </label>
-        {valueDisplay !== undefined && (
+        {display !== undefined && (
           <span aria-hidden="true" className="font-mono text-accent text-xs px-2 py-0.5 bg-card-80 rounded border border-border">
-            {valueDisplay}
+            {display}
           </span>
         )}
       </div>
@@ -145,8 +153,10 @@ export const RangeControl: React.FC<RangeControlProps> = ({
 export type StatusType = 'success' | 'error' | 'warning' | 'info';
 
 export interface StatusMessageProps {
-  type: StatusType;
-  message: string;
+  type?: StatusType;
+  variant?: StatusType;
+  message?: string;
+  children?: React.ReactNode;
   className?: string;
 }
 
@@ -177,13 +187,21 @@ const statusConfig = {
   },
 };
 
-export const StatusMessage: React.FC<StatusMessageProps> = ({ type, message, className }) => {
-  const config = statusConfig[type];
+export const StatusMessage: React.FC<StatusMessageProps> = ({
+  type,
+  variant,
+  message,
+  children,
+  className,
+}) => {
+  const currentType = variant || type || 'info';
+  const config = statusConfig[currentType] || statusConfig.info;
   const IconComponent = config.icon;
+  const content = children || message;
 
   return (
     <div
-      role="status"
+      role="region"
       aria-live="polite"
       className={clsx(
         'flex items-center gap-3 p-3 rounded-lg border text-sm',
@@ -194,7 +212,7 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({ type, message, cla
       <IconComponent className={clsx('w-5 h-5 shrink-0', config.iconColor)} aria-hidden="true" />
       <div className="flex-1">
         <span className="sr-only">{config.label}</span>
-        <span>{message}</span>
+        <span>{content}</span>
       </div>
     </div>
   );
@@ -204,22 +222,69 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({ type, message, cla
 export interface TooltipProps {
   content: string;
   children: React.ReactElement;
+  delayDuration?: number;
+  side?: 'top' | 'bottom' | 'left' | 'right';
   className?: string;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
+export const Tooltip: React.FC<TooltipProps> = ({
+  content,
+  children,
+  delayDuration = 200,
+  side = 'top',
+  className,
+}) => {
   const [isVisible, setIsVisible] = useState(false);
   const tooltipId = useId();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleOpen = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (delayDuration === 0) {
+      setIsVisible(true);
+    } else {
+      timerRef.current = setTimeout(() => {
+        setIsVisible(true);
+      }, delayDuration);
+    }
+  };
+
+  const handleClose = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsVisible(false);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    if (isVisible) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isVisible]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const child = React.Children.only(children);
 
   return (
-    <div 
+    <div
       className={clsx('relative inline-flex', className)}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-      onFocus={() => setIsVisible(true)}
-      onBlur={() => setIsVisible(false)}
+      aria-describedby={isVisible ? tooltipId : undefined}
+      onMouseEnter={handleOpen}
+      onMouseLeave={handleClose}
+      onFocus={handleOpen}
+      onBlur={handleClose}
     >
       {React.cloneElement(child, {
         'aria-describedby': isVisible ? tooltipId : undefined,
@@ -229,7 +294,8 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, className }
           id={tooltipId}
           role="tooltip"
           className={clsx(
-            'absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1',
+            'absolute left-1/2 -translate-x-1/2 px-2.5 py-1',
+            side === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2',
             'bg-background text-foreground text-xs rounded shadow-lg border border-border',
             'whitespace-nowrap z-50 pointer-events-none',
             'motion-safe:transition-opacity motion-safe:duration-150'

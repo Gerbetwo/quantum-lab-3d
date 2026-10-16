@@ -10,7 +10,6 @@ export default defineConfig({
     }
   },
   test: {
-    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
@@ -44,7 +43,7 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
-    include: ["tests/unit/**/*.test.{ts,tsx}", "tests/component/**/*.test.{ts,tsx}", "tests/integration/**/*.test.{ts,tsx}", "src/**/*.test.{ts,tsx}"],
-    exclude: ["tests/e2e/**", "node_modules/**", ".next/**"]
+    include: ["src/tests/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
+    exclude: ["tests/e2e/**", "src/tests/e2e/**", "**/*.spec.ts", "src/archive/**", "node_modules/**", ".next/**"]
   }
 });

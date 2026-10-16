@@ -17,7 +17,7 @@ import {
   type GateMatrix,
   type GateType,
 } from "@/lib/quantumCore";
-import { audioEngine, isAudioEnabled } from "@/lib/audio/audioEngine";
+import { audioEngine } from "@/lib/audio/audioEngine";
 
 export type MissionId =
   | "superposition"
@@ -42,10 +42,17 @@ export function isMissionId(id: string): id is MissionId {
   return CORE_MISSION_IDS.includes(id as MissionId);
 }
 
+export const MAIN_JOURNEY_MISSION_IDS: readonly MissionId[] = [
+  "superposition",
+  "entanglement",
+  "decoherence",
+  "applications",
+];
+
 export function isMainJourneyComplete(
   completed: MissionId[] | readonly MissionId[]
 ): boolean {
-  return CORE_MISSION_IDS.every((id) => completed.includes(id));
+  return MAIN_JOURNEY_MISSION_IDS.every((id) => completed.includes(id));
 }
 
 export function getMissionById(id: MissionId | string) {
@@ -915,6 +922,9 @@ export const useQuantumStore = create<QuantumStore>()(
         set({
           ...INITIAL_PHYSICS,
           ...INITIAL_MISSION_RUN,
+          completed: [],
+          completedMissions: [],
+          elapsedSeconds: 0,
         });
       },
 
@@ -1048,7 +1058,7 @@ export function useSession() {
       missionTime,
       missionState,
       events: [],
-      lastUpdated: Date.now(),
+      lastUpdated: 0,
       metrics,
       progress,
       activeTab: 0,

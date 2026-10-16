@@ -11,7 +11,7 @@ import {
   Task6Page,
   Task7Page,
   CelebrationPage,
-} from './pages';
+} from './e2e/pages';
 
 
 test.describe('Command palette', () => {

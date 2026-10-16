@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 
-import { BasePage } from "./BasePage";
+import { BasePage } from '../../tests/e2e/pages/BasePage';
 
 export abstract class MissionPage extends BasePage {
   readonly missionTitle = this.page.getByTestId("header-mission-title");

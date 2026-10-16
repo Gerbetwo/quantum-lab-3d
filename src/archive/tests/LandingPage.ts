@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { BasePage } from './BasePage';
+import { BasePage } from '../../tests/e2e/pages/BasePage';
 
 export class LandingPage extends BasePage {
   readonly heading = this.page.getByRole('heading', {

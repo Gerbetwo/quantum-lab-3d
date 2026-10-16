@@ -18,6 +18,7 @@ next-env.d.ts
 /playwright-report/
 /test-results/
 .vitest/
+__snapshots__/
 
 # === Phase backups (script-per-phase protocol) ===
 .backup_*/

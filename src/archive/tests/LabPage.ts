@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { BasePage } from './BasePage';
+import { BasePage } from '../../tests/e2e/pages/BasePage';
 
 export class LabPage extends BasePage {
   readonly grid = this.page.getByTestId('circuit-grid');

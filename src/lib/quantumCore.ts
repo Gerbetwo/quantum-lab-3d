@@ -974,7 +974,7 @@ export const MAX_DIM = 1 << MAX_QUBITS_SV;
 
 export function dimOf(numQubits: number): number {
   if (!Number.isInteger(numQubits) || numQubits < 0 || numQubits > MAX_QUBITS_SV) {
-    throw new RangeError('numQubits must be an integer in [0, ' + MAX_QUBITS_SV + '], received: ' + numQubits);
+    throw new RangeError('nQubits must be an integer in [0, ' + MAX_QUBITS_SV + '], received: ' + numQubits);
   }
   return 1 << numQubits;
 }

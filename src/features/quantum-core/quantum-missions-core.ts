@@ -1,5 +1,5 @@
 import { useQuantumStore, useSession, type MissionPhase } from "@/store/useQuantumStore";
-import { useMemo, useCallback, useSyncExternalStore, useEffect } from "react";
+import { useMemo, useCallback } from "react";
 
 // --- Section: src/features/missions/config/missions.ts ---
 export type MissionId =
@@ -1242,14 +1242,9 @@ function setMissionTitle(next: string): void {
 }
 
 export function useMissionTitleState(): string {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return currentTitle;
 }
 
 export function useMissionTitle(title: string): void {
-  useEffect(() => {
-    setMissionTitle(title);
-    return () => {
-      if (currentTitle === title) setMissionTitle('');
-    };
-  }, [title]);
+  setMissionTitle(title);
 }
