@@ -14,15 +14,28 @@ export function simulateGroverStep(
   numQubits: number,
   targetIndex: number,
   currentStep: number
-): GroverStepState {
-  const N = Math.pow(2, numQubits);
+): GroverStepState;
+export function simulateGroverStep(
+  amplitudes: number[],
+  targetIndex: number
+): number[];
+export function simulateGroverStep(
+  numQubitsOrAmps: number | number[],
+  targetIndex: number,
+  currentStep = 1
+): GroverStepState | number[] {
+  if (Array.isArray(numQubitsOrAmps)) {
+    const N = numQubitsOrAmps.length;
+    const amplitudes = numQubitsOrAmps.map((amp, idx) => (idx === targetIndex ? -amp : amp));
+    const mean = amplitudes.reduce((acc, val) => acc + val, 0) / N;
+    return amplitudes.map((amp) => 2 * mean - amp);
+  }
+
+  const N = Math.pow(2, numQubitsOrAmps);
   let amplitudes = Array(N).fill(1 / Math.sqrt(N));
 
   for (let s = 0; s < currentStep; s++) {
-    // Oracle Phase Flip
     amplitudes[targetIndex] = -amplitudes[targetIndex];
-
-    // Diffusion Inversion about Mean
     const mean = amplitudes.reduce((acc, val) => acc + val, 0) / N;
     amplitudes = amplitudes.map((amp) => 2 * mean - amp);
   }
@@ -115,5 +128,78 @@ export function simulate3QubitBitFlipEC(errorInjectedIndex: number | null): QECR
     syndrome,
     errorQubitIndex: errorInjectedIndex,
     recoveredState: `Corrected Qubit ${errorInjectedIndex} -> α|000⟩ + β|111⟩ (100% Fidelity)`,
+  };
+}
+
+export type BitTriple = [0 | 1, 0 | 1, 0 | 1];
+
+export function bitFlipEncode(bit: 0 | 1): BitTriple {
+  return bit === 1 ? [1, 1, 1] : [0, 0, 0];
+}
+
+export function injectBitFlip(triple: BitTriple, index: 0 | 1 | 2): BitTriple {
+  const copy: BitTriple = [...triple];
+  copy[index] = copy[index] === 1 ? 0 : 1;
+  return copy;
+}
+
+export function detectBitFlipSyndrome(triple: BitTriple): {
+  syndrome: number;
+  errorIndex: number;
+  corrected: BitTriple;
+} {
+  const [b0, b1, b2] = triple;
+  let errorIndex = -1;
+  const corrected: BitTriple = [...triple];
+  if (b0 !== b1 && b0 !== b2) errorIndex = 0;
+  else if (b1 !== b0 && b1 !== b2) errorIndex = 1;
+  else if (b2 !== b0 && b2 !== b1) errorIndex = 2;
+  if (errorIndex !== -1) corrected[errorIndex] = corrected[errorIndex] === 1 ? 0 : 1;
+  return { syndrome: errorIndex === -1 ? 0 : errorIndex + 1, errorIndex, corrected };
+}
+
+export function uniformAmplitudes(N: number): number[] {
+  return Array(N).fill(1 / Math.sqrt(N));
+}
+
+export function groverIterations(N: number): number {
+  return Math.max(1, Math.floor((Math.PI / 4) * Math.sqrt(N)));
+}
+
+export function measureAmplitude(
+  amplitudes: number[] | number,
+  _rng: () => number = Math.random
+): number {
+  if (typeof amplitudes === 'number') return amplitudes * amplitudes;
+  const probs = amplitudes.map((a) => a * a);
+  const r = _rng();
+  let cumulative = 0;
+  for (let i = 0; i < probs.length; i++) {
+    cumulative += probs[i];
+    if (r <= cumulative) return i;
+  }
+  return amplitudes.length - 1;
+}
+
+export interface ShorDemoResult {
+  period: number;
+  sequence: number[];
+  factors: [number, number];
+  explanation?: string;
+}
+
+export function runShorDemo(base: number): ShorDemoResult {
+  const shor = simulateShorN15(base);
+  const sequence: number[] = [];
+  let val = 1;
+  for (let i = 0; i < shor.period; i++) {
+    sequence.push(val);
+    val = (val * base) % 15;
+  }
+  return {
+    period: shor.period,
+    sequence,
+    factors: shor.factors,
+    explanation: `Period r = ${shor.period}, Factors = ${shor.factors.join(', ')}`,
   };
 }

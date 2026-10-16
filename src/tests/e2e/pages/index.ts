@@ -8,7 +8,7 @@ import {
   Task6Page, 
   Task7Page, 
   CelebrationPage 
-} from './MissionTaskPage';
+} from '@/archive/tests/MissionTaskPage';
 
 export {
   LandingPage,

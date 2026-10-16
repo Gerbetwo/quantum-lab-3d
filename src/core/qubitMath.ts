@@ -3,7 +3,13 @@
  * Invariants: θ ∈ [0, π], φ ∈ [0, 2π], P(|0⟩) + P(|1⟩) = 1.0
  */
 
-import { ComplexType, QuantumState, QubitBlochState, MeasurementResult } from './types';
+import {
+  QuantumState,
+  QubitBlochState,
+  MeasurementResult,
+  QuantumCircuit,
+  StateVector,
+} from './types';
 
 export function normalizeAngleTheta(theta: number): number {
   return Math.max(0, Math.min(Math.PI, theta));
@@ -69,3 +75,36 @@ export function createBellState(): { pair: string; probability00: number; probab
     probability11: 0.5,
   };
 }
+
+export function bellState(_variant?: string) {
+  return createBellState();
+}
+
+export function measureEntangledQubit(randomSeed = Math.random()): {
+  localOutcome: 0 | 1;
+  remoteOutcome: 0 | 1;
+  aliceOutcome: 0 | 1;
+  bobOutcome: 0 | 1;
+  state: string;
+} {
+  const bit: 0 | 1 = randomSeed < 0.5 ? 0 : 1;
+  return {
+    localOutcome: bit,
+    remoteOutcome: bit,
+    aliceOutcome: bit,
+    bobOutcome: bit,
+    state: bit === 0 ? '|00⟩' : '|11⟩',
+  };
+}
+
+export function createEmptyCircuit(numQubits: number, maxDepth = 16): QuantumCircuit {
+  return { numQubits, maxDepth, steps: [] };
+}
+
+export function evaluateFullCircuit(_circuit: QuantumCircuit): { final: StateVector } {
+  return { final: [] };
+}
+
+export * from './types';
+export * from './decoherenceMath';
+export * from './algorithms';

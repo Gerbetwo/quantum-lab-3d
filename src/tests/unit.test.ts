@@ -56,3 +56,61 @@ describe('Quantum Core Math (src/core)', () => {
     });
   });
 });
+
+import { MISSIONS, CORE_MISSION_IDS, getMissionById, isMissionId } from '../features/missions/missionRegistry';
+import { useQuantumStore } from '../store/useQuantumStore';
+
+describe('Mission Registry (src/features/missions/missionRegistry)', () => {
+  it('exposes exactly 7 core missions (Missions 0-6)', () => {
+    expect(CORE_MISSION_IDS).toHaveLength(7);
+    expect(MISSIONS).toHaveLength(7);
+  });
+
+  it('retrieves mission configurations by id and numeric index', () => {
+    const mission0 = getMissionById(0);
+    expect(mission0?.id).toBe('superposition');
+    expect(mission0?.index).toBe(0);
+
+    const grover = getMissionById('grover');
+    expect(grover?.id).toBe('grover');
+    expect(grover?.index).toBe(4);
+    expect(grover?.initialTheta).toBeCloseTo(Math.PI / 2);
+  });
+
+  it('validates mission ids', () => {
+    expect(isMissionId('superposition')).toBe(true);
+    expect(isMissionId('unknown-mission')).toBe(false);
+  });
+});
+
+describe('Quantum Store (src/store/useQuantumStore)', () => {
+  it('implements unlocked jumpToMission (HU-MVP-09)', () => {
+    useQuantumStore.getState().jumpToMission('entanglement');
+    const state = useQuantumStore.getState();
+    expect(state.currentMissionId).toBe('entanglement');
+    expect(state.isEntangled).toBe(true);
+    expect(state.theta).toBeCloseTo(Math.PI / 2);
+    expect(state.lastOutcome).toBeNull();
+  });
+
+  it('implements 1-click resetState to |0> clearing collapse flags (HU-MVP-10)', () => {
+    // Dirty state
+    useQuantumStore.setState({
+      theta: Math.PI,
+      phi: 1.5,
+      lastOutcome: 1,
+      isEntangled: true,
+      userPredictionProb0: 0.8,
+    });
+
+    useQuantumStore.getState().resetState();
+    const reset = useQuantumStore.getState();
+    expect(reset.theta).toBe(0);
+    expect(reset.phi).toBe(0);
+    expect(reset.temperatureK).toBe(0.015);
+    expect(reset.lastOutcome).toBeNull();
+    expect(reset.userPredictionProb0).toBeNull();
+    expect(reset.isEntangled).toBe(false);
+  });
+});
+

@@ -1,4 +1,5 @@
-import { useQuantumStore, useSession, type MissionPhase } from "@/store/useQuantumStore";
+import { useQuantumStore, type MissionPhase } from "@/store/useQuantumStore";
+import { useSession } from "@/archive/legacy-store-telemetry";
 import { useMemo, useCallback } from "react";
 
 // --- Section: src/features/missions/config/missions.ts ---

@@ -8,7 +8,8 @@ import { Award, ExternalLink, CheckCircle2 } from 'lucide-react';
 
 import { prefersReducedMotion } from './BlochCanvas';
 import { MISSIONS } from '@/features/quantum-core/quantum-missions-core';
-import { useSession, playChimeSuccess, useSessionTimer, audioEngine, useQuantumStore } from '@/store/useQuantumStore';
+import { useSession, useSessionTimer } from '@/archive/legacy-store-telemetry';
+import { playChimeSuccess } from '@/lib/audio/audioEngine';
 
 interface NavItem {
   id: string;

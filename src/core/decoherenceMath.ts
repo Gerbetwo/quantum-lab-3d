@@ -34,3 +34,7 @@ export function applyPhaseDecay(
     purity,
   };
 }
+
+export function calculateCoherenceTime(tempK: number): number {
+  return calculateT2CoherenceTime(kelvinToMilliKelvin(tempK));
+}

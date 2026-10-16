@@ -5,7 +5,7 @@ import { CheckCircle2, Lock, PlayCircle } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 import { PageContainer, PageHeader } from '@/components/AppLayout';
-import { useSession } from '@/store/useQuantumStore';
+import { useSession } from '@/archive/legacy-store-telemetry';
 import { MISSIONS, type MissionDefinition } from '@/features/quantum-core/quantum-missions-core';
 
 function CardWrapper({

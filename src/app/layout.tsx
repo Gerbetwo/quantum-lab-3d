@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AppShell } from '@/components/AppLayout';
-import { SessionProvider } from '@/store/useQuantumStore';
+import { SessionProvider } from '@/archive/legacy-store-telemetry';
 
 
 export const metadata: Metadata = {
