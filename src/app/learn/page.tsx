@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { CheckCircle2, Lock, PlayCircle } from 'lucide-react';
 
 import type { ReactNode } from 'react';
-import { LeanLabLayout, PageContainer, PageHeader } from '@/components/AppLayout';
+import { PageContainer, PageHeader } from '@/components/AppLayout';
 import { useSession } from '@/store/useQuantumStore';
-import { MISSIONS, MissionDefinition } from '@/features/quantum-core/quantum-missions-core';
+import { MISSIONS, type MissionDefinition } from '@/features/quantum-core/quantum-missions-core';
 
 function CardWrapper({
   href,
@@ -33,8 +33,7 @@ export default function LearnPage() {
   const completedIds = session?.completed || [];
 
   return (
-    <LeanLabLayout>
-      <PageContainer className="py-8">
+    <PageContainer className="py-8">
         <PageHeader
           title="Quantum Learning Modules"
           description="Select a mission to explore interactive concepts through 3D simulations and guided modules."
@@ -100,6 +99,5 @@ export default function LearnPage() {
           })}
         </div>
       </PageContainer>
-    </LeanLabLayout>
   );
 }

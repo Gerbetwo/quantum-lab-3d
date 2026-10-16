@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { AppShell } from '@/components/AppLayout';
 import { BlochSphereWorkspace, MathDock } from '@/components/BlochCanvas';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import {
@@ -19,8 +18,7 @@ export default function Page() {
     (activeMissionId ? getMissionById(activeMissionId) : undefined) ?? MISSIONS[0];
 
   return (
-    <AppShell>
-      <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-61px)] overflow-hidden p-4 gap-4 bg-background">
+    <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-61px)] overflow-hidden p-4 gap-4 bg-background">
         {/* Left/Center (60%): BlochSphereWorkspace mounted as a single persistent WebGL canvas across missions */}
         <div className="w-full lg:w-[60%] h-full flex flex-col min-h-0">
           <BlochSphereWorkspace />
@@ -76,6 +74,5 @@ export default function Page() {
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }
