@@ -10,6 +10,9 @@ import {
   burstParticles,
   updateParticles,
   calculateDecoherencePerturbation,
+  computeSphericalVector,
+  lerpSphericalAngles,
+  updateBlochSphereUniforms,
 } from './blochSceneObjects';
 
 let singletonRenderer: THREE.WebGLRenderer | null = null;
@@ -51,9 +54,11 @@ export const BlochViewport: React.FC<{ className?: string }> = ({ className = ''
     const container = containerRef.current;
     if (!container) return;
 
+    // Single WebGLRenderer context reuse safeguard (AGENTS.md Principle 2)
     const renderer = acquireRenderer(container);
     const { scene, camera } = createBaseScene(container);
-    const { sphere, ring, axes, arrowHelper, geometries, materials } = createBlochSphereScene();
+    const elements = createBlochSphereScene();
+    const { sphere, ring, axes, arrowHelper, geometries, materials } = elements;
     scene.add(sphere, ring, axes, arrowHelper);
 
     const particlePool = createParticlePool(250);
@@ -89,8 +94,9 @@ export const BlochViewport: React.FC<{ className?: string }> = ({ className = ''
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
 
-    const currentDir = new THREE.Vector3(0, 1, 0);
-    const targetDir = new THREE.Vector3();
+    // Spherical angle state vector lerp tracker
+    const initSt = useQuantumStore.getState();
+    let currentAngles = { theta: initSt.theta, phi: initSt.phi };
     let animId = 0;
     let lastTime = performance.now();
 
@@ -99,21 +105,24 @@ export const BlochViewport: React.FC<{ className?: string }> = ({ className = ''
       lastTime = now;
 
       const state = useQuantumStore.getState();
-      let curT = state.theta;
-      let curP = state.phi;
+      let targetT = state.theta;
+      let targetP = state.phi;
       let targetLen = 1.3;
 
       if (state.temperatureK > 0.05) {
-        const { deltaTheta, deltaPhi, vectorLength } = calculateDecoherencePerturbation(curT, curP, state.temperatureK);
-        curT += deltaTheta;
-        curP += deltaPhi;
+        const { deltaTheta, deltaPhi, vectorLength } = calculateDecoherencePerturbation(targetT, targetP, state.temperatureK);
+        targetT += deltaTheta;
+        targetP += deltaPhi;
         targetLen = 1.3 * vectorLength;
       }
 
-      const sT = Math.sin(curT);
-      targetDir.set(sT * Math.cos(curP), Math.cos(curT), sT * Math.sin(curP)).normalize();
-      currentDir.lerp(targetDir, Math.min(1.0, dt * 14.0)).normalize();
-      arrowHelper.setDirection(currentDir);
+      // Smooth spherical angle easing across gate executions
+      currentAngles = prefersReducedMotion()
+        ? { theta: targetT, phi: targetP }
+        : lerpSphericalAngles(currentAngles, { theta: targetT, phi: targetP }, dt * 12.0);
+
+      const dir = computeSphericalVector(currentAngles.theta, currentAngles.phi);
+      arrowHelper.setDirection(dir);
       arrowHelper.setLength(targetLen, 0.2, 0.08);
 
       updateParticles(particlePool, dt);
@@ -133,6 +142,14 @@ export const BlochViewport: React.FC<{ className?: string }> = ({ className = ''
     resizeObserver.observe(container);
 
     const unsub = useQuantumStore.subscribe((state, prev) => {
+      // In-place uniform/material updates on mission changes without WebGL rebuild
+      if (state.currentMissionId !== prev.currentMissionId) {
+        const isEnt = state.currentMissionId === 'entanglement';
+        updateBlochSphereUniforms(elements, {
+          sphereColor: isEnt ? 0xa855f7 : 0x00f3ff,
+          arrowColor: isEnt ? 0xa855f7 : 0x00f3ff,
+        });
+      }
       if (state.lastOutcome !== null && state.lastOutcome !== prev.lastOutcome) {
         burstParticles(particlePool, [0, state.lastOutcome === 0 ? 1.3 : -1.3, 0], 80);
       }
@@ -150,6 +167,7 @@ export const BlochViewport: React.FC<{ className?: string }> = ({ className = ''
       arrowHelper.line?.geometry.dispose();
       arrowHelper.cone?.geometry.dispose();
       particlePool.mesh.geometry.dispose();
+      // Safeguard: singletonRenderer is preserved across unmounts/mounts
     };
   }, []);
 

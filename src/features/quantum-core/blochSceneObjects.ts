@@ -34,7 +34,7 @@ export function createBlochSphereScene(): BlochSphereElements {
   const materials: THREE.Material[] = [];
 
   const sphereGeo = new THREE.SphereGeometry(1.3, 32, 16);
-  const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.15 });
+  const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.15 });
   geometries.push(sphereGeo); materials.push(sphereMat);
   const sphere = new THREE.Mesh(sphereGeo, sphereMat);
 
@@ -53,9 +53,45 @@ export function createBlochSphereScene(): BlochSphereElements {
   geometries.push(axesGeo); materials.push(axesMat);
   const axes = new THREE.LineSegments(axesGeo, axesMat);
 
-  const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 1.3, 0x00f0ff, 0.2, 0.08);
+  const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 1.3, 0x00f3ff, 0.2, 0.08);
 
   return { sphere, ring, axes, arrowHelper, geometries, materials };
+}
+
+export function computeSphericalVector(theta: number, phi: number): THREE.Vector3 {
+  const sT = Math.sin(theta);
+  return new THREE.Vector3(sT * Math.cos(phi), Math.cos(theta), sT * Math.sin(phi)).normalize();
+}
+
+export function lerpSphericalAngles(
+  current: { theta: number; phi: number },
+  target: { theta: number; phi: number },
+  factor: number
+): { theta: number; phi: number } {
+  const t = Math.max(0, Math.min(1, factor));
+  const nextTheta = current.theta + (target.theta - current.theta) * t;
+
+  let dPhi = target.phi - current.phi;
+  while (dPhi > Math.PI) dPhi -= 2 * Math.PI;
+  while (dPhi < -Math.PI) dPhi += 2 * Math.PI;
+  const nextPhi = (current.phi + dPhi * t + 2 * Math.PI) % (2 * Math.PI);
+
+  return { theta: nextTheta, phi: nextPhi };
+}
+
+export function updateBlochSphereUniforms(
+  elements: BlochSphereElements,
+  options: { sphereColor?: number; arrowColor?: number; opacity?: number } = {}
+): void {
+  if (options.sphereColor !== undefined && elements.sphere.material instanceof THREE.MeshBasicMaterial) {
+    elements.sphere.material.color.setHex(options.sphereColor);
+  }
+  if (options.opacity !== undefined && elements.sphere.material instanceof THREE.MeshBasicMaterial) {
+    elements.sphere.material.opacity = options.opacity;
+  }
+  if (options.arrowColor !== undefined) {
+    elements.arrowHelper.setColor(options.arrowColor);
+  }
 }
 
 export interface ParticlePool {
@@ -70,7 +106,7 @@ export interface ParticlePool {
 
 export function createParticlePool(maxInstances = 300): ParticlePool {
   const geo = new THREE.IcosahedronGeometry(0.04, 0);
-  const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.85 });
+  const mat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.85 });
   const mesh = new THREE.InstancedMesh(geo, mat, maxInstances);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.count = 0;
