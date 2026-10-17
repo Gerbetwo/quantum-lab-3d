@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useQuantumStore } from './useQuantumStore';
+import { useQuantumStore } from '../useQuantumStore';
 import { TOTAL_MISSIONS, CORE_MISSION_IDS } from '@/features/missions/missionRegistry';
 
 describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
   beforeEach(() => {
     useQuantumStore.getState().resetProgress();
     useQuantumStore.getState().resetState();
+    useQuantumStore.getState().returnToTitle();
   });
 
   describe('Mission Tracking & Progression', () => {
@@ -121,4 +122,76 @@ describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
       });
     });
   });
+
+  describe('Game Flow & Modal Controls', () => {
+    it('initializes with default state: appViewState TITLE and isPauseMenuOpen false', () => {
+      const state = useQuantumStore.getState();
+      expect(state.appViewState).toBe('TITLE');
+      expect(state.isPauseMenuOpen).toBe(false);
+    });
+
+    it('transitions appViewState correctly via setAppViewState', () => {
+      const { setAppViewState } = useQuantumStore.getState();
+
+      setAppViewState('CAMPAIGN_SELECT');
+      expect(useQuantumStore.getState().appViewState).toBe('CAMPAIGN_SELECT');
+
+      setAppViewState('SANDBOX');
+      expect(useQuantumStore.getState().appViewState).toBe('SANDBOX');
+
+      setAppViewState('IN_MISSION');
+      expect(useQuantumStore.getState().appViewState).toBe('IN_MISSION');
+
+      setAppViewState('TITLE');
+      expect(useQuantumStore.getState().appViewState).toBe('TITLE');
+    });
+
+    it('toggles pause menu modal state with togglePauseMenu', () => {
+      const { togglePauseMenu } = useQuantumStore.getState();
+      expect(useQuantumStore.getState().isPauseMenuOpen).toBe(false);
+
+      togglePauseMenu();
+      expect(useQuantumStore.getState().isPauseMenuOpen).toBe(true);
+
+      togglePauseMenu();
+      expect(useQuantumStore.getState().isPauseMenuOpen).toBe(false);
+    });
+
+    it('returns to TITLE view and closes pause menu via returnToTitle', () => {
+      useQuantumStore.setState({
+        appViewState: 'IN_MISSION',
+        isPauseMenuOpen: true,
+      });
+
+      useQuantumStore.getState().returnToTitle();
+      const state = useQuantumStore.getState();
+      expect(state.appViewState).toBe('TITLE');
+      expect(state.isPauseMenuOpen).toBe(false);
+    });
+
+    it('launches mission by string id, sets currentMissionId and transitions to IN_MISSION', () => {
+      useQuantumStore.getState().launchMission('entanglement');
+      const state = useQuantumStore.getState();
+      expect(state.currentMissionId).toBe('entanglement');
+      expect(state.appViewState).toBe('IN_MISSION');
+      expect(state.isEntangled).toBe(true);
+    });
+
+    it('launches mission by numeric index, sets currentMissionId and transitions to IN_MISSION', () => {
+      useQuantumStore.getState().launchMission(4);
+      const state = useQuantumStore.getState();
+      expect(state.currentMissionId).toBe('grover');
+      expect(state.appViewState).toBe('IN_MISSION');
+    });
+
+    it('closes pause menu if open when launching a mission', () => {
+      useQuantumStore.setState({ isPauseMenuOpen: true });
+      useQuantumStore.getState().launchMission('superposition');
+      const state = useQuantumStore.getState();
+      expect(state.isPauseMenuOpen).toBe(false);
+      expect(state.appViewState).toBe('IN_MISSION');
+      expect(state.currentMissionId).toBe('superposition');
+    });
+  });
 });
+

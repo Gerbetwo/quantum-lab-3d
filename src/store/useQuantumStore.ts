@@ -5,11 +5,15 @@ import { calculateT2CoherenceTime, kelvinToMilliKelvin } from "@/core/decoherenc
 import { soundEngine } from "@/lib/soundEngine";
 import { type MissionId, getMissionById, getMissionIndex, TOTAL_MISSIONS } from "@/features/missions/missionRegistry";
 
+export type AppViewState = "TITLE" | "CAMPAIGN_SELECT" | "SANDBOX" | "IN_MISSION";
+
 export type MissionPhase =
   | "BRIEFING" | "PREDICTION" | "EXPERIMENT" | "OBSERVATION" | "ANALYSIS"
   | "COMPLETED" | "MANIPULATION" | "MEASUREMENT" | "VERIFICATION" | "SUCCESS";
 
 export interface QuantumStore {
+  appViewState: AppViewState;
+  isPauseMenuOpen: boolean;
   theta: number; phi: number; temperatureK: number; coherenceTimeUs: number;
   entanglementDegree: number; isEntangled: boolean; lastOutcome: 0 | 1 | null;
   currentMissionId: MissionId; activeMissionId: MissionId; activeMission: MissionId;
@@ -19,6 +23,11 @@ export interface QuantumStore {
   completedMissions: number[] & any; completed: any; progress: number[];
   isSandboxUnlocked: boolean;
   elapsedSeconds: number; isRunning: boolean;
+
+  setAppViewState: (view: AppViewState) => void;
+  togglePauseMenu: () => void;
+  returnToTitle: () => void;
+  launchMission: (id: MissionId | number | string) => void;
 
   setAngles: (theta: number, phi: number) => void;
   setTheta: (theta: number) => void;
@@ -83,12 +92,22 @@ const init = getInitialPersisted();
 export const useQuantumStore = create<QuantumStore>()(
   persist(
     (set, get) => ({
+      appViewState: "TITLE",
+      isPauseMenuOpen: false,
       ...INITIAL_PHYSICS,
       currentMissionId: "superposition", activeMissionId: "superposition", activeMission: "superposition",
       activeStepIndex: 0, currentPhase: "BRIEFING", userPredictionProb0: null, appliedGates: [], missionState: {},
       completedMissions: init.completedMissions, completed: init.completedMissions,
       progress: init.completedMissions.length ? [init.completedMissions.length] : [0],
       isSandboxUnlocked: init.isSandboxUnlocked, elapsedSeconds: 0, isRunning: true,
+
+      setAppViewState: (appViewState) => set({ appViewState }),
+      togglePauseMenu: () => set((s) => ({ isPauseMenuOpen: !s.isPauseMenuOpen })),
+      returnToTitle: () => set({ appViewState: "TITLE", isPauseMenuOpen: false }),
+      launchMission: (id) => {
+        get().jumpToMission(id as MissionId | number);
+        set({ appViewState: "IN_MISSION", isPauseMenuOpen: false });
+      },
 
       setAngles: (theta, phi) => set({ theta, phi }),
       setTheta: (theta) => set({ theta }),
