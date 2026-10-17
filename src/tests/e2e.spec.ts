@@ -2,17 +2,8 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { CommandPalettePage } from './e2e/pages/CommandPalettePage';
 import {
-  LandingPage,
-  Task1Page,
-  Task2Page,
-  Task3Page,
-  Task4Page,
-  Task5Page,
-  Task6Page,
-  Task7Page,
-  CelebrationPage,
+  LandingPage, Task1Page, Task2Page, Task3Page, Task4Page, Task5Page, Task6Page, Task7Page, CelebrationPage,
 } from './e2e/pages';
-
 
 test.describe('Command palette', () => {
   test('opens with Ctrl+K, filters, and closes with Escape', async ({ page }) => {
@@ -41,9 +32,8 @@ test.describe('Command palette', () => {
   });
 });
 
-
 const SAME_ORIGIN = 'http://localhost:3000';
-const FAVICON_RE = /\/favicon\.ico\$/;
+const FAVICON_RE = /\/favicon\.ico$/;
 const REACT_WARNING_RE = /^Warning:/;
 
 test.describe('Console cleanliness audit', () => {
@@ -56,14 +46,10 @@ test.describe('Console cleanliness audit', () => {
     page.on('console', (msg) => {
       const text = msg.text();
       if (msg.type() === 'error') consoleErrors.push(text);
-      if (msg.type() === 'warning' && REACT_WARNING_RE.test(text)) {
-        reactWarnings.push(text);
-      }
+      if (msg.type() === 'warning' && REACT_WARNING_RE.test(text)) reactWarnings.push(text);
     });
 
-    page.on('pageerror', (err) => {
-      uncaughtExceptions.push(err.message);
-    });
+    page.on('pageerror', (err) => { uncaughtExceptions.push(err.message); });
 
     page.on('response', (response) => {
       if (response.status() !== 404) return;
@@ -85,7 +71,6 @@ test.describe('Console cleanliness audit', () => {
   });
 });
 
-
 test.describe('Full journey', () => {
   test('completes all 7 missions and reaches the celebration modal', async ({ page }) => {
     const landing = new LandingPage(page);
@@ -104,7 +89,6 @@ test.describe('Full journey', () => {
     await new CelebrationPage(page).expectVisible();
   });
 });
-
 
 test.describe('Phase 4 - /lab end-to-end flow', () => {
   test('full flow: place gate, switch views, load GHZ, run circuit', async ({ page }) => {
@@ -163,22 +147,16 @@ test.describe('Phase 4 - /lab end-to-end flow', () => {
   });
 });
 
-
 test.describe('Mission 1 Interactive E2E', () => {
   test('permite ajustar theta, medir y colapsar el qubit', async ({ page }) => {
     await page.goto('/');
-
-    // Asegurar que estamos en la misión 1 (o navegar a ella)
     const measureButton = page.getByRole('button', { name: /Disparar Detector Láser/i });
     await expect(measureButton).toBeVisible();
-
     await measureButton.click();
-
     const resultBanner = page.getByText(/Resultado de Medición/i);
     await expect(resultBanner).toBeVisible();
   });
 });
-
 
 test.describe('E2E Quantum Sandbox Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -204,24 +182,16 @@ test.describe('E2E Quantum Sandbox Suite', () => {
   });
 });
 
-
 test.describe('Phase 1: E2E Baseline Smoke Flow', () => {
   test('verifies home page loads correctly and displays brand header', async ({ page }) => {
     await page.goto('/');
-
     await expect(page).toHaveTitle(/QuantumLab 3D/i);
-
     const brandHeading = page.locator('header').getByText(/QUANTUMLAB/i);
     await expect(brandHeading).toBeVisible();
-
-    // Entrar al laboratorio desde la pantalla de bienvenida
     await page.getByRole('button', { name: /Iniciar Experimentos/i }).click();
-
-    // Validar que se cargó la Tarea 1 verificando su título en pantalla
     await expect(page.getByText(/El Bit Clásico/i)).toBeVisible();
   });
 });
-
 
 const VIEWPORTS = [
   { name: 'desktop-large', width: 1920, height: 1080 },
@@ -243,16 +213,13 @@ VIEWPORTS.forEach(({ name, width, height }) => {
     test('captura snapshot visual y valida reglas de accesibilidad', async ({ page }) => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
-
       await expect(page).toHaveScreenshot(`homepage-${name}.png`, {
         fullPage: true,
         maxDiffPixelRatio: 0.05,
       });
-
       const accessibilityScanResults = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
-
       expect(accessibilityScanResults.violations).toEqual([]);
     });
   });
