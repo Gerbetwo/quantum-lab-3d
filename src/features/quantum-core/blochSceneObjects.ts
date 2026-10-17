@@ -25,6 +25,7 @@ export interface BlochSphereElements {
   ring: THREE.Mesh;
   axes: THREE.LineSegments;
   arrowHelper: THREE.ArrowHelper;
+  tipHandle: THREE.Mesh;
   geometries: THREE.BufferGeometry[];
   materials: THREE.Material[];
 }
@@ -55,12 +56,29 @@ export function createBlochSphereScene(): BlochSphereElements {
 
   const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 1.3, 0x00f3ff, 0.2, 0.08);
 
-  return { sphere, ring, axes, arrowHelper, geometries, materials };
+  const tipHandleGeo = new THREE.SphereGeometry(0.09, 16, 16);
+  const tipHandleMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.9 });
+  geometries.push(tipHandleGeo); materials.push(tipHandleMat);
+  const tipHandle = new THREE.Mesh(tipHandleGeo, tipHandleMat);
+  tipHandle.name = 'bloch-vector-tip-handle';
+  tipHandle.position.set(0, 1.3, 0);
+
+  return { sphere, ring, axes, arrowHelper, tipHandle, geometries, materials };
 }
 
 export function computeSphericalVector(theta: number, phi: number): THREE.Vector3 {
   const sT = Math.sin(theta);
   return new THREE.Vector3(sT * Math.cos(phi), Math.cos(theta), sT * Math.sin(phi)).normalize();
+}
+
+export function vectorToSphericalAngles(v: THREE.Vector3): { theta: number; phi: number } {
+  const len = v.length();
+  if (len < 1e-6) return { theta: 0, phi: 0 };
+  const clampedY = Math.max(-1, Math.min(1, v.y / len));
+  const theta = Math.acos(clampedY);
+  let phi = Math.atan2(v.z, v.x);
+  if (phi < 0) phi += 2 * Math.PI;
+  return { theta, phi };
 }
 
 export function lerpSphericalAngles(
@@ -91,6 +109,9 @@ export function updateBlochSphereUniforms(
   }
   if (options.arrowColor !== undefined) {
     elements.arrowHelper.setColor(options.arrowColor);
+    if (elements.tipHandle.material instanceof THREE.MeshBasicMaterial) {
+      elements.tipHandle.material.color.setHex(options.arrowColor);
+    }
   }
 }
 

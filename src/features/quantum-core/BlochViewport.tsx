@@ -11,6 +11,7 @@ import {
   updateParticles,
   calculateDecoherencePerturbation,
   computeSphericalVector,
+  vectorToSphericalAngles,
   lerpSphericalAngles,
   updateBlochSphereUniforms,
 } from './blochSceneObjects';
@@ -58,15 +59,21 @@ export const BlochViewport: React.FC<{ className?: string }> = ({ className = ''
     const renderer = acquireRenderer(container);
     const { scene, camera } = createBaseScene(container);
     const elements = createBlochSphereScene();
-    const { sphere, ring, axes, arrowHelper, geometries, materials } = elements;
-    scene.add(sphere, ring, axes, arrowHelper);
+    const { sphere, ring, axes, arrowHelper, tipHandle, geometries, materials } = elements;
+    scene.add(sphere, ring, axes, arrowHelper, tipHandle);
 
     const particlePool = createParticlePool(250);
     scene.add(particlePool.mesh);
 
-    let isDragging = false;
+    let isDraggingCamera = false;
+    let isDraggingHandle = false;
     let prevMouse = { x: 0, y: 0 };
     const spherical = { radius: 4.8, theta: Math.PI / 4, phi: Math.PI / 3 };
+
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const blochSphereGeom = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1.3);
+    const hitPoint = new THREE.Vector3();
 
     const updateCamera = () => {
       spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
@@ -79,17 +86,74 @@ export const BlochViewport: React.FC<{ className?: string }> = ({ className = ''
     };
     updateCamera();
 
-    const onPointerDown = (e: PointerEvent) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; };
-    const onPointerMove = (e: PointerEvent) => {
-      if (!isDragging) return;
-      const dx = (e.clientX - prevMouse.x) * 0.008;
-      const dy = (e.clientY - prevMouse.y) * 0.008;
-      spherical.theta -= dx;
-      spherical.phi -= dy;
-      prevMouse = { x: e.clientX, y: e.clientY };
-      updateCamera();
+    const updateMouseCoords = (e: PointerEvent) => {
+      const rect = container.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     };
-    const onPointerUp = () => { isDragging = false; };
+
+    const checkHandleIntersection = (): boolean => {
+      raycaster.setFromCamera(mouse, camera);
+      const targets = arrowHelper.cone ? [tipHandle, arrowHelper.cone] : [tipHandle];
+      const hits = raycaster.intersectObjects(targets, false);
+      return hits.length > 0;
+    };
+
+    const updateAnglesFromPointer = () => {
+      raycaster.setFromCamera(mouse, camera);
+      const hasHit = raycaster.ray.intersectSphere(blochSphereGeom, hitPoint);
+      if (!hasHit) {
+        raycaster.ray.closestPointToPoint(new THREE.Vector3(0, 0, 0), hitPoint);
+      }
+      const { theta: newTheta, phi: newPhi } = vectorToSphericalAngles(hitPoint);
+      useQuantumStore.getState().setAngles(newTheta, newPhi);
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      updateMouseCoords(e);
+      if (checkHandleIntersection()) {
+        isDraggingHandle = true;
+        container.style.cursor = 'grabbing';
+        tipHandle.scale.setScalar(1.35);
+        updateAnglesFromPointer();
+      } else {
+        isDraggingCamera = true;
+        prevMouse = { x: e.clientX, y: e.clientY };
+      }
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (isDraggingHandle) {
+        updateMouseCoords(e);
+        updateAnglesFromPointer();
+        return;
+      }
+      if (isDraggingCamera) {
+        const dx = (e.clientX - prevMouse.x) * 0.008;
+        const dy = (e.clientY - prevMouse.y) * 0.008;
+        spherical.theta -= dx;
+        spherical.phi -= dy;
+        prevMouse = { x: e.clientX, y: e.clientY };
+        updateCamera();
+        return;
+      }
+      updateMouseCoords(e);
+      const isHovered = checkHandleIntersection();
+      container.style.cursor = isHovered ? 'grab' : 'default';
+      tipHandle.scale.setScalar(isHovered ? 1.3 : 1.0);
+    };
+
+    const onPointerUp = () => {
+      if (isDraggingHandle) {
+        isDraggingHandle = false;
+        const isHovered = checkHandleIntersection();
+        container.style.cursor = isHovered ? 'grab' : 'default';
+        tipHandle.scale.setScalar(isHovered ? 1.3 : 1.0);
+      }
+      isDraggingCamera = false;
+    };
+
     container.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
@@ -109,21 +173,22 @@ export const BlochViewport: React.FC<{ className?: string }> = ({ className = ''
       let targetP = state.phi;
       let targetLen = 1.3;
 
-      if (state.temperatureK > 0.05) {
+      if (!isDraggingHandle && state.temperatureK > 0.05) {
         const { deltaTheta, deltaPhi, vectorLength } = calculateDecoherencePerturbation(targetT, targetP, state.temperatureK);
         targetT += deltaTheta;
         targetP += deltaPhi;
         targetLen = 1.3 * vectorLength;
       }
 
-      // Smooth spherical angle easing across gate executions
-      currentAngles = prefersReducedMotion()
+      // Smooth spherical angle easing across gate executions, instant 1:1 on direct drag
+      currentAngles = prefersReducedMotion() || isDraggingHandle
         ? { theta: targetT, phi: targetP }
         : lerpSphericalAngles(currentAngles, { theta: targetT, phi: targetP }, dt * 12.0);
 
       const dir = computeSphericalVector(currentAngles.theta, currentAngles.phi);
       arrowHelper.setDirection(dir);
       arrowHelper.setLength(targetLen, 0.2, 0.08);
+      tipHandle.position.copy(dir).multiplyScalar(targetLen);
 
       updateParticles(particlePool, dt);
       renderer.render(scene, camera);
