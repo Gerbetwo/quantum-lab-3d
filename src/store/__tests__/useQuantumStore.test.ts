@@ -121,6 +121,22 @@ describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
         expect(stateNumeric.currentMissionId).toBe(id);
       });
     });
+
+    it('aliases startMission and selectMission to jumpToMission', () => {
+      useQuantumStore.getState().startMission('entanglement');
+      expect(useQuantumStore.getState().currentMissionId).toBe('entanglement');
+
+      useQuantumStore.getState().selectMission('grover');
+      expect(useQuantumStore.getState().currentMissionId).toBe('grover');
+    });
+
+    it('aliases completeMission to markMissionCompleted and provides recordMissionTime', () => {
+      useQuantumStore.getState().completeMission('grover');
+      expect(useQuantumStore.getState().completedMissions).toContain(4);
+
+      // recordMissionTime does not throw
+      expect(() => useQuantumStore.getState().recordMissionTime('grover', 42)).not.toThrow();
+    });
   });
 
   describe('Game Flow & Modal Controls', () => {
@@ -191,6 +207,174 @@ describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
       expect(state.isPauseMenuOpen).toBe(false);
       expect(state.appViewState).toBe('IN_MISSION');
       expect(state.currentMissionId).toBe('superposition');
+    });
+  });
+
+  describe('Language Switches & Localization Persistence', () => {
+    it('switches between en and es seamlessly', () => {
+      useQuantumStore.getState().setLanguage('en');
+      expect(useQuantumStore.getState().language).toBe('en');
+
+      useQuantumStore.getState().setLanguage('es');
+      expect(useQuantumStore.getState().language).toBe('es');
+    });
+  });
+
+  describe('Quantum Gates & Physical State Transitions', () => {
+    it('sets polar (theta) and azimuthal (phi) angles', () => {
+      useQuantumStore.getState().setAngles(Math.PI / 3, Math.PI / 4);
+      const s1 = useQuantumStore.getState();
+      expect(s1.theta).toBeCloseTo(Math.PI / 3);
+      expect(s1.phi).toBeCloseTo(Math.PI / 4);
+
+      useQuantumStore.getState().setTheta(Math.PI / 2);
+      expect(useQuantumStore.getState().theta).toBeCloseTo(Math.PI / 2);
+
+      useQuantumStore.getState().setPhi(Math.PI);
+      expect(useQuantumStore.getState().phi).toBeCloseTo(Math.PI);
+    });
+
+    it('applies Pauli-X gate (bit flip) to theta', () => {
+      useQuantumStore.getState().setAngles(0, 0);
+      useQuantumStore.getState().applyGate('X');
+      expect(useQuantumStore.getState().theta).toBeCloseTo(Math.PI);
+
+      useQuantumStore.getState().applyGate('X');
+      expect(useQuantumStore.getState().theta).toBeCloseTo(0);
+    });
+
+    it('applies Pauli-Z gate (phase flip) to phi', () => {
+      useQuantumStore.getState().setAngles(Math.PI / 2, 0);
+      useQuantumStore.getState().applyGate('Z');
+      expect(useQuantumStore.getState().phi).toBeCloseTo(Math.PI);
+
+      useQuantumStore.getState().applyGate('Z');
+      expect(useQuantumStore.getState().phi).toBeCloseTo(0);
+    });
+
+    it('applies Hadamard (H) gate between pole and equator', () => {
+      // From |0⟩ (theta = 0) to equator (theta = π/2)
+      useQuantumStore.getState().setAngles(0, 0);
+      useQuantumStore.getState().applyGate('H');
+      expect(useQuantumStore.getState().theta).toBeCloseTo(Math.PI / 2);
+
+      // From equator (theta = π/2) back to pole (theta = 0)
+      useQuantumStore.getState().applyGate('H');
+      expect(useQuantumStore.getState().theta).toBeCloseTo(0);
+    });
+
+    it('tracks applied gates history via applyGateToMission', () => {
+      useQuantumStore.getState().resetState();
+      useQuantumStore.getState().applyGateToMission('H');
+      useQuantumStore.getState().applyGateToMission('X');
+      useQuantumStore.getState().applyGateToMission('Z');
+
+      const state = useQuantumStore.getState();
+      expect(state.appliedGates).toEqual(['H', 'X', 'Z']);
+    });
+
+    it('performs state collapse and registers last outcome on measurement', () => {
+      // State |0⟩ -> outcome must be 0
+      useQuantumStore.getState().setAngles(0, 0);
+      const outcome0 = useQuantumStore.getState().measure();
+      expect(outcome0).toBe(0);
+      expect(useQuantumStore.getState().lastOutcome).toBe(0);
+      expect(useQuantumStore.getState().theta).toBe(0);
+
+      // State |1⟩ -> outcome must be 1
+      useQuantumStore.getState().setAngles(Math.PI, 0);
+      const outcome1 = useQuantumStore.getState().measure();
+      expect(outcome1).toBe(1);
+      expect(useQuantumStore.getState().lastOutcome).toBe(1);
+      expect(useQuantumStore.getState().theta).toBeCloseTo(Math.PI);
+    });
+  });
+
+  describe('Cryogenic Environment & Thermal Invariants', () => {
+    it('updates temperature and recalculates T2 coherence time', () => {
+      // 15 mK (0.015 K) baseline
+      useQuantumStore.getState().setTemperature(0.015);
+      const s1 = useQuantumStore.getState();
+      expect(s1.temperatureK).toBe(0.015);
+      expect(s1.coherenceTimeUs).toBeCloseTo(245.356, 2);
+
+      // 0.8 K (800 mK) -> 250 * e^(-1) ≈ 91.970 μs
+      useQuantumStore.getState().setTemperatureK(0.8);
+      const s2 = useQuantumStore.getState();
+      expect(s2.temperatureK).toBe(0.8);
+      expect(s2.coherenceTimeUs).toBeCloseTo(91.970, 2);
+    });
+  });
+
+  describe('Entanglement State Transitions', () => {
+    it('sets entanglement status and degree', () => {
+      useQuantumStore.getState().setEntangled(true);
+      expect(useQuantumStore.getState().isEntangled).toBe(true);
+      expect(useQuantumStore.getState().entanglementDegree).toBe(1);
+
+      useQuantumStore.getState().setEntangled(false);
+      expect(useQuantumStore.getState().isEntangled).toBe(false);
+      expect(useQuantumStore.getState().entanglementDegree).toBe(0);
+    });
+  });
+
+  describe('Mission Phase Progression & Step Evaluation', () => {
+    it('transitions across mission phases correctly', () => {
+      const phases = ['PREDICTION', 'EXPERIMENT', 'OBSERVATION', 'ANALYSIS', 'COMPLETED'] as const;
+      for (const phase of phases) {
+        useQuantumStore.getState().transitionPhase(phase);
+        expect(useQuantumStore.getState().currentPhase).toBe(phase);
+      }
+
+      useQuantumStore.getState().transitionMissionPhase('BRIEFING');
+      expect(useQuantumStore.getState().currentPhase).toBe('BRIEFING');
+    });
+
+    it('manages zero-spoiler user predictions', () => {
+      useQuantumStore.getState().setPrediction(0.75);
+      expect(useQuantumStore.getState().userPredictionProb0).toBe(0.75);
+
+      useQuantumStore.getState().setUserPrediction(0.5);
+      expect(useQuantumStore.getState().userPredictionProb0).toBe(0.5);
+    });
+
+    it('evaluates mission steps with angular tolerance checking', () => {
+      useQuantumStore.getState().resetState();
+      useQuantumStore.getState().setAngles(Math.PI / 2, 0);
+
+      // Target within 0.08 rad tolerance -> pass
+      const pass = useQuantumStore.getState().evaluateMissionStep(Math.PI / 2 + 0.04, 0.03);
+      expect(pass).toBe(true);
+      expect(useQuantumStore.getState().activeStepIndex).toBe(1);
+
+      // Target outside 0.08 rad tolerance -> fail
+      const fail = useQuantumStore.getState().evaluateMissionStep(0, 0);
+      expect(fail).toBe(false);
+      expect(useQuantumStore.getState().activeStepIndex).toBe(2);
+    });
+  });
+
+  describe('Simulation Timer Controls', () => {
+    it('controls elapsed seconds tick, pause, resume, and reset', () => {
+      useQuantumStore.getState().resetTimer();
+      expect(useQuantumStore.getState().elapsedSeconds).toBe(0);
+
+      useQuantumStore.getState().tick();
+      expect(useQuantumStore.getState().elapsedSeconds).toBe(1);
+
+      useQuantumStore.getState().pause();
+      expect(useQuantumStore.getState().isRunning).toBe(false);
+      useQuantumStore.getState().tick();
+      // When paused, tick does not increment
+      expect(useQuantumStore.getState().elapsedSeconds).toBe(1);
+
+      useQuantumStore.getState().resume();
+      expect(useQuantumStore.getState().isRunning).toBe(true);
+      useQuantumStore.getState().tick();
+      expect(useQuantumStore.getState().elapsedSeconds).toBe(2);
+
+      useQuantumStore.getState().resetTimer();
+      expect(useQuantumStore.getState().elapsedSeconds).toBe(0);
     });
   });
 });
