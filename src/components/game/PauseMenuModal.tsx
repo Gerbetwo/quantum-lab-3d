@@ -78,7 +78,8 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
     setTimeout(() => setResetFeedback(false), 1500);
   };
 
-  const handleExitToTitle = () => {
+  const handleExitToTitle = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     soundEngine.unlock();
     soundEngine.playVectorSnap();
     returnToTitle();

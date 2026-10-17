@@ -149,7 +149,10 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => returnToTitle()}
+              onClick={(e) => {
+                e.stopPropagation();
+                returnToTitle();
+              }}
               data-testid="return-to-title-button"
               className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-edge flex items-center gap-1.5 transition-all active:scale-95"
             >
@@ -181,7 +184,7 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
               type="button"
               onClick={handleGoToSandbox}
               data-testid="topbar-sandbox-button"
-              className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white flex items-center gap-2 border border-purple-400/40 shadow-[0_0_20px_rgba(168,85,247,0.25)] transition-all active:scale-95"
+              className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white flex items-center gap-2 border border-purple-400/40 shadow-[0_0_20px_rgba(168,85,247,0.25)] transition-all active:scale-95"
             >
               <Beaker className="w-4 h-4 text-purple-200" />
               <span>SANDBOX MODE</span>
