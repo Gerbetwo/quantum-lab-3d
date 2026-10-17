@@ -1,0 +1,317 @@
+'use client';
+
+import React from 'react';
+import { useQuantumStore } from '@/store/useQuantumStore';
+import { soundEngine } from '@/lib/soundEngine';
+import type { MissionId } from '@/features/missions/missionRegistry';
+import {
+  Sparkles,
+  ArrowRight,
+  ArrowLeft,
+  Beaker,
+  CheckCircle2,
+  PlayCircle,
+  Cpu,
+  Layers,
+  ShieldCheck,
+} from 'lucide-react';
+
+interface MissionNodeData {
+  id: MissionId;
+  index: number;
+  order: number;
+  code: string;
+  concept: string;
+  title: string;
+  subtitle: string;
+  difficulty: 'FOUNDATIONAL' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+  difficultyColor: string;
+}
+
+const CAMPAIGN_NODES: MissionNodeData[] = [
+  {
+    id: 'superposition',
+    index: 0,
+    order: 1,
+    code: 'MSN-01',
+    concept: 'Superposition',
+    title: 'Superposición Cuántica',
+    subtitle: '|0⟩, |1⟩ & Bloch Sphere Geometry',
+    difficulty: 'FOUNDATIONAL',
+    difficultyColor: 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30',
+  },
+  {
+    id: 'entanglement',
+    index: 1,
+    order: 2,
+    code: 'MSN-02',
+    concept: 'Entanglement',
+    title: 'Entrelazamiento Cuántico',
+    subtitle: 'Bell States & Correlated Collapse',
+    difficulty: 'INTERMEDIATE',
+    difficultyColor: 'text-cyan bg-cyan/10 border-cyan/30',
+  },
+  {
+    id: 'decoherence',
+    index: 2,
+    order: 3,
+    code: 'MSN-03',
+    concept: 'Decoherence',
+    title: 'Decoherencia y Ruido',
+    subtitle: 'Thermal Bath & T2 Dephasing',
+    difficulty: 'INTERMEDIATE',
+    difficultyColor: 'text-amber-400 bg-amber-950/40 border-amber-500/30',
+  },
+  {
+    id: 'gates',
+    index: 3,
+    order: 4,
+    code: 'MSN-04',
+    concept: 'Unitary Gates',
+    title: 'Puertas Cuánticas',
+    subtitle: 'Pauli X, Z, Hadamard Rotations',
+    difficulty: 'INTERMEDIATE',
+    difficultyColor: 'text-cyan bg-cyan/10 border-cyan/30',
+  },
+  {
+    id: 'grover',
+    index: 4,
+    order: 5,
+    code: 'MSN-05',
+    concept: 'Grover Search',
+    title: 'Algoritmo de Grover',
+    subtitle: 'Amplitude Amplification & Diffusion',
+    difficulty: 'ADVANCED',
+    difficultyColor: 'text-purple-400 bg-purple-950/40 border-purple-500/30',
+  },
+  {
+    id: 'applications',
+    index: 5,
+    order: 6,
+    code: 'MSN-06',
+    concept: 'Shor Factorization',
+    title: 'Factorización de Shor',
+    subtitle: 'Period Finding & N=15 Factorization',
+    difficulty: 'ADVANCED',
+    difficultyColor: 'text-purple-400 bg-purple-950/40 border-purple-500/30',
+  },
+  {
+    id: 'error-correction',
+    index: 6,
+    order: 7,
+    code: 'MSN-07',
+    concept: '3-Qubit QEC',
+    title: 'Corrección de Errores',
+    subtitle: 'Bit-Flip Code & Syndrome Recovery',
+    difficulty: 'EXPERT',
+    difficultyColor: 'text-rose-400 bg-rose-950/40 border-rose-500/30',
+  },
+];
+
+interface CampaignSelectOverlayProps {
+  forceVisible?: boolean;
+}
+
+export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOverlayProps = {}) {
+  const appViewState = useQuantumStore((s) => s.appViewState);
+  const setAppViewState = useQuantumStore((s) => s.setAppViewState);
+  const returnToTitle = useQuantumStore((s) => s.returnToTitle);
+  const launchMission = useQuantumStore((s) => s.launchMission);
+  const completedMissions = useQuantumStore((s) => s.completedMissions);
+  const isSandboxUnlocked = useQuantumStore((s) => s.isSandboxUnlocked);
+
+  if (appViewState !== 'CAMPAIGN_SELECT' && !forceVisible) {
+    return null;
+  }
+
+  const handleLaunch = (id: MissionId) => {
+    soundEngine.unlock();
+    soundEngine.playVectorSnap();
+    launchMission(id);
+  };
+
+  const handleGoToSandbox = () => {
+    soundEngine.unlock();
+    soundEngine.playVectorSnap();
+    setAppViewState('SANDBOX');
+  };
+
+  const completedCount = completedMissions.length;
+
+  return (
+    <div
+      data-testid="campaign-select-overlay"
+      className="fixed inset-0 z-40 flex flex-col bg-background/90 backdrop-blur-md overflow-y-auto p-4 md:p-8 select-none"
+    >
+      <div className="w-full max-w-7xl mx-auto flex flex-col gap-6">
+        {/* Flight-Deck Top Bar */}
+        <header className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card/60 backdrop-blur-md shadow-lg">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => returnToTitle()}
+              data-testid="return-to-title-button"
+              className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-edge flex items-center gap-1.5 transition-all active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>TITLE</span>
+            </button>
+            <div className="border-l border-border/80 pl-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-cyan" />
+                <h2 className="text-sm font-bold tracking-wide text-foreground uppercase font-mono">
+                  Flight-Deck Campaign Roster
+                </h2>
+              </div>
+              <p className="text-[11px] text-muted-foreground font-mono">
+                Select a tactical mission node or launch the sandbox simulation harness.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 border border-edge text-xs font-mono">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-muted-foreground">Progression:</span>
+              <span className="text-cyan font-bold">{completedCount} / 7 Mastered</span>
+            </div>
+
+            {/* Top-bar button to jump directly to SANDBOX mode */}
+            <button
+              type="button"
+              onClick={handleGoToSandbox}
+              data-testid="topbar-sandbox-button"
+              className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white flex items-center gap-2 border border-purple-400/40 shadow-[0_0_20px_rgba(168,85,247,0.25)] transition-all active:scale-95"
+            >
+              <Beaker className="w-4 h-4 text-purple-200" />
+              <span>SANDBOX MODE</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Tactical Mission Grid: Missions 0-6 + Sandbox */}
+        <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {CAMPAIGN_NODES.map((node) => {
+            const isCompleted = completedMissions.includes(node.index);
+
+            return (
+              <div
+                key={node.id}
+                data-testid={`mission-card-${node.id}`}
+                className={`p-5 rounded-xl border flex flex-col justify-between gap-4 transition-all duration-200 bg-card/70 backdrop-blur-sm ${
+                  isCompleted
+                    ? 'border-emerald-500/40 hover:border-emerald-400/70 shadow-[0_0_15px_rgba(16,185,129,0.08)]'
+                    : 'border-border hover:border-cyan/50 hover:shadow-[0_0_15px_rgba(0,243,255,0.08)]'
+                }`}
+              >
+                <div className="flex flex-col gap-2.5">
+                  {/* Card Header: Mission Code & Difficulty */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-3 border border-edge text-cyan font-semibold">
+                      {node.code} · Mission {node.index}
+                    </span>
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-medium ${node.difficultyColor}`}
+                    >
+                      {node.difficulty}
+                    </span>
+                  </div>
+
+                  {/* Core Concept Badge */}
+                  <div className="inline-flex items-center gap-1.5 text-xs font-mono text-foreground font-semibold">
+                    <Cpu className="w-3.5 h-3.5 text-cyan" />
+                    <span>{node.concept}</span>
+                  </div>
+
+                  {/* Titles */}
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">{node.title}</h3>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                      {node.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Card Footer: Status Badge & Launch Button */}
+                <div className="pt-3 border-t border-edge flex flex-col gap-3">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-muted-foreground text-[11px]">Telemetry Status</span>
+                    {isCompleted ? (
+                      <span className="text-emerald-400 flex items-center gap-1 text-[11px] font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> COMPLETED
+                      </span>
+                    ) : (
+                      <span className="text-cyan/80 flex items-center gap-1 text-[11px]">
+                        <PlayCircle className="w-3.5 h-3.5" /> READY
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Direct Launch Control */}
+                  <button
+                    type="button"
+                    onClick={() => handleLaunch(node.id)}
+                    data-testid={`launch-mission-${node.id}`}
+                    className="w-full py-2 px-3 rounded-lg text-xs font-mono font-bold bg-cyan/15 hover:bg-cyan/25 text-cyan border border-cyan/40 hover:border-cyan flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+                  >
+                    <span>LAUNCH SIMULATION</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Sandbox Node */}
+          <div
+            data-testid="mission-card-sandbox"
+            className="p-5 rounded-xl border border-purple-500/30 bg-card/70 backdrop-blur-sm flex flex-col justify-between gap-4 transition-all duration-200 hover:border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
+          >
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-3 border border-edge text-purple-400 font-semibold">
+                  LAB-00 · Sandbox
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-medium text-purple-300 bg-purple-950/40 border-purple-500/30">
+                  UNCONSTRAINED
+                </span>
+              </div>
+
+              <div className="inline-flex items-center gap-1.5 text-xs font-mono text-purple-300 font-semibold">
+                <Layers className="w-3.5 h-3.5 text-purple-400" />
+                <span>Arbitrary Qubit Lab</span>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Quantum Sandbox Lab</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                  Full 3D Bloch sphere, thermal noise sweeps & custom gates
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-edge flex flex-col gap-3">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-muted-foreground text-[11px]">Lab Clearance</span>
+                <span className="text-purple-400 flex items-center gap-1 text-[11px] font-medium">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {isSandboxUnlocked ? 'UNLOCKED' : 'AVAILABLE'}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoToSandbox}
+                data-testid="launch-sandbox-button"
+                className="w-full py-2 px-3 rounded-lg text-xs font-mono font-bold bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 hover:border-purple-400 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+              >
+                <Beaker className="w-3.5 h-3.5 text-purple-400" />
+                <span>LAUNCH SIMULATION</span>
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
