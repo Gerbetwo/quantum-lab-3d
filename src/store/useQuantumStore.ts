@@ -11,7 +11,10 @@ export type MissionPhase =
   | "BRIEFING" | "PREDICTION" | "EXPERIMENT" | "OBSERVATION" | "ANALYSIS"
   | "COMPLETED" | "MANIPULATION" | "MEASUREMENT" | "VERIFICATION" | "SUCCESS";
 
+export type Language = 'en' | 'es';
+
 export interface QuantumStore {
+  language: Language;
   appViewState: AppViewState;
   isPauseMenuOpen: boolean;
   theta: number; phi: number; temperatureK: number; coherenceTimeUs: number;
@@ -24,6 +27,7 @@ export interface QuantumStore {
   isSandboxUnlocked: boolean;
   elapsedSeconds: number; isRunning: boolean;
 
+  setLanguage: (lang: Language) => void;
   setAppViewState: (view: AppViewState) => void;
   togglePauseMenu: () => void;
   returnToTitle: () => void;
@@ -62,24 +66,34 @@ export interface QuantumStore {
 
 const COOKIE_COMPLETED = "quantum_completed_missions";
 const COOKIE_SANDBOX = "quantum_sandbox_unlocked";
+const COOKIE_LANGUAGE = "quantum_language";
 
-function syncCookies(completed: number[], isSandboxUnlocked: boolean) {
+function syncCookies(completed: number[], isSandboxUnlocked: boolean, language?: Language) {
   if (typeof window === "undefined") return;
   try {
     Cookies.set(COOKIE_COMPLETED, JSON.stringify(completed), { expires: 365 });
     Cookies.set(COOKIE_SANDBOX, String(isSandboxUnlocked), { expires: 365 });
+    if (language) {
+      Cookies.set(COOKIE_LANGUAGE, language, { expires: 365 });
+    }
   } catch (_e) { /* Safe */ }
 }
 
-function getInitialPersisted(): { completedMissions: number[]; isSandboxUnlocked: boolean } {
-  if (typeof window === "undefined") return { completedMissions: [], isSandboxUnlocked: false };
+function getInitialPersisted(): { completedMissions: number[]; isSandboxUnlocked: boolean; language: Language } {
+  if (typeof window === "undefined") return { completedMissions: [], isSandboxUnlocked: false, language: "es" };
   try {
     const c = Cookies.get(COOKIE_COMPLETED);
     const s = Cookies.get(COOKIE_SANDBOX);
+    const l = Cookies.get(COOKIE_LANGUAGE) as Language | undefined;
     const completedMissions: number[] = c ? JSON.parse(c) : [];
-    return { completedMissions, isSandboxUnlocked: s === "true" || completedMissions.length >= TOTAL_MISSIONS };
+    const language: Language = l === 'en' || l === 'es' ? l : 'es';
+    return {
+      completedMissions,
+      isSandboxUnlocked: s === "true" || completedMissions.length >= TOTAL_MISSIONS,
+      language,
+    };
   } catch (_e) {
-    return { completedMissions: [], isSandboxUnlocked: false };
+    return { completedMissions: [], isSandboxUnlocked: false, language: "es" };
   }
 }
 
@@ -92,6 +106,7 @@ const init = getInitialPersisted();
 export const useQuantumStore = create<QuantumStore>()(
   persist(
     (set, get) => ({
+      language: init.language,
       appViewState: "TITLE",
       isPauseMenuOpen: false,
       ...INITIAL_PHYSICS,
@@ -101,6 +116,10 @@ export const useQuantumStore = create<QuantumStore>()(
       progress: init.completedMissions.length ? [init.completedMissions.length] : [0],
       isSandboxUnlocked: init.isSandboxUnlocked, elapsedSeconds: 0, isRunning: true,
 
+      setLanguage: (language: Language) => {
+        set({ language });
+        syncCookies(get().completedMissions, get().isSandboxUnlocked, language);
+      },
       setAppViewState: (appViewState) => set({ appViewState }),
       togglePauseMenu: () => set((s) => ({ isPauseMenuOpen: !s.isPauseMenuOpen })),
       returnToTitle: () => set({ appViewState: "TITLE", isPauseMenuOpen: false }),
@@ -232,6 +251,7 @@ export const useQuantumStore = create<QuantumStore>()(
         completed: s.completed,
         progress: s.progress,
         isSandboxUnlocked: s.isSandboxUnlocked,
+        language: s.language,
       }),
     }
   )
