@@ -3,19 +3,10 @@
 import React, { useState } from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
 
-export const GlassCard: React.FC<{ children: React.ReactNode; className?: string; title?: string; badge?: string }> = ({
-  children, className = '', title, badge,
-}) => (
-  <div className={`p-3.5 rounded-xl border border-accent/20 bg-card/60 backdrop-blur-md shadow-lg ${className}`}>
-    {(title || badge) && (
-      <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-border/80">
-        {title && <h3 className="text-xs font-mono font-semibold tracking-wider text-accent uppercase">{title}</h3>}
-        {badge && <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/30">{badge}</span>}
-      </div>
-    )}
-    {children}
-  </div>
-);
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui/Button';
+
+export { GlassCard };
 
 export const Tooltip: React.FC<{ content: string; children: React.ReactElement; className?: string }> = ({ content, children, className }) => {
   const [show, setShow] = useState(false);
@@ -128,13 +119,14 @@ export const MeasurementCard: React.FC<{ className?: string }> = ({ className })
           </div>
         )}
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          cornerNotch
           onClick={handleMeasure}
-          className="w-full mt-2 py-1.5 px-3 bg-accent hover:opacity-90 text-background font-bold rounded-lg text-xs transition-opacity cursor-pointer shadow-md"
+          className="w-full mt-2"
         >
           Measure State (Collapse)
-        </button>
+        </Button>
       </div>
     </GlassCard>
   );
