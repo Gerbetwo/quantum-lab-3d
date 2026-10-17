@@ -1,88 +1,174 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *, .theme-dark, .theme-dark *));
 
 /* ==========================================================================
-   1. SEMANTIC THEME TOKENS
+   1. SEMANTIC THEME TOKENS: DUAL HIGH-PRECISION PALETTES
    ========================================================================== */
-:root {
+
+/* Cleanroom Lab (Light Theme: #F4F6F9 bg, #0284C7 precision blue) */
+:root,
+.theme-light {
   color-scheme: light;
 
-  /* Canvas & Surfaces */
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* Surfaces & Canvas */
+  --background: #f4f6f9;
+  --foreground: #0b0e14;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #0b0e14;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #0b0e14;
+  --surface-1: #ffffff;
+  --surface-2: #eef2f6;
+  --surface-3: #e2e8f0;
+  --edge: #cbd5e1;
 
-  /* Interactive & Accent States */
-  --primary: #0891b2;
+  /* Tactical Precision Blue & Interactive Accents */
+  --precision-blue: #0284c7;
+  --primary: #0284c7;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0b0e14;
+  --muted: #e2e8f0;
+  --muted-foreground: #475569; /* WCAG AA: 6.3:1 contrast on #f4f6f9 */
   --accent: #0284c7;
   --accent-foreground: #ffffff;
 
-  /* Borders & Focus */
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #0891b2;
+  /* Sharp 1px Tactical Borders */
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #0284c7;
+  --sim-border: 1px solid rgba(2, 132, 199, 0.35);
+  --sim-border-subtle: 1px solid rgba(11, 14, 20, 0.12);
+  --sim-border-strong: 1px solid #0284c7;
 
-  /* Status & Telemetry */
-  --success: #059669;
-  --warning: #d97706;
-  --destructive: #dc2626;
+  /* Zero-Blur Tactical HUD Panel */
+  --hud-panel-bg: rgba(244, 246, 249, 0.94);
+  --hud-panel-border: var(--sim-border);
+  --hud-panel-shadow: 0 4px 20px -2px rgba(11, 14, 20, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+
+  /* Status & Telemetry (WCAG AA Compliant) */
+  --success: #047857;
+  --warning: #b45309;
+  --destructive: #b91c1c;
 
   /* Telemetry Axes & Quantum Accents */
-  --axis-x: #0891b2;
-  --axis-y: #7c3aed;
-  --axis-z: #d97706;
-  --quantum-cyan: #0891b2;
-  --quantum-purple: #7c3aed;
-  --quantum-emerald: #059669;
+  --axis-x: #0284c7;
+  --axis-y: #6d28d9;
+  --axis-z: #b45309;
+  --quantum-cyan: #0284c7;
+  --quantum-purple: #6d28d9;
+  --quantum-emerald: #047857;
+  --cyan: #0284c7;
+
+  /* Glow Effects */
+  --sim-glow: 0 0 20px rgba(2, 132, 199, 0.25);
+  --glow-cyan-color: rgba(2, 132, 199, 0.25);
 }
 
-.dark {
+/* Deep Space Cryostat / Obsidian Dark (Dark Theme: #0B0E14 bg, #00F0FF cyan glow) */
+.dark,
+.theme-dark {
   color-scheme: dark;
 
-  /* Canvas & Surfaces (Cyber-Academic Void) */
-  --background: #090d16;
+  /* Surfaces & Canvas */
+  --background: #0b0e14;
   --foreground: #f8fafc;
-  --card: #111827;
+  --card: #111622;
   --card-foreground: #f8fafc;
-  --popover: #111827;
+  --popover: #111622;
   --popover-foreground: #f8fafc;
+  --surface-1: #111622;
+  --surface-2: #161f30;
+  --surface-3: #1e293b;
+  --edge: rgba(255, 255, 255, 0.1);
 
-  /* Interactive & Accent States (Electric Neon) */
-  --primary: #00f3ff;
-  --primary-foreground: #090d16;
-  --secondary: #1e293b;
+  /* Tactical Electric Neon Cyan & Interactive Accents */
+  --precision-blue: #00f0ff;
+  --primary: #00f0ff;
+  --primary-foreground: #0b0e14;
+  --secondary: #1a2234;
   --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #00f3ff;
-  --accent-foreground: #090d16;
+  --muted: #1a2234;
+  --muted-foreground: #94a3b8; /* WCAG AAA: 7.6:1 contrast on #0b0e14 */
+  --accent: #00f0ff;
+  --accent-foreground: #0b0e14;
 
-  /* Borders & Focus */
+  /* Sharp 1px Tactical Borders */
   --border: #1e293b;
   --input: #1e293b;
-  --ring: #00f3ff;
+  --ring: #00f0ff;
+  --sim-border: 1px solid rgba(0, 240, 255, 0.25);
+  --sim-border-subtle: 1px solid rgba(255, 255, 255, 0.12);
+  --sim-border-strong: 1px solid #00f0ff;
 
-  /* Status & Telemetry */
+  /* Zero-Blur Tactical HUD Panel */
+  --hud-panel-bg: rgba(11, 14, 20, 0.92);
+  --hud-panel-border: var(--sim-border);
+  --hud-panel-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+
+  /* Status & Telemetry (WCAG AA Compliant) */
   --success: #10b981;
   --warning: #f59e0b;
-  --destructive: #ef4444;
+  --destructive: #f87171;
 
   /* Telemetry Axes & Quantum Accents */
-  --axis-x: #00f3ff;
+  --axis-x: #00f0ff;
   --axis-y: #a855f7;
   --axis-z: #f59e0b;
-  --quantum-cyan: #00f3ff;
+  --quantum-cyan: #00f0ff;
   --quantum-purple: #a855f7;
   --quantum-emerald: #10b981;
+  --cyan: #00f0ff;
+
+  /* Glow Effects */
+  --sim-glow: 0 0 20px rgba(0, 240, 255, 0.3);
+  --glow-cyan-color: rgba(0, 240, 255, 0.25);
+}
+
+/* Explicit Cleanroom Light Scope Override */
+.theme-light {
+  color-scheme: light;
+  --background: #f4f6f9;
+  --foreground: #0b0e14;
+  --card: #ffffff;
+  --card-foreground: #0b0e14;
+  --popover: #ffffff;
+  --popover-foreground: #0b0e14;
+  --surface-1: #ffffff;
+  --surface-2: #eef2f6;
+  --surface-3: #e2e8f0;
+  --edge: #cbd5e1;
+  --precision-blue: #0284c7;
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0b0e14;
+  --muted: #e2e8f0;
+  --muted-foreground: #475569;
+  --accent: #0284c7;
+  --accent-foreground: #ffffff;
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #0284c7;
+  --sim-border: 1px solid rgba(2, 132, 199, 0.35);
+  --sim-border-subtle: 1px solid rgba(11, 14, 20, 0.12);
+  --sim-border-strong: 1px solid #0284c7;
+  --hud-panel-bg: rgba(244, 246, 249, 0.94);
+  --hud-panel-border: var(--sim-border);
+  --hud-panel-shadow: 0 4px 20px -2px rgba(11, 14, 20, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  --success: #047857;
+  --warning: #b45309;
+  --destructive: #b91c1c;
+  --axis-x: #0284c7;
+  --axis-y: #6d28d9;
+  --axis-z: #b45309;
+  --quantum-cyan: #0284c7;
+  --quantum-purple: #6d28d9;
+  --quantum-emerald: #047857;
+  --cyan: #0284c7;
+  --sim-glow: 0 0 20px rgba(2, 132, 199, 0.25);
+  --glow-cyan-color: rgba(2, 132, 199, 0.25);
 }
 
 /* ==========================================================================
@@ -115,11 +201,50 @@
   --color-quantum-purple: var(--quantum-purple);
   --color-quantum-cyan: var(--quantum-cyan);
   --color-quantum-emerald: var(--quantum-emerald);
+  --color-precision-blue: var(--precision-blue);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-edge: var(--edge);
+  --color-cyan: var(--cyan);
 }
 
 /* ==========================================================================
-   3. GLASSMORPHISM & GLOW UTILITIES
+   3. SHARP TACTICAL BORDERS
    ========================================================================== */
+.border-sim {
+  border: var(--sim-border);
+}
+
+.border-sim-subtle {
+  border: var(--sim-border-subtle);
+}
+
+.border-sim-strong {
+  border: var(--sim-border-strong);
+}
+
+/* ==========================================================================
+   4. TACTICAL HUD PANELS & GLASSMORPHISM
+   ========================================================================== */
+/* Zero-Blur Tactical Flight-Deck HUD Panel */
+.hud-panel {
+  background: var(--hud-panel-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: var(--sim-border);
+  box-shadow: var(--hud-panel-shadow);
+}
+
+.hud-panel-glow {
+  background: var(--hud-panel-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: var(--sim-border-strong);
+  box-shadow: var(--sim-glow), var(--hud-panel-shadow);
+}
+
+/* Glassmorphism panel retained for legacy translucent elements */
 .glass-panel {
   background: rgba(17, 24, 39, 0.75);
   backdrop-filter: blur(12px);
@@ -128,14 +253,15 @@
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-:root:not(.dark) .glass-panel {
+:root:not(.dark) .glass-panel,
+.theme-light .glass-panel {
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
 }
 
 .glow-cyan {
-  box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);
+  box-shadow: 0 0 20px var(--glow-cyan-color, rgba(0, 240, 255, 0.25));
 }
 
 .glow-purple {
@@ -147,14 +273,54 @@
 }
 
 /* ==========================================================================
-   4. BACKGROUND GRADIENT UTILITIES
+   5. HIGH-CONTRAST TELEMETRY FONT STYLES
+   ========================================================================== */
+.font-telemetry,
+.telemetry-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1, "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
+  letter-spacing: 0.04em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.telemetry-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.telemetry-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+}
+
+.telemetry-header {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+/* ==========================================================================
+   6. BACKGROUND GRADIENT UTILITIES
    ========================================================================== */
 .bg-quantum-void {
-  background: radial-gradient(circle at 50% 20%, rgba(0, 243, 255, 0.06) 0%, rgba(9, 13, 22, 1) 70%);
+  background: radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.06) 0%, rgba(11, 14, 20, 1) 70%);
 }
 
 .bg-radial-glow {
-  background: radial-gradient(circle at center, rgba(0, 243, 255, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(0, 240, 255, 0.12) 0%, transparent 70%);
 }
 
 .bg-quantum-grid {
@@ -164,8 +330,20 @@
   background-size: 28px 28px;
 }
 
+:root:not(.dark) .bg-quantum-grid,
+.theme-light .bg-quantum-grid {
+  background-image:
+    linear-gradient(to right, rgba(11, 14, 20, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(11, 14, 20, 0.05) 1px, transparent 1px);
+}
+
+:root:not(.dark) .bg-quantum-void,
+.theme-light .bg-quantum-void {
+  background: radial-gradient(circle at 50% 20%, rgba(2, 132, 199, 0.08) 0%, rgba(244, 246, 249, 1) 70%);
+}
+
 /* ==========================================================================
-   5. SPECIAL UTILITIES & BASE STYLING
+   7. SPECIAL UTILITIES & BASE STYLING
    ========================================================================== */
 @utility duration-350 {
   transition-duration: 350ms;
