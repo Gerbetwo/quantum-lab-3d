@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { Sparkles, Trophy, ArrowRight, X } from 'lucide-react';
@@ -122,13 +121,16 @@ export function CelebrationModal() {
           >
             Review Roadmap
           </button>
-          <Link
-            href="/sandbox"
-            onClick={() => setIsOpen(false)}
-            className="flex-1 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-cyan hover:bg-cyan/90 text-background flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all active:scale-95"
+          <button
+            type="button"
+            onClick={() => {
+              useQuantumStore.getState().setAppViewState('SANDBOX');
+              setIsOpen(false);
+            }}
+            className="flex-1 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-cyan hover:bg-cyan/90 text-background flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all active:scale-95 cursor-pointer"
           >
             Enter Sandbox Lab <ArrowRight className="w-4 h-4" />
-          </Link>
+          </button>
         </div>
       </div>
     </div>

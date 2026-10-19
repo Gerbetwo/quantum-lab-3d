@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useQuantumStore } from '@/store/useQuantumStore';
 import { simulateGroverStep, runShorDemo, simulate3QubitBitFlipEC } from '@/core/algorithms';
 import type { MissionId } from './missionRegistry';
 
@@ -10,16 +11,20 @@ interface AlgorithmControlsProps {
 
 export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
   // Grover State (Mission 4)
-  const [groverStep, setGroverStep] = useState(0);
-  const [targetIndex, setTargetIndex] = useState(2);
+  const groverStep = useQuantumStore((s) => s.groverStep);
+  const targetIndex = useQuantumStore((s) => s.groverTargetIndex);
+  const setGroverStep = useQuantumStore((s) => s.setGroverStep);
+  const setTargetIndex = useQuantumStore((s) => s.setGroverTargetIndex);
   const groverResult = simulateGroverStep(2, targetIndex, groverStep);
 
   // Shor State (Mission 5, N=15)
-  const [shorBase, setShorBase] = useState(7);
+  const shorBase = useQuantumStore((s) => s.shorBase);
+  const setShorBase = useQuantumStore((s) => s.setShorBase);
   const shorResult = runShorDemo(shorBase);
 
   // 3-Qubit QEC State (Mission 6)
-  const [injectedError, setInjectedError] = useState<number | null>(null);
+  const injectedError = useQuantumStore((s) => s.qecInjectedError);
+  const setInjectedError = useQuantumStore((s) => s.setQecInjectedError);
   const qecResult = simulate3QubitBitFlipEC(injectedError);
 
   if (missionId === 'grover') {

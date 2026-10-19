@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
-import { soundEngine, isAudioEnabled, toggleAudio } from '@/lib/soundEngine';
+import { soundEngine } from '@/lib/soundEngine';
 import {
   Play,
   Grid,
@@ -28,6 +28,8 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
   const returnToTitle = useQuantumStore((s) => s.returnToTitle);
   const resetState = useQuantumStore((s) => s.resetState);
   const currentMissionId = useQuantumStore((s) => s.currentMissionId);
+  const isSoundEnabled = useQuantumStore((s) => s.isSoundEnabled);
+  const toggleSound = useQuantumStore((s) => s.toggleSound);
 
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
@@ -36,7 +38,6 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
     return document.documentElement.classList.contains('dark');
   });
 
-  const [soundOn, setSoundOn] = useState<boolean>(() => isAudioEnabled());
   const [resetFeedback, setResetFeedback] = useState<boolean>(false);
 
   useEffect(() => {
@@ -98,8 +99,7 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
   };
 
   const handleToggleSound = () => {
-    const next = toggleAudio();
-    setSoundOn(next);
+    toggleSound();
   };
 
   return (
@@ -220,11 +220,11 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
               className="py-2 px-3 rounded-lg text-xs font-mono bg-surface-2 hover:bg-surface-3 border border-edge flex items-center justify-between transition-colors"
             >
               <span className="flex items-center gap-1.5 text-muted-foreground">
-                {soundOn ? <Volume2 className="w-3.5 h-3.5 text-cyan" /> : <VolumeX className="w-3.5 h-3.5 text-rose-400" />}
+                {isSoundEnabled ? <Volume2 className="w-3.5 h-3.5 text-cyan" /> : <VolumeX className="w-3.5 h-3.5 text-rose-400" />}
                 <span>Audio</span>
               </span>
               <span className="text-[11px] font-bold text-foreground">
-                {soundOn ? 'ON' : 'MUTED'}
+                {isSoundEnabled ? 'ON' : 'MUTED'}
               </span>
             </button>
           </div>

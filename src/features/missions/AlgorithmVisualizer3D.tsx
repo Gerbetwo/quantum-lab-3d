@@ -1,13 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { useQuantumStore } from '@/store/useQuantumStore';
-import {
-  simulateGroverStep,
-  runShorDemo,
-  simulate3QubitBitFlipEC,
-} from '@/core/algorithms';
+import { simulateGroverStep, runShorDemo, simulate3QubitBitFlipEC } from '@/core/algorithms';
 
 export type AlgorithmType = 'grover' | 'shor' | 'qec';
 
@@ -18,9 +14,7 @@ export function resolveAlgorithmType(missionId?: string): AlgorithmType {
   return 'grover';
 }
 
-// ==========================================
 // 1. GROVER 3D BAR GRAPH BUILDERS
-// ==========================================
 export interface GroverBarElements {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -85,9 +79,7 @@ export function updateGroverBars(
   }
 }
 
-// ==========================================
 // 2. SHOR PERIODICITY WHEEL BUILDERS
-// ==========================================
 export interface ShorWheelElements {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -155,9 +147,7 @@ export function updateShorWheelAnimation(elements: ShorWheelElements, timeSec: n
   elements.rotor.rotation.z = timeSec * 0.2;
 }
 
-// ==========================================
 // 3. 3-QUBIT QEC SYNDROME LATTICE BUILDERS
-// ==========================================
 export interface QECLatticeElements {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -211,10 +201,7 @@ export function createQECLatticeScene(errorIndex: number | null = null): QECLatt
 
   // Interconnecting Parity Check Links (q0 <-> q1 and q1 <-> q2)
   const links: THREE.Line[] = [];
-  const linkDefs = [
-    [-1.8, 0],
-    [0, 1.8],
-  ];
+  const linkDefs = [[-1.8, 0], [0, 1.8]];
 
   for (const [x1, x2] of linkDefs) {
     const linkGeo = new THREE.BufferGeometry().setFromPoints([
@@ -269,9 +256,7 @@ export function updateQECLattice(
   beamMat.opacity = errorIndex === null ? 0.85 : 0.25;
 }
 
-// ==========================================
-// REACT COMPONENT & HUD INTEGRATION
-// ==========================================
+// 4. REACT COMPONENT & HUD INTEGRATION
 export interface AlgorithmVisualizer3DProps {
   missionId?: string;
   className?: string;
@@ -286,11 +271,17 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
   const activeMission = missionId ?? storeMissionId;
   const algoType = resolveAlgorithmType(activeMission);
 
-  // Local interactive parameters
-  const [groverStep, setGroverStep] = useState(0);
-  const [targetIndex, setTargetIndex] = useState(2);
-  const [shorBase, setShorBase] = useState(7);
-  const [injectedError, setInjectedError] = useState<number | null>(null);
+  // Algorithm state synchronized via store (HU-MVP-06, HU-MVP-07, HU-MVP-08)
+  const groverStep = useQuantumStore((s) => s.groverStep);
+  const targetIndex = useQuantumStore((s) => s.groverTargetIndex);
+  const setGroverStep = useQuantumStore((s) => s.setGroverStep);
+  const setTargetIndex = useQuantumStore((s) => s.setGroverTargetIndex);
+
+  const shorBase = useQuantumStore((s) => s.shorBase);
+  const setShorBase = useQuantumStore((s) => s.setShorBase);
+
+  const injectedError = useQuantumStore((s) => s.qecInjectedError);
+  const setInjectedError = useQuantumStore((s) => s.setQecInjectedError);
 
   const groverResult = useMemo(() => simulateGroverStep(2, targetIndex, groverStep), [targetIndex, groverStep]);
   const shorResult = useMemo(() => runShorDemo(shorBase), [shorBase]);
@@ -361,12 +352,10 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', onResize);
-      groverElements?.geometries.forEach((g) => g.dispose());
-      groverElements?.materials.forEach((m) => m.dispose());
-      shorElements?.geometries.forEach((g) => g.dispose());
-      shorElements?.materials.forEach((m) => m.dispose());
-      qecElements?.geometries.forEach((g) => g.dispose());
-      qecElements?.materials.forEach((m) => m.dispose());
+      [groverElements, shorElements, qecElements].forEach((el) => {
+        el?.geometries.forEach((g) => g.dispose());
+        el?.materials.forEach((m) => m.dispose());
+      });
       if (renderer && renderer.domElement.parentElement === container) {
         container.removeChild(renderer.domElement);
         renderer.dispose();

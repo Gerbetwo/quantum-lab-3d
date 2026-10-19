@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import Cookies from "js-cookie";
 import { calculateT2CoherenceTime, kelvinToMilliKelvin } from "@/core/decoherenceMath";
-import { soundEngine } from "@/lib/soundEngine";
+import { soundEngine, setAudioEnabled, isAudioEnabled } from "@/lib/soundEngine";
 import { type MissionId, getMissionById, getMissionIndex, TOTAL_MISSIONS } from "@/features/missions/missionRegistry";
 
 export type AppViewState = "TITLE" | "CAMPAIGN_SELECT" | "SANDBOX" | "IN_MISSION";
@@ -27,11 +27,28 @@ export interface QuantumStore {
   isSandboxUnlocked: boolean;
   elapsedSeconds: number; isRunning: boolean;
 
+  // Algorithm state (Missions 4–6)
+  groverStep: number;
+  groverTargetIndex: number;
+  shorBase: number;
+  qecInjectedError: number | null;
+
+  // Audio system state
+  isSoundEnabled: boolean;
+  soundEnabled: boolean;
+
   setLanguage: (lang: Language) => void;
   setAppViewState: (view: AppViewState) => void;
   togglePauseMenu: () => void;
   returnToTitle: () => void;
   launchMission: (id: MissionId | number | string) => void;
+
+  setGroverStep: (step: number | ((prev: number) => number)) => void;
+  setGroverTargetIndex: (targetIndex: number) => void;
+  setShorBase: (shorBase: number) => void;
+  setQecInjectedError: (qecInjectedError: number | null) => void;
+  toggleSound: () => boolean;
+  setSoundEnabled: (enabled: boolean) => void;
 
   setAngles: (theta: number, phi: number) => void;
   setTheta: (theta: number) => void;
@@ -115,6 +132,12 @@ export const useQuantumStore = create<QuantumStore>()(
       completedMissions: init.completedMissions, completed: init.completedMissions,
       progress: init.completedMissions.length ? [init.completedMissions.length] : [0],
       isSandboxUnlocked: init.isSandboxUnlocked, elapsedSeconds: 0, isRunning: true,
+      groverStep: 0,
+      groverTargetIndex: 2,
+      shorBase: 7,
+      qecInjectedError: null,
+      isSoundEnabled: isAudioEnabled(),
+      soundEnabled: isAudioEnabled(),
 
       setLanguage: (language: Language) => {
         set({ language });
@@ -126,6 +149,25 @@ export const useQuantumStore = create<QuantumStore>()(
       launchMission: (id) => {
         get().jumpToMission(id as MissionId | number);
         set({ appViewState: "IN_MISSION", isPauseMenuOpen: false });
+      },
+
+      setGroverStep: (step) =>
+        set((s) => ({
+          groverStep: typeof step === 'function' ? step(s.groverStep) : step,
+        })),
+      setGroverTargetIndex: (groverTargetIndex) => set({ groverTargetIndex }),
+      setShorBase: (shorBase) => set({ shorBase }),
+      setQecInjectedError: (qecInjectedError) => set({ qecInjectedError }),
+
+      toggleSound: () => {
+        const next = !get().isSoundEnabled;
+        setAudioEnabled(next);
+        set({ isSoundEnabled: next, soundEnabled: next });
+        return next;
+      },
+      setSoundEnabled: (enabled: boolean) => {
+        setAudioEnabled(enabled);
+        set({ isSoundEnabled: enabled, soundEnabled: enabled });
       },
 
       setAngles: (theta, phi) => set({ theta, phi }),
@@ -217,6 +259,7 @@ export const useQuantumStore = create<QuantumStore>()(
           coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(tempK)),
           isEntangled: config.id === "entanglement", entanglementDegree: config.id === "entanglement" ? 1 : 0,
           lastOutcome: null, userPredictionProb0: null, currentPhase: "BRIEFING", activeStepIndex: 0, appliedGates: [],
+          groverStep: 0, groverTargetIndex: 2, shorBase: 7, qecInjectedError: null,
         });
       },
 
@@ -230,6 +273,10 @@ export const useQuantumStore = create<QuantumStore>()(
           currentPhase: "BRIEFING",
           activeStepIndex: 0,
           appliedGates: [],
+          groverStep: 0,
+          groverTargetIndex: 2,
+          shorBase: 7,
+          qecInjectedError: null,
         }),
 
       tick: () => {
