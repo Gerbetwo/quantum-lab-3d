@@ -14,9 +14,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 /**
- * Ultra-sharp flight-deck HUD Button primitive.
- * Enforces 1px sharp borders (border-slate-300 in light, border-slate-800 in dark),
- * zero drop-shadow fluff, and JetBrains Mono / Inter monospaced numeric styling.
+- Ultra-sharp flight-deck HUD Button primitive.
+- Enforces 1px sharp tactical borders, theme token variables (Light/Dark integrated),
+- zero drop-shadow fluff, and high-precision monospaced numeric styling.
  */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -35,17 +35,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const variantStyles: Record<ButtonVariant, string> = {
       primary:
-        'bg-sky-600 hover:bg-sky-500 text-white border-sky-700 dark:bg-cyan-500/15 dark:hover:bg-cyan-500/25 dark:text-cyan-400 dark:border-cyan-500/50 dark:hover:border-cyan-400',
+        'bg-primary/15 hover:bg-primary/25 text-quantum-cyan border-quantum-cyan/40 hover:border-quantum-cyan',
       secondary:
-        'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-900/90 dark:hover:bg-slate-800 dark:text-slate-200 dark:border-slate-800 dark:hover:border-slate-700',
+        'bg-surface-2 hover:bg-surface-3 text-foreground border-border hover:border-edge',
       outline:
-        'bg-transparent hover:bg-slate-100 text-slate-800 border-slate-300 dark:bg-transparent dark:hover:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:border-cyan-500/40 dark:hover:text-cyan-400',
+        'bg-transparent hover:bg-surface-2 text-foreground border-border hover:border-quantum-cyan/50 hover:text-quantum-cyan',
       ghost:
-        'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-transparent dark:bg-transparent dark:hover:bg-slate-900 dark:text-slate-400 dark:hover:text-slate-100 dark:border-transparent',
+        'bg-transparent hover:bg-surface-2 text-muted-foreground hover:text-foreground border-transparent',
       danger:
-        'bg-red-50 hover:bg-red-100 text-red-700 border-red-300 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400 dark:border-red-500/40 dark:hover:border-red-500/60',
+        'bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/40 hover:border-destructive/60',
       hud:
-        'bg-slate-100/90 hover:bg-slate-200/90 text-slate-900 border-slate-300 dark:bg-[#0B0E14]/90 dark:hover:bg-slate-900 dark:text-slate-100 dark:border-slate-800 dark:hover:border-cyan-400/50',
+        'bg-surface-1 hover:bg-surface-2 text-foreground border-border hover:border-quantum-cyan/50',
     };
 
     const sizeStyles: Record<ButtonSize, string> = {
@@ -60,7 +60,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         data-testid="hud-button"
-        className={`relative inline-flex items-center justify-center font-mono font-semibold uppercase tracking-wider tabular-nums border transition-colors select-none cursor-pointer disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+        className={`relative inline-flex items-center justify-center telemetry-mono font-semibold uppercase tracking-wider tabular-nums border transition-colors select-none cursor-pointer disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
         style={{
           boxShadow: 'none',
         }}

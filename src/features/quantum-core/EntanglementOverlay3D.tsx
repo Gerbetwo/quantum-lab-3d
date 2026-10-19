@@ -381,24 +381,28 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
     return null;
   }
 
-  return (
+return (
     <div
       data-testid="entanglement-overlay-3d"
-      className={`relative w-full h-full min-h-[360px] rounded-2xl border border-cyan/30 bg-slate-950/70 backdrop-blur-md overflow-hidden flex flex-col select-none ${className}`}
+      className={`relative w-full h-full min-h-90 rounded-2xl hud-panel overflow-hidden flex flex-col select-none ${className}`}
     >
       {/* 3D WebGL Canvas Viewport */}
       <div ref={containerRef} className="absolute inset-0 z-0 touch-none" />
 
       {/* Perimeter Tactical HUD */}
-      <div className="relative z-10 flex items-center justify-between p-3.5 border-b border-border/60 bg-background/50 backdrop-blur-sm pointer-events-none">
+      <div className="relative z-10 flex items-center justify-between p-3.5 border-b border-border bg-background/80 pointer-events-none">
         <div className="flex items-center gap-2">
-          <span className={`w-2.5 h-2.5 rounded-full ${waveState.active ? 'bg-amber-400 animate-ping' : 'bg-cyan animate-pulse'}`} />
-          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan">
+          <span
+            className={`w-2.5 h-2.5 rounded-full ${
+              waveState.active ? 'bg-warning animate-ping' : 'bg-quantum-cyan animate-pulse'
+            }`}
+          />
+          <h2 className="text-xs telemetry-mono font-bold uppercase tracking-wider text-quantum-cyan">
             Dual Bloch Viewport: EPR Laser Strand
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan/15 text-cyan border border-cyan/30">
+          <span className="text-[10px] telemetry-mono px-2 py-0.5 rounded-full hud-badge-cyan">
             {telemetry.channelStatus}
           </span>
         </div>
@@ -407,23 +411,37 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
       {/* Floating Qubit Telemetry Nodes */}
       <div className="relative z-10 flex-1 flex items-end justify-between p-4 pointer-events-none">
         {/* Qubit A Info */}
-        <div className="flex flex-col items-center p-2 rounded-lg bg-surface-2/80 border border-edge/80 backdrop-blur-sm min-w-28 text-center">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase">Qubit A (Alice)</span>
-          <span className="text-base font-mono font-bold text-cyan">{telemetry.aliceState}</span>
+        <div className="flex flex-col items-center p-2 rounded-lg bg-surface-2 border border-edge min-w-28 text-center">
+          <span className="text-[10px] telemetry-mono text-muted-foreground uppercase">
+            Qubit A (Alice)
+          </span>
+          <span className="text-base telemetry-mono font-bold text-quantum-cyan">
+            {telemetry.aliceState}
+          </span>
         </div>
 
         {/* Center EPR Laser Strand Status */}
-        <div className="flex flex-col items-center text-center p-1.5 rounded bg-background/70 border border-border/80">
-          <span className="text-[9px] font-mono text-muted-foreground uppercase">Laser Strand Pulse</span>
-          <span className={`text-[11px] font-mono font-semibold ${waveState.active ? 'text-amber-300' : 'text-purple-400'}`}>
+        <div className="flex flex-col items-center text-center p-1.5 rounded bg-surface-2 border border-border">
+          <span className="text-[9px] telemetry-mono text-muted-foreground uppercase">
+            Laser Strand Pulse
+          </span>
+          <span
+            className={`text-[11px] telemetry-mono font-semibold ${
+              waveState.active ? 'text-warning' : 'text-quantum-purple'
+            }`}
+          >
             {waveState.active ? '⚡ Spin-Flip Wave' : '∿ 120-pt Laser Line'}
           </span>
         </div>
 
         {/* Qubit B Info */}
-        <div className="flex flex-col items-center p-2 rounded-lg bg-surface-2/80 border border-edge/80 backdrop-blur-sm min-w-28 text-center">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase">Qubit B (Bob)</span>
-          <span className="text-base font-mono font-bold text-purple-400">{telemetry.bobState}</span>
+        <div className="flex flex-col items-center p-2 rounded-lg bg-surface-2 border border-edge min-w-28 text-center">
+          <span className="text-[10px] telemetry-mono text-muted-foreground uppercase">
+            Qubit B (Bob)
+          </span>
+          <span className="text-base telemetry-mono font-bold text-quantum-purple">
+            {telemetry.bobState}
+          </span>
         </div>
       </div>
     </div>

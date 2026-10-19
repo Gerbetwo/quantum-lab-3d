@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { soundEngine } from '@/lib/soundEngine';
 import { useTranslation, DICTIONARY } from '@/lib/i18n';
@@ -138,11 +137,11 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
   return (
     <div
       data-testid="campaign-select-overlay"
-      className="fixed inset-0 z-40 flex flex-col bg-background/90 backdrop-blur-md overflow-y-auto p-4 md:p-8 select-none"
+      className="fixed inset-0 z-40 flex flex-col bg-background/80 backdrop-blur-md overflow-y-auto p-4 md:p-8 select-none"
     >
       <div className="w-full max-w-7xl mx-auto flex flex-col gap-6">
         {/* Flight-Deck Top Bar */}
-        <header className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card/60 backdrop-blur-md shadow-lg">
+        <header className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl hud-panel">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -151,29 +150,29 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 returnToTitle();
               }}
               data-testid="return-to-title-button"
-              className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-edge flex items-center gap-1.5 transition-all active:scale-95"
+              className="px-3 py-1.5 rounded-lg text-xs telemetry-mono font-medium bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>TITLE</span>
             </button>
-            <div className="border-l border-border/80 pl-3">
+            <div className="border-l border-border pl-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-cyan" />
-                <h2 className="text-sm font-bold tracking-wide text-foreground uppercase font-mono">
+                <Sparkles className="w-3.5 h-3.5 text-quantum-cyan" />
+                <h2 className="text-sm font-bold tracking-wide text-foreground uppercase telemetry-mono">
                   Flight-Deck Campaign Roster
                 </h2>
               </div>
-              <p className="text-[11px] text-muted-foreground font-mono">
+              <p className="text-[11px] text-muted-foreground telemetry-mono">
                 Select a tactical mission node or launch the sandbox simulation harness.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 border border-edge text-xs font-mono">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 border border-border text-xs telemetry-mono">
+              <ShieldCheck className="w-3.5 h-3.5 text-success" />
               <span className="text-muted-foreground">Progression:</span>
-              <span className="text-cyan font-bold">{completedCount} / 7 Mastered</span>
+              <span className="text-quantum-cyan font-bold">{completedCount} / 7 Mastered</span>
             </div>
 
             {/* Top-bar button to jump directly to SANDBOX mode */}
@@ -181,9 +180,9 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
               type="button"
               onClick={handleGoToSandbox}
               data-testid="topbar-sandbox-button"
-              className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white flex items-center gap-2 border border-purple-400/40 shadow-[0_0_20px_rgba(168,85,247,0.25)] transition-all active:scale-95"
+              className="px-4 py-2 rounded-xl text-xs telemetry-mono font-bold hud-badge-purple hover:opacity-90 flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
             >
-              <Beaker className="w-4 h-4 text-purple-200" />
+              <Beaker className="w-4 h-4 text-quantum-purple" />
               <span>SANDBOX MODE</span>
             </button>
           </div>
@@ -201,20 +200,20 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
               <div
                 key={node.id}
                 data-testid={`mission-card-${node.id}`}
-                className={`p-5 rounded-xl border flex flex-col justify-between gap-4 transition-all duration-200 border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95 ${
+                className={`p-5 rounded-xl border flex flex-col justify-between gap-4 transition-all duration-200 hud-panel ${
                   isCompleted
-                    ? 'border-emerald-500/60 dark:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.08)]'
-                    : 'hover:border-cyan-500/60 dark:hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(0,243,255,0.08)]'
+                    ? 'border-success/60 glow-emerald'
+                    : 'hover:border-quantum-cyan/60 hover:glow-cyan'
                 }`}
               >
                 <div className="flex flex-col gap-2.5">
                   {/* Card Header: Mission Code & Difficulty */}
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-3 border border-edge text-cyan font-semibold">
+                    <span className="text-[11px] telemetry-mono px-2 py-0.5 rounded bg-surface-3 border border-border text-quantum-cyan font-semibold">
                       {node.code} · Mission {node.index}
                     </span>
                     <span
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-medium ${node.difficultyColor}`}
+                      className={`text-[10px] telemetry-mono px-2 py-0.5 rounded border uppercase font-medium ${node.difficultyColor}`}
                     >
                       {node.difficulty}
                     </span>
@@ -230,12 +229,12 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 </div>
 
                 {/* Direct Launch Control */}
-                <div className="pt-3 border-t border-edge flex flex-col">
+                <div className="pt-3 border-t border-border flex flex-col">
                   <button
                     type="button"
                     onClick={() => handleLaunch(node.id)}
                     data-testid={`launch-mission-${node.id}`}
-                    className="w-full py-2 px-3 rounded-lg text-xs font-mono font-bold bg-cyan/15 hover:bg-cyan/25 text-cyan border border-cyan/40 hover:border-cyan flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+                    className="w-full py-2 px-3 rounded-lg text-xs telemetry-mono font-bold hud-badge-cyan hover:opacity-90 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
                   >
                     <span>LAUNCH SIMULATION</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -248,14 +247,14 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
           {/* Sandbox Node */}
           <div
             data-testid="mission-card-sandbox"
-            className="p-5 rounded-xl border border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95 flex flex-col justify-between gap-4 transition-all duration-200 hover:border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
+            className="p-5 rounded-xl border hud-panel flex flex-col justify-between gap-4 transition-all duration-200 hover:border-quantum-purple/60 hover:glow-purple"
           >
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-3 border border-edge text-purple-400 font-semibold">
+                <span className="text-[11px] telemetry-mono px-2 py-0.5 rounded bg-surface-3 border border-border text-quantum-purple font-semibold">
                   LAB-00 · Sandbox
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded uppercase font-medium hud-badge-purple">
+                <span className="text-[10px] telemetry-mono px-2 py-0.5 rounded uppercase font-medium hud-badge-purple">
                   UNCONSTRAINED
                 </span>
               </div>
@@ -268,14 +267,14 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
               </div>
             </div>
 
-            <div className="pt-3 border-t border-edge flex flex-col">
+            <div className="pt-3 border-t border-border flex flex-col">
               <button
                 type="button"
                 onClick={handleGoToSandbox}
                 data-testid="launch-sandbox-button"
-                className="w-full py-2 px-3 rounded-lg text-xs font-mono font-bold bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 hover:border-purple-400 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+                className="w-full py-2 px-3 rounded-lg text-xs telemetry-mono font-bold hud-badge-purple hover:opacity-90 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
               >
-                <Beaker className="w-3.5 h-3.5 text-purple-400" />
+                <Beaker className="w-3.5 h-3.5 text-quantum-purple" />
                 <span>LAUNCH SIMULATION</span>
               </button>
             </div>

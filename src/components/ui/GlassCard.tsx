@@ -14,9 +14,8 @@ export interface GlassCardProps extends Omit<React.HTMLAttributes<HTMLDivElement
 }
 
 /**
- * Ultra-sharp flight-deck HUD GlassCard primitive.
- * Uses 1px tactical borders (border-slate-300 light, border-slate-800 dark),
- * zero drop-shadow fluff, and sub-pixel corner notch styling.
+- Ultra-sharp flight-deck HUD GlassCard primitive.
+- Leverages theme tokens, 1px tactical borders, and sub-pixel corner notch styling.
  */
 export const GlassCard: React.FC<GlassCardProps> = ({
   children,
@@ -34,11 +33,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   return (
     <div
       data-testid="hud-glass-card"
-      className={`relative p-3.5 border border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95 text-foreground transition-colors select-none ${className}`}
-      style={{
-        // Zero drop-shadow fluff; clean flat telemetry border
-        boxShadow: 'none',
-      }}
+      className={`relative p-3.5 hud-panel text-foreground transition-colors select-none ${className}`}
       {...props}
     >
       {/* Sub-pixel corner notch styling */}
@@ -46,41 +41,41 @@ export const GlassCard: React.FC<GlassCardProps> = ({
         <>
           <span
             aria-hidden="true"
-            className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-sky-600 dark:border-cyan-400 pointer-events-none"
+            className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-quantum-cyan pointer-events-none"
           />
           <span
             aria-hidden="true"
-            className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-sky-600 dark:border-cyan-400 pointer-events-none"
+            className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-quantum-cyan pointer-events-none"
           />
           <span
             aria-hidden="true"
-            className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-sky-600 dark:border-cyan-400 pointer-events-none"
+            className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-quantum-cyan pointer-events-none"
           />
           <span
             aria-hidden="true"
-            className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-sky-600 dark:border-cyan-400 pointer-events-none"
+            className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-quantum-cyan pointer-events-none"
           />
         </>
       )}
 
       {/* Header bar with monospaced telemetry border */}
       {(title || badge || headerRight || telemetryId) && (
-        <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-slate-300 dark:border-slate-800">
+        <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-border">
           <div className="flex items-center gap-2">
             {telemetryId && (
-              <span className="text-[10px] font-mono tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+              <span className="text-[10px] telemetry-mono tracking-widest text-muted-foreground uppercase">
                 [{telemetryId}]
               </span>
             )}
             {title && (
-              <h3 className="text-xs font-mono font-semibold tracking-wider text-slate-900 dark:text-cyan-400 uppercase">
+              <h3 className="text-xs telemetry-mono font-semibold tracking-wider text-quantum-cyan uppercase">
                 {title}
               </h3>
             )}
           </div>
           <div className="flex items-center gap-1.5">
             {badge && (
-              <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.5 border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-cyan-300">
+              <span className="text-[10px] telemetry-mono tabular-nums px-1.5 py-0.5 hud-badge-cyan">
                 {badge}
               </span>
             )}
@@ -90,7 +85,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
       )}
 
       {/* Card Content with monospaced numeric styling */}
-      <div className={`space-y-2 text-xs font-mono ${isHudVariant ? 'tracking-tight' : ''}`}>
+      <div className={`space-y-2 text-xs telemetry-mono ${isHudVariant ? 'tracking-tight' : ''}`}>
         {children}
       </div>
     </div>
@@ -106,7 +101,7 @@ export interface TelemetryValueProps {
 }
 
 /**
- * High-contrast numeric telemetry display with JetBrains Mono / Inter monospaced numeric tabular layout.
+- High-contrast numeric telemetry display with monospaced tabular layout.
  */
 export const TelemetryValue: React.FC<TelemetryValueProps> = ({
   label,
@@ -117,19 +112,19 @@ export const TelemetryValue: React.FC<TelemetryValueProps> = ({
 }) => {
   const highlightStyles = {
     default: 'text-foreground',
-    cyan: 'text-sky-600 dark:text-cyan-400',
-    amber: 'text-amber-600 dark:text-amber-400',
-    emerald: 'text-emerald-600 dark:text-emerald-400',
-    purple: 'text-purple-600 dark:text-purple-400',
-    rose: 'text-rose-600 dark:text-rose-400',
+    cyan: 'text-quantum-cyan',
+    amber: 'text-warning',
+    emerald: 'text-success',
+    purple: 'text-quantum-purple',
+    rose: 'text-destructive',
   };
 
   return (
-    <div className={`flex items-center justify-between py-0.5 border-b border-slate-200/60 dark:border-slate-800/60 text-xs font-mono ${className}`}>
-      <span className="font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px]">{label}</span>
-      <span className={`font-mono font-bold tabular-nums tracking-tight ${highlightStyles[highlight]}`}>
+    <div className={`flex items-center justify-between py-0.5 border-b border-border text-xs telemetry-mono ${className}`}>
+      <span className="telemetry-mono text-muted-foreground uppercase tracking-wider text-[11px]">{label}</span>
+      <span className={`telemetry-mono font-bold tabular-nums tracking-tight ${highlightStyles[highlight]}`}>
         {value}
-        {unit && <span className="ml-1 text-[10px] font-normal text-slate-500 dark:text-slate-400">{unit}</span>}
+        {unit && <span className="ml-1 text-[10px] font-normal text-muted-foreground">{unit}</span>}
       </span>
     </div>
   );

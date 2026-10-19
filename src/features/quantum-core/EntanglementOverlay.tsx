@@ -35,36 +35,36 @@ export function EntanglementOverlay({ className = '' }: EntanglementOverlayProps
   return (
     <div
       data-testid="entanglement-overlay"
-      className={`p-4 rounded-xl border border-cyan/40 bg-card/90 backdrop-blur-md shadow-xl flex flex-col gap-3 text-foreground ${className}`}
+      className={`p-4 rounded-xl hud-panel flex flex-col gap-3 text-foreground ${className}`}
     >
-      <div className="flex items-center justify-between border-b border-border/80 pb-2">
+      <div className="flex items-center justify-between border-b border-border pb-2">
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse" />
-          <h3 className="text-xs font-mono font-bold tracking-wider text-cyan uppercase">
+          <span className="w-2.5 h-2.5 rounded-full bg-quantum-cyan animate-pulse" />
+          <h3 className="text-xs telemetry-mono font-bold tracking-wider text-quantum-cyan uppercase">
             Bell State |Φ⁺⟩ Correlation
           </h3>
         </div>
         <span
-          className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+          className={`text-[10px] telemetry-mono px-2 py-0.5 rounded-full ${
             isEntangled
-              ? 'bg-cyan/10 border-cyan text-cyan'
-              : 'bg-muted/30 border-border text-muted-foreground'
+              ? 'hud-badge-cyan'
+              : 'bg-surface-2 text-muted-foreground border border-border'
           }`}
         >
           {isEntangled ? '100% Entangled' : 'Separable'}
         </span>
       </div>
 
-      <p className="text-xs text-muted-foreground font-mono">
+      <p className="text-xs text-muted-foreground telemetry-mono">
         {bell.pair} (P(00)={bell.probability00 * 100}%, P(11)={bell.probability11 * 100}%)
       </p>
 
       {/* Visual Dual-Qubit Correlation Channel */}
-      <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-background/80 border border-border">
+      <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-surface-2 border border-border">
         {/* Qubit A (Local / Alice) */}
-        <div className="flex-1 flex flex-col items-center text-center p-2 rounded bg-surface-2 border border-edge">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase">Local (Alice)</span>
-          <span className="text-base font-bold font-mono text-cyan mt-1">{aliceState}</span>
+        <div className="flex-1 flex flex-col items-center text-center p-2 rounded bg-surface-1 border border-border">
+          <span className="text-[10px] telemetry-mono text-muted-foreground uppercase">Local (Alice)</span>
+          <span className="text-base font-bold telemetry-mono text-quantum-cyan mt-1">{aliceState}</span>
           <span className="text-[10px] text-muted-foreground mt-0.5">
             {lastOutcome !== null ? `Collapsed: ${lastOutcome}` : 'Superposition'}
           </span>
@@ -75,17 +75,17 @@ export function EntanglementOverlay({ className = '' }: EntanglementOverlayProps
           <div
             className={`h-1 w-16 transition-all duration-300 rounded-full ${
               isEntangled
-                ? 'bg-gradient-to-r from-cyan via-purple-500 to-cyan animate-pulse shadow-[0_0_8px_rgba(0,240,255,0.8)]'
-                : 'bg-border'
+                ? 'bg-linear-to-r from-quantum-cyan via-quantum-purple to-quantum-cyan animate-pulse glow-cyan'
+                : 'bg-surface-3'
             }`}
           />
-          <span className="text-[9px] font-mono text-muted-foreground mt-1">EPR Channel</span>
+          <span className="text-[9px] telemetry-mono text-muted-foreground mt-1">EPR Channel</span>
         </div>
 
         {/* Qubit B (Distant / Bob) */}
-        <div className="flex-1 flex flex-col items-center text-center p-2 rounded bg-surface-2 border border-edge">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase">Distant (Bob)</span>
-          <span className="text-base font-bold font-mono text-purple-400 mt-1">{bobState}</span>
+        <div className="flex-1 flex flex-col items-center text-center p-2 rounded bg-surface-1 border border-border">
+          <span className="text-[10px] telemetry-mono text-muted-foreground uppercase">Distant (Bob)</span>
+          <span className="text-base font-bold telemetry-mono text-quantum-purple mt-1">{bobState}</span>
           <span className="text-[10px] text-muted-foreground mt-0.5">
             {lastOutcome !== null ? `Instant: ${lastOutcome}` : 'Superposition'}
           </span>
@@ -93,7 +93,7 @@ export function EntanglementOverlay({ className = '' }: EntanglementOverlayProps
       </div>
 
       {lastOutcome !== null && (
-        <div className="p-2.5 rounded hud-badge-emerald text-xs font-mono">
+        <div className="p-2.5 rounded hud-badge-emerald text-xs telemetry-mono">
           ✓ Non-local correlation confirmed: Alice={lastOutcome} ↔ Bob={lastOutcome} (Zero |01⟩/|10⟩)
         </div>
       )}
@@ -103,7 +103,7 @@ export function EntanglementOverlay({ className = '' }: EntanglementOverlayProps
         <button
           type="button"
           onClick={handlePrepareBellState}
-          className="flex-1 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-cyan/15 hover:bg-cyan/25 text-cyan border border-cyan/40 transition-colors"
+          className="flex-1 px-3 py-1.5 rounded-lg text-xs telemetry-mono font-semibold hud-badge-cyan hover:opacity-90 transition-all cursor-pointer"
         >
           Prepare |Φ⁺⟩ Pair
         </button>
@@ -111,7 +111,7 @@ export function EntanglementOverlay({ className = '' }: EntanglementOverlayProps
           type="button"
           onClick={handleMeasureAlice}
           disabled={!isEntangled}
-          className="flex-1 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex-1 px-3 py-1.5 rounded-lg text-xs telemetry-mono font-semibold hud-badge-purple hover:opacity-90 transition-all cursor-pointer disabled:opacity-40"
         >
           Measure Alice
         </button>

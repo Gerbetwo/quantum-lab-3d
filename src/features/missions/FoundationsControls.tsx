@@ -22,8 +22,8 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
 
   if (missionId === 'superposition') {
     return (
-      <div className="flex flex-col gap-2 p-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95">
-        <span className="text-xs font-mono font-semibold text-sky-600 dark:text-cyan-400 uppercase tracking-wider">
+      <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-surface-2">
+        <span className="text-xs telemetry-mono font-semibold text-quantum-cyan uppercase tracking-wider">
           Superposition Presets
         </span>
         <div className="grid grid-cols-2 gap-2 mt-1">
@@ -32,7 +32,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             size="sm"
             variant={theta === 0 ? 'primary' : 'secondary'}
             onClick={() => { setTheta(0); setPhi(0); }}
-            className="normal-case text-xs"
+            className="normal-case telemetry-mono text-xs"
           >
             |0⟩ Ground (θ=0)
           </Button>
@@ -41,7 +41,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             size="sm"
             variant={Math.abs(theta - Math.PI) < 0.05 ? 'primary' : 'secondary'}
             onClick={() => { setTheta(Math.PI); setPhi(0); }}
-            className="normal-case text-xs"
+            className="normal-case telemetry-mono text-xs"
           >
             |1⟩ Excited (θ=π)
           </Button>
@@ -50,7 +50,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             size="sm"
             variant={Math.abs(theta - Math.PI / 2) < 0.05 && phi === 0 ? 'primary' : 'secondary'}
             onClick={() => { setTheta(Math.PI / 2); setPhi(0); }}
-            className="normal-case text-xs"
+            className="normal-case telemetry-mono text-xs"
           >
             |+⟩ Superposition
           </Button>
@@ -59,7 +59,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             size="sm"
             variant={Math.abs(theta - Math.PI / 2) < 0.05 && Math.abs(phi - Math.PI) < 0.05 ? 'primary' : 'secondary'}
             onClick={() => { setTheta(Math.PI / 2); setPhi(Math.PI); }}
-            className="normal-case text-xs"
+            className="normal-case telemetry-mono text-xs"
           >
             |−⟩ Phase Opposite
           </Button>
@@ -70,8 +70,8 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
 
   if (missionId === 'entanglement') {
     return (
-      <div className="flex flex-col gap-2 p-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95">
-        <span className="text-xs font-mono font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+      <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-surface-2">
+        <span className="text-xs telemetry-mono font-semibold text-quantum-purple uppercase tracking-wider">
           Bell State |Φ⁺⟩ Controls
         </span>
         <div className="flex gap-2 mt-1">
@@ -80,7 +80,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             size="sm"
             variant={isEntangled ? 'primary' : 'secondary'}
             onClick={() => { setEntangled(true); setTheta(Math.PI / 2); }}
-            className="flex-1 normal-case text-xs"
+            className="flex-1 normal-case telemetry-mono text-xs"
           >
             Create |Φ⁺⟩ = 1/√2(|00⟩+|11⟩)
           </Button>
@@ -89,7 +89,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             size="sm"
             variant="secondary"
             onClick={() => { setEntangled(false); setTheta(0); }}
-            className="normal-case text-xs"
+            className="normal-case telemetry-mono text-xs"
           >
             Separate
           </Button>
@@ -106,8 +106,8 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
       { label: '300 K (Room)', val: 300.0 },
     ];
     return (
-      <div className="flex flex-col gap-2 p-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95">
-        <span className="text-xs font-mono font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+      <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-surface-2">
+        <span className="text-xs telemetry-mono font-semibold text-warning uppercase tracking-wider">
           Cryogenic Temperature
         </span>
         <div className="grid grid-cols-2 gap-2 mt-1">
@@ -118,7 +118,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
               size="sm"
               variant={Math.abs(temperatureK - t.val) < 0.001 ? 'primary' : 'secondary'}
               onClick={() => setTemperatureK(t.val)}
-              className="normal-case text-xs"
+              className="normal-case telemetry-mono text-xs"
             >
               {t.label}
             </Button>
@@ -131,8 +131,8 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
   // Mission 3: Gates
   const gates = ['H', 'X', 'Y', 'Z', 'S', 'T'] as const;
   return (
-    <div className="flex flex-col gap-2 p-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95">
-      <span className="text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+    <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-surface-2">
+      <span className="text-xs telemetry-mono font-semibold text-quantum-emerald uppercase tracking-wider">
         Quantum Gate Palette
       </span>
       <div className="grid grid-cols-3 gap-2 mt-1">
@@ -143,7 +143,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             size="sm"
             variant="secondary"
             onClick={() => applyGate(g)}
-            className="normal-case text-xs font-bold"
+            className="normal-case telemetry-mono text-xs font-bold"
           >
             Gate [{g}]
           </Button>

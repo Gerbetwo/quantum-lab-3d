@@ -72,24 +72,24 @@ export function CelebrationModal() {
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md"
     >
-      <div className="relative w-full max-w-lg p-6 rounded-2xl border border-cyan/40 bg-card/95 shadow-[0_0_50px_rgba(0,243,255,0.2)] flex flex-col gap-5 text-center">
+      <div className="relative w-full max-w-lg p-6 rounded-2xl hud-panel glow-cyan flex flex-col gap-5 text-center">
         {/* Close Button */}
         <button
           type="button"
           onClick={() => setIsOpen(false)}
           aria-label="Close celebration modal"
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Icon & Milestone Badge */}
-        <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan/20 to-purple-500/20 border border-cyan/40 flex items-center justify-center shadow-inner">
-          <Trophy className="w-7 h-7 text-cyan animate-pulse" />
+        <div className="mx-auto w-14 h-14 rounded-2xl hud-badge-cyan flex items-center justify-center shadow-inner">
+          <Trophy className="w-7 h-7 text-quantum-cyan animate-pulse" />
         </div>
 
         <div>
-          <span className="text-xs font-mono font-semibold text-cyan uppercase tracking-wider">
+          <span className="text-xs telemetry-mono font-semibold text-quantum-cyan uppercase tracking-wider">
             Curriculum Complete
           </span>
           <h2 className="text-xl font-bold text-foreground mt-1 tracking-tight">
@@ -102,8 +102,8 @@ export function CelebrationModal() {
         </div>
 
         {/* Unlock Perk Box */}
-        <div className="p-3.5 rounded-xl bg-surface-2 border border-edge text-left flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-xl bg-surface-2 border border-border text-left flex items-start gap-3">
+          <Sparkles className="w-5 h-5 text-quantum-purple shrink-0 mt-0.5" />
           <div className="text-xs">
             <span className="font-bold text-foreground">Sandbox Lab Unlocked</span>
             <p className="text-muted-foreground mt-0.5">
@@ -117,7 +117,7 @@ export function CelebrationModal() {
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="flex-1 px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-surface-2 hover:bg-surface-3 text-muted-foreground border border-edge transition-colors"
+            className="flex-1 px-4 py-2 rounded-xl text-xs telemetry-mono font-semibold bg-surface-2 hover:bg-surface-3 text-muted-foreground border border-border transition-colors cursor-pointer"
           >
             Review Roadmap
           </button>
@@ -127,7 +127,7 @@ export function CelebrationModal() {
               useQuantumStore.getState().setAppViewState('SANDBOX');
               setIsOpen(false);
             }}
-            className="flex-1 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-cyan hover:bg-cyan/90 text-background flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all active:scale-95 cursor-pointer"
+            className="flex-1 px-4 py-2 rounded-xl text-xs telemetry-mono font-bold bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center gap-1.5 glow-cyan transition-all active:scale-95 cursor-pointer"
           >
             Enter Sandbox Lab <ArrowRight className="w-4 h-4" />
           </button>

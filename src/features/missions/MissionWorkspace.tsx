@@ -17,11 +17,11 @@ interface MissionWorkspaceProps {
 }
 
 /**
- * Tactical In-Mission Workspace HUD (HU-MVP-03, HU-MVP-12).
- * Perimeter-anchored HUD architecture clearing center 90%+ for 3D Bloch canvas interaction:
- * - Top edge: MissionHeader (ID, objective ticker, ES/EN switch, ESC Pause)
- * - Bottom-left: Floating Gate Controls & angle sliders (fixed bottom-4 left-4 z-20 w-80)
- * - Bottom-right: Dirac Math Dock (fixed bottom-4 right-4 z-20 w-80)
+- Tactical In-Mission Workspace HUD (HU-MVP-03, HU-MVP-12).
+- Perimeter-anchored HUD architecture clearing center 90%+ for 3D Bloch canvas interaction:
+- Top edge: MissionHeader (ID, objective ticker, ES/EN switch, ESC Pause)
+- Bottom-left: Floating Gate Controls & angle sliders (fixed bottom-4 left-4 z-20 w-80)
+- Bottom-right: Dirac Math Dock (fixed bottom-4 right-4 z-20 w-80)
  */
 export function MissionWorkspace({ missionId: propMissionId, className = '' }: MissionWorkspaceProps) {
   const appViewState = useQuantumStore((s) => s.appViewState);
@@ -56,7 +56,9 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
   const setEntangled = useQuantumStore((s) => s.setEntangled);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [predictedP0, setPredictedP0] = useState<number>(userPredictionProb0 !== null ? Math.round(userPredictionProb0 * 100) : 50);
+  const [predictedP0, setPredictedP0] = useState<number>(
+    userPredictionProb0 !== null ? Math.round(userPredictionProb0 * 100) : 50
+  );
   const [isLocked, setIsLocked] = useState<boolean>(userPredictionProb0 !== null);
 
   const safeTheta = Number.isFinite(theta) ? theta : 0;
@@ -98,7 +100,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
               aria-expanded={!isCollapsed}
               aria-label={isCollapsed ? 'Expand Gate Controls' : 'Collapse Gate Controls'}
               title={isCollapsed ? 'Expand Controls' : 'Collapse Controls'}
-              className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-cyan-300 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
             >
               {isCollapsed ? (
                 <ChevronUp className="w-3.5 h-3.5" />
@@ -109,17 +111,20 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
           }
         >
           {!isCollapsed && (
-            <div data-testid="gate-controls-content" className="space-y-3 font-mono text-xs max-h-[calc(100vh-10rem)] overflow-y-auto pr-0.5">
+            <div
+              data-testid="gate-controls-content"
+              className="space-y-3 telemetry-mono text-xs max-h-[calc(100vh-10rem)] overflow-y-auto pr-0.5"
+            >
               {/* Qubit Angle Sliders (θ, φ) */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-[10px] tracking-wider text-slate-500 dark:text-slate-400 uppercase">
+                <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase">
                   <span>Qubit Spherical Angles</span>
                   <button
                     type="button"
                     onClick={() => resetState()}
                     data-testid="reset-qubit-button"
                     title="Reset to ground state |0⟩"
-                    className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[10px] text-warning hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3" /> Reset |0⟩
                   </button>
@@ -128,8 +133,8 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                 {/* Theta slider */}
                 <div>
                   <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">θ (Polar):</span>
-                    <span className="font-bold tabular-nums text-sky-700 dark:text-cyan-400">
+                    <span className="text-muted-foreground">θ (Polar):</span>
+                    <span className="font-bold tabular-nums text-quantum-cyan">
                       {((safeTheta * 180) / Math.PI).toFixed(1)}°
                     </span>
                   </div>
@@ -142,9 +147,9 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                     onChange={(e) => setTheta(parseFloat(e.target.value))}
                     data-testid="slider-theta"
                     aria-label="Theta angle slider"
-                    className="w-full accent-cyan cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-800"
+                    className="w-full accent-cyan cursor-pointer h-1.5 bg-surface-3"
                   />
-                  <div className="flex justify-between text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
                     <span>0° (|0⟩)</span>
                     <span>90° (|+⟩)</span>
                     <span>180° (|1⟩)</span>
@@ -154,8 +159,8 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                 {/* Phi slider */}
                 <div>
                   <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">φ (Azimuthal):</span>
-                    <span className="font-bold tabular-nums text-purple-700 dark:text-purple-400">
+                    <span className="text-muted-foreground">φ (Azimuthal):</span>
+                    <span className="font-bold tabular-nums text-quantum-purple">
                       {((safePhi * 180) / Math.PI).toFixed(1)}°
                     </span>
                   </div>
@@ -168,9 +173,9 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                     onChange={(e) => setPhi(parseFloat(e.target.value))}
                     data-testid="slider-phi"
                     aria-label="Phi angle slider"
-                    className="w-full accent-purple-500 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-800"
+                    className="w-full accent-quantum-purple cursor-pointer h-1.5 bg-surface-3"
                   />
-                  <div className="flex justify-between text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
                     <span>0°</span>
                     <span>180°</span>
                     <span>360°</span>
@@ -179,10 +184,10 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
               </div>
 
               {/* Quantum Gate Action Buttons (X, Y, Z, H) */}
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80">
-                <div className="flex items-center justify-between text-[10px] tracking-wider text-slate-500 dark:text-slate-400 uppercase mb-1.5">
+              <div className="pt-2 border-t border-border">
+                <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase mb-1.5">
                   <span>Unitary Gates</span>
-                  <span className="text-slate-400">SU(2)</span>
+                  <span className="text-muted-foreground">SU(2)</span>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {(['X', 'Y', 'Z', 'H'] as const).map((gate) => (
@@ -192,7 +197,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                       cornerNotch
                       onClick={() => applyGate(gate)}
                       data-testid={`gate-button-${gate}`}
-                      className="py-1 px-1.5 text-xs font-mono font-bold"
+                      className="py-1 px-1.5 text-xs telemetry-mono font-bold"
                     >
                       [{gate}]
                     </Button>
@@ -201,14 +206,18 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
               </div>
 
               {/* Mission-Specific or Sandbox Tactical Controls */}
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 space-y-2">
+              <div className="pt-2 border-t border-border space-y-2">
                 {isSandbox ? (
-                  <div className="space-y-3 font-mono text-xs">
+                  <div className="space-y-3 telemetry-mono text-xs">
                     {/* Thermal Decoherence Chamber */}
-                    <div className="p-2.5 rounded-lg bg-surface-2 border border-edge flex flex-col gap-2">
-                      <div className="flex items-center justify-between text-[10px] uppercase font-bold text-amber-500 dark:text-amber-400">
+                    <div className="p-2.5 rounded-lg bg-surface-2 border border-border flex flex-col gap-2">
+                      <div className="flex items-center justify-between text-[10px] uppercase font-bold text-warning">
                         <span>Thermal Chamber (15 mK – 300 K)</span>
-                        <span>{temperatureK >= 1 ? `${temperatureK.toFixed(1)} K` : `${Math.round(temperatureK * 1000)} mK`}</span>
+                        <span>
+                          {temperatureK >= 1
+                            ? `${temperatureK.toFixed(1)} K`
+                            : `${Math.round(temperatureK * 1000)} mK`}
+                        </span>
                       </div>
                       <input
                         type="range"
@@ -217,10 +226,12 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                         step="0.5"
                         value={temperatureK}
                         onChange={(e) => setTemperatureK(parseFloat(e.target.value))}
-                        className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-800"
+                        className="w-full accent-warning cursor-pointer h-1.5 bg-surface-3"
                       />
                       <div className="flex justify-between text-[10px] text-muted-foreground">
-                        <span>T₂(T): <b className="text-emerald-500 dark:text-emerald-400 font-bold">{coherenceTimeUs.toFixed(1)} μs</b></span>
+                        <span>
+                          T₂(T): <b className="text-quantum-emerald font-bold">{coherenceTimeUs.toFixed(1)} μs</b>
+                        </span>
                       </div>
                     </div>
 
@@ -229,8 +240,10 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                       <button
                         type="button"
                         onClick={() => setEntangled(!isEntangled)}
-                        className={`w-full py-1.5 px-2 rounded text-xs font-mono font-semibold border transition-all ${
-                          isEntangled ? 'bg-purple-500/20 text-purple-300 border-purple-400' : 'bg-surface-2 text-muted-foreground border-edge hover:bg-surface-3'
+                        className={`w-full py-1.5 px-2 rounded text-xs telemetry-mono font-semibold transition-all cursor-pointer ${
+                          isEntangled
+                            ? 'hud-badge-purple'
+                            : 'bg-surface-2 text-muted-foreground border border-border hover:bg-surface-3'
                         }`}
                       >
                         {isEntangled ? '⚡ Bell Pair |Φ⁺⟩ Active' : 'Enable Bell Entanglement'}
@@ -247,8 +260,10 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                       </Button>
 
                       {lastOutcome !== null && (
-                        <div className="p-1.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-mono flex items-center justify-between">
-                          <span>Outcome: <b className="text-sky-600 dark:text-cyan-400">|{lastOutcome}⟩</b></span>
+                        <div className="p-1.5 rounded bg-surface-2 border border-border text-[11px] telemetry-mono flex items-center justify-between">
+                          <span>
+                            Outcome: <b className="text-quantum-cyan">|{lastOutcome}⟩</b>
+                          </span>
                           <span className="text-muted-foreground">P₀: {actualProb0}%</span>
                         </div>
                       )}
@@ -256,13 +271,15 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                   </div>
                 ) : activeMissionId === 'superposition' ? (
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[10px] tracking-wider text-slate-500 dark:text-slate-400 uppercase">
+                    <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase">
                       <span>Zero-Spoiler Hypothesis</span>
-                      <span className="text-[10px] text-slate-400">{isLocked ? '🔒 Locked' : '✏️ Unlocked'}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {isLocked ? '🔒 Locked' : '✏️ Unlocked'}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-500">P(|0⟩):</span>
+                      <span className="text-[11px] text-muted-foreground">P(|0⟩):</span>
                       <input
                         type="range"
                         min={0}
@@ -271,7 +288,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                         value={predictedP0}
                         onChange={(e) => setPredictedP0(Number(e.target.value))}
                         data-testid="prediction-slider"
-                        className="flex-1 accent-cyan cursor-pointer disabled:opacity-50 h-1.5 bg-slate-200 dark:bg-slate-800"
+                        className="flex-1 accent-cyan cursor-pointer disabled:opacity-50 h-1.5 bg-surface-3"
                       />
                       <span className="text-xs font-bold w-9 text-right tabular-nums">{predictedP0}%</span>
                     </div>
@@ -310,9 +327,17 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                     </div>
 
                     {lastOutcome !== null && (
-                      <div className="p-1.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-mono flex items-center justify-between">
-                        <span>Outcome: <b className="text-sky-600 dark:text-cyan-400">|{lastOutcome}⟩</b> (P₀: {actualProb0}%)</span>
-                        <span className={Math.abs(predictedP0 - actualProb0) <= 20 ? 'text-emerald-500 font-bold' : 'text-amber-500'}>
+                      <div className="p-1.5 rounded bg-surface-2 border border-border text-[11px] telemetry-mono flex items-center justify-between">
+                        <span>
+                          Outcome: <b className="text-quantum-cyan">|{lastOutcome}⟩</b> (P₀: {actualProb0}%)
+                        </span>
+                        <span
+                          className={
+                            Math.abs(predictedP0 - actualProb0) <= 20
+                              ? 'text-success font-bold'
+                              : 'text-warning'
+                          }
+                        >
                           {Math.abs(predictedP0 - actualProb0) <= 20 ? '✨ Match!' : 'Diverged'}
                         </span>
                       </div>

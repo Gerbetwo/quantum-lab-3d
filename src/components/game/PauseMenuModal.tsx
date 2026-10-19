@@ -92,20 +92,20 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
   return (
     <div
       data-testid="pause-menu-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md select-none"
     >
       <div
         data-testid="pause-menu-modal"
-        className="w-full max-w-md p-6 rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-2xl flex flex-col gap-5 text-foreground"
+        className="w-full max-w-md p-6 rounded-2xl hud-panel glow-cyan flex flex-col gap-5 text-foreground"
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-border/80">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
           <div>
-            <span className="text-[10px] font-mono tracking-widest text-cyan uppercase font-semibold">
+            <span className="text-[10px] telemetry-mono tracking-widest text-quantum-cyan uppercase font-semibold">
               Flight-Deck Control
             </span>
             <h2 className="text-base font-bold tracking-tight">PAUSE SIMULATION</h2>
-            <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
+            <p className="text-[11px] telemetry-mono text-muted-foreground mt-0.5">
               Active: <span className="text-foreground uppercase">{currentMissionId}</span>
             </p>
           </div>
@@ -113,7 +113,7 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
             type="button"
             onClick={handleResume}
             data-testid="pause-close-button"
-            className="p-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-edge transition-colors"
+            className="p-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border transition-colors cursor-pointer"
             title="Resume Simulation"
           >
             <X className="w-4 h-4" />
@@ -127,13 +127,13 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
             type="button"
             onClick={handleResume}
             data-testid="pause-resume-button"
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-mono font-bold bg-cyan/15 hover:bg-cyan/25 text-cyan border border-cyan/40 hover:border-cyan flex items-center justify-between transition-all active:scale-98 shadow-sm"
+            className="w-full py-2.5 px-4 rounded-xl text-xs telemetry-mono font-bold hud-badge-cyan hover:opacity-90 flex items-center justify-between transition-all active:scale-98 cursor-pointer"
           >
             <span className="flex items-center gap-2">
               <Play className="w-4 h-4 fill-current" />
               <span>RESUME</span>
             </span>
-            <span className="text-[10px] text-cyan/70 font-normal">ESC</span>
+            <span className="text-[10px] opacity-80 font-normal">ESC</span>
           </button>
 
           {/* 2. MISSION SELECTOR */}
@@ -141,9 +141,9 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
             type="button"
             onClick={handleMissionSelector}
             data-testid="pause-mission-selector-button"
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-mono font-semibold bg-surface-2 hover:bg-surface-3 text-foreground border border-edge flex items-center gap-2 transition-all active:scale-98"
+            className="w-full py-2.5 px-4 rounded-xl text-xs telemetry-mono font-semibold bg-surface-2 hover:bg-surface-3 text-foreground border border-border flex items-center gap-2 transition-all active:scale-98 cursor-pointer"
           >
-            <Grid className="w-4 h-4 text-purple-400" />
+            <Grid className="w-4 h-4 text-quantum-purple" />
             <span>MISSION SELECTOR</span>
           </button>
 
@@ -152,14 +152,14 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
             type="button"
             onClick={handleResetState}
             data-testid="pause-reset-state-button"
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-mono font-semibold bg-surface-2 hover:bg-surface-3 text-foreground border border-edge flex items-center justify-between transition-all active:scale-98"
+            className="w-full py-2.5 px-4 rounded-xl text-xs telemetry-mono font-semibold bg-surface-2 hover:bg-surface-3 text-foreground border border-border flex items-center justify-between transition-all active:scale-98 cursor-pointer"
           >
             <span className="flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-amber-400" />
+              <RotateCcw className="w-4 h-4 text-warning" />
               <span>RESET QUANTUM STATE</span>
             </span>
             {resetFeedback && (
-              <span className="text-[10px] text-amber-400 font-normal animate-pulse">|0⟩ RESET</span>
+              <span className="text-[10px] text-warning font-normal animate-pulse">|0⟩ RESET</span>
             )}
           </button>
 
@@ -168,17 +168,17 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
             type="button"
             onClick={handleExitToTitle}
             data-testid="pause-exit-title-button"
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-mono font-semibold bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-edge flex items-center gap-2 transition-all active:scale-98"
+            className="w-full py-2.5 px-4 rounded-xl text-xs telemetry-mono font-semibold bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border flex items-center gap-2 transition-all active:scale-98 cursor-pointer"
           >
-            <LogOut className="w-4 h-4 text-rose-400" />
+            <LogOut className="w-4 h-4 text-destructive" />
             <span>EXIT TO TITLE</span>
           </button>
         </div>
 
         {/* Options Drawer: Theme & Sound Controls */}
-        <div className="pt-3 border-t border-border/80 flex flex-col gap-2">
-          <div className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
-            <Sliders className="w-3.5 h-3.5 text-cyan" />
+        <div className="pt-3 border-t border-border flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 text-[11px] telemetry-mono text-muted-foreground uppercase tracking-wider">
+            <Sliders className="w-3.5 h-3.5 text-quantum-cyan" />
             <span>System Options</span>
           </div>
 
@@ -188,10 +188,14 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
               type="button"
               onClick={handleToggleTheme}
               data-testid="pause-theme-toggle"
-              className="py-2 px-3 rounded-lg text-xs font-mono bg-surface-2 hover:bg-surface-3 border border-edge flex items-center justify-between transition-colors"
+              className="py-2 px-3 rounded-lg text-xs telemetry-mono bg-surface-2 hover:bg-surface-3 border border-border flex items-center justify-between transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-1.5 text-muted-foreground">
-                {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-300" /> : <Moon className="w-3.5 h-3.5 text-cyan" />}
+                {theme === 'dark' ? (
+                  <Sun className="w-3.5 h-3.5 text-warning" />
+                ) : (
+                  <Moon className="w-3.5 h-3.5 text-quantum-cyan" />
+                )}
                 <span>Theme</span>
               </span>
               <span className="text-[11px] font-bold text-foreground">
@@ -204,10 +208,14 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
               type="button"
               onClick={handleToggleSound}
               data-testid="pause-sound-toggle"
-              className="py-2 px-3 rounded-lg text-xs font-mono bg-surface-2 hover:bg-surface-3 border border-edge flex items-center justify-between transition-colors"
+              className="py-2 px-3 rounded-lg text-xs telemetry-mono bg-surface-2 hover:bg-surface-3 border border-border flex items-center justify-between transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-1.5 text-muted-foreground">
-                {isSoundEnabled ? <Volume2 className="w-3.5 h-3.5 text-cyan" /> : <VolumeX className="w-3.5 h-3.5 text-rose-400" />}
+                {isSoundEnabled ? (
+                  <Volume2 className="w-3.5 h-3.5 text-quantum-cyan" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5 text-destructive" />
+                )}
                 <span>Audio</span>
               </span>
               <span className="text-[11px] font-bold text-foreground">
@@ -218,7 +226,7 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
         </div>
 
         {/* Footer Hint */}
-        <div className="text-center text-[10px] font-mono text-muted-foreground/60 border-t border-border/40 pt-2">
+        <div className="text-center text-[10px] telemetry-mono text-muted-foreground border-t border-border pt-2">
           PRESS [ESC] OR CLICK RESUME TO RETURN TO SIMULATION
         </div>
       </div>
