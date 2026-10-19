@@ -1,4 +1,3 @@
-import { LeanLabLayout } from '@/components/layout/AppShell';
 import {
   MISSIONS,
   type MissionDefinition,
@@ -7,6 +6,7 @@ import {
 } from '@/features/missions/missionRegistry';
 import { MissionWorkspace } from '@/features/missions/MissionWorkspace';
 import { notFound } from 'next/navigation';
+import { MissionLauncher } from './MissionLauncher';
 
 interface MissionPageProps {
   params: Promise<{ id: string }>;
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: MissionPageProps) {
 
 export default async function MissionPage({ params }: MissionPageProps) {
   const { id } = await params;
-  
+
   if (!isMissionId(id)) {
     notFound();
   }
@@ -46,10 +46,9 @@ export default async function MissionPage({ params }: MissionPageProps) {
   }
 
   return (
-    <LeanLabLayout>
-      <div className="flex-1 p-6 max-w-4xl mx-auto w-full">
-        <MissionWorkspace missionId={id} />
-      </div>
-    </LeanLabLayout>
+    <>
+      <MissionLauncher missionId={id} />
+      <MissionWorkspace missionId={id} />
+    </>
   );
 }

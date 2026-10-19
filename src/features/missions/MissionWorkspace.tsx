@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { isMissionId, type MissionId } from './missionRegistry';
 import { FoundationsControls } from './FoundationsControls';
@@ -24,9 +24,19 @@ interface MissionWorkspaceProps {
  * - Bottom-right: Dirac Math Dock (fixed bottom-4 right-4 z-20 w-80)
  */
 export function MissionWorkspace({ missionId: propMissionId, className = '' }: MissionWorkspaceProps) {
+  const appViewState = useQuantumStore((s) => s.appViewState);
+  const isSandbox = appViewState === 'SANDBOX';
+
   const storeMissionId = useQuantumStore((s) => s.currentMissionId ?? s.activeMissionId ?? 'superposition');
   const rawId = propMissionId || storeMissionId;
   const activeMissionId: MissionId = isMissionId(rawId) ? rawId : 'superposition';
+
+  const launchMission = useQuantumStore((s) => s.launchMission);
+  useEffect(() => {
+    if (appViewState !== 'SANDBOX' && propMissionId && isMissionId(propMissionId) && propMissionId !== storeMissionId) {
+      launchMission(propMissionId);
+    }
+  }, [appViewState, propMissionId, storeMissionId, launchMission]);
 
   const theta = useQuantumStore((s) => s.theta);
   const phi = useQuantumStore((s) => s.phi);
@@ -38,6 +48,12 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
   const lastOutcome = useQuantumStore((s) => s.lastOutcome);
   const userPredictionProb0 = useQuantumStore((s) => s.userPredictionProb0);
   const setUserPrediction = useQuantumStore((s) => s.setUserPrediction);
+
+  const temperatureK = useQuantumStore((s) => s.temperatureK);
+  const coherenceTimeUs = useQuantumStore((s) => s.coherenceTimeUs);
+  const setTemperatureK = useQuantumStore((s) => s.setTemperatureK);
+  const isEntangled = useQuantumStore((s) => s.isEntangled);
+  const setEntangled = useQuantumStore((s) => s.setEntangled);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [predictedP0, setPredictedP0] = useState<number>(userPredictionProb0 !== null ? Math.round(userPredictionProb0 * 100) : 50);
@@ -69,7 +85,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
         className="fixed bottom-4 left-4 z-20 w-80 pointer-events-auto select-none"
       >
         <GlassCard
-          title="Gate Controls"
+          title={isSandbox ? 'Sandbox Controls' : 'Gate Controls'}
           badge="U(θ,φ)"
           telemetryId="CTRL.01"
           cornerNotch={true}
@@ -184,9 +200,61 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                 </div>
               </div>
 
-              {/* Mission-Specific Tactical Controls */}
+              {/* Mission-Specific or Sandbox Tactical Controls */}
               <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 space-y-2">
-                {activeMissionId === 'superposition' ? (
+                {isSandbox ? (
+                  <div className="space-y-3 font-mono text-xs">
+                    {/* Thermal Decoherence Chamber */}
+                    <div className="p-2.5 rounded-lg bg-surface-2 border border-edge flex flex-col gap-2">
+                      <div className="flex items-center justify-between text-[10px] uppercase font-bold text-amber-500 dark:text-amber-400">
+                        <span>Thermal Chamber (15 mK – 300 K)</span>
+                        <span>{temperatureK >= 1 ? `${temperatureK.toFixed(1)} K` : `${Math.round(temperatureK * 1000)} mK`}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.015"
+                        max="300"
+                        step="0.5"
+                        value={temperatureK}
+                        onChange={(e) => setTemperatureK(parseFloat(e.target.value))}
+                        className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-800"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>T₂(T): <b className="text-emerald-500 dark:text-emerald-400 font-bold">{coherenceTimeUs.toFixed(1)} μs</b></span>
+                      </div>
+                    </div>
+
+                    {/* Entanglement & Collapse */}
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEntangled(!isEntangled)}
+                        className={`w-full py-1.5 px-2 rounded text-xs font-mono font-semibold border transition-all ${
+                          isEntangled ? 'bg-purple-500/20 text-purple-300 border-purple-400' : 'bg-surface-2 text-muted-foreground border-edge hover:bg-surface-3'
+                        }`}
+                      >
+                        {isEntangled ? '⚡ Bell Pair |Φ⁺⟩ Active' : 'Enable Bell Entanglement'}
+                      </button>
+
+                      <Button
+                        variant="primary"
+                        cornerNotch
+                        onClick={() => measure()}
+                        data-testid="measure-collapse-button"
+                        className="w-full text-xs py-1.5"
+                      >
+                        Measure & Collapse Wavefunction
+                      </Button>
+
+                      {lastOutcome !== null && (
+                        <div className="p-1.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-mono flex items-center justify-between">
+                          <span>Outcome: <b className="text-sky-600 dark:text-cyan-400">|{lastOutcome}⟩</b></span>
+                          <span className="text-muted-foreground">P₀: {actualProb0}%</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : activeMissionId === 'superposition' ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[10px] tracking-wider text-slate-500 dark:text-slate-400 uppercase">
                       <span>Zero-Spoiler Hypothesis</span>
