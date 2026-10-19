@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AppShell } from '@/components/layout/AppShell';
-import { SessionProvider } from '@/archive/legacy-store-telemetry';
+import { SessionProvider } from '@/components/layout/SessionProvider';
 
 export const metadata: Metadata = {
   title: 'QuantumLab 3D',

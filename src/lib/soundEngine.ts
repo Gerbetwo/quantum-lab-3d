@@ -23,6 +23,17 @@ export function toggleAudio(): boolean {
   return next;
 }
 
+let _userInteracted = false;
+
+export function __markUserInteracted(): void {
+  _userInteracted = true;
+}
+
+export function __resetAudioOverride(): void {
+  runtimeAudioOverride = null;
+  _userInteracted = false;
+}
+
 export class SoundEngine {
   private ctx: AudioContext | null = null;
 
@@ -177,6 +188,26 @@ export class SoundEngine {
     } catch (_err) { /* fail-safe */ }
   }
 
+  public playErrorSound(): void {
+    if (!isAudioEnabled()) return;
+    const ctx = this.getContext();
+    if (!ctx || ctx.state !== 'running') return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, now);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.2);
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    } catch (_err) { /* Safe */ }
+  }
+
   // Compatibility aliases
   public playMeasurementSound(): void { this.playStateCollapse(); }
   public playSuccessSound(): void { this.playMissionComplete(); }
@@ -186,6 +217,7 @@ export class SoundEngine {
 // Global Singleton Export
 export const soundEngine = new SoundEngine();
 export const audioEngine = soundEngine;
+export const QuantumAudioEngine = SoundEngine;
 
 // Standalone Helper Functions
 export const playVectorSnap = (): void => soundEngine.playVectorSnap();
@@ -195,3 +227,29 @@ export const playStateCollapse = (): void => soundEngine.playStateCollapse();
 export const playMeasurementSound = (): void => soundEngine.playMeasurementSound();
 export const playMissionComplete = (): void => soundEngine.playMissionComplete();
 export const playSuccessSound = (): void => soundEngine.playSuccessSound();
+export const playErrorSound = (): void => soundEngine.playErrorSound();
+
+export function playNote(freq = 440, duration = 0.1): void {
+  if (!isAudioEnabled()) return;
+  const ctx = soundEngine.getContext();
+  if (!ctx || ctx.state !== 'running') return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (_err) { /* Safe */ }
+}
+
+export const playChimeSuccess = (): void => soundEngine.playSuccessSound();
+export const playQuantumCollapse = (): void => soundEngine.playMeasurementSound();
+export const playMeasurementCollapse = (_n?: number): void => soundEngine.playMeasurementSound();
+export const playGateForQubit = (_q?: number, gate = 'H'): void => soundEngine.playGateSound(gate);
+export const playDecoherenceAlert = (): void => soundEngine.playErrorSound();
+export const playLaserScan = (): void => soundEngine.playGateSound('LASER');
+export const playButtonClick = (): void => playNote(600, 0.05);
+export const playHover = (): void => playNote(300, 0.02);
+

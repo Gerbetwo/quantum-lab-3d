@@ -5,7 +5,7 @@ import { CheckCircle2, Lock, PlayCircle } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 import { PageContainer, PageHeader } from '@/components/layout/AppShell';
-import { useSession } from '@/archive/legacy-store-telemetry';
+import { useQuantumStore } from '@/store/useQuantumStore';
 import { MISSIONS, type MissionDefinition } from '@/features/missions/missionRegistry';
 
 function CardWrapper({
@@ -28,8 +28,7 @@ function CardWrapper({
 }
 
 export default function LearnPage() {
-  const { session, isHydrated } = useSession();
-  const completedIds = session?.completed || [];
+  const completedIds = useQuantumStore((s) => s.completedMissions ?? []);
 
   return (
     <PageContainer className="py-8">
@@ -40,9 +39,9 @@ export default function LearnPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
         {MISSIONS.map((mission: MissionDefinition, index: number) => {
-          const isCompleted = isHydrated && completedIds.includes(mission.id);
+          const isCompleted = completedIds.includes(mission.id) || completedIds.includes(index);
           const prereqs = mission.prerequisites || [];
-          const isUnlocked = !isHydrated || index === 0 || prereqs.every((p: string) => (completedIds as readonly string[]).includes(p));
+          const isUnlocked = index === 0 || prereqs.every((p: string) => (completedIds as readonly string[]).includes(p));
           const cardProps = isUnlocked ? { href: `/missions/${mission.id}` } : {};
 
           return (
