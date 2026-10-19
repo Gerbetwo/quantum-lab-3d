@@ -41,7 +41,7 @@ export function EntanglementOverlay({ className = '' }: EntanglementOverlayProps
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse" />
           <h3 className="text-xs font-mono font-bold tracking-wider text-cyan uppercase">
-            HU-MVP-04: Bell State |Φ⁺⟩ Correlation
+            Bell State |Φ⁺⟩ Correlation
           </h3>
         </div>
         <span

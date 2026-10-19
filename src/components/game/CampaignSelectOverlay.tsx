@@ -3,16 +3,13 @@
 import React from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { soundEngine } from '@/lib/soundEngine';
+import { useTranslation, DICTIONARY } from '@/lib/i18n';
 import type { MissionId } from '@/features/missions/missionRegistry';
 import {
   Sparkles,
   ArrowRight,
   ArrowLeft,
   Beaker,
-  CheckCircle2,
-  PlayCircle,
-  Cpu,
-  Layers,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -113,12 +110,12 @@ interface CampaignSelectOverlayProps {
 }
 
 export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOverlayProps = {}) {
+  const { language } = useTranslation();
   const appViewState = useQuantumStore((s) => s.appViewState);
   const setAppViewState = useQuantumStore((s) => s.setAppViewState);
   const returnToTitle = useQuantumStore((s) => s.returnToTitle);
   const launchMission = useQuantumStore((s) => s.launchMission);
   const completedMissions = useQuantumStore((s) => s.completedMissions);
-  const isSandboxUnlocked = useQuantumStore((s) => s.isSandboxUnlocked);
 
   if (appViewState !== 'CAMPAIGN_SELECT' && !forceVisible) {
     return null;
@@ -196,15 +193,18 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
         <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {CAMPAIGN_NODES.map((node) => {
             const isCompleted = completedMissions.includes(node.index);
+            const missionData = DICTIONARY[language]?.missions[node.id];
+            const title = missionData?.title ?? node.title;
+            const subtitle = missionData?.subtitle ?? node.subtitle;
 
             return (
               <div
                 key={node.id}
                 data-testid={`mission-card-${node.id}`}
-                className={`p-5 rounded-xl border flex flex-col justify-between gap-4 transition-all duration-200 bg-card/70 backdrop-blur-sm ${
+                className={`p-5 rounded-xl border flex flex-col justify-between gap-4 transition-all duration-200 border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95 ${
                   isCompleted
-                    ? 'border-emerald-500/40 hover:border-emerald-400/70 shadow-[0_0_15px_rgba(16,185,129,0.08)]'
-                    : 'border-border hover:border-cyan/50 hover:shadow-[0_0_15px_rgba(0,243,255,0.08)]'
+                    ? 'border-emerald-500/60 dark:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.08)]'
+                    : 'hover:border-cyan-500/60 dark:hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(0,243,255,0.08)]'
                 }`}
               >
                 <div className="flex flex-col gap-2.5">
@@ -220,37 +220,17 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                     </span>
                   </div>
 
-                  {/* Core Concept Badge */}
-                  <div className="inline-flex items-center gap-1.5 text-xs font-mono text-foreground font-semibold">
-                    <Cpu className="w-3.5 h-3.5 text-cyan" />
-                    <span>{node.concept}</span>
-                  </div>
-
                   {/* Titles */}
                   <div>
-                    <h3 className="text-sm font-bold text-foreground">{node.title}</h3>
+                    <h3 className="text-sm font-bold text-foreground">{title}</h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
-                      {node.subtitle}
+                      {subtitle}
                     </p>
                   </div>
                 </div>
 
-                {/* Card Footer: Status Badge & Launch Button */}
-                <div className="pt-3 border-t border-edge flex flex-col gap-3">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-muted-foreground text-[11px]">Telemetry Status</span>
-                    {isCompleted ? (
-                      <span className="text-emerald-400 flex items-center gap-1 text-[11px] font-medium">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> COMPLETED
-                      </span>
-                    ) : (
-                      <span className="text-cyan/80 flex items-center gap-1 text-[11px]">
-                        <PlayCircle className="w-3.5 h-3.5" /> READY
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Direct Launch Control */}
+                {/* Direct Launch Control */}
+                <div className="pt-3 border-t border-edge flex flex-col">
                   <button
                     type="button"
                     onClick={() => handleLaunch(node.id)}
@@ -268,7 +248,7 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
           {/* Sandbox Node */}
           <div
             data-testid="mission-card-sandbox"
-            className="p-5 rounded-xl border border-purple-500/30 bg-card/70 backdrop-blur-sm flex flex-col justify-between gap-4 transition-all duration-200 hover:border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
+            className="p-5 rounded-xl border border-slate-300 dark:border-slate-800 bg-white/95 dark:bg-[#0B0E14]/95 flex flex-col justify-between gap-4 transition-all duration-200 hover:border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
           >
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between gap-2">
@@ -280,11 +260,6 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 </span>
               </div>
 
-              <div className="inline-flex items-center gap-1.5 text-xs font-mono text-purple-300 font-semibold">
-                <Layers className="w-3.5 h-3.5 text-purple-400" />
-                <span>Arbitrary Qubit Lab</span>
-              </div>
-
               <div>
                 <h3 className="text-sm font-bold text-foreground">Quantum Sandbox Lab</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
@@ -293,15 +268,7 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
               </div>
             </div>
 
-            <div className="pt-3 border-t border-edge flex flex-col gap-3">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-muted-foreground text-[11px]">Lab Clearance</span>
-                <span className="text-purple-400 flex items-center gap-1 text-[11px] font-medium">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  {isSandboxUnlocked ? 'UNLOCKED' : 'AVAILABLE'}
-                </span>
-              </div>
-
+            <div className="pt-3 border-t border-edge flex flex-col">
               <button
                 type="button"
                 onClick={handleGoToSandbox}

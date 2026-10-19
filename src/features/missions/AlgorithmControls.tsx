@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
+import { useTranslation } from '@/lib/i18n';
 import { simulateGroverStep, runShorDemo, simulate3QubitBitFlipEC } from '@/core/algorithms';
 import type { MissionId } from './missionRegistry';
 
@@ -10,6 +11,8 @@ interface AlgorithmControlsProps {
 }
 
 export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
+  const { t } = useTranslation();
+
   // Grover State (Mission 4)
   const groverStep = useQuantumStore((s) => s.groverStep);
   const targetIndex = useQuantumStore((s) => s.groverTargetIndex);
@@ -33,7 +36,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
       <div className="flex flex-col gap-2 p-3 rounded-lg bg-surface-2 border border-edge">
         <div className="flex items-center justify-between">
           <span className="text-xs font-mono font-semibold text-cyan uppercase">
-            HU-MVP-06: Grover Search (N=4)
+            {t('algorithms.grover_title')}
           </span>
           <span className="text-[10px] font-mono text-muted-foreground">Step {groverStep}/2</span>
         </div>
@@ -86,7 +89,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
     return (
       <div className="flex flex-col gap-2 p-3 rounded-lg bg-surface-2 border border-edge">
         <span className="text-xs font-mono font-semibold text-purple-400 uppercase">
-          HU-MVP-07: Shor Factoring (N = 15)
+          {t('algorithms.shor_title')}
         </span>
         <div className="flex items-center gap-1.5 text-xs font-mono">
           <span className="text-muted-foreground">Base a:</span>
@@ -120,7 +123,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
   return (
     <div className="flex flex-col gap-2 p-3 rounded-lg bg-surface-2 border border-edge">
       <span className="text-xs font-mono font-semibold text-emerald-400 uppercase">
-        HU-MVP-08: 3-Qubit Bit-Flip QEC
+        {t('algorithms.qec_title')}
       </span>
       <div className="text-xs font-mono text-muted-foreground">
         Logical: |ψ⟩ → α|000⟩ + β|111⟩
