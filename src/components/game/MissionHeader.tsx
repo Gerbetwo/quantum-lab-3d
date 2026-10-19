@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation, DICTIONARY } from '@/lib/i18n';
 import { getMissionById, isMissionId, getMissionIndex, type MissionId } from '@/features/missions/missionRegistry';
 import { Sliders, Sparkles, CheckCircle2, Globe, ArrowLeft } from 'lucide-react';
 
@@ -34,7 +34,9 @@ export function MissionHeader({ missionId: propMissionId, className = '' }: Miss
     setLanguage(language === 'es' ? 'en' : 'es');
   };
 
-  const objectiveText = mission?.learningObjective ?? mission?.description ?? 'Explore quantum state kinematics';
+  const missionI18n = DICTIONARY[language]?.missions?.[activeMissionId];
+  const missionTitle = missionI18n?.title ?? mission?.title ?? activeMissionId;
+  const objectiveText = missionI18n?.learningObjective ?? missionI18n?.description ?? mission?.learningObjective ?? mission?.description ?? 'Explore quantum state kinematics';
 
   return (
     <header
@@ -61,7 +63,7 @@ export function MissionHeader({ missionId: propMissionId, className = '' }: Miss
             data-testid="mission-title"
             className="text-xs font-mono font-bold text-slate-900 dark:text-cyan-400 uppercase tracking-wide truncate max-w-[140px] sm:max-w-[220px]"
           >
-            {mission?.title ?? activeMissionId}
+            {missionTitle}
           </span>
         </div>
 

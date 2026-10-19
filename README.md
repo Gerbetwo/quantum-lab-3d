@@ -1,12 +1,6 @@
-Here is the updated and streamlined top-level project documentation (`README.md`), revised to reflect the current Next.js version, seven guided missions, actual route structure, persistence behavior, and available scripts while removing obsolete or unverified claims.
-
----
-
 # QuantumLab 3D — Experimental Interactive Platform
 
 > A high-performance interactive 3D WebGL platform for educational experimentation in Quantum Computing basics. Built with **Next.js 16**, **Three.js**, **Tailwind CSS**, and **TypeScript**.
-> 
-> 
 
 ---
 
@@ -15,19 +9,16 @@ Here is the updated and streamlined top-level project documentation (`README.md`
 The platform features **seven guided quantum missions** designed for active discovery learning:
 
 * **Missions 0–3:** Core quantum foundations including superposition, Bloch sphere representation, entanglement, and thermal decoherence.
-* **Missions 4–6:** Advanced quantum concepts and algorithmic explorations.
+* **Missions 4–6:** Advanced quantum algorithms (Grover search, Shor factorization, 3-qubit bit-flip QEC).
 
 ---
 
 ## 🚀 Technical Highlights
 
-* **Persistence:** Session tracking and user progress managed via local cookies (`js-cookie`).
-
-
-* **Audio Engine:** Web Audio API synthesized procedural sound effects.
-* **Architecture:** Built on the Next.js App Router and Three.js 3D WebGL rendering pipeline.
-
-
+* **Persistence:** Session tracking and user progress managed via local cookies (`js-cookie`) and Zustand storage.
+* **Audio Engine:** Web Audio API synthesized procedural sound effects without external audio assets.
+* **Unified State & Single WebGL Context:** Centralized Zustand store routing with persistent singleton WebGLRenderer canvas.
+* **Built-in i18n:** Zero-dependency ES/EN dictionary and translation selector.
 
 ---
 
@@ -48,7 +39,6 @@ npm run dev
 
 # Build for production
 npm run build
-
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -59,12 +49,15 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```text
 src/
-|-- app/                       # Next.js App Router (layout.tsx, page.tsx)
-|-- components/                # UI components and 3D mission modules
-|-- domain/quantum/            # Pure domain logic for quantum calculations
-|-- hooks/                     # Custom React hooks (e.g., useThreeScene)
-\-- lib/                       # Utilities, cookies persistence, sound engine, Three.js setup
-
+|-- app/                       # Next.js App Router (layout.tsx, page.tsx, learn/, sandbox/, missions/)
+|-- components/                # Tactical HUD overlays, App Shell, modals, and design tokens
+|-- core/                      # Pure quantum math & algorithms (qubitMath, decoherenceMath, algorithms)
+|-- features/
+|   |-- quantum-core/          # WebGL Bloch viewport, raycasting gizmos, shader overlays, particles
+|   \-- missions/              # Mission registry, in-mission workspace, and algorithm controls
+|-- lib/                       # Web Audio procedural sound engine, i18n dictionary, utilities
+|-- store/                     # Unified Zustand store (useQuantumStore.ts)
+\-- tests/                     # Vitest unit & component integration test suites
 ```
 
 ---
@@ -73,4 +66,6 @@ src/
 
 * `npm run dev` — Starts the local development server.
 * `npm run build` — Compiles the application for production.
+* `npm run test` — Runs the Vitest test suites.
 * `npm run lint` — Runs ESLint code quality checks.
+* `npm run test:e2e` — Runs Playwright end-to-end flight-deck tests.
