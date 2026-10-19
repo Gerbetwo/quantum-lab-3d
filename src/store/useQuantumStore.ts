@@ -6,11 +6,6 @@ import { soundEngine, setAudioEnabled, isAudioEnabled } from "@/lib/soundEngine"
 import { type MissionId, getMissionById, getMissionIndex, TOTAL_MISSIONS } from "@/features/missions/missionRegistry";
 
 export type AppViewState = "TITLE" | "CAMPAIGN_SELECT" | "SANDBOX" | "IN_MISSION";
-
-export type MissionPhase =
-  | "BRIEFING" | "PREDICTION" | "EXPERIMENT" | "OBSERVATION" | "ANALYSIS"
-  | "COMPLETED" | "MANIPULATION" | "MEASUREMENT" | "VERIFICATION" | "SUCCESS";
-
 export type Language = 'en' | 'es';
 export type Theme = 'dark' | 'light';
 
@@ -19,70 +14,54 @@ export interface QuantumStore {
   language: Language;
   appViewState: AppViewState;
   isPauseMenuOpen: boolean;
-  theta: number; phi: number; temperatureK: number; coherenceTimeUs: number;
-  entanglementDegree: number; isEntangled: boolean; lastOutcome: 0 | 1 | null;
-  currentMissionId: MissionId; activeMissionId: MissionId; activeMission: MissionId;
-  activeStepIndex: number; currentPhase: MissionPhase; userPredictionProb0: number | null;
-  appliedGates: string[]; missionState: Record<string, unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  completedMissions: number[] & any; completed: any; progress: number[];
-  isSandboxUnlocked: boolean;
-  elapsedSeconds: number; isRunning: boolean;
 
-  // Algorithm state (Missions 4–6)
+  // Physics State
+  theta: number;
+  phi: number;
+  temperatureK: number;
+  coherenceTimeUs: number;
+  isEntangled: boolean;
+  lastOutcome: 0 | 1 | null;
+
+  // Navigation & Progress
+  currentMissionId: MissionId;
+  completedMissions: number[];
+  isSandboxUnlocked: boolean;
+  userPredictionProb0: number | null;
+
+  // Algorithm State (Missions 4-6)
   groverStep: number;
   groverTargetIndex: number;
   shorBase: number;
   qecInjectedError: number | null;
-
-  // Audio system state
   isSoundEnabled: boolean;
-  soundEnabled: boolean;
 
+  // Actions
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
   setAppViewState: (view: AppViewState) => void;
   togglePauseMenu: () => void;
   returnToTitle: () => void;
-  launchMission: (id: MissionId | number | string) => void;
+  selectMission: (id: MissionId | number) => void;
 
   setGroverStep: (step: number | ((prev: number) => number)) => void;
-  setGroverTargetIndex: (targetIndex: number) => void;
-  setShorBase: (shorBase: number) => void;
-  setQecInjectedError: (qecInjectedError: number | null) => void;
+  setGroverTargetIndex: (idx: number) => void;
+  setShorBase: (base: number) => void;
+  setQecInjectedError: (err: number | null) => void;
   toggleSound: () => boolean;
-  setSoundEnabled: (enabled: boolean) => void;
 
   setAngles: (theta: number, phi: number) => void;
   setTheta: (theta: number) => void;
   setPhi: (phi: number) => void;
-  setTemperature: (temperatureK: number) => void;
-  setTemperatureK: (temperatureK: number) => void;
-  setEntangled: (isEntangled: boolean) => void;
+  setTemperature: (tempK: number) => void;
+  setEntangled: (entangled: boolean) => void;
   setLastOutcome: (outcome: 0 | 1 | null) => void;
   applyGate: (gate: string) => void;
-  applyGateToMission: (gate: string) => void;
   measure: () => 0 | 1;
-  setPrediction: (prob0: number) => void;
-  setUserPrediction: (prob0: number) => void;
-  transitionPhase: (phase: MissionPhase) => void;
-  transitionMissionPhase: (phase: MissionPhase) => void;
-  evaluateMissionStep: (targetTheta?: number, targetPhi?: number) => boolean;
-  markMissionCompleted: (id: number | MissionId | string) => void;
-  completeMission: (id: number | MissionId | string) => void;
-  setSandboxUnlocked: (unlocked: boolean) => void;
-  unlockSandbox: () => void;
-  resetProgress: () => void;
-  recordMissionTime: (id: MissionId | string, durationSeconds: number) => void;
-  jumpToMission: (id: MissionId | number) => void;
-  startMission: (id: MissionId | number) => void;
-  selectMission: (id: MissionId | number) => void;
+  setUserPrediction: (prob0: number | null) => void;
+  markMissionCompleted: (id: number | MissionId) => void;
   resetState: () => void;
-  tick: () => void;
-  pause: () => void;
-  resume: () => void;
-  resetTimer: () => void;
 }
 
 const COOKIE_COMPLETED = "quantum_completed_missions";
@@ -151,9 +130,14 @@ function getInitialPersisted(): { completedMissions: number[]; isSandboxUnlocked
 }
 
 const INITIAL_PHYSICS = {
-  theta: 0, phi: 0, temperatureK: 0.015, coherenceTimeUs: calculateT2CoherenceTime(15),
-  entanglementDegree: 0, isEntangled: false, lastOutcome: null as 0 | 1 | null,
+  theta: 0,
+  phi: 0,
+  temperatureK: 0.015,
+  coherenceTimeUs: calculateT2CoherenceTime(15),
+  isEntangled: false,
+  lastOutcome: null as 0 | 1 | null,
 };
+
 const init = getInitialPersisted();
 const initialTheme = getInitialTheme();
 if (typeof window !== "undefined") {
@@ -168,17 +152,16 @@ export const useQuantumStore = create<QuantumStore>()(
       appViewState: "TITLE",
       isPauseMenuOpen: false,
       ...INITIAL_PHYSICS,
-      currentMissionId: "superposition", activeMissionId: "superposition", activeMission: "superposition",
-      activeStepIndex: 0, currentPhase: "BRIEFING", userPredictionProb0: null, appliedGates: [], missionState: {},
-      completedMissions: init.completedMissions, completed: init.completedMissions,
-      progress: init.completedMissions.length ? [init.completedMissions.length] : [0],
-      isSandboxUnlocked: init.isSandboxUnlocked, elapsedSeconds: 0, isRunning: true,
+      currentMissionId: "superposition",
+      completedMissions: init.completedMissions,
+      isSandboxUnlocked: init.isSandboxUnlocked,
+      userPredictionProb0: null,
+
       groverStep: 0,
       groverTargetIndex: 2,
       shorBase: 7,
       qecInjectedError: null,
       isSoundEnabled: isAudioEnabled(),
-      soundEnabled: isAudioEnabled(),
 
       setTheme: (theme: Theme) => {
         set({ theme });
@@ -197,9 +180,26 @@ export const useQuantumStore = create<QuantumStore>()(
       setAppViewState: (appViewState) => set({ appViewState }),
       togglePauseMenu: () => set((s) => ({ isPauseMenuOpen: !s.isPauseMenuOpen })),
       returnToTitle: () => set({ appViewState: "TITLE", isPauseMenuOpen: false }),
-      launchMission: (id) => {
-        get().jumpToMission(id as MissionId | number);
-        set({ appViewState: "IN_MISSION", isPauseMenuOpen: false });
+
+      selectMission: (id) => {
+        const config = getMissionById(id) ?? getMissionById(0)!;
+        const tempK = config.initialTemperatureK;
+        set({
+          currentMissionId: config.id,
+          theta: config.initialTheta,
+          phi: config.initialPhi,
+          temperatureK: tempK,
+          coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(tempK)),
+          isEntangled: config.id === "entanglement",
+          lastOutcome: null,
+          userPredictionProb0: null,
+          groverStep: 0,
+          groverTargetIndex: 2,
+          shorBase: 7,
+          qecInjectedError: null,
+          appViewState: "IN_MISSION",
+          isPauseMenuOpen: false,
+        });
       },
 
       setGroverStep: (step) =>
@@ -213,12 +213,8 @@ export const useQuantumStore = create<QuantumStore>()(
       toggleSound: () => {
         const next = !get().isSoundEnabled;
         setAudioEnabled(next);
-        set({ isSoundEnabled: next, soundEnabled: next });
+        set({ isSoundEnabled: next });
         return next;
-      },
-      setSoundEnabled: (enabled: boolean) => {
-        setAudioEnabled(enabled);
-        set({ isSoundEnabled: enabled, soundEnabled: enabled });
       },
 
       setAngles: (theta, phi) => set({ theta, phi }),
@@ -226,8 +222,7 @@ export const useQuantumStore = create<QuantumStore>()(
       setPhi: (phi) => set({ phi }),
       setTemperature: (temperatureK) =>
         set({ temperatureK, coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(temperatureK)) }),
-      setTemperatureK: (temperatureK) => get().setTemperature(temperatureK),
-      setEntangled: (isEntangled) => set({ isEntangled, entanglementDegree: isEntangled ? 1 : 0 }),
+      setEntangled: (isEntangled) => set({ isEntangled }),
       setLastOutcome: (lastOutcome) => set({ lastOutcome }),
 
       applyGate: (gate) => {
@@ -241,11 +236,6 @@ export const useQuantumStore = create<QuantumStore>()(
         soundEngine.playGateSound(gate);
       },
 
-      applyGateToMission: (gate) => {
-        set((s) => ({ appliedGates: [...s.appliedGates, gate] }));
-        get().applyGate(gate);
-      },
-
       measure: () => {
         const { theta } = get();
         const p0 = Math.cos(theta / 2) ** 2;
@@ -255,19 +245,7 @@ export const useQuantumStore = create<QuantumStore>()(
         return outcome;
       },
 
-      setPrediction: (prob0) => set({ userPredictionProb0: prob0 }),
       setUserPrediction: (prob0) => set({ userPredictionProb0: prob0 }),
-      transitionPhase: (phase) => set({ currentPhase: phase }),
-      transitionMissionPhase: (phase) => set({ currentPhase: phase }),
-
-      evaluateMissionStep: (targetTheta, targetPhi) => {
-        set((s) => ({ activeStepIndex: s.activeStepIndex + 1 }));
-        if (targetTheta !== undefined && targetPhi !== undefined) {
-          const { theta, phi } = get();
-          return Math.abs(theta - targetTheta) <= 0.08 && Math.abs(phi - targetPhi) <= 0.08;
-        }
-        return true;
-      },
 
       markMissionCompleted: (id) => {
         const idx = typeof id === "number" ? id : getMissionIndex(id);
@@ -276,69 +254,24 @@ export const useQuantumStore = create<QuantumStore>()(
         if (!current.includes(idx)) {
           const updated = Array.from(new Set([...current, idx])).sort((a, b) => a - b);
           const unlocked = updated.length >= TOTAL_MISSIONS || get().isSandboxUnlocked;
-          set({ completedMissions: updated, completed: updated, progress: updated, isSandboxUnlocked: unlocked });
+          set({ completedMissions: updated, isSandboxUnlocked: unlocked });
           syncCookies(updated, unlocked);
           soundEngine.playSuccessSound();
         }
       },
 
-      completeMission: (id) => get().markMissionCompleted(id),
-      setSandboxUnlocked: (unlocked) => {
-        set({ isSandboxUnlocked: unlocked });
-        syncCookies(get().completedMissions, unlocked);
-      },
-      unlockSandbox: () => get().setSandboxUnlocked(true),
-
-      resetProgress: () => {
-        if (typeof window !== "undefined") {
-          try {
-            Cookies.remove(COOKIE_COMPLETED);
-            Cookies.remove(COOKIE_SANDBOX);
-          } catch (_e) { /* Safe */ }
-        }
-        set({ completedMissions: [], completed: [], progress: [0], isSandboxUnlocked: false });
-      },
-
-      recordMissionTime: () => {},
-
-      jumpToMission: (id) => {
-        const config = getMissionById(id) ?? getMissionById(0)!;
-        const tempK = config.initialTemperatureK;
-        set({
-          currentMissionId: config.id, activeMissionId: config.id, activeMission: config.id,
-          theta: config.initialTheta, phi: config.initialPhi, temperatureK: tempK,
-          coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(tempK)),
-          isEntangled: config.id === "entanglement", entanglementDegree: config.id === "entanglement" ? 1 : 0,
-          lastOutcome: null, userPredictionProb0: null, currentPhase: "BRIEFING", activeStepIndex: 0, appliedGates: [],
-          groverStep: 0, groverTargetIndex: 2, shorBase: 7, qecInjectedError: null,
-        });
-      },
-
-      startMission: (id) => get().jumpToMission(id),
-      selectMission: (id) => get().jumpToMission(id),
-
       resetState: () =>
         set({
           ...INITIAL_PHYSICS,
           userPredictionProb0: null,
-          currentPhase: "BRIEFING",
-          activeStepIndex: 0,
-          appliedGates: [],
           groverStep: 0,
           groverTargetIndex: 2,
           shorBase: 7,
           qecInjectedError: null,
         }),
-
-      tick: () => {
-        if (get().isRunning) set((s) => ({ elapsedSeconds: s.elapsedSeconds + 1 }));
-      },
-      pause: () => set({ isRunning: false }),
-      resume: () => set({ isRunning: true }),
-      resetTimer: () => set({ elapsedSeconds: 0 }),
     }),
     {
-      name: "quantum_lab_session_v2",
+      name: "quantum_lab_session_v3",
       storage: createJSONStorage(() => (typeof window !== "undefined" && window.localStorage ? window.localStorage : {
         getItem: () => null,
         setItem: () => {},
@@ -346,8 +279,6 @@ export const useQuantumStore = create<QuantumStore>()(
       })),
       partialize: (s) => ({
         completedMissions: s.completedMissions,
-        completed: s.completed,
-        progress: s.progress,
         isSandboxUnlocked: s.isSandboxUnlocked,
         language: s.language,
         theme: s.theme,

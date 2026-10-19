@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
+import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/Button';
 import type { MissionId } from './missionRegistry';
 
@@ -10,6 +11,7 @@ interface FoundationsControlsProps {
 }
 
 export function FoundationsControls({ missionId }: FoundationsControlsProps) {
+  const { t } = useTranslation();
   const theta = useQuantumStore((s) => s.theta);
   const phi = useQuantumStore((s) => s.phi);
   const temperatureK = useQuantumStore((s) => s.temperatureK);
@@ -24,7 +26,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
     return (
       <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-surface-2">
         <span className="text-xs telemetry-mono font-semibold text-quantum-cyan uppercase tracking-wider">
-          Superposition Presets
+          {t('foundations.superposition_presets')}
         </span>
         <div className="grid grid-cols-2 gap-2 mt-1">
           <Button
@@ -34,7 +36,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             onClick={() => { setTheta(0); setPhi(0); }}
             className="normal-case telemetry-mono text-xs"
           >
-            |0⟩ Ground (θ=0)
+            {t('foundations.ground_state')}
           </Button>
           <Button
             type="button"
@@ -43,7 +45,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             onClick={() => { setTheta(Math.PI); setPhi(0); }}
             className="normal-case telemetry-mono text-xs"
           >
-            |1⟩ Excited (θ=π)
+            {t('foundations.excited_state')}
           </Button>
           <Button
             type="button"
@@ -52,7 +54,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             onClick={() => { setTheta(Math.PI / 2); setPhi(0); }}
             className="normal-case telemetry-mono text-xs"
           >
-            |+⟩ Superposition
+            {t('foundations.plus_state')}
           </Button>
           <Button
             type="button"
@@ -61,7 +63,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             onClick={() => { setTheta(Math.PI / 2); setPhi(Math.PI); }}
             className="normal-case telemetry-mono text-xs"
           >
-            |−⟩ Phase Opposite
+            {t('foundations.minus_state')}
           </Button>
         </div>
       </div>
@@ -72,7 +74,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
     return (
       <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-surface-2">
         <span className="text-xs telemetry-mono font-semibold text-quantum-purple uppercase tracking-wider">
-          Bell State |Φ⁺⟩ Controls
+          {t('foundations.bell_controls')}
         </span>
         <div className="flex gap-2 mt-1">
           <Button
@@ -82,7 +84,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             onClick={() => { setEntangled(true); setTheta(Math.PI / 2); }}
             className="flex-1 normal-case telemetry-mono text-xs"
           >
-            Create |Φ⁺⟩ = 1/√2(|00⟩+|11⟩)
+            {t('foundations.create_bell')}
           </Button>
           <Button
             type="button"
@@ -91,7 +93,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
             onClick={() => { setEntangled(false); setTheta(0); }}
             className="normal-case telemetry-mono text-xs"
           >
-            Separate
+            {t('foundations.separate')}
           </Button>
         </div>
       </div>
@@ -100,15 +102,15 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
 
   if (missionId === 'decoherence') {
     const temps = [
-      { label: '15 mK (Base)', val: 0.015 },
-      { label: '4 K (L-He)', val: 4.0 },
-      { label: '77 K (L-N2)', val: 77.0 },
-      { label: '300 K (Room)', val: 300.0 },
+      { label: t('foundations.preset_15mk'), val: 0.015 },
+      { label: t('foundations.preset_4k'), val: 4.0 },
+      { label: t('foundations.preset_77k'), val: 77.0 },
+      { label: t('foundations.preset_300k'), val: 300.0 },
     ];
     return (
       <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-surface-2">
         <span className="text-xs telemetry-mono font-semibold text-warning uppercase tracking-wider">
-          Cryogenic Temperature
+          {t('foundations.cryo_temp_title')}
         </span>
         <div className="grid grid-cols-2 gap-2 mt-1">
           {temps.map((t) => (
@@ -133,7 +135,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
   return (
     <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-surface-2">
       <span className="text-xs telemetry-mono font-semibold text-quantum-emerald uppercase tracking-wider">
-        Quantum Gate Palette
+        {t('foundations.gate_palette')}
       </span>
       <div className="grid grid-cols-3 gap-2 mt-1">
         {gates.map((g) => (

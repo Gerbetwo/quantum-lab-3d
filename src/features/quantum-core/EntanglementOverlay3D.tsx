@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as THREE from 'three';
 import { useQuantumStore } from '@/store/useQuantumStore';
+import { useTranslation } from '@/lib/i18n';
 import { computeSphericalVector } from './blochSceneObjects';
 
 export interface DualBlochElements {
@@ -115,7 +116,6 @@ export function createDualBlochScene(): DualBlochElements {
     laserPositions[i * 3 + 1] = 0;
     laserPositions[i * 3 + 2] = 0;
 
-    // Gradient cyan (Alice) -> purple (Bob)
     laserColors[i * 3] = THREE.MathUtils.lerp(0.0, 0.66, fraction);
     laserColors[i * 3 + 1] = THREE.MathUtils.lerp(0.95, 0.33, fraction);
     laserColors[i * 3 + 2] = THREE.MathUtils.lerp(1.0, 0.97, fraction);
@@ -177,12 +177,10 @@ export function updateLaserStrand(
     const fraction = i / (particleCount - 1);
     const baseX = STRAND_MIN_X + fraction * (STRAND_MAX_X - STRAND_MIN_X);
 
-    // Baseline coherence pulse traveling between Alice and Bob
     const pulsePhase = fraction * 14.0 - timeSeconds * 7.0;
     let y = 0.035 * Math.sin(pulsePhase);
     let z = 0.035 * Math.cos(pulsePhase);
 
-    // Spin-flip helical shockwave during collapse
     if (isWaveActive) {
       const shockwaveCenter = STRAND_MIN_X + waveProgress * (STRAND_MAX_X - STRAND_MIN_X);
       const dist = Math.abs(baseX - shockwaveCenter);
@@ -192,7 +190,6 @@ export function updateLaserStrand(
       y += 0.35 * waveEnv * Math.sin(wavePhase) * (0.35 + 0.65 * shockIntensity);
       z += 0.35 * waveEnv * Math.cos(wavePhase) * (0.35 + 0.65 * shockIntensity);
 
-      // Color flash during collapse
       if (waveState.outcome === 0) {
         laserColors[i * 3] = THREE.MathUtils.lerp(0.06, 0.0, shockIntensity);
         laserColors[i * 3 + 1] = THREE.MathUtils.lerp(0.95, 1.0, shockIntensity);
@@ -203,7 +200,6 @@ export function updateLaserStrand(
         laserColors[i * 3 + 2] = THREE.MathUtils.lerp(0.6, 0.9, shockIntensity);
       }
     } else {
-      // Normal quantum correlation gradient
       laserColors[i * 3] = THREE.MathUtils.lerp(0.0, 0.66, fraction);
       laserColors[i * 3 + 1] = THREE.MathUtils.lerp(0.95, 0.33, fraction);
       laserColors[i * 3 + 2] = THREE.MathUtils.lerp(1.0, 0.97, fraction);
@@ -229,7 +225,6 @@ export function computeSynchronizedAngles(
     const targetTheta = lastOutcome === 0 ? 0 : Math.PI;
     if (waveState.active) {
       const tau = Math.min(1.0, (nowSec - waveState.startTime) / waveState.duration);
-      // Alice snaps first, Bob snaps as the spin wave arrives
       const tA = Math.min(1.0, tau * 1.8);
       const tB = Math.max(0.0, Math.min(1.0, (tau - 0.25) / 0.75));
       return {
@@ -253,12 +248,13 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
   missionId,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
-  const storeMissionId = useQuantumStore((s) => s.currentMissionId ?? s.activeMissionId ?? 'superposition');
+  const currentMissionId = useQuantumStore((s) => s.currentMissionId ?? 'superposition');
   const isEntangled = useQuantumStore((s) => s.isEntangled);
   const lastOutcome = useQuantumStore((s) => s.lastOutcome);
 
-  const effectiveMissionId = missionId ?? storeMissionId;
+  const effectiveMissionId = missionId ?? currentMissionId;
   const isMission2 = effectiveMissionId === 'mission-2' || effectiveMissionId === 'entanglement';
 
   const [waveState, setWaveState] = useState<SpinFlipWaveState>({
@@ -273,7 +269,6 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
     waveStateRef.current = waveState;
   }, [waveState]);
 
-  // Measurement collapse trigger
   const prevOutcomeRef = useRef<0 | 1 | null>(null);
   useEffect(() => {
     if (lastOutcome !== null && prevOutcomeRef.current === null) {
@@ -301,7 +296,6 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
       renderer.setSize(container.clientWidth || 800, container.clientHeight || 500, false);
       container.appendChild(renderer.domElement);
     } catch (_e) {
-      // Safe fallback in test/non-WebGL environments
       renderer = null;
     }
 
@@ -328,13 +322,11 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
         nowSec
       );
 
-      // Synchronize Qubit A
       const dirA = computeSphericalVector(angles.thetaA, angles.phiA);
       arrowA.setDirection(dirA);
       arrowA.position.set(-2.2, 0, 0);
       tipHandleA.position.copy(new THREE.Vector3(-2.2, 0, 0).add(dirA.clone().multiplyScalar(1.0)));
 
-      // Synchronize Qubit B
       const dirB = computeSphericalVector(angles.thetaB, angles.phiB);
       arrowB.setDirection(dirB);
       arrowB.position.set(2.2, 0, 0);
@@ -371,25 +363,23 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
 
   const telemetry = useMemo(() => {
     return {
-      aliceState: lastOutcome !== null ? `|${lastOutcome}⟩` : isEntangled ? '1/√2(|0⟩+|1⟩)' : '|0⟩',
-      bobState: lastOutcome !== null ? `|${lastOutcome}⟩` : isEntangled ? '1/√2(|0⟩+|1⟩)' : '|0⟩',
-      channelStatus: waveState.active ? 'SPIN-FLIP COLLAPSE WAVE' : isEntangled ? '100% BELL COHERENT' : 'DECOUPLED',
+      aliceState: lastOutcome !== null ? `|${lastOutcome}⟩` : isEntangled ? t('entanglement_3d.superposed') : '|0⟩',
+      bobState: lastOutcome !== null ? `|${lastOutcome}⟩` : isEntangled ? t('entanglement_3d.superposed') : '|0⟩',
+      channelStatus: waveState.active ? t('entanglement_3d.collapse_wave') : isEntangled ? t('entanglement_3d.bell_coherent') : t('entanglement_3d.decoupled'),
     };
-  }, [lastOutcome, isEntangled, waveState.active]);
+  }, [lastOutcome, isEntangled, waveState.active, t]);
 
   if (!isMission2) {
     return null;
   }
 
-return (
+  return (
     <div
       data-testid="entanglement-overlay-3d"
       className={`relative w-full h-full min-h-90 rounded-2xl hud-panel overflow-hidden flex flex-col select-none ${className}`}
     >
-      {/* 3D WebGL Canvas Viewport */}
       <div ref={containerRef} className="absolute inset-0 z-0 touch-none" />
 
-      {/* Perimeter Tactical HUD */}
       <div className="relative z-10 flex items-center justify-between p-3.5 border-b border-border bg-background/80 pointer-events-none">
         <div className="flex items-center gap-2">
           <span
@@ -397,49 +387,45 @@ return (
               waveState.active ? 'bg-warning animate-ping' : 'bg-quantum-cyan animate-pulse'
             }`}
           />
-          <h2 className="text-xs telemetry-mono font-bold uppercase tracking-wider text-quantum-cyan">
-            Dual Bloch Viewport: EPR Laser Strand
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-quantum-cyan">
+            {t('entanglement_3d.viewport_title')}
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] telemetry-mono px-2 py-0.5 rounded-full hud-badge-cyan">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full hud-badge-cyan">
             {telemetry.channelStatus}
           </span>
         </div>
       </div>
 
-      {/* Floating Qubit Telemetry Nodes */}
       <div className="relative z-10 flex-1 flex items-end justify-between p-4 pointer-events-none">
-        {/* Qubit A Info */}
         <div className="flex flex-col items-center p-2 rounded-lg bg-surface-2 border border-edge min-w-28 text-center">
-          <span className="text-[10px] telemetry-mono text-muted-foreground uppercase">
-            Qubit A (Alice)
+          <span className="text-[10px] font-mono text-muted-foreground uppercase">
+            {t('entanglement_3d.alice_label')}
           </span>
-          <span className="text-base telemetry-mono font-bold text-quantum-cyan">
+          <span className="text-base font-mono font-bold text-quantum-cyan">
             {telemetry.aliceState}
           </span>
         </div>
 
-        {/* Center EPR Laser Strand Status */}
         <div className="flex flex-col items-center text-center p-1.5 rounded bg-surface-2 border border-border">
-          <span className="text-[9px] telemetry-mono text-muted-foreground uppercase">
-            Laser Strand Pulse
+          <span className="text-[9px] font-mono text-muted-foreground uppercase">
+            {t('entanglement_3d.strand_status')}
           </span>
           <span
-            className={`text-[11px] telemetry-mono font-semibold ${
+            className={`text-[11px] font-mono font-semibold ${
               waveState.active ? 'text-warning' : 'text-quantum-purple'
             }`}
           >
-            {waveState.active ? '⚡ Spin-Flip Wave' : '∿ 120-pt Laser Line'}
+            {waveState.active ? t('entanglement_3d.spin_flip_wave') : t('entanglement_3d.laser_line')}
           </span>
         </div>
 
-        {/* Qubit B Info */}
         <div className="flex flex-col items-center p-2 rounded-lg bg-surface-2 border border-edge min-w-28 text-center">
-          <span className="text-[10px] telemetry-mono text-muted-foreground uppercase">
-            Qubit B (Bob)
+          <span className="text-[10px] font-mono text-muted-foreground uppercase">
+            {t('entanglement_3d.bob_label')}
           </span>
-          <span className="text-base telemetry-mono font-bold text-quantum-purple">
+          <span className="text-base font-mono font-bold text-quantum-purple">
             {telemetry.bobState}
           </span>
         </div>

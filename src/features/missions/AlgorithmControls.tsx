@@ -41,7 +41,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
           <span className="text-[10px] telemetry-mono text-muted-foreground">Step {groverStep}/2</span>
         </div>
         <div className="flex items-center gap-2 text-xs telemetry-mono">
-          <span className="text-muted-foreground">Target:</span>
+          <span className="text-muted-foreground">{t('algorithm_controls.target_label')}</span>
           {[0, 1, 2, 3].map((idx) => (
             <button
               key={idx}
@@ -58,9 +58,9 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
           ))}
         </div>
         <div className="flex items-center justify-between text-xs telemetry-mono mt-1">
-          <span>Target P(|{targetIndex}⟩): {targetProb}%</span>
+          <span>{t('algorithm_controls.target_prob', { i: targetIndex, p: targetProb })}: {targetProb}%</span>
           <span className={groverResult.targetFound ? 'text-success font-bold' : 'text-muted-foreground'}>
-            {groverResult.targetFound ? '✓ AMPLIFIED' : 'Uniform'}
+            {groverResult.targetFound ? t('algorithm_controls.amplified') : t('algorithm_controls.uniform')}
           </span>
         </div>
         <div className="w-full bg-surface-3 h-2 rounded-full overflow-hidden">
@@ -72,15 +72,13 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
             onClick={() => setGroverStep((s) => Math.min(2, s + 1))}
             className="flex-1 px-3 py-1.5 rounded text-xs telemetry-mono font-semibold hud-badge-cyan cursor-pointer transition-all hover:opacity-90"
           >
-            Apply Oracle + Diffusion
+            {t('algorithm_controls.apply_grover')}
           </button>
           <button
             type="button"
             onClick={() => setGroverStep(0)}
             className="px-3 py-1.5 rounded text-xs telemetry-mono bg-surface-3 border border-border text-muted-foreground cursor-pointer transition-all hover:bg-surface-2"
-          >
-            Reset
-          </button>
+          >{t('algorithm_controls.reset')}</button>
         </div>
       </div>
     );
@@ -94,7 +92,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
           {t('algorithms.shor_title')}
         </span>
         <div className="flex items-center gap-1.5 text-xs telemetry-mono">
-          <span className="text-muted-foreground">Base a:</span>
+          <span className="text-muted-foreground">{t('algorithms.base_a')}</span>
           {bases.map((b) => (
             <button
               key={b}
@@ -117,7 +115,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
           </span>
         </div>
         <span className="text-[10px] text-muted-foreground italic telemetry-mono">
-          Didactic N=15 model. (Pedagogical demonstration, not RSA-2048).
+          {t('algorithm_controls.didactic_notice')}
         </span>
       </div>
     );
@@ -133,7 +131,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
         Logical: |ψ⟩ → α|000⟩ + β|111⟩
       </div>
       <div className="flex gap-1.5 text-xs telemetry-mono">
-        <span className="text-muted-foreground self-center">Inject Error:</span>
+        <span className="text-muted-foreground self-center">{t('algorithm_controls.inject_error')}</span>
         {[0, 1, 2].map((q) => (
           <button
             key={q}
@@ -145,7 +143,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
                 : 'bg-surface-3 border border-border text-muted-foreground hover:bg-surface-2'
             }`}
           >
-            Flip q{q}
+            {t('algorithm_controls.flip_qubit', { index: q })}
           </button>
         ))}
         <button
@@ -156,9 +154,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
               ? 'hud-badge-emerald font-bold'
               : 'bg-surface-3 border border-border text-muted-foreground hover:bg-surface-2'
           }`}
-        >
-          Clean
-        </button>
+        >{t('algorithm_controls.clean')}</button>
       </div>
       <div className="p-2 rounded bg-surface-3 border border-border text-xs telemetry-mono flex flex-col gap-1">
         <span>

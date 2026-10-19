@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 import { useQuantumStore } from "@/store/useQuantumStore";
+import { useTranslation } from '@/lib/i18n';
 import {
   kelvinToMilliKelvin,
   calculateT2CoherenceTime,
@@ -236,6 +237,7 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
   className = "",
   initialTemperatureK,
 }) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const storeTemp = useQuantumStore((s) => s.temperatureK);
   const setTemperature = useQuantumStore((s) => s.setTemperature);
@@ -376,11 +378,11 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
             }`}
           />
           <h2 className="text-xs telemetry-mono font-bold uppercase tracking-wider text-quantum-cyan">
-            Thermal Decoherence: GPU Jitter & Mesh Distortion
+            {t('decoherence.title')}
           </h2>
         </div>
         <span className="text-[10px] telemetry-mono px-2 py-0.5 rounded-full hud-badge-cyan">
-          T₂ = {metrics.t2CoherenceTimeUs} μs
+          {t('decoherence.t2_badge', { t2: metrics.t2CoherenceTimeUs })}
         </span>
       </div>
 
@@ -391,7 +393,7 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
           <div className="flex gap-4 telemetry-mono text-xs">
             <div>
               <span className="text-[10px] text-muted-foreground uppercase block">
-                Temp (T)
+                {t('decoherence.temp_label')}
               </span>
               <span className="font-bold text-foreground">
                 {metrics.temperatureK < 1
@@ -401,7 +403,7 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
             </div>
             <div>
               <span className="text-[10px] text-muted-foreground uppercase block">
-                Coherence T₂
+                {t('decoherence.coherence_label')}
               </span>
               <span className="font-bold text-quantum-cyan">
                 {metrics.t2CoherenceTimeUs} μs
@@ -409,7 +411,7 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
             </div>
             <div>
               <span className="text-[10px] text-muted-foreground uppercase block">
-                Distortion Δ
+                {t('decoherence.distortion_label')}
               </span>
               <span className="font-bold text-warning">
                 {(metrics.distortionAmplitude * 100).toFixed(1)}%
@@ -417,7 +419,7 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
             </div>
             <div>
               <span className="text-[10px] text-muted-foreground uppercase block">
-                Jitter v
+                {t('decoherence.jitter_label')}
               </span>
               <span className="font-bold text-destructive">
                 {metrics.particleSpeed}x

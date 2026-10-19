@@ -109,11 +109,11 @@ interface CampaignSelectOverlayProps {
 }
 
 export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOverlayProps = {}) {
-  const { language } = useTranslation();
+  const { t, language } = useTranslation();
   const appViewState = useQuantumStore((s) => s.appViewState);
   const setAppViewState = useQuantumStore((s) => s.setAppViewState);
   const returnToTitle = useQuantumStore((s) => s.returnToTitle);
-  const launchMission = useQuantumStore((s) => s.launchMission);
+  const selectMission = useQuantumStore((s) => s.selectMission);
   const completedMissions = useQuantumStore((s) => s.completedMissions);
 
   if (appViewState !== 'CAMPAIGN_SELECT' && !forceVisible) {
@@ -123,7 +123,7 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
   const handleLaunch = (id: MissionId) => {
     soundEngine.unlock();
     soundEngine.playVectorSnap();
-    launchMission(id);
+    selectMission(id);
   };
 
   const handleGoToSandbox = () => {
@@ -150,40 +150,39 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 returnToTitle();
               }}
               data-testid="return-to-title-button"
-              className="px-3 py-1.5 rounded-lg text-xs telemetry-mono font-medium bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>TITLE</span>
+              <span>{t('hud.exit_title')}</span>
             </button>
             <div className="border-l border-border pl-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-quantum-cyan" />
-                <h2 className="text-sm font-bold tracking-wide text-foreground uppercase telemetry-mono">
-                  Flight-Deck Campaign Roster
+                <h2 className="text-sm font-bold tracking-wide text-foreground uppercase font-mono">
+                  {t('campaign.roster_title')}
                 </h2>
               </div>
-              <p className="text-[11px] text-muted-foreground telemetry-mono">
-                Select a tactical mission node or launch the sandbox simulation harness.
+              <p className="text-[11px] text-muted-foreground font-mono">
+                {t('campaign.roster_subtitle')}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 border border-border text-xs telemetry-mono">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 border border-border text-xs font-mono">
               <ShieldCheck className="w-3.5 h-3.5 text-success" />
-              <span className="text-muted-foreground">Progression:</span>
+              <span className="text-muted-foreground">{t('campaign.progression_label')}</span>
               <span className="text-quantum-cyan font-bold">{completedCount} / 7 Mastered</span>
             </div>
 
-            {/* Top-bar button to jump directly to SANDBOX mode */}
             <button
               type="button"
               onClick={handleGoToSandbox}
               data-testid="topbar-sandbox-button"
-              className="px-4 py-2 rounded-xl text-xs telemetry-mono font-bold hud-badge-purple hover:opacity-90 flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-mono font-bold hud-badge-purple hover:opacity-90 flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
             >
               <Beaker className="w-4 h-4 text-quantum-purple" />
-              <span>SANDBOX MODE</span>
+              <span>{t('campaign.sandbox_mode')}</span>
             </button>
           </div>
         </header>
@@ -207,19 +206,17 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 }`}
               >
                 <div className="flex flex-col gap-2.5">
-                  {/* Card Header: Mission Code & Difficulty */}
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] telemetry-mono px-2 py-0.5 rounded bg-surface-3 border border-border text-quantum-cyan font-semibold">
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-3 border border-border text-quantum-cyan font-semibold">
                       {node.code} · Mission {node.index}
                     </span>
                     <span
-                      className={`text-[10px] telemetry-mono px-2 py-0.5 rounded border uppercase font-medium ${node.difficultyColor}`}
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-medium ${node.difficultyColor}`}
                     >
                       {node.difficulty}
                     </span>
                   </div>
 
-                  {/* Titles */}
                   <div>
                     <h3 className="text-sm font-bold text-foreground">{title}</h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
@@ -228,15 +225,14 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                   </div>
                 </div>
 
-                {/* Direct Launch Control */}
                 <div className="pt-3 border-t border-border flex flex-col">
                   <button
                     type="button"
                     onClick={() => handleLaunch(node.id)}
                     data-testid={`launch-mission-${node.id}`}
-                    className="w-full py-2 px-3 rounded-lg text-xs telemetry-mono font-bold hud-badge-cyan hover:opacity-90 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                    className="w-full py-2 px-3 rounded-lg text-xs font-mono font-bold hud-badge-cyan hover:opacity-90 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
                   >
-                    <span>LAUNCH SIMULATION</span>
+                    <span>{t('campaign.launch_simulation')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -244,25 +240,24 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
             );
           })}
 
-          {/* Sandbox Node */}
           <div
             data-testid="mission-card-sandbox"
             className="p-5 rounded-xl border hud-panel flex flex-col justify-between gap-4 transition-all duration-200 hover:border-quantum-purple/60 hover:glow-purple"
           >
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] telemetry-mono px-2 py-0.5 rounded bg-surface-3 border border-border text-quantum-purple font-semibold">
-                  LAB-00 · Sandbox
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-3 border border-border text-quantum-purple font-semibold">
+                  {t('campaign.sandbox_card.code')}
                 </span>
-                <span className="text-[10px] telemetry-mono px-2 py-0.5 rounded uppercase font-medium hud-badge-purple">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded uppercase font-medium hud-badge-purple">
                   UNCONSTRAINED
                 </span>
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-foreground">Quantum Sandbox Lab</h3>
+                <h3 className="text-sm font-bold text-foreground">{t('mission_header.sandbox_title')}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
-                  Full 3D Bloch sphere, thermal noise sweeps & custom gates
+                  {t('campaign.sandbox_card.subtitle')}
                 </p>
               </div>
             </div>
@@ -272,10 +267,10 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 type="button"
                 onClick={handleGoToSandbox}
                 data-testid="launch-sandbox-button"
-                className="w-full py-2 px-3 rounded-lg text-xs telemetry-mono font-bold hud-badge-purple hover:opacity-90 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                className="w-full py-2 px-3 rounded-lg text-xs font-mono font-bold hud-badge-purple hover:opacity-90 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
               >
                 <Beaker className="w-3.5 h-3.5 text-quantum-purple" />
-                <span>LAUNCH SIMULATION</span>
+                <span>{t('campaign.launch_simulation')}</span>
               </button>
             </div>
           </div>

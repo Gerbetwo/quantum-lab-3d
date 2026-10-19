@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
+import { useTranslation } from '@/lib/i18n';
 import { isMissionId, type MissionId } from './missionRegistry';
 import { FoundationsControls } from './FoundationsControls';
 import { AlgorithmControls } from './AlgorithmControls';
@@ -16,27 +17,21 @@ interface MissionWorkspaceProps {
   className?: string;
 }
 
-/**
-- Tactical In-Mission Workspace HUD (HU-MVP-03, HU-MVP-12).
-- Perimeter-anchored HUD architecture clearing center 90%+ for 3D Bloch canvas interaction:
-- Top edge: MissionHeader (ID, objective ticker, ES/EN switch, ESC Pause)
-- Bottom-left: Floating Gate Controls & angle sliders (fixed bottom-4 left-4 z-20 w-80)
-- Bottom-right: Dirac Math Dock (fixed bottom-4 right-4 z-20 w-80)
- */
 export function MissionWorkspace({ missionId: propMissionId, className = '' }: MissionWorkspaceProps) {
+  const { t } = useTranslation();
   const appViewState = useQuantumStore((s) => s.appViewState);
   const isSandbox = appViewState === 'SANDBOX';
 
-  const storeMissionId = useQuantumStore((s) => s.currentMissionId ?? s.activeMissionId ?? 'superposition');
-  const rawId = propMissionId || storeMissionId;
+  const currentMissionId = useQuantumStore((s) => s.currentMissionId ?? 'superposition');
+  const rawId = propMissionId || currentMissionId;
   const activeMissionId: MissionId = isMissionId(rawId) ? rawId : 'superposition';
 
-  const launchMission = useQuantumStore((s) => s.launchMission);
+  const selectMission = useQuantumStore((s) => s.selectMission);
   useEffect(() => {
-    if (appViewState !== 'SANDBOX' && propMissionId && isMissionId(propMissionId) && propMissionId !== storeMissionId) {
-      launchMission(propMissionId);
+    if (appViewState !== 'SANDBOX' && propMissionId && isMissionId(propMissionId) && propMissionId !== currentMissionId) {
+      selectMission(propMissionId);
     }
-  }, [appViewState, propMissionId, storeMissionId, launchMission]);
+  }, [appViewState, propMissionId, currentMissionId, selectMission]);
 
   const theta = useQuantumStore((s) => s.theta);
   const phi = useQuantumStore((s) => s.phi);
@@ -51,7 +46,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
 
   const temperatureK = useQuantumStore((s) => s.temperatureK);
   const coherenceTimeUs = useQuantumStore((s) => s.coherenceTimeUs);
-  const setTemperatureK = useQuantumStore((s) => s.setTemperatureK);
+  const setTemperature = useQuantumStore((s) => s.setTemperature);
   const isEntangled = useQuantumStore((s) => s.isEntangled);
   const setEntangled = useQuantumStore((s) => s.setEntangled);
 
@@ -77,28 +72,23 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
       data-testid="mission-workspace"
       className={`pointer-events-none select-none relative ${className}`.trim()}
     >
-      {/* 1. Edge Navigation Header (fixed top-0 left-0 right-0 z-20) */}
       <MissionHeader missionId={activeMissionId} />
 
-      {/* 2. Floating Gate Controls Bar & Qubit Angle Sliders (fixed bottom-4 left-4 z-20) */}
       <aside
         data-testid="floating-gate-controls"
-        aria-label="Quantum Gate Controls Bar"
+        aria-label={t('workspace.gate_controls')}
         className="fixed bottom-4 left-4 z-20 w-80 pointer-events-auto select-none"
       >
         <GlassCard
-          title={isSandbox ? 'Sandbox Controls' : 'Gate Controls'}
+          title={isSandbox ? t('workspace.sandbox_controls') : t('workspace.gate_controls')}
           badge="U(θ,φ)"
-          telemetryId="CTRL.01"
-          cornerNotch={true}
-          variant="telemetry"
           headerRight={
             <button
               type="button"
               onClick={() => setIsCollapsed((prev) => !prev)}
               data-testid="gate-controls-toggle"
               aria-expanded={!isCollapsed}
-              aria-label={isCollapsed ? 'Expand Gate Controls' : 'Collapse Gate Controls'}
+              aria-label={t('workspace.gate_controls')}
               title={isCollapsed ? 'Expand Controls' : 'Collapse Controls'}
               className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
             >
@@ -113,27 +103,25 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
           {!isCollapsed && (
             <div
               data-testid="gate-controls-content"
-              className="space-y-3 telemetry-mono text-xs max-h-[calc(100vh-10rem)] overflow-y-auto pr-0.5"
+              className="space-y-3 font-mono text-xs max-h-[calc(100vh-10rem)] overflow-y-auto pr-0.5"
             >
-              {/* Qubit Angle Sliders (θ, φ) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase">
-                  <span>Qubit Spherical Angles</span>
+                  <span>{t('workspace.qubit_angles')}</span>
                   <button
                     type="button"
                     onClick={() => resetState()}
                     data-testid="reset-qubit-button"
-                    title="Reset to ground state |0⟩"
+                    title={t('workspace.reset_ground_tooltip')}
                     className="text-[10px] text-warning hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <RotateCcw className="w-3 h-3" /> Reset |0⟩
+                    <RotateCcw className="w-3 h-3" /> {t('mission_header.reset_to_zero')}
                   </button>
                 </div>
 
-                {/* Theta slider */}
                 <div>
                   <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-muted-foreground">θ (Polar):</span>
+                    <span className="text-muted-foreground">{t('workspace.theta_polar')}</span>
                     <span className="font-bold tabular-nums text-quantum-cyan">
                       {((safeTheta * 180) / Math.PI).toFixed(1)}°
                     </span>
@@ -146,7 +134,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                     value={safeTheta}
                     onChange={(e) => setTheta(parseFloat(e.target.value))}
                     data-testid="slider-theta"
-                    aria-label="Theta angle slider"
+                    aria-label={t('workspace.theta_aria')}
                     className="w-full accent-cyan cursor-pointer h-1.5 bg-surface-3"
                   />
                   <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
@@ -156,10 +144,9 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                   </div>
                 </div>
 
-                {/* Phi slider */}
                 <div>
                   <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-muted-foreground">φ (Azimuthal):</span>
+                    <span className="text-muted-foreground">{t('workspace.phi_azimuthal')}</span>
                     <span className="font-bold tabular-nums text-quantum-purple">
                       {((safePhi * 180) / Math.PI).toFixed(1)}°
                     </span>
@@ -172,7 +159,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                     value={safePhi}
                     onChange={(e) => setPhi(parseFloat(e.target.value))}
                     data-testid="slider-phi"
-                    aria-label="Phi angle slider"
+                    aria-label={t('workspace.phi_aria')}
                     className="w-full accent-quantum-purple cursor-pointer h-1.5 bg-surface-3"
                   />
                   <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
@@ -183,10 +170,9 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                 </div>
               </div>
 
-              {/* Quantum Gate Action Buttons (X, Y, Z, H) */}
               <div className="pt-2 border-t border-border">
                 <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase mb-1.5">
-                  <span>Unitary Gates</span>
+                  <span>{t('workspace.unitary_gates')}</span>
                   <span className="text-muted-foreground">SU(2)</span>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -194,10 +180,9 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                     <Button
                       key={gate}
                       variant="secondary"
-                      cornerNotch
                       onClick={() => applyGate(gate)}
                       data-testid={`gate-button-${gate}`}
-                      className="py-1 px-1.5 text-xs telemetry-mono font-bold"
+                      className="py-1 px-1.5 text-xs font-mono font-bold"
                     >
                       [{gate}]
                     </Button>
@@ -205,14 +190,12 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                 </div>
               </div>
 
-              {/* Mission-Specific or Sandbox Tactical Controls */}
               <div className="pt-2 border-t border-border space-y-2">
                 {isSandbox ? (
-                  <div className="space-y-3 telemetry-mono text-xs">
-                    {/* Thermal Decoherence Chamber */}
+                  <div className="space-y-3 font-mono text-xs">
                     <div className="p-2.5 rounded-lg bg-surface-2 border border-border flex flex-col gap-2">
                       <div className="flex items-center justify-between text-[10px] uppercase font-bold text-warning">
-                        <span>Thermal Chamber (15 mK – 300 K)</span>
+                        <span>{t('workspace.thermal_chamber')}</span>
                         <span>
                           {temperatureK >= 1
                             ? `${temperatureK.toFixed(1)} K`
@@ -225,7 +208,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                         max="300"
                         step="0.5"
                         value={temperatureK}
-                        onChange={(e) => setTemperatureK(parseFloat(e.target.value))}
+                        onChange={(e) => setTemperature(parseFloat(e.target.value))}
                         className="w-full accent-warning cursor-pointer h-1.5 bg-surface-3"
                       />
                       <div className="flex justify-between text-[10px] text-muted-foreground">
@@ -235,34 +218,32 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                       </div>
                     </div>
 
-                    {/* Entanglement & Collapse */}
                     <div className="flex flex-col gap-2">
                       <button
                         type="button"
                         onClick={() => setEntangled(!isEntangled)}
-                        className={`w-full py-1.5 px-2 rounded text-xs telemetry-mono font-semibold transition-all cursor-pointer ${
+                        className={`w-full py-1.5 px-2 rounded text-xs font-mono font-semibold transition-all cursor-pointer ${
                           isEntangled
                             ? 'hud-badge-purple'
                             : 'bg-surface-2 text-muted-foreground border border-border hover:bg-surface-3'
                         }`}
                       >
-                        {isEntangled ? '⚡ Bell Pair |Φ⁺⟩ Active' : 'Enable Bell Entanglement'}
+                        {isEntangled ? t('workspace.bell_pair_active') : t('workspace.bell_enable')}
                       </button>
 
                       <Button
                         variant="primary"
-                        cornerNotch
                         onClick={() => measure()}
                         data-testid="measure-collapse-button"
                         className="w-full text-xs py-1.5"
                       >
-                        Measure & Collapse Wavefunction
+                        {t('workspace.measure_collapse_wave')}
                       </Button>
 
                       {lastOutcome !== null && (
-                        <div className="p-1.5 rounded bg-surface-2 border border-border text-[11px] telemetry-mono flex items-center justify-between">
+                        <div className="p-1.5 rounded bg-surface-2 border border-border text-[11px] font-mono flex items-center justify-between">
                           <span>
-                            Outcome: <b className="text-quantum-cyan">|{lastOutcome}⟩</b>
+                            {t('workspace.outcome')}: <b className="text-quantum-cyan">|{lastOutcome}⟩</b>
                           </span>
                           <span className="text-muted-foreground">P₀: {actualProb0}%</span>
                         </div>
@@ -272,9 +253,9 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                 ) : activeMissionId === 'superposition' ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase">
-                      <span>Zero-Spoiler Hypothesis</span>
+                      <span>{t('workspace.hypothesis_title')}</span>
                       <span className="text-[10px] text-muted-foreground">
-                        {isLocked ? '🔒 Locked' : '✏️ Unlocked'}
+                        {isLocked ? t('workspace.locked') : t('workspace.unlocked')}
                       </span>
                     </div>
 
@@ -297,27 +278,24 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                       {!isLocked ? (
                         <Button
                           variant="secondary"
-                          cornerNotch
                           onClick={handleLockPrediction}
                           data-testid="lock-guess-button"
                           className="flex-1 text-xs py-1"
                         >
-                          Lock Guess
+                          {t('workspace.lock_guess')}
                         </Button>
                       ) : (
                         <Button
                           variant="secondary"
-                          cornerNotch
                           onClick={() => setIsLocked(false)}
                           data-testid="unlock-guess-button"
                           className="flex-1 text-xs py-1"
                         >
-                          Unlock
+                          {t('workspace.unlock')}
                         </Button>
                       )}
                       <Button
                         variant="primary"
-                        cornerNotch
                         onClick={() => measure()}
                         data-testid="measure-collapse-button"
                         className="flex-1 text-xs py-1"
@@ -327,7 +305,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                     </div>
 
                     {lastOutcome !== null && (
-                      <div className="p-1.5 rounded bg-surface-2 border border-border text-[11px] telemetry-mono flex items-center justify-between">
+                      <div className="p-1.5 rounded bg-surface-2 border border-border text-[11px] font-mono flex items-center justify-between">
                         <span>
                           Outcome: <b className="text-quantum-cyan">|{lastOutcome}⟩</b> (P₀: {actualProb0}%)
                         </span>
@@ -338,7 +316,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                               : 'text-warning'
                           }
                         >
-                          {Math.abs(predictedP0 - actualProb0) <= 20 ? '✨ Match!' : 'Diverged'}
+                          {Math.abs(predictedP0 - actualProb0) <= 20 ? t('workspace.match') : t('workspace.diverged')}
                         </span>
                       </div>
                     )}
@@ -358,7 +336,6 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
         </GlassCard>
       </aside>
 
-      {/* 3. Floating Telemetry Math Dock at Bottom-Right (fixed bottom-4 right-4 z-20) */}
       <MathDock className="pointer-events-auto" />
     </div>
   );

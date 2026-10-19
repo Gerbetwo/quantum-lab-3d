@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
+import { useTranslation } from '@/lib/i18n';
 import { soundEngine } from '@/lib/soundEngine';
 import {
   Play,
@@ -21,6 +22,7 @@ interface PauseMenuModalProps {
 }
 
 export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {}) {
+  const { t } = useTranslation();
   const isPauseMenuOpen = useQuantumStore((s) => s.isPauseMenuOpen);
   const togglePauseMenu = useQuantumStore((s) => s.togglePauseMenu);
   const appViewState = useQuantumStore((s) => s.appViewState);
@@ -81,14 +83,6 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
     returnToTitle();
   };
 
-  const handleToggleTheme = () => {
-    toggleTheme();
-  };
-
-  const handleToggleSound = () => {
-    toggleSound();
-  };
-
   return (
     <div
       data-testid="pause-menu-backdrop"
@@ -101,12 +95,12 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-border">
           <div>
-            <span className="text-[10px] telemetry-mono tracking-widest text-quantum-cyan uppercase font-semibold">
-              Flight-Deck Control
+            <span className="text-[10px] font-mono tracking-widest text-quantum-cyan uppercase font-semibold">
+              {t('pause.flight_deck_control')}
             </span>
-            <h2 className="text-base font-bold tracking-tight">PAUSE SIMULATION</h2>
-            <p className="text-[11px] telemetry-mono text-muted-foreground mt-0.5">
-              Active: <span className="text-foreground uppercase">{currentMissionId}</span>
+            <h2 className="text-base font-bold tracking-tight">{t('pause.pause_simulation')}</h2>
+            <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
+              {t('pause.active_label')} <span className="text-foreground uppercase">{currentMissionId}</span>
             </p>
           </div>
           <button
@@ -114,7 +108,7 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
             onClick={handleResume}
             data-testid="pause-close-button"
             className="p-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border transition-colors cursor-pointer"
-            title="Resume Simulation"
+            title={t('pause.close_button')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -122,73 +116,68 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
 
         {/* Action Menu List */}
         <div className="flex flex-col gap-2">
-          {/* 1. RESUME */}
           <button
             type="button"
             onClick={handleResume}
             data-testid="pause-resume-button"
-            className="w-full py-2.5 px-4 rounded-xl text-xs telemetry-mono font-bold hud-badge-cyan hover:opacity-90 flex items-center justify-between transition-all active:scale-98 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-mono font-bold hud-badge-cyan hover:opacity-90 flex items-center justify-between transition-all active:scale-98 cursor-pointer"
           >
             <span className="flex items-center gap-2">
               <Play className="w-4 h-4 fill-current" />
-              <span>RESUME</span>
+              <span>{t('pause.resume')}</span>
             </span>
             <span className="text-[10px] opacity-80 font-normal">ESC</span>
           </button>
 
-          {/* 2. MISSION SELECTOR */}
           <button
             type="button"
             onClick={handleMissionSelector}
             data-testid="pause-mission-selector-button"
-            className="w-full py-2.5 px-4 rounded-xl text-xs telemetry-mono font-semibold bg-surface-2 hover:bg-surface-3 text-foreground border border-border flex items-center gap-2 transition-all active:scale-98 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-mono font-semibold bg-surface-2 hover:bg-surface-3 text-foreground border border-border flex items-center gap-2 transition-all active:scale-98 cursor-pointer"
           >
             <Grid className="w-4 h-4 text-quantum-purple" />
-            <span>MISSION SELECTOR</span>
+            <span>{t('pause.mission_selector')}</span>
           </button>
 
-          {/* 3. RESET QUANTUM STATE */}
           <button
             type="button"
             onClick={handleResetState}
             data-testid="pause-reset-state-button"
-            className="w-full py-2.5 px-4 rounded-xl text-xs telemetry-mono font-semibold bg-surface-2 hover:bg-surface-3 text-foreground border border-border flex items-center justify-between transition-all active:scale-98 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-mono font-semibold bg-surface-2 hover:bg-surface-3 text-foreground border border-border flex items-center justify-between transition-all active:scale-98 cursor-pointer"
           >
             <span className="flex items-center gap-2">
               <RotateCcw className="w-4 h-4 text-warning" />
-              <span>RESET QUANTUM STATE</span>
+              <span>{t('pause.reset_quantum_state')}</span>
             </span>
             {resetFeedback && (
-              <span className="text-[10px] text-warning font-normal animate-pulse">|0⟩ RESET</span>
+              <span className="text-[10px] text-warning font-normal animate-pulse">{t('pause.reset_feedback')}</span>
             )}
           </button>
 
-          {/* 4. EXIT TO TITLE */}
           <button
             type="button"
             onClick={handleExitToTitle}
             data-testid="pause-exit-title-button"
-            className="w-full py-2.5 px-4 rounded-xl text-xs telemetry-mono font-semibold bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border flex items-center gap-2 transition-all active:scale-98 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-mono font-semibold bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border flex items-center gap-2 transition-all active:scale-98 cursor-pointer"
           >
             <LogOut className="w-4 h-4 text-destructive" />
-            <span>EXIT TO TITLE</span>
+            <span>{t('pause.exit_to_title')}</span>
           </button>
         </div>
 
-        {/* Options Drawer: Theme & Sound Controls */}
+        {/* Options Drawer */}
         <div className="pt-3 border-t border-border flex flex-col gap-2">
-          <div className="flex items-center gap-1.5 text-[11px] telemetry-mono text-muted-foreground uppercase tracking-wider">
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
             <Sliders className="w-3.5 h-3.5 text-quantum-cyan" />
-            <span>System Options</span>
+            <span>{t('pause.system_options')}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            {/* Theme Toggle */}
             <button
               type="button"
-              onClick={handleToggleTheme}
+              onClick={toggleTheme}
               data-testid="pause-theme-toggle"
-              className="py-2 px-3 rounded-lg text-xs telemetry-mono bg-surface-2 hover:bg-surface-3 border border-border flex items-center justify-between transition-colors cursor-pointer"
+              className="py-2 px-3 rounded-lg text-xs font-mono bg-surface-2 hover:bg-surface-3 border border-border flex items-center justify-between transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 {theme === 'dark' ? (
@@ -196,19 +185,18 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
                 ) : (
                   <Moon className="w-3.5 h-3.5 text-quantum-cyan" />
                 )}
-                <span>Theme</span>
+                <span>{t('pause.theme')}</span>
               </span>
               <span className="text-[11px] font-bold text-foreground">
-                {theme === 'dark' ? 'Dark' : 'Light'}
+                {theme === 'dark' ? t('pause.theme_dark') : t('pause.theme_light')}
               </span>
             </button>
 
-            {/* Sound Toggle */}
             <button
               type="button"
-              onClick={handleToggleSound}
+              onClick={toggleSound}
               data-testid="pause-sound-toggle"
-              className="py-2 px-3 rounded-lg text-xs telemetry-mono bg-surface-2 hover:bg-surface-3 border border-border flex items-center justify-between transition-colors cursor-pointer"
+              className="py-2 px-3 rounded-lg text-xs font-mono bg-surface-2 hover:bg-surface-3 border border-border flex items-center justify-between transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 {isSoundEnabled ? (
@@ -216,18 +204,18 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
                 ) : (
                   <VolumeX className="w-3.5 h-3.5 text-destructive" />
                 )}
-                <span>Audio</span>
+                <span>{t('pause.audio')}</span>
               </span>
               <span className="text-[11px] font-bold text-foreground">
-                {isSoundEnabled ? 'ON' : 'MUTED'}
+                {isSoundEnabled ? t('pause.audio_on') : t('pause.audio_muted')}
               </span>
             </button>
           </div>
         </div>
 
         {/* Footer Hint */}
-        <div className="text-center text-[10px] telemetry-mono text-muted-foreground border-t border-border pt-2">
-          PRESS [ESC] OR CLICK RESUME TO RETURN TO SIMULATION
+        <div className="text-center text-[10px] font-mono text-muted-foreground border-t border-border pt-2">
+          {t('pause.footer_hint')}
         </div>
       </div>
     </div>

@@ -7,8 +7,6 @@ import {
   QuantumState,
   QubitBlochState,
   MeasurementResult,
-  QuantumCircuit,
-  StateVector,
 } from './types';
 
 export function normalizeAngleTheta(theta: number): number {
@@ -76,7 +74,7 @@ export function createBellState(): { pair: string; probability00: number; probab
   };
 }
 
-export function bellState(_variant?: string) {
+export function bellState() {
   return createBellState();
 }
 
@@ -95,14 +93,6 @@ export function measureEntangledQubit(randomSeed = Math.random()): {
     bobOutcome: bit,
     state: bit === 0 ? '|00⟩' : '|11⟩',
   };
-}
-
-export function createEmptyCircuit(numQubits: number, maxDepth = 16): QuantumCircuit {
-  return { numQubits, maxDepth, steps: [] };
-}
-
-export function evaluateFullCircuit(_circuit: QuantumCircuit): { final: StateVector } {
-  return { final: [] };
 }
 
 export * from './types';

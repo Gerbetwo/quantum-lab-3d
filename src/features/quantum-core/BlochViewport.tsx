@@ -303,13 +303,13 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       <div className="shrink-0 border-t border-border bg-surface-2 px-4 py-2.5 text-xs telemetry-mono text-muted-foreground flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-4">
           <span>
-            <strong className="text-axis-x">X:</strong> {coords.x}
+            <strong className="text-axis-x">{'X:'}</strong> {coords.x}
           </span>
           <span>
-            <strong className="text-axis-y">Y:</strong> {coords.y}
+            <strong className="text-axis-y">{'Y:'}</strong> {coords.y}
           </span>
           <span>
-            <strong className="text-axis-z">Z:</strong> {coords.z}
+            <strong className="text-axis-z">{'Z:'}</strong> {coords.z}
           </span>
         </div>
         {lastOutcome !== null && (

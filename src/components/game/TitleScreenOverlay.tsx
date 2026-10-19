@@ -2,10 +2,12 @@
 
 import React, { useEffect, useCallback } from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
+import { useTranslation } from '@/lib/i18n';
 import { soundEngine } from '@/lib/soundEngine';
 import { Sparkles, Terminal } from 'lucide-react';
 
 export function TitleScreenOverlay() {
+  const { t } = useTranslation();
   const appViewState = useQuantumStore((s) => s.appViewState);
   const setAppViewState = useQuantumStore((s) => s.setAppViewState);
 
@@ -47,39 +49,39 @@ export function TitleScreenOverlay() {
       <header className="w-full max-w-6xl flex justify-between items-center text-xs telemetry-mono tracking-wider text-muted-foreground border-b border-border pb-3">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-quantum-emerald animate-pulse" />
-          <span className="text-foreground font-semibold">QUANTUM SIMULATION ENGINE</span>
-          <span className="hidden sm:inline text-muted-foreground">| FLIGHT-DECK ONLINE</span>
+          <span className="text-foreground font-semibold">{t('title.engine_label')}</span>
+          <span className="hidden sm:inline text-muted-foreground">| {t('title.flight_deck_online')}</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="hidden sm:inline">SYS.TEMP: 15 mK</span>
-          <span className="text-quantum-cyan font-bold tracking-normal">v0.3.0-QUANTUM-CORE</span>
+          <span className="hidden sm:inline">{t('title.sys_temp')}</span>
+          <span className="text-quantum-cyan font-bold tracking-normal">{t('title.version')}</span>
         </div>
       </header>
 
       {/* Hero Typography & Interactive Prompt */}
       <main className="flex flex-col items-center text-center gap-4 my-auto">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full hud-badge-cyan text-xs telemetry-mono">
-          <Sparkles className="w-3.5 h-3.5" /> BLOCH SPHERE VIEWPORT
+          <Sparkles className="w-3.5 h-3.5" /> {t('title.viewport_badge')}
         </div>
 
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight font-sans">
-          QUANTUM<span className="bg-linear-to-r from-quantum-cyan via-quantum-purple to-quantum-emerald bg-clip-text text-transparent">LAB 3D</span>
+          {t('title.headline')}<span className="bg-linear-to-r from-quantum-cyan via-quantum-purple to-quantum-emerald bg-clip-text text-transparent">{t('title.headline_accent')}</span>
         </h1>
 
         <p className="text-sm sm:text-base text-muted-foreground max-w-md telemetry-mono">
-          TACTICAL STATE MANIPULATION & DECOHERENCE HARNESS
+          {t('title.tagline')}
         </p>
 
         <div className="mt-8 px-6 py-3 rounded-xl hud-badge-cyan glow-cyan telemetry-mono text-xs sm:text-sm tracking-widest font-bold animate-pulse flex items-center gap-2 cursor-pointer">
           <Terminal className="w-4 h-4" />
-          <span>PRESS ANY KEY / ENTER QUANTUM LAB</span>
+          <span>{t('title.press_any_key')}</span>
         </div>
       </main>
 
       {/* Telemetry Footer */}
       <footer className="w-full max-w-6xl flex justify-between items-center text-[10px] telemetry-mono text-muted-foreground border-t border-border pt-3">
-        <span>SINGLE WEBGL CONTEXT // DETERMINISTIC PHYSICS</span>
-        <span>CLICK ANYWHERE OR PRESS ANY KEY TO INITIALIZE</span>
+        <span>{t('title.footer_physics')}</span>
+        <span>{t('title.footer_init')}</span>
       </footer>
     </div>
   );

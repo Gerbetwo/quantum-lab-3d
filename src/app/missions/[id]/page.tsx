@@ -6,7 +6,6 @@ import {
 } from '@/features/missions/missionRegistry';
 import { MissionWorkspace } from '@/features/missions/MissionWorkspace';
 import { notFound } from 'next/navigation';
-import { MissionLauncher } from './MissionLauncher';
 
 interface MissionPageProps {
   params: Promise<{ id: string }>;
@@ -45,10 +44,5 @@ export default async function MissionPage({ params }: MissionPageProps) {
     notFound();
   }
 
-  return (
-    <>
-      <MissionLauncher missionId={id} />
-      <MissionWorkspace missionId={id} />
-    </>
-  );
+  return <MissionWorkspace missionId={id} />;
 }

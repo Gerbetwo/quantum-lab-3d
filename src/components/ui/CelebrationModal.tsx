@@ -3,9 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { useQuantumStore } from '@/store/useQuantumStore';
+import { useTranslation } from '@/lib/i18n';
 import { Sparkles, Trophy, ArrowRight, X } from 'lucide-react';
 
 export function CelebrationModal() {
+  const { t } = useTranslation();
   const completedMissions = useQuantumStore((s) => s.completedMissions);
   const isSandboxUnlocked = useQuantumStore((s) => s.isSandboxUnlocked);
 
@@ -77,7 +79,7 @@ export function CelebrationModal() {
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          aria-label="Close celebration modal"
+          aria-label={t('celebration.close_aria')}
           className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
@@ -90,13 +92,13 @@ export function CelebrationModal() {
 
         <div>
           <span className="text-xs telemetry-mono font-semibold text-quantum-cyan uppercase tracking-wider">
-            Curriculum Complete
+            {t('celebration.curriculum_complete')}
           </span>
           <h2 className="text-xl font-bold text-foreground mt-1 tracking-tight">
-            🎉 Quantum Mastery Achieved!
+            {t('celebration.mastery_title')}
           </h2>
           <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-            Congratulations! You have completed all 7 core missions of QuantumLab 3D—from single-qubit
+            {t('celebration.mastery_body')}{" "}
             Bloch sphere superposition to Shor&apos;s factorization and 3-qubit error correction.
           </p>
         </div>
@@ -105,9 +107,9 @@ export function CelebrationModal() {
         <div className="p-3.5 rounded-xl bg-surface-2 border border-border text-left flex items-start gap-3">
           <Sparkles className="w-5 h-5 text-quantum-purple shrink-0 mt-0.5" />
           <div className="text-xs">
-            <span className="font-bold text-foreground">Sandbox Lab Unlocked</span>
+            <span className="font-bold text-foreground">{t('celebration.sandbox_unlocked')}</span>
             <p className="text-muted-foreground mt-0.5">
-              Access the freeform workspace with continuous angle rotations, real-time cryogenic thermal sweeps (15 mK – 300 K), and zero mission constraints.
+              {t('celebration.sandbox_body')}{" "} real-time cryogenic thermal sweeps (15 mK – 300 K), and zero mission constraints.
             </p>
           </div>
         </div>
@@ -119,7 +121,7 @@ export function CelebrationModal() {
             onClick={() => setIsOpen(false)}
             className="flex-1 px-4 py-2 rounded-xl text-xs telemetry-mono font-semibold bg-surface-2 hover:bg-surface-3 text-muted-foreground border border-border transition-colors cursor-pointer"
           >
-            Review Roadmap
+            {t('celebration.review_roadmap')}
           </button>
           <button
             type="button"
@@ -129,7 +131,7 @@ export function CelebrationModal() {
             }}
             className="flex-1 px-4 py-2 rounded-xl text-xs telemetry-mono font-bold bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center gap-1.5 glow-cyan transition-all active:scale-95 cursor-pointer"
           >
-            Enter Sandbox Lab <ArrowRight className="w-4 h-4" />
+            {t('celebration.enter_sandbox')} <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>

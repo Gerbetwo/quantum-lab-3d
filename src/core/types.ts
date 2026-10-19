@@ -35,37 +35,4 @@ export interface MeasurementResult {
 
 export type StateVector = ComplexType[];
 export type QubitIndex = number;
-export type GateType =
-  | 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T' | 'I' | 'CNOT' | 'CZ' | 'SWAP'
-  | 'CS' | 'CT' | 'CPHASE' | 'CR' | 'TOFFOLI' | 'MEASURE' | 'CUSTOM';
-export type GateMatrix = ComplexType[][];
-
-export interface StateVectorHistoryDetails {
-  steps: StateVector[];
-  stepStates: StateVector[];
-  afterEachStep: StateVector[];
-  final: StateVector;
-}
-
-export type StateVectorHistory = StateVector[] & StateVectorHistoryDetails;
-
-export interface PlacedGate {
-  id: string;
-  type: GateType;
-  targetQubit: number;
-  controlQubit?: number;
-  step?: number;
-  targets?: number[];
-  controls?: number[];
-}
-
-export interface CircuitStep {
-  step: number;
-  gates: PlacedGate[];
-}
-
-export interface QuantumCircuit {
-  numQubits: number;
-  maxDepth?: number;
-  steps: CircuitStep[];
-}
+export type GateType = 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T' | 'I';

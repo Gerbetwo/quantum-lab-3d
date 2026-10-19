@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 import { useQuantumStore } from "@/store/useQuantumStore";
+import { useTranslation } from '@/lib/i18n';
 import {
   simulateGroverStep,
   runShorDemo,
@@ -28,7 +29,6 @@ export function resolveAlgorithmType(missionId?: string): AlgorithmType {
   return "grover";
 }
 
-// 1. GROVER 3D BAR GRAPH BUILDERS
 export interface GroverBarElements {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -45,7 +45,6 @@ export function createGroverBarScene(targetIndex = 2): GroverBarElements {
   camera.position.set(0, 1.8, 4.6);
   camera.lookAt(0, 0.6, 0);
 
-  // Base floor grid
   const grid = new THREE.GridHelper(4.8, 8, 0x00f3ff, 0x1e293b);
   grid.position.y = 0;
   scene.add(grid);
@@ -55,7 +54,7 @@ export function createGroverBarScene(targetIndex = 2): GroverBarElements {
 
   for (let i = 0; i < 4; i++) {
     const geo = new THREE.BoxGeometry(0.65, 1.0, 0.65);
-    geo.translate(0, 0.5, 0); // pivot at base
+    geo.translate(0, 0.5, 0);
     geometries.push(geo);
 
     const isTarget = i === targetIndex;
@@ -69,7 +68,7 @@ export function createGroverBarScene(targetIndex = 2): GroverBarElements {
 
     const bar = new THREE.Mesh(geo, mat);
     bar.position.set(xPositions[i], 0, 0);
-    bar.scale.set(1, 0.7, 1); // initial uniform 25%
+    bar.scale.set(1, 0.7, 1);
     scene.add(bar);
     bars.push(bar);
   }
@@ -95,7 +94,6 @@ export function updateGroverBars(
   }
 }
 
-// 2. SHOR PERIODICITY WHEEL BUILDERS
 export interface ShorWheelElements {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -118,7 +116,6 @@ export function createShorWheelScene(
   camera.position.set(0, 0, 5.0);
   camera.lookAt(0, 0, 0);
 
-  // Outer Torus Rotor
   const rotorGeo = new THREE.TorusGeometry(1.6, 0.04, 16, 64);
   const rotorMat = new THREE.MeshBasicMaterial({
     color: 0xa855f7,
@@ -130,7 +127,6 @@ export function createShorWheelScene(
   const rotor = new THREE.Mesh(rotorGeo, rotorMat);
   scene.add(rotor);
 
-  // Periodicity Nodes
   const nodes: THREE.Mesh[] = [];
   const validPeriod = Math.max(1, period);
   for (let i = 0; i < validPeriod; i++) {
@@ -146,7 +142,6 @@ export function createShorWheelScene(
     scene.add(node);
     nodes.push(node);
 
-    // Connecting spoke to center
     const spokeGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(1.6 * Math.cos(angle), 1.6 * Math.sin(angle), 0),
@@ -161,7 +156,6 @@ export function createShorWheelScene(
     scene.add(new THREE.Line(spokeGeo, spokeMat));
   }
 
-  // Orbital Laser Bead
   const beadGeo = new THREE.SphereGeometry(0.16, 16, 16);
   const beadMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   geometries.push(beadGeo);
@@ -196,7 +190,6 @@ export function updateShorWheelAnimation(
   elements.rotor.rotation.z = timeSec * 0.2;
 }
 
-// 3. 3-QUBIT QEC SYNDROME LATTICE BUILDERS
 export interface QECLatticeElements {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -237,7 +230,6 @@ export function createQECLatticeScene(
     scene.add(node);
     nodes.push(node);
 
-    // Red error shockwave shell
     const shellGeo = new THREE.SphereGeometry(0.48, 16, 16);
     const shellMat = new THREE.MeshBasicMaterial({
       color: 0xef4444,
@@ -252,7 +244,6 @@ export function createQECLatticeScene(
     pulseShells.push(shell);
   }
 
-  // Interconnecting Parity Check Links (q0 <-> q1 and q1 <-> q2)
   const links: THREE.Line[] = [];
   const linkDefs = [
     [-1.8, 0],
@@ -276,7 +267,6 @@ export function createQECLatticeScene(
     links.push(link);
   }
 
-  // Green clearing recovery beam
   const beamGeo = new THREE.BufferGeometry().setFromPoints([
     new THREE.Vector3(-2.2, -0.7, 0),
     new THREE.Vector3(2.2, -0.7, 0),
@@ -328,7 +318,6 @@ export function updateQECLattice(
   beamMat.opacity = errorIndex === null ? 0.85 : 0.25;
 }
 
-// 4. REACT COMPONENT & HUD INTEGRATION
 export interface AlgorithmVisualizer3DProps {
   missionId?: string;
   className?: string;
@@ -338,14 +327,12 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
   missionId,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
-  const storeMissionId = useQuantumStore(
-    (s) => s.currentMissionId ?? s.activeMissionId ?? "grover",
-  );
-  const activeMission = missionId ?? storeMissionId;
+  const currentMissionId = useQuantumStore((s) => s.currentMissionId);
+  const activeMission = missionId ?? currentMissionId ?? "grover";
   const algoType = resolveAlgorithmType(activeMission);
 
-  // Algorithm state synchronized via store (HU-MVP-06, HU-MVP-07, HU-MVP-08)
   const groverStep = useQuantumStore((s) => s.groverStep);
   const targetIndex = useQuantumStore((s) => s.groverTargetIndex);
   const setGroverStep = useQuantumStore((s) => s.setGroverStep);
@@ -462,6 +449,7 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
       }
     };
   }, [algoType, targetIndex, groverResult, shorResult, injectedError]);
+
   return (
     <div
       data-testid="algorithm-visualizer-3d"
@@ -473,15 +461,13 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
       <div className="relative z-10 flex items-center justify-between p-3.5 border-b border-border bg-background/80 pointer-events-none">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-quantum-cyan animate-pulse" />
-          <h2 className="text-xs telemetry-mono font-bold uppercase tracking-wider text-quantum-cyan">
-            {algoType === "grover" && "Grover 3D Amplitude Amplification (N=4)"}
-            {algoType === "shor" &&
-              `Shor Periodicity Wheel (N=15, a=${shorBase})`}
-            {algoType === "qec" &&
-              "3-Qubit Syndrome Lattice & Bit-Flip Clearing"}
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-quantum-cyan">
+            {algoType === "grover" && t('algorithm_viz.grover_title')}
+            {algoType === "shor" && t('algorithm_viz.shor_title', { a: shorBase })}
+            {algoType === "qec" && t('algorithm_viz.qec_title')}
           </h2>
         </div>
-        <span className="text-[10px] telemetry-mono px-2 py-0.5 rounded-full hud-badge-cyan uppercase">
+        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full hud-badge-cyan uppercase">
           {algoType} Active
         </span>
       </div>
@@ -490,10 +476,10 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
       <div className="relative z-10 flex-1 flex flex-col justify-end p-4 pointer-events-none">
         <div className="p-3 rounded-xl bg-surface-2 border border-border pointer-events-auto flex flex-col gap-2.5">
           {algoType === "grover" && (
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs telemetry-mono">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground uppercase text-[10px]">
-                  Target State:
+                  {t('algorithm_viz.target_state')}
                 </span>
                 {[0, 1, 2, 3].map((idx) => (
                   <button
@@ -503,7 +489,7 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
                       setTargetIndex(idx);
                       setGroverStep(0);
                     }}
-                    className={`px-2.5 py-1 rounded text-xs telemetry-mono cursor-pointer transition-all ${
+                    className={`px-2.5 py-1 rounded text-xs font-mono cursor-pointer transition-all ${
                       targetIndex === idx
                         ? "hud-badge-cyan font-bold"
                         : "bg-surface-3 border border-border text-muted-foreground hover:bg-surface-2"
@@ -524,33 +510,33 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
                 <button
                   type="button"
                   onClick={() => setGroverStep((s) => Math.min(2, s + 1))}
-                  className="px-3 py-1 rounded text-xs telemetry-mono font-semibold hud-badge-cyan cursor-pointer transition-all hover:opacity-90"
+                  className="px-3 py-1 rounded text-xs font-mono font-semibold hud-badge-cyan cursor-pointer transition-all hover:opacity-90"
                 >
-                  Apply Oracle + Diffusion (Step {groverStep}/2)
+                  {t('algorithm_viz.apply_oracle', { step: groverStep })}
                 </button>
                 <button
                   type="button"
                   onClick={() => setGroverStep(0)}
-                  className="px-2.5 py-1 rounded text-xs telemetry-mono bg-surface-3 border border-border text-muted-foreground cursor-pointer transition-all hover:bg-surface-2"
+                  className="px-2.5 py-1 rounded text-xs font-mono bg-surface-3 border border-border text-muted-foreground cursor-pointer transition-all hover:bg-surface-2"
                 >
-                  Reset
+                  {t('common.reset')}
                 </button>
               </div>
             </div>
           )}
 
           {algoType === "shor" && (
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs telemetry-mono">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
               <div className="flex items-center gap-1.5">
                 <span className="text-muted-foreground uppercase text-[10px]">
-                  Coprime Base a:
+                  {t('algorithm_viz.coprime_base')}
                 </span>
                 {[2, 7, 8, 11, 13].map((b) => (
                   <button
                     key={b}
                     type="button"
                     onClick={() => setShorBase(b)}
-                    className={`px-2.5 py-1 rounded text-xs telemetry-mono cursor-pointer transition-all ${
+                    className={`px-2.5 py-1 rounded text-xs font-mono cursor-pointer transition-all ${
                       shorBase === b
                         ? "hud-badge-purple font-bold"
                         : "bg-surface-3 border border-border text-muted-foreground hover:bg-surface-2"
@@ -562,46 +548,45 @@ export const AlgorithmVisualizer3D: React.FC<AlgorithmVisualizer3DProps> = ({
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-quantum-purple">
-                  Sequence: [{shorResult.sequence.join(", ")}...] (Period r ={" "}
-                  {shorResult.period})
+                  {t('algorithm_viz.sequence', { seq: shorResult.sequence.join(', '), r: shorResult.period })}
                 </span>
                 <span className="text-success font-bold">
-                  Factors: {shorResult.factors.join(" × ")} = 15
+                  {t('algorithm_viz.factors', { f1: shorResult.factors[0], f2: shorResult.factors[1] })}
                 </span>
               </div>
             </div>
           )}
 
           {algoType === "qec" && (
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs telemetry-mono">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground uppercase text-[10px]">
-                  Inject Error:
+                  {t('algorithm_viz.inject_error')}
                 </span>
                 {[0, 1, 2].map((q) => (
                   <button
                     key={q}
                     type="button"
                     onClick={() => setInjectedError(q)}
-                    className={`px-2.5 py-1 rounded text-xs telemetry-mono cursor-pointer transition-all ${
+                    className={`px-2.5 py-1 rounded text-xs font-mono cursor-pointer transition-all ${
                       injectedError === q
                         ? "hud-badge-rose font-bold"
                         : "bg-surface-3 border border-border text-muted-foreground hover:bg-surface-2"
                     }`}
                   >
-                    Flip q{q}
+                    {t('algorithm_controls.flip_qubit', { index: q })}
                   </button>
                 ))}
                 <button
                   type="button"
                   onClick={() => setInjectedError(null)}
-                  className={`px-2.5 py-1 rounded text-xs telemetry-mono cursor-pointer transition-all ${
+                  className={`px-2.5 py-1 rounded text-xs font-mono cursor-pointer transition-all ${
                     injectedError === null
                       ? "hud-badge-emerald font-bold"
                       : "bg-surface-3 border border-border text-muted-foreground hover:bg-surface-2"
                   }`}
                 >
-                  Clean
+                  {t('algorithm_viz.clean')}
                 </button>
               </div>
               <div className="flex items-center gap-3">
