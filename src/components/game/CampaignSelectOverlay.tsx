@@ -38,7 +38,7 @@ const CAMPAIGN_NODES: MissionNodeData[] = [
     title: 'Superposición Cuántica',
     subtitle: '|0⟩, |1⟩ & Bloch Sphere Geometry',
     difficulty: 'FOUNDATIONAL',
-    difficultyColor: 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30',
+    difficultyColor: 'hud-badge-emerald',
   },
   {
     id: 'entanglement',
@@ -49,7 +49,7 @@ const CAMPAIGN_NODES: MissionNodeData[] = [
     title: 'Entrelazamiento Cuántico',
     subtitle: 'Bell States & Correlated Collapse',
     difficulty: 'INTERMEDIATE',
-    difficultyColor: 'text-cyan bg-cyan/10 border-cyan/30',
+    difficultyColor: 'hud-badge-cyan',
   },
   {
     id: 'decoherence',
@@ -60,7 +60,7 @@ const CAMPAIGN_NODES: MissionNodeData[] = [
     title: 'Decoherencia y Ruido',
     subtitle: 'Thermal Bath & T2 Dephasing',
     difficulty: 'INTERMEDIATE',
-    difficultyColor: 'text-amber-400 bg-amber-950/40 border-amber-500/30',
+    difficultyColor: 'hud-badge-amber',
   },
   {
     id: 'gates',
@@ -71,7 +71,7 @@ const CAMPAIGN_NODES: MissionNodeData[] = [
     title: 'Puertas Cuánticas',
     subtitle: 'Pauli X, Z, Hadamard Rotations',
     difficulty: 'INTERMEDIATE',
-    difficultyColor: 'text-cyan bg-cyan/10 border-cyan/30',
+    difficultyColor: 'hud-badge-cyan',
   },
   {
     id: 'grover',
@@ -82,7 +82,7 @@ const CAMPAIGN_NODES: MissionNodeData[] = [
     title: 'Algoritmo de Grover',
     subtitle: 'Amplitude Amplification & Diffusion',
     difficulty: 'ADVANCED',
-    difficultyColor: 'text-purple-400 bg-purple-950/40 border-purple-500/30',
+    difficultyColor: 'hud-badge-purple',
   },
   {
     id: 'applications',
@@ -93,7 +93,7 @@ const CAMPAIGN_NODES: MissionNodeData[] = [
     title: 'Factorización de Shor',
     subtitle: 'Period Finding & N=15 Factorization',
     difficulty: 'ADVANCED',
-    difficultyColor: 'text-purple-400 bg-purple-950/40 border-purple-500/30',
+    difficultyColor: 'hud-badge-purple',
   },
   {
     id: 'error-correction',
@@ -104,7 +104,7 @@ const CAMPAIGN_NODES: MissionNodeData[] = [
     title: 'Corrección de Errores',
     subtitle: 'Bit-Flip Code & Syndrome Recovery',
     difficulty: 'EXPERT',
-    difficultyColor: 'text-rose-400 bg-rose-950/40 border-rose-500/30',
+    difficultyColor: 'hud-badge-rose',
   },
 ];
 
@@ -275,7 +275,7 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-3 border border-edge text-purple-400 font-semibold">
                   LAB-00 · Sandbox
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-medium text-purple-300 bg-purple-950/40 border-purple-500/30">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded uppercase font-medium hud-badge-purple">
                   UNCONSTRAINED
                 </span>
               </div>

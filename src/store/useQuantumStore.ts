@@ -12,8 +12,10 @@ export type MissionPhase =
   | "COMPLETED" | "MANIPULATION" | "MEASUREMENT" | "VERIFICATION" | "SUCCESS";
 
 export type Language = 'en' | 'es';
+export type Theme = 'dark' | 'light';
 
 export interface QuantumStore {
+  theme: Theme;
   language: Language;
   appViewState: AppViewState;
   isPauseMenuOpen: boolean;
@@ -37,6 +39,8 @@ export interface QuantumStore {
   isSoundEnabled: boolean;
   soundEnabled: boolean;
 
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
   setAppViewState: (view: AppViewState) => void;
   togglePauseMenu: () => void;
@@ -84,6 +88,38 @@ export interface QuantumStore {
 const COOKIE_COMPLETED = "quantum_completed_missions";
 const COOKIE_SANDBOX = "quantum_sandbox_unlocked";
 const COOKIE_LANGUAGE = "quantum_language";
+const STORAGE_THEME = "quantum_theme";
+
+export function getInitialTheme(): Theme {
+  if (typeof window === "undefined") return "dark";
+  try {
+    const saved = localStorage.getItem(STORAGE_THEME);
+    if (saved === "dark" || saved === "light") return saved;
+    return "dark";
+  } catch (_e) {
+    return "dark";
+  }
+}
+
+export function syncDocumentTheme(theme: Theme) {
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      window.localStorage.setItem(STORAGE_THEME, theme);
+    } catch (_e) { /* Safe */ }
+  }
+  if (typeof document !== "undefined" && document.documentElement) {
+    try {
+      const root = document.documentElement.classList;
+      if (theme === "dark") {
+        root.add("dark", "theme-dark");
+        root.remove("theme-light");
+      } else {
+        root.remove("dark", "theme-dark");
+        root.add("theme-light");
+      }
+    } catch (_e) { /* Safe */ }
+  }
+}
 
 function syncCookies(completed: number[], isSandboxUnlocked: boolean, language?: Language) {
   if (typeof window === "undefined") return;
@@ -119,10 +155,15 @@ const INITIAL_PHYSICS = {
   entanglementDegree: 0, isEntangled: false, lastOutcome: null as 0 | 1 | null,
 };
 const init = getInitialPersisted();
+const initialTheme = getInitialTheme();
+if (typeof window !== "undefined") {
+  syncDocumentTheme(initialTheme);
+}
 
 export const useQuantumStore = create<QuantumStore>()(
   persist(
     (set, get) => ({
+      theme: initialTheme,
       language: init.language,
       appViewState: "TITLE",
       isPauseMenuOpen: false,
@@ -138,6 +179,16 @@ export const useQuantumStore = create<QuantumStore>()(
       qecInjectedError: null,
       isSoundEnabled: isAudioEnabled(),
       soundEnabled: isAudioEnabled(),
+
+      setTheme: (theme: Theme) => {
+        set({ theme });
+        syncDocumentTheme(theme);
+      },
+      toggleTheme: () => {
+        const next = get().theme === "dark" ? "light" : "dark";
+        set({ theme: next });
+        syncDocumentTheme(next);
+      },
 
       setLanguage: (language: Language) => {
         set({ language });
@@ -299,6 +350,7 @@ export const useQuantumStore = create<QuantumStore>()(
         progress: s.progress,
         isSandboxUnlocked: s.isSandboxUnlocked,
         language: s.language,
+        theme: s.theme,
       }),
     }
   )

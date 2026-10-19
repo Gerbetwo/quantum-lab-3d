@@ -68,7 +68,7 @@ export function MissionHeader({ missionId: propMissionId, className = '' }: Miss
         </div>
 
         {isCompleted ? (
-          <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded flex items-center gap-1 font-bold">
+          <span className="text-[10px] font-mono hud-badge-emerald px-2 py-0.5 rounded flex items-center gap-1 font-bold">
             <CheckCircle2 className="w-3 h-3" /> DONE
           </span>
         ) : (
@@ -76,7 +76,7 @@ export function MissionHeader({ missionId: propMissionId, className = '' }: Miss
             type="button"
             onClick={() => markMissionCompleted(missionIndex)}
             data-testid="mark-completed-button"
-            className="text-[10px] font-mono text-sky-600 dark:text-cyan-400 border border-sky-400/50 dark:border-cyan-500/40 bg-sky-50 dark:bg-cyan-950/40 px-2 py-0.5 rounded flex items-center gap-1 hover:bg-sky-100 dark:hover:bg-cyan-900/60 transition-colors font-bold"
+            className="text-[10px] font-mono hud-badge-cyan px-2 py-0.5 rounded flex items-center gap-1 hover:brightness-110 transition-all font-bold"
           >
             <Sparkles className="w-3 h-3" /> MARK COMPLETE
           </button>

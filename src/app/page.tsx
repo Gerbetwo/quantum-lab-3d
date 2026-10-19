@@ -35,7 +35,7 @@ export default function HomePage() {
       {/* 4. Sandbox Mode Tactical HUD */}
       {appViewState === 'SANDBOX' && (
         <div className="w-full max-w-2xl mx-auto my-auto p-6 rounded-2xl border border-purple-500/40 bg-card/85 backdrop-blur-md shadow-2xl flex flex-col items-center text-center gap-4 pointer-events-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/40 border border-purple-500/40 text-purple-300 text-xs font-mono">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full hud-badge-purple text-xs font-mono">
             <Sparkles className="w-3.5 h-3.5 text-purple-400" /> UNCONSTRAINED SANDBOX ACTIVE
           </div>
 

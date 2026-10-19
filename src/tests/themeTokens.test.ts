@@ -96,4 +96,48 @@ describe('Theme Tokens Specification (globals.css)', () => {
       expect(contrastRatio(whiteText, precisionBlue)).toBeGreaterThan(3.0);
     });
   });
+
+  it('defines semantic badge utilities with theme-aware high contrast', () => {
+    expect(cssContent).toMatch(/\.hud-badge-cyan\b/);
+    expect(cssContent).toMatch(/\.hud-badge-purple\b/);
+    expect(cssContent).toMatch(/\.hud-badge-emerald\b/);
+    expect(cssContent).toMatch(/\.hud-badge-amber\b/);
+    expect(cssContent).toMatch(/\.hud-badge-rose\b/);
+  });
+});
+
+import { useQuantumStore } from '../store/useQuantumStore';
+
+describe('Centralized Theme State in useQuantumStore', () => {
+  it('manages theme state and synchronizes document.documentElement and localStorage', () => {
+    const store = useQuantumStore.getState();
+    expect(store.theme).toBeDefined();
+
+    // Test setTheme('light')
+    store.setTheme('light');
+    expect(useQuantumStore.getState().theme).toBe('light');
+    expect(localStorage.getItem('quantum_theme')).toBe('light');
+    expect(document.documentElement.classList.contains('theme-light')).toBe(true);
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(document.documentElement.classList.contains('theme-dark')).toBe(false);
+
+    // Test toggleTheme() -> back to 'dark'
+    useQuantumStore.getState().toggleTheme();
+    expect(useQuantumStore.getState().theme).toBe('dark');
+    expect(localStorage.getItem('quantum_theme')).toBe('dark');
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.classList.contains('theme-dark')).toBe(true);
+    expect(document.documentElement.classList.contains('theme-light')).toBe(false);
+
+    // Test toggleTheme() -> 'light'
+    useQuantumStore.getState().toggleTheme();
+    expect(useQuantumStore.getState().theme).toBe('light');
+    expect(localStorage.getItem('quantum_theme')).toBe('light');
+    expect(document.documentElement.classList.contains('theme-light')).toBe(true);
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+
+    // Restore to dark
+    useQuantumStore.getState().setTheme('dark');
+    expect(useQuantumStore.getState().theme).toBe('dark');
+  });
 });

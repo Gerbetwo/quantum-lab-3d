@@ -76,18 +76,17 @@ export function AppShell({ children }: AppShellProps) {
   const appViewState = useQuantumStore((s) => s.appViewState);
   const togglePauseMenu = useQuantumStore((s) => s.togglePauseMenu);
   const resetState = useQuantumStore((s) => s.resetState);
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    if (typeof window === 'undefined') return 'dark';
-    const saved = localStorage.getItem('quantum_theme') as 'dark' | 'light' | null;
-    return saved === 'light' ? 'light' : 'dark';
-  });
+  const theme = useQuantumStore((s) => s.theme);
+  const toggleTheme = useQuantumStore((s) => s.toggleTheme);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove('dark', 'theme-dark');
+      document.documentElement.classList.add('theme-light');
     } else {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add('dark', 'theme-dark');
+      document.documentElement.classList.remove('theme-light');
     }
   }, [theme]);
 
@@ -97,17 +96,6 @@ export function AppShell({ children }: AppShellProps) {
       window.dispatchEvent(new Event('resize'));
     }
   }, [appViewState]);
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    localStorage.setItem('quantum_theme', next);
-    if (next === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
-  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {

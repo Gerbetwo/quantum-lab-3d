@@ -72,11 +72,11 @@ export function MissionRoadmap() {
                     Level {mission.order}
                   </span>
                   {isDone ? (
-                    <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-[11px] font-mono hud-badge-emerald px-2 py-0.5 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" /> Mastered
                     </span>
                   ) : isAvailable ? (
-                    <span className="text-[11px] font-mono text-cyan bg-cyan/10 border border-cyan/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-[11px] font-mono hud-badge-cyan px-2 py-0.5 rounded-full flex items-center gap-1">
                       <PlayCircle className="w-3 h-3" /> Active
                     </span>
                   ) : (
@@ -121,7 +121,7 @@ export function MissionRoadmap() {
                 Sandbox Lab
               </span>
               {isSandboxUnlocked ? (
-                <span className="text-[11px] font-mono text-purple-300 bg-purple-950/40 border border-purple-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[11px] font-mono hud-badge-purple px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> Unlocked
                 </span>
               ) : (

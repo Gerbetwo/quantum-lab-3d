@@ -30,13 +30,8 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
   const currentMissionId = useQuantumStore((s) => s.currentMissionId);
   const isSoundEnabled = useQuantumStore((s) => s.isSoundEnabled);
   const toggleSound = useQuantumStore((s) => s.toggleSound);
-
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const saved = localStorage.getItem('quantum_theme');
-    if (saved) return saved === 'dark';
-    return document.documentElement.classList.contains('dark');
-  });
+  const theme = useQuantumStore((s) => s.theme);
+  const toggleTheme = useQuantumStore((s) => s.toggleTheme);
 
   const [resetFeedback, setResetFeedback] = useState<boolean>(false);
 
@@ -87,15 +82,7 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
   };
 
   const handleToggleTheme = () => {
-    const nextDark = !isDark;
-    setIsDark(nextDark);
-    if (nextDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('quantum_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('quantum_theme', 'light');
-    }
+    toggleTheme();
   };
 
   const handleToggleSound = () => {
@@ -204,11 +191,11 @@ export function PauseMenuModal({ forceVisible = false }: PauseMenuModalProps = {
               className="py-2 px-3 rounded-lg text-xs font-mono bg-surface-2 hover:bg-surface-3 border border-edge flex items-center justify-between transition-colors"
             >
               <span className="flex items-center gap-1.5 text-muted-foreground">
-                {isDark ? <Sun className="w-3.5 h-3.5 text-amber-300" /> : <Moon className="w-3.5 h-3.5 text-cyan" />}
+                {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-300" /> : <Moon className="w-3.5 h-3.5 text-cyan" />}
                 <span>Theme</span>
               </span>
               <span className="text-[11px] font-bold text-foreground">
-                {isDark ? 'Dark' : 'Light'}
+                {theme === 'dark' ? 'Dark' : 'Light'}
               </span>
             </button>
 

@@ -93,7 +93,7 @@ export function EntanglementOverlay({ className = '' }: EntanglementOverlayProps
       </div>
 
       {lastOutcome !== null && (
-        <div className="p-2.5 rounded bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 text-xs font-mono">
+        <div className="p-2.5 rounded hud-badge-emerald text-xs font-mono">
           ✓ Non-local correlation confirmed: Alice={lastOutcome} ↔ Bob={lastOutcome} (Zero |01⟩/|10⟩)
         </div>
       )}

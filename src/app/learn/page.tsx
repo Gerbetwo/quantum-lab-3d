@@ -60,11 +60,11 @@ export default function LearnPage() {
                     Misión {mission.order}
                   </span>
                   {isCompleted ? (
-                    <span className="flex items-center text-xs font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center text-xs font-medium hud-badge-emerald px-2 py-0.5 rounded-full">
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Completada
                     </span>
                   ) : isUnlocked ? (
-                    <span className="flex items-center text-xs font-medium text-cyan bg-cyan/10 border border-cyan/30 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center text-xs font-medium hud-badge-cyan px-2 py-0.5 rounded-full">
                       <PlayCircle className="w-3.5 h-3.5 mr-1" /> Disponible
                     </span>
                   ) : (
