@@ -13,6 +13,7 @@ import {
   Sliders,
   Sparkles,
   CheckCircle2,
+  Clock,
   Globe,
   ArrowLeft,
   RotateCcw,
@@ -37,7 +38,6 @@ export function MissionHeader({ missionId: propMissionId, className = '' }: Miss
   const missionIndex = getMissionIndex(activeMissionId);
 
   const completedMissions = useQuantumStore((s) => s.completedMissions);
-  const markMissionCompleted = useQuantumStore((s) => s.markMissionCompleted);
   const togglePauseMenu = useQuantumStore((s) => s.togglePauseMenu);
   const setAppViewState = useQuantumStore((s) => s.setAppViewState);
   const selectMission = useQuantumStore((s) => s.selectMission);
@@ -95,18 +95,19 @@ export function MissionHeader({ missionId: propMissionId, className = '' }: Miss
             <Sparkles className="w-3 h-3 text-quantum-purple" /> {t('mission_header.sandbox_badge')}
           </span>
         ) : isCompleted ? (
-          <span className="text-[10px] font-mono hud-badge-emerald px-2 py-0.5 rounded flex items-center gap-1 font-bold">
-            <CheckCircle2 className="w-3 h-3 text-success" /> DONE
+          <span
+            data-testid="mission-status-completed"
+            className="text-[10px] font-mono hud-badge-emerald px-2 py-0.5 rounded flex items-center gap-1 font-bold uppercase"
+          >
+            <CheckCircle2 className="w-3 h-3 text-success" /> COMPLETED
           </span>
         ) : (
-          <button
-            type="button"
-            onClick={() => markMissionCompleted(missionIndex)}
-            data-testid="mark-completed-button"
-            className="text-[10px] font-mono hud-badge-cyan px-2 py-0.5 rounded flex items-center gap-1 hover:opacity-90 transition-all font-bold cursor-pointer"
+          <span
+            data-testid="mission-status-in-progress"
+            className="text-[10px] font-mono hud-badge-amber px-2 py-0.5 rounded flex items-center gap-1 font-bold uppercase"
           >
-            <Sparkles className="w-3 h-3" /> {t('mission_header.mark_complete')}
-          </button>
+            <Clock className="w-3 h-3 text-warning" /> IN PROGRESS
+          </span>
         )}
       </div>
 

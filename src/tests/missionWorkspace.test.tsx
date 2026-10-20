@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MissionWorkspace } from '@/features/missions/MissionWorkspace';
 import { MissionHeader } from '@/components/game/MissionHeader';
+import { CampaignSelectOverlay } from '@/components/game/CampaignSelectOverlay';
 import { useQuantumStore } from '@/store/useQuantumStore';
 
 describe('Floating Gate Controls & Edge Navigation (HU-MVP-03, HU-MVP-12)', () => {
@@ -66,6 +67,69 @@ describe('Floating Gate Controls & Edge Navigation (HU-MVP-03, HU-MVP-12)', () =
 
       fireEvent.click(pauseBtn);
       expect(useQuantumStore.getState().isPauseMenuOpen).toBe(true);
+    });
+
+    it('renders IN PROGRESS badge when mission is incomplete and COMPLETED when finished', () => {
+      useQuantumStore.setState({ completedMissions: [] });
+      const { unmount } = render(<MissionHeader missionId="superposition" />);
+      expect(screen.getByTestId('mission-status-in-progress')).toBeDefined();
+      expect(screen.getByTestId('mission-status-in-progress').textContent).toContain('IN PROGRESS');
+      expect(screen.queryByTestId('mark-completed-button')).toBeNull();
+      unmount();
+
+      useQuantumStore.setState({ completedMissions: [0] });
+      render(<MissionHeader missionId="superposition" />);
+      expect(screen.getByTestId('mission-status-completed')).toBeDefined();
+      expect(screen.getByTestId('mission-status-completed').textContent).toContain('COMPLETED');
+      expect(screen.queryByTestId('mission-status-in-progress')).toBeNull();
+    });
+  });
+
+  describe('Sequential Mission Progression (CampaignSelectOverlay)', () => {
+    it('locks sequential nodes until prerequisites are completed while keeping sandbox unconstrained', () => {
+      useQuantumStore.setState({
+        appViewState: 'CAMPAIGN_SELECT',
+        completedMissions: [],
+        currentMissionId: 'superposition',
+      });
+
+      const { unmount } = render(<CampaignSelectOverlay forceVisible />);
+
+      // Mission 0 is unlocked
+      const card0 = screen.getByTestId('mission-card-superposition');
+      expect(card0.className).not.toContain('cursor-not-allowed');
+      const btn0 = screen.getByTestId('launch-mission-superposition');
+      expect(btn0.hasAttribute('disabled')).toBe(false);
+
+      // Mission 1 is locked because Mission 0 is not completed
+      const card1 = screen.getByTestId('mission-card-entanglement');
+      expect(card1.className).toContain('opacity-50');
+      expect(card1.className).toContain('cursor-not-allowed');
+      const btn1 = screen.getByTestId('launch-mission-entanglement');
+      expect(btn1.hasAttribute('disabled')).toBe(true);
+      expect(btn1.textContent).toContain('LOCKED');
+
+      // Clicking locked button does not launch the mission
+      fireEvent.click(btn1);
+      expect(useQuantumStore.getState().currentMissionId).toBe('superposition');
+
+      // Sandbox card is unconstrained
+      const sandboxCard = screen.getByTestId('mission-card-sandbox');
+      expect(sandboxCard.className).not.toContain('opacity-50');
+      expect(sandboxCard.className).not.toContain('cursor-not-allowed');
+      unmount();
+
+      // Once Mission 0 is completed, Mission 1 becomes unlocked
+      useQuantumStore.setState({ completedMissions: [0] });
+      render(<CampaignSelectOverlay forceVisible />);
+      const card1Unlocked = screen.getByTestId('mission-card-entanglement');
+      expect(card1Unlocked.className).not.toContain('cursor-not-allowed');
+      const btn1Unlocked = screen.getByTestId('launch-mission-entanglement');
+      expect(btn1Unlocked.hasAttribute('disabled')).toBe(false);
+
+      // Launching unlocked mission works
+      fireEvent.click(btn1Unlocked);
+      expect(useQuantumStore.getState().currentMissionId).toBe('entanglement');
     });
   });
 

@@ -3,13 +3,18 @@
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { soundEngine } from '@/lib/soundEngine';
 import { useTranslation, DICTIONARY } from '@/lib/i18n';
-import type { MissionId } from '@/features/missions/missionRegistry';
+import {
+  isMissionUnlocked,
+  getMissionById,
+  type MissionId,
+} from '@/features/missions/missionRegistry';
 import {
   Sparkles,
   ArrowRight,
   ArrowLeft,
   Beaker,
   ShieldCheck,
+  Lock,
 } from 'lucide-react';
 
 interface MissionNodeData {
@@ -121,6 +126,10 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
   }
 
   const handleLaunch = (id: MissionId) => {
+    const config = getMissionById(id);
+    if (config && !isMissionUnlocked(config.index, completedMissions)) {
+      return;
+    }
     soundEngine.unlock();
     soundEngine.playVectorSnap();
     selectMission(id);
@@ -191,6 +200,7 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
         <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {CAMPAIGN_NODES.map((node) => {
             const isCompleted = completedMissions.includes(node.index);
+            const isUnlocked = isMissionUnlocked(node.index, completedMissions);
             const missionData = DICTIONARY[language]?.missions[node.id];
             const title = missionData?.title ?? node.title;
             const subtitle = missionData?.subtitle ?? node.subtitle;
@@ -200,7 +210,9 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 key={node.id}
                 data-testid={`mission-card-${node.id}`}
                 className={`p-5 rounded-xl border flex flex-col justify-between gap-4 transition-all duration-200 hud-panel ${
-                  isCompleted
+                  !isUnlocked
+                    ? 'opacity-50 cursor-not-allowed border-border'
+                    : isCompleted
                     ? 'border-success/60 glow-emerald'
                     : 'hover:border-quantum-cyan/60 hover:glow-cyan'
                 }`}
@@ -211,9 +223,18 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                       {node.code} · Mission {node.index}
                     </span>
                     <span
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-medium ${node.difficultyColor}`}
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-medium flex items-center gap-1 ${
+                        !isUnlocked ? 'hud-badge-amber' : node.difficultyColor
+                      }`}
                     >
-                      {node.difficulty}
+                      {!isUnlocked ? (
+                        <>
+                          <Lock className="w-3 h-3 text-warning" />
+                          <span>LOCKED</span>
+                        </>
+                      ) : (
+                        node.difficulty
+                      )}
                     </span>
                   </div>
 
@@ -228,12 +249,30 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                 <div className="pt-3 border-t border-border flex flex-col">
                   <button
                     type="button"
-                    onClick={() => handleLaunch(node.id)}
+                    disabled={!isUnlocked}
+                    onClick={() => {
+                      if (isUnlocked) {
+                        handleLaunch(node.id);
+                      }
+                    }}
                     data-testid={`launch-mission-${node.id}`}
-                    className="w-full py-2 px-3 rounded-lg text-xs font-mono font-bold hud-badge-cyan hover:opacity-90 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                    className={`w-full py-2 px-3 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all ${
+                      !isUnlocked
+                        ? 'bg-surface-3 text-muted-foreground border border-border cursor-not-allowed'
+                        : 'hud-badge-cyan hover:opacity-90 active:scale-95 cursor-pointer'
+                    }`}
                   >
-                    <span>{t('campaign.launch_simulation')}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    {!isUnlocked ? (
+                      <>
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>LOCKED</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{t('campaign.launch_simulation')}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
