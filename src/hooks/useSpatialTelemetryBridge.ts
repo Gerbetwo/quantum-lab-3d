@@ -28,7 +28,11 @@ export type KnownSpatialId =
   | "phase-shifter"
   | "interferometer-path"
   | "interference-detector"
-  | "complex-amplitude-disk";
+  | "complex-amplitude-disk"
+  | "entanglement-lattice"
+  | "qubit-alice"
+  | "qubit-bob"
+  | "two-qubit-state";
 
 /**
  * Metadata mapping a 3D spatial element ID to HUD telemetry symbols and descriptions.
@@ -250,6 +254,38 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: "A_{\\text{total}} = \\frac{1}{2}(1 + e^{i\\phi})",
     label: "Complex Amplitude Addition",
     description: "Vector addition of quantum probability amplitudes on the complex plane",
+    hudSection: "state-vector",
+  },
+  "entanglement-lattice": {
+    id: "entanglement-lattice",
+    symbol: "|Φ⁺⟩",
+    latex: "|\\Phi^+\\rangle = \\frac{1}{\\sqrt{2}}(|00\\rangle + |11\\rangle)",
+    label: "Entanglement Tensor Lattice",
+    description: "Non-local EPR correlation channel connecting Alice and Bob",
+    hudSection: "state-vector",
+  },
+  "qubit-alice": {
+    id: "qubit-alice",
+    symbol: "|ψ_A⟩",
+    latex: "|\\psi_A\\rangle",
+    label: "Qubit A (Alice)",
+    description: "Local quantum subsystem controlled by Alice",
+    hudSection: "state-vector",
+  },
+  "qubit-bob": {
+    id: "qubit-bob",
+    symbol: "|ψ_B⟩",
+    latex: "|\\psi_B\\rangle",
+    label: "Qubit B (Bob)",
+    description: "Distant subsystem steered via non-local entanglement correlation",
+    hudSection: "state-vector",
+  },
+  "two-qubit-state": {
+    id: "two-qubit-state",
+    symbol: "|ψ_AB⟩",
+    latex: "|\\psi\\rangle = c_{00}|00\\rangle + c_{01}|01\\rangle + c_{10}|10\\rangle + c_{11}|11\\rangle",
+    label: "2-Qubit State Vector",
+    description: "Composite state vector spanning the 4D bipartite Hilbert space",
     hudSection: "state-vector",
   },
 };
