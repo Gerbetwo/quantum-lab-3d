@@ -15,7 +15,7 @@ export interface QuantumStore {
   appViewState: AppViewState;
   isPauseMenuOpen: boolean;
 
-  // Physics State
+  // Physics State (Retained Core Invariants)
   theta: number;
   phi: number;
   temperatureK: number;
@@ -29,11 +29,9 @@ export interface QuantumStore {
   isSandboxUnlocked: boolean;
   userPredictionProb0: number | null;
 
-  // Algorithm State (Missions 4-6)
+  // Algorithm State
   groverStep: number;
   groverTargetIndex: number;
-  shorBase: number;
-  qecInjectedError: number | null;
   isSoundEnabled: boolean;
 
   // Actions
@@ -47,8 +45,6 @@ export interface QuantumStore {
 
   setGroverStep: (step: number | ((prev: number) => number)) => void;
   setGroverTargetIndex: (idx: number) => void;
-  setShorBase: (base: number) => void;
-  setQecInjectedError: (err: number | null) => void;
   toggleSound: () => boolean;
   setSoundEnabled: (enabled: boolean) => void;
 
@@ -156,18 +152,18 @@ export function checkMissionObjectiveCompletion(state: QuantumStore): boolean {
   switch (state.currentMissionId) {
     case 'superposition':
       return Math.abs(state.theta - Math.PI / 2) < 0.1 || state.lastOutcome !== null;
+    case 'gates':
+      return Math.abs(state.theta - Math.PI / 2) < 0.1 || Math.abs(state.theta - Math.PI) < 0.1;
+    case 'measurement':
+      return state.lastOutcome !== null;
+    case 'interference':
+      return Math.abs(state.phi - Math.PI) < 0.2 || Math.abs(state.phi - Math.PI / 2) < 0.2;
     case 'entanglement':
       return state.isEntangled && state.lastOutcome !== null;
     case 'decoherence':
       return state.temperatureK >= 100;
-    case 'gates':
-      return Math.abs(state.theta - Math.PI / 2) < 0.1 || Math.abs(state.theta - Math.PI) < 0.1;
     case 'grover':
       return state.groverStep >= 2;
-    case 'applications':
-      return state.shorBase === 7 || state.shorBase === 13;
-    case 'error-correction':
-      return state.qecInjectedError === null;
     default:
       return false;
   }
@@ -187,192 +183,178 @@ export const useQuantumStore = create<QuantumStore>()(
         theme: initialTheme,
         language: init.language,
         appViewState: "TITLE",
-      isPauseMenuOpen: false,
-      ...INITIAL_PHYSICS,
-      currentMissionId: "superposition",
-      completedMissions: init.completedMissions,
-      isSandboxUnlocked: init.isSandboxUnlocked,
-      userPredictionProb0: null,
+        isPauseMenuOpen: false,
+        ...INITIAL_PHYSICS,
+        currentMissionId: "superposition",
+        completedMissions: init.completedMissions,
+        isSandboxUnlocked: init.isSandboxUnlocked,
+        userPredictionProb0: null,
 
-      groverStep: 0,
-      groverTargetIndex: 2,
-      shorBase: 7,
-      qecInjectedError: null,
-      isSoundEnabled: isAudioEnabled(),
+        groverStep: 0,
+        groverTargetIndex: 2,
+        isSoundEnabled: isAudioEnabled(),
 
-      setTheme: (theme: Theme) => {
-        set({ theme });
-        syncDocumentTheme(theme);
-      },
-      toggleTheme: () => {
-        const next = get().theme === "dark" ? "light" : "dark";
-        set({ theme: next });
-        syncDocumentTheme(next);
-      },
+        setTheme: (theme: Theme) => {
+          set({ theme });
+          syncDocumentTheme(theme);
+        },
+        toggleTheme: () => {
+          const next = get().theme === "dark" ? "light" : "dark";
+          set({ theme: next });
+          syncDocumentTheme(next);
+        },
 
-      setLanguage: (language: Language) => {
-        set({ language });
-        syncCookies(get().completedMissions, get().isSandboxUnlocked, language);
-      },
-      setAppViewState: (appViewState) => set({ appViewState }),
-      togglePauseMenu: () => set((s) => ({ isPauseMenuOpen: !s.isPauseMenuOpen })),
-      returnToTitle: () => set({ appViewState: "TITLE", isPauseMenuOpen: false }),
+        setLanguage: (language: Language) => {
+          set({ language });
+          syncCookies(get().completedMissions, get().isSandboxUnlocked, language);
+        },
+        setAppViewState: (appViewState) => set({ appViewState }),
+        togglePauseMenu: () => set((s) => ({ isPauseMenuOpen: !s.isPauseMenuOpen })),
+        returnToTitle: () => set({ appViewState: "TITLE", isPauseMenuOpen: false }),
 
-      selectMission: (id) => {
-        const config = getMissionById(id) ?? getMissionById(0)!;
-        const tempK = config.initialTemperatureK;
-        set({
-          currentMissionId: config.id,
-          theta: config.initialTheta,
-          phi: config.initialPhi,
-          temperatureK: tempK,
-          coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(tempK)),
-          isEntangled: config.id === "entanglement",
-          lastOutcome: null,
-          userPredictionProb0: null,
-          groverStep: 0,
-          groverTargetIndex: 2,
-          shorBase: 7,
-          qecInjectedError: null,
-          appViewState: "IN_MISSION",
-          isPauseMenuOpen: false,
-        });
-      },
+        selectMission: (id) => {
+          const config = getMissionById(id) ?? getMissionById(0)!;
+          const tempK = config.initialTemperatureK;
+          set({
+            currentMissionId: config.id,
+            theta: config.initialTheta,
+            phi: config.initialPhi,
+            temperatureK: tempK,
+            coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(tempK)),
+            isEntangled: config.id === "entanglement",
+            lastOutcome: null,
+            userPredictionProb0: null,
+            groverStep: 0,
+            groverTargetIndex: 2,
+            appViewState: "IN_MISSION",
+            isPauseMenuOpen: false,
+          });
+        },
 
-      setGroverStep: (step) => {
-        set((s) => ({
-          groverStep: typeof step === 'function' ? step(s.groverStep) : step,
-        }));
-        checkAndMarkObjective();
-      },
-      setGroverTargetIndex: (groverTargetIndex) => set({ groverTargetIndex }),
-      setShorBase: (shorBase) => {
-        set({ shorBase });
-        checkAndMarkObjective();
-      },
-      setQecInjectedError: (qecInjectedError) => {
-        set({ qecInjectedError });
-        checkAndMarkObjective();
-      },
+        setGroverStep: (step) => {
+          set((s) => ({
+            groverStep: typeof step === 'function' ? step(s.groverStep) : step,
+          }));
+          checkAndMarkObjective();
+        },
+        setGroverTargetIndex: (groverTargetIndex) => set({ groverTargetIndex }),
 
-      toggleSound: () => {
-        const next = !get().isSoundEnabled;
-        setAudioEnabled(next);
-        set({ isSoundEnabled: next });
-        return next;
-      },
-      setSoundEnabled: (enabled: boolean) => {
-        setAudioEnabled(enabled);
-        set({ isSoundEnabled: enabled });
-      },
+        toggleSound: () => {
+          const next = !get().isSoundEnabled;
+          setAudioEnabled(next);
+          set({ isSoundEnabled: next });
+          return next;
+        },
+        setSoundEnabled: (enabled: boolean) => {
+          setAudioEnabled(enabled);
+          set({ isSoundEnabled: enabled });
+        },
 
-      setAngles: (theta, phi) => {
-        set({ theta, phi });
-        checkAndMarkObjective();
-      },
-      setTheta: (theta) => {
-        set({ theta });
-        checkAndMarkObjective();
-      },
-      setPhi: (phi) => set({ phi }),
-      setTemperature: (temperatureK) => {
-        set({ temperatureK, coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(temperatureK)) });
-        checkAndMarkObjective();
-      },
-      setTemperatureK: (tempK) => get().setTemperature(tempK),
-      setEntangled: (isEntangled) => {
-        set({ isEntangled });
-        checkAndMarkObjective();
-      },
-      setLastOutcome: (lastOutcome) => set({ lastOutcome }),
+        setAngles: (theta, phi) => {
+          set({ theta, phi });
+          checkAndMarkObjective();
+        },
+        setTheta: (theta) => {
+          set({ theta });
+          checkAndMarkObjective();
+        },
+        setPhi: (phi) => set({ phi }),
+        setTemperature: (temperatureK) => {
+          set({ temperatureK, coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(temperatureK)) });
+          checkAndMarkObjective();
+        },
+        setTemperatureK: (tempK) => get().setTemperature(tempK),
+        setEntangled: (isEntangled) => {
+          set({ isEntangled });
+          checkAndMarkObjective();
+        },
+        setLastOutcome: (lastOutcome) => set({ lastOutcome }),
 
-      applyGate: (gate) => {
-        const { theta, phi } = get();
-        let nextTheta = theta;
-        let nextPhi = phi;
-        switch (gate) {
-          case "X":
-            nextTheta = Math.PI - theta;
-            break;
-          case "Y":
-            nextTheta = Math.PI - theta;
-            nextPhi = (phi + Math.PI / 2) % (2 * Math.PI);
-            break;
-          case "Z":
-            nextPhi = (phi + Math.PI) % (2 * Math.PI);
-            break;
-          case "H":
-            nextTheta = Math.abs(theta - Math.PI / 2) < 0.1 ? 0 : Math.PI / 2;
-            break;
-          case "S":
-            nextPhi = (phi + Math.PI / 2) % (2 * Math.PI);
-            break;
-          case "T":
-            nextPhi = (phi + Math.PI / 4) % (2 * Math.PI);
-            break;
-        }
-        set({ theta: nextTheta, phi: nextPhi });
-        soundEngine.playGateSound(gate);
-        checkAndMarkObjective();
-      },
+        applyGate: (gate) => {
+          const { theta, phi } = get();
+          let nextTheta = theta;
+          let nextPhi = phi;
+          switch (gate) {
+            case "X":
+              nextTheta = Math.PI - theta;
+              break;
+            case "Y":
+              nextTheta = Math.PI - theta;
+              nextPhi = (phi + Math.PI / 2) % (2 * Math.PI);
+              break;
+            case "Z":
+              nextPhi = (phi + Math.PI) % (2 * Math.PI);
+              break;
+            case "H":
+              nextTheta = Math.abs(theta - Math.PI / 2) < 0.1 ? 0 : Math.PI / 2;
+              break;
+            case "S":
+              nextPhi = (phi + Math.PI / 2) % (2 * Math.PI);
+              break;
+            case "T":
+              nextPhi = (phi + Math.PI / 4) % (2 * Math.PI);
+              break;
+          }
+          set({ theta: nextTheta, phi: nextPhi });
+          soundEngine.playGateSound(gate);
+          checkAndMarkObjective();
+        },
 
-      measure: () => {
-        const { theta } = get();
-        const p0 = Math.cos(theta / 2) ** 2;
-        const outcome: 0 | 1 = Math.random() < p0 ? 0 : 1;
-        set({ theta: outcome === 0 ? 0 : Math.PI, phi: 0, lastOutcome: outcome });
-        soundEngine.playMeasurementSound();
-        checkAndMarkObjective();
-        return outcome;
-      },
+        measure: () => {
+          const { theta } = get();
+          const p0 = Math.cos(theta / 2) ** 2;
+          const outcome: 0 | 1 = Math.random() < p0 ? 0 : 1;
+          set({ theta: outcome === 0 ? 0 : Math.PI, phi: 0, lastOutcome: outcome });
+          soundEngine.playMeasurementSound();
+          checkAndMarkObjective();
+          return outcome;
+        },
 
-      setUserPrediction: (prob0) => set({ userPredictionProb0: prob0 }),
-      setPrediction: (prob0) => get().setUserPrediction(prob0),
+        setUserPrediction: (prob0) => set({ userPredictionProb0: prob0 }),
+        setPrediction: (prob0) => get().setUserPrediction(prob0),
 
-      markMissionCompleted: (id) => {
-        const idx = typeof id === "number" ? id : getMissionIndex(id);
-        if (idx < 0) return;
-        const current = get().completedMissions;
-        if (!current.includes(idx)) {
-          const updated = Array.from(new Set([...current, idx])).sort((a, b) => a - b);
-          const unlocked = updated.length >= TOTAL_MISSIONS || get().isSandboxUnlocked;
-          set({ completedMissions: updated, isSandboxUnlocked: unlocked });
-          syncCookies(updated, unlocked);
-          soundEngine.playSuccessSound();
-        }
-      },
-      completeMission: (id) => get().markMissionCompleted(id),
-      recordMissionTime: () => {},
+        markMissionCompleted: (id) => {
+          const idx = typeof id === "number" ? id : getMissionIndex(id);
+          if (idx < 0) return;
+          const current = get().completedMissions;
+          if (!current.includes(idx)) {
+            const updated = Array.from(new Set([...current, idx])).sort((a, b) => a - b);
+            const unlocked = updated.length >= TOTAL_MISSIONS || get().isSandboxUnlocked;
+            set({ completedMissions: updated, isSandboxUnlocked: unlocked });
+            syncCookies(updated, unlocked);
+            soundEngine.playSuccessSound();
+          }
+        },
+        completeMission: (id) => get().markMissionCompleted(id),
+        recordMissionTime: () => {},
 
-      jumpToMission: (id) => get().selectMission(id),
-      startMission: (id) => get().selectMission(id),
-      launchMission: (id) => get().selectMission(id),
+        jumpToMission: (id) => get().selectMission(id),
+        startMission: (id) => get().selectMission(id),
+        launchMission: (id) => get().selectMission(id),
 
-      setSandboxUnlocked: (isSandboxUnlocked) => {
-        set({ isSandboxUnlocked });
-        syncCookies(get().completedMissions, isSandboxUnlocked);
-      },
-      unlockSandbox: () => get().setSandboxUnlocked(true),
+        setSandboxUnlocked: (isSandboxUnlocked) => {
+          set({ isSandboxUnlocked });
+          syncCookies(get().completedMissions, isSandboxUnlocked);
+        },
+        unlockSandbox: () => get().setSandboxUnlocked(true),
 
-      resetProgress: () => {
-        if (typeof window !== "undefined") {
-          try {
-            Cookies.remove(COOKIE_COMPLETED);
-            Cookies.remove(COOKIE_SANDBOX);
-          } catch (_e) { /* Safe */ }
-        }
-        set({ completedMissions: [], isSandboxUnlocked: false });
-      },
+        resetProgress: () => {
+          if (typeof window !== "undefined") {
+            try {
+              Cookies.remove(COOKIE_COMPLETED);
+              Cookies.remove(COOKIE_SANDBOX);
+            } catch (_e) { /* Safe */ }
+          }
+          set({ completedMissions: [], isSandboxUnlocked: false });
+        },
 
-      resetState: () =>
-        set({
-          ...INITIAL_PHYSICS,
-          userPredictionProb0: null,
-          groverStep: 0,
-          groverTargetIndex: 2,
-          shorBase: 7,
-          qecInjectedError: null,
-        }),
+        resetState: () =>
+          set({
+            ...INITIAL_PHYSICS,
+            userPredictionProb0: null,
+            groverStep: 0,
+            groverTargetIndex: 2,
+          }),
       };
     },
     {

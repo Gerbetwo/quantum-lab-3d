@@ -73,7 +73,7 @@ describe('Mission Registry (src/features/missions/missionRegistry)', () => {
 
     const grover = getMissionById('grover');
     expect(grover?.id).toBe('grover');
-    expect(grover?.index).toBe(4);
+    expect(grover?.index).toBe(6);
     expect(grover?.initialTheta).toBeCloseTo(Math.PI / 2);
   });
 

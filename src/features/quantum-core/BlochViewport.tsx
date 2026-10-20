@@ -7,37 +7,22 @@ import {
   createBaseScene,
   createBlochSphereScene,
   createParticlePool,
-  burstParticles,
-  updateParticles,
-  calculateDecoherencePerturbation,
-  computeSphericalVector,
   vectorToSphericalAngles,
-  lerpSphericalAngles,
-  updateBlochSphereUniforms,
+  computeSphericalVector,
   updatePolarArc,
   updateAzimuthalLine,
+  calculateDecoherencePerturbation,
+  lerpSphericalAngles,
+  updateParticles,
+  updateBlochSphereUniforms,
+  burstParticles,
 } from "./blochSceneObjects";
 import {
-  createDualBlochScene,
-  updateLaserStrand,
-  computeSynchronizedAngles,
-  type SpinFlipWaveState,
-} from "./EntanglementOverlay3D";
-import {
   createThermalDistortionShaderMaterial,
-  updateThermalDistortionUniforms,
   createDecoherenceParticleSystem,
+  updateThermalDistortionUniforms,
   updateThermalParticles,
 } from "./DecoherenceParticles";
-import {
-  createGroverBarScene,
-  updateGroverBars,
-  createShorWheelScene,
-  updateShorWheelAnimation,
-  createQECLatticeScene,
-  updateQECLattice,
-} from "@/features/missions/AlgorithmVisualizer3D";
-import { simulateGroverStep, runShorDemo } from "@/core/algorithms";
 
 export let singletonRenderer: THREE.WebGLRenderer | null = null;
 
@@ -214,19 +199,7 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
     decoherenceParticles.points.visible = false;
     scene.add(decoherenceParticles.points);
 
-    const dualBloch = createDualBlochScene();
-    const groverScene = createGroverBarScene(initSt.groverTargetIndex);
-    let activeShorBase = initSt.shorBase;
-    let shorScene = createShorWheelScene(runShorDemo(activeShorBase).period);
-    const qecScene = createQECLatticeScene(initSt.qecInjectedError);
-    const waveState: SpinFlipWaveState = {
-      active: false,
-      startTime: 0,
-      duration: 1.2,
-      outcome: 0,
-    };
     let cameraImpulse = 0;
-
     let isDraggingCamera = false;
     let isDraggingHandle = false;
     let prevMouse = { x: 0, y: 0 };
@@ -366,85 +339,8 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       camera.fov = 45 - cameraImpulse * 3.5;
       camera.updateProjectionMatrix();
 
+      // Only track active physics state: theta, phi, temperatureK, isEntangled
       const state = useQuantumStore.getState();
-      const isMission = state.appViewState === "IN_MISSION";
-      const mId = isMission ? state.currentMissionId : "superposition";
-
-      if (isMission) {
-        if (mId === "entanglement") {
-          if (
-            waveState.active &&
-            now / 1000 - waveState.startTime > waveState.duration
-          ) {
-            waveState.active = false;
-          }
-          updateLaserStrand(dualBloch, now / 1000, waveState);
-          const angles = computeSynchronizedAngles(
-            state.theta,
-            state.phi,
-            state.lastOutcome,
-            waveState,
-            now / 1000,
-          );
-          const dirA = computeSphericalVector(angles.thetaA, angles.phiA);
-          dualBloch.arrowA.setDirection(dirA);
-          dualBloch.arrowA.setLength(1.3, 0.2, 0.08);
-          dualBloch.tipHandleA.position.copy(dirA).multiplyScalar(1.3);
-          updatePolarArc(dualBloch.polarArcA, angles.thetaA, angles.phiA, 1.0);
-          updateAzimuthalLine(dualBloch.azimuthalLineA, angles.thetaA, angles.phiA, 1.0);
-
-          const dirB = computeSphericalVector(angles.thetaB, angles.phiB);
-          dualBloch.arrowB.setDirection(dirB);
-          dualBloch.arrowB.setLength(1.3, 0.2, 0.08);
-          dualBloch.tipHandleB.position.copy(dirB).multiplyScalar(1.3);
-          updatePolarArc(dualBloch.polarArcB, angles.thetaB, angles.phiB, 1.0);
-          updateAzimuthalLine(dualBloch.azimuthalLineB, angles.thetaB, angles.phiB, 1.0);
-
-          renderer.render(dualBloch.scene, dualBloch.camera);
-          animId = requestAnimationFrame(loop);
-          return;
-        }
-
-        if (mId === "grover") {
-          const gRes = simulateGroverStep(
-            2,
-            state.groverTargetIndex,
-            state.groverStep,
-          );
-          updateGroverBars(
-            groverScene,
-            gRes.probabilities,
-            state.groverTargetIndex,
-          );
-          groverScene.camera.position.x = Math.sin((now / 1000) * 0.6) * 0.4;
-          groverScene.camera.lookAt(0, 0.6, 0);
-          renderer.render(groverScene.scene, groverScene.camera);
-          animId = requestAnimationFrame(loop);
-          return;
-        }
-
-        if (mId === "applications") {
-          if (state.shorBase !== activeShorBase) {
-            shorScene.geometries.forEach((g) => g.dispose());
-            shorScene.materials.forEach((m) => m.dispose());
-            activeShorBase = state.shorBase;
-            shorScene = createShorWheelScene(
-              runShorDemo(activeShorBase).period,
-            );
-          }
-          updateShorWheelAnimation(shorScene, now / 1000);
-          renderer.render(shorScene.scene, shorScene.camera);
-          animId = requestAnimationFrame(loop);
-          return;
-        }
-
-        if (mId === "error-correction") {
-          updateQECLattice(qecScene, state.qecInjectedError, now / 1000);
-          renderer.render(qecScene.scene, qecScene.camera);
-          animId = requestAnimationFrame(loop);
-          return;
-        }
-      }
 
       let targetT = state.theta;
       let targetP = state.phi;
@@ -482,11 +378,11 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       updatePolarArc(polarArc, currentAngles.theta, currentAngles.phi, targetLen);
       updateAzimuthalLine(azimuthalLine, currentAngles.theta, currentAngles.phi, targetLen);
 
-      // "decoherence"
-      const isDecoherence = mId === "decoherence";
-      sphere.material = isDecoherence ? thermalShaderMat : defaultSphereMat;
-      decoherenceParticles.points.visible = isDecoherence;
-      if (isDecoherence) {
+      // Decoherence thermal effects
+      const isThermal = state.temperatureK > 0.05;
+      sphere.material = isThermal ? thermalShaderMat : defaultSphereMat;
+      decoherenceParticles.points.visible = isThermal;
+      if (isThermal) {
         updateThermalDistortionUniforms(
           thermalShaderMat,
           now / 1000,
@@ -495,9 +391,8 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
         updateThermalParticles(decoherenceParticles, dt, state.temperatureK);
       }
 
-      // "superposition"
+      // Ghost arrow for superposition
       const showGhost =
-        mId === "superposition" &&
         Math.sin(currentAngles.theta) > 0.25 &&
         state.lastOutcome === null;
       ghostArrow.visible = showGhost;
@@ -509,18 +404,11 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
           ),
         );
         ring.rotation.z = (now / 1000) * 2.5;
-      }
-
-      // "gates"
-      const isGates = isMission && mId === "gates";
-      trailLine.visible = isGates;
-      if (isGates) {
+      } else {
         ring.rotation.z = currentAngles.phi;
-      } else if (!showGhost) {
-        ring.rotation.z = 0;
       }
 
-      // shift trailPositions each frame to record tipHandle.position
+      // Trail positions
       for (let i = (60 - 1) * 3; i >= 3; i--) {
         trailPositions[i] = trailPositions[i - 3];
       }
@@ -538,39 +426,25 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
     const onResize = () => {
       const w = container.clientWidth || 800;
       const h = container.clientHeight || 600;
-      const aspect = w / h;
-      [
-        camera,
-        dualBloch.camera,
-        groverScene.camera,
-        shorScene.camera,
-        qecScene.camera,
-      ].forEach((cam) => {
-        cam.aspect = aspect;
-        cam.updateProjectionMatrix();
-      });
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
       polarArc.material.resolution.set(w, h);
       azimuthalLine.material.resolution.set(w, h);
-      dualBloch.polarArcA.material.resolution.set(w, h);
-      dualBloch.azimuthalLineA.material.resolution.set(w, h);
-      dualBloch.polarArcB.material.resolution.set(w, h);
-      dualBloch.azimuthalLineB.material.resolution.set(w, h);
     };
     const resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(container);
 
     const unsub = useQuantumStore.subscribe((state, prev) => {
-      // In-place uniform/material updates on mission or theme changes without WebGL rebuild
+      // In-place uniform/material updates on isEntangled or theme changes without WebGL rebuild
       if (
-        state.currentMissionId !== prev.currentMissionId ||
+        state.isEntangled !== prev.isEntangled ||
         state.theme !== prev.theme
       ) {
-        const isEnt = state.currentMissionId === "entanglement";
         updateBlochSphereUniforms(elements, {
           theme: state.theme,
-          sphereColor: isEnt ? 0x2e1065 : undefined,
-          arrowColor: isEnt ? 0xa855f7 : undefined,
+          sphereColor: state.isEntangled ? 0x2e1065 : undefined,
+          arrowColor: state.isEntangled ? 0xa855f7 : undefined,
           gridAlpha: 0.15,
         });
       }
@@ -584,9 +458,6 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
           [0, state.lastOutcome === 0 ? 1.3 : -1.3, 0],
           80,
         );
-        waveState.active = true;
-        waveState.startTime = performance.now() / 1000;
-        waveState.outcome = state.lastOutcome;
       }
     });
 
@@ -598,20 +469,8 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       container.removeEventListener("pointercancel", onPointerCancel);
-      [
-        ...geometries,
-        ...dualBloch.geometries,
-        ...groverScene.geometries,
-        ...shorScene.geometries,
-        ...qecScene.geometries,
-      ].forEach((g) => g.dispose());
-      [
-        ...materials,
-        ...dualBloch.materials,
-        ...groverScene.materials,
-        ...shorScene.materials,
-        ...qecScene.materials,
-      ].forEach((m) => m.dispose());
+      geometries.forEach((g) => g.dispose());
+      materials.forEach((m) => m.dispose());
       [
         arrowHelper.line?.geometry,
         arrowHelper.cone?.geometry,
@@ -623,7 +482,6 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
         thermalShaderMat,
         decoherenceParticles.points.geometry,
       ].forEach((res) => res?.dispose());
-      // Safeguard: singletonRenderer is preserved across unmounts/mounts
     };
   }, []);
 
