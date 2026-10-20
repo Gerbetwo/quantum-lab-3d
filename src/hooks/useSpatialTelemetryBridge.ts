@@ -24,7 +24,11 @@ export type KnownSpatialId =
   | "decoherence-envelope"
   | "measurement-chamber"
   | "collapse-ray"
-  | "histogram-3d";
+  | "histogram-3d"
+  | "phase-shifter"
+  | "interferometer-path"
+  | "interference-detector"
+  | "complex-amplitude-disk";
 
 /**
  * Metadata mapping a 3D spatial element ID to HUD telemetry symbols and descriptions.
@@ -215,6 +219,38 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     label: "3D Stochastic Sampling Histogram",
     description: "Empirical outcome distribution verifying the Born rule via repeated shots",
     hudSection: "born-probabilities",
+  },
+  "phase-shifter": {
+    id: "phase-shifter",
+    symbol: "U(φ)",
+    latex: "\\hat{R}_z(\\phi) = e^{-i\\phi \\hat{\\sigma}_z / 2}",
+    label: "Optical Phase Shifter",
+    description: "Applies relative phase delay e^{iφ} across the lower interferometer arm",
+    hudSection: "angles",
+  },
+  "interferometer-path": {
+    id: "interferometer-path",
+    symbol: "e^{iφ}",
+    latex: "|\\psi\\rangle = \\frac{1}{\\sqrt{2}}(|0\\rangle + e^{i\\phi}|1\\rangle)",
+    label: "Dual-Path Interferometer",
+    description: "Two distinct quantum amplitude trajectories recombining at the beam splitter",
+    hudSection: "state-vector",
+  },
+  "interference-detector": {
+    id: "interference-detector",
+    symbol: "I(φ)",
+    latex: "I = \\cos^2(\\phi/2)",
+    label: "Interference Detector Target",
+    description: "Measures constructive vs destructive amplitude interference ripples",
+    hudSection: "born-probabilities",
+  },
+  "complex-amplitude-disk": {
+    id: "complex-amplitude-disk",
+    symbol: "A₀ + A₁",
+    latex: "A_{\\text{total}} = \\frac{1}{2}(1 + e^{i\\phi})",
+    label: "Complex Amplitude Addition",
+    description: "Vector addition of quantum probability amplitudes on the complex plane",
+    hudSection: "state-vector",
   },
 };
 
