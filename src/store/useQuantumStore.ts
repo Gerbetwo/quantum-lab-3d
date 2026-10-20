@@ -151,9 +151,6 @@ const INITIAL_PHYSICS = {
 
 const init = getInitialPersisted();
 const initialTheme = getInitialTheme();
-if (typeof window !== "undefined") {
-  syncDocumentTheme(initialTheme);
-}
 
 export const useQuantumStore = create<QuantumStore>()(
   persist(
