@@ -8,7 +8,16 @@ import {
   kelvinToMilliKelvin,
   calculateT2CoherenceTime,
 } from "@/core/decoherenceMath";
-import { computeSphericalVector } from "./blochSceneObjects";
+import {
+  computeSphericalVector,
+  computePolarArcPositions,
+  updatePolarArc,
+  computeAzimuthalLinePositions,
+  updateAzimuthalLine,
+} from "./blochSceneObjects";
+import { Line2 } from 'three/examples/jsm/lines/Line2.js';
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 
 export interface ThermalMetrics {
   temperatureK: number;
@@ -307,6 +316,37 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
     );
     scene.add(arrowHelper);
 
+    const polarArcGeo = new LineGeometry();
+    polarArcGeo.setPositions(computePolarArcPositions(0, 0, 1.3));
+    const polarArcMat = new LineMaterial({
+      color: 0x00f3ff,
+      linewidth: 2.5,
+      transparent: true,
+      opacity: 0.80,
+      depthWrite: false,
+    });
+    const polarArc = new Line2(polarArcGeo, polarArcMat);
+    polarArc.name = 'bloch-polar-arc';
+    scene.add(polarArc);
+
+    const azimuthalGeo = new LineGeometry();
+    azimuthalGeo.setPositions(computeAzimuthalLinePositions(0, 0, 1.3));
+    const azimuthalMat = new LineMaterial({
+      color: 0xffee00,
+      linewidth: 2.5,
+      transparent: true,
+      opacity: 0.80,
+      depthWrite: false,
+    });
+    const azimuthalLine = new Line2(azimuthalGeo, azimuthalMat);
+    azimuthalLine.name = 'bloch-azimuthal-line';
+    scene.add(azimuthalLine);
+
+    const initW = container.clientWidth || 800;
+    const initH = container.clientHeight || 500;
+    polarArc.material.resolution.set(initW, initH);
+    azimuthalLine.material.resolution.set(initW, initH);
+
     const particleSystem = createDecoherenceParticleSystem(350);
     scene.add(particleSystem.points);
 
@@ -328,6 +368,8 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
 
       const dir = computeSphericalVector(state.theta, state.phi);
       arrowHelper.setDirection(dir);
+      updatePolarArc(polarArc, state.theta, state.phi, 1.3);
+      updateAzimuthalLine(azimuthalLine, state.theta, state.phi, 1.3);
 
       if (renderer) renderer.render(scene, camera);
       animId = requestAnimationFrame(loop);
@@ -341,6 +383,8 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
+      polarArc.material.resolution.set(w, h);
+      azimuthalLine.material.resolution.set(w, h);
     };
     window.addEventListener("resize", onResize);
 
@@ -351,6 +395,10 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
       sphereMat.dispose();
       ringGeo.dispose();
       ringMat.dispose();
+      polarArcGeo.dispose();
+      polarArcMat.dispose();
+      azimuthalGeo.dispose();
+      azimuthalMat.dispose();
       particleSystem.points.geometry.dispose();
       (particleSystem.points.material as THREE.Material).dispose();
       if (renderer && renderer.domElement.parentElement === container) {

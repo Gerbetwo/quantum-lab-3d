@@ -159,7 +159,8 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
     // Single WebGLRenderer context reuse safeguard (AGENTS.md Principle 2)
     const renderer = acquireRenderer(container);
     const { scene, camera } = createBaseScene(container);
-    const elements = createBlochSphereScene();
+    const initSt = useQuantumStore.getState();
+    const elements = createBlochSphereScene(initSt.theme);
     const {
       sphere,
       ring,
@@ -213,7 +214,6 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
     decoherenceParticles.points.visible = false;
     scene.add(decoherenceParticles.points);
 
-    const initSt = useQuantumStore.getState();
     const dualBloch = createDualBlochScene();
     const groverScene = createGroverBarScene(initSt.groverTargetIndex);
     let activeShorBase = initSt.shorBase;
@@ -276,6 +276,12 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
     };
 
     const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      try {
+        target?.setPointerCapture?.(e.pointerId);
+      } catch (_err) {
+        // Ignored in headless/test environments
+      }
       updateMouseCoords(e);
       if (checkHandleIntersection()) {
         isDraggingHandle = true;
@@ -309,7 +315,15 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       tipHandle.scale.setScalar(isHovered ? 1.3 : 1.0);
     };
 
-    const onPointerUp = () => {
+    const onPointerUp = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      try {
+        if (target?.hasPointerCapture?.(e.pointerId)) {
+          target.releasePointerCapture(e.pointerId);
+        }
+      } catch (_err) {
+        // Ignored
+      }
       if (isDraggingHandle) {
         isDraggingHandle = false;
         const isHovered = checkHandleIntersection();
@@ -319,9 +333,25 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       isDraggingCamera = false;
     };
 
+    const onPointerCancel = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      try {
+        if (target?.hasPointerCapture?.(e.pointerId)) {
+          target.releasePointerCapture(e.pointerId);
+        }
+      } catch (_err) {
+        // Ignored
+      }
+      isDraggingHandle = false;
+      isDraggingCamera = false;
+      container.style.cursor = "default";
+      tipHandle.scale.setScalar(1.0);
+    };
+
     container.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    container.addEventListener("pointercancel", onPointerCancel);
 
     // Spherical angle state vector lerp tracker
     let currentAngles = { theta: initSt.theta, phi: initSt.phi };
@@ -360,11 +390,15 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
           dualBloch.arrowA.setDirection(dirA);
           dualBloch.arrowA.setLength(1.3, 0.2, 0.08);
           dualBloch.tipHandleA.position.copy(dirA).multiplyScalar(1.3);
+          updatePolarArc(dualBloch.polarArcA, angles.thetaA, angles.phiA, 1.0);
+          updateAzimuthalLine(dualBloch.azimuthalLineA, angles.thetaA, angles.phiA, 1.0);
 
           const dirB = computeSphericalVector(angles.thetaB, angles.phiB);
           dualBloch.arrowB.setDirection(dirB);
           dualBloch.arrowB.setLength(1.3, 0.2, 0.08);
           dualBloch.tipHandleB.position.copy(dirB).multiplyScalar(1.3);
+          updatePolarArc(dualBloch.polarArcB, angles.thetaB, angles.phiB, 1.0);
+          updateAzimuthalLine(dualBloch.azimuthalLineB, angles.thetaB, angles.phiB, 1.0);
 
           renderer.render(dualBloch.scene, dualBloch.camera);
           animId = requestAnimationFrame(loop);
@@ -518,17 +552,25 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       renderer.setSize(w, h, false);
       polarArc.material.resolution.set(w, h);
       azimuthalLine.material.resolution.set(w, h);
+      dualBloch.polarArcA.material.resolution.set(w, h);
+      dualBloch.azimuthalLineA.material.resolution.set(w, h);
+      dualBloch.polarArcB.material.resolution.set(w, h);
+      dualBloch.azimuthalLineB.material.resolution.set(w, h);
     };
     const resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(container);
 
     const unsub = useQuantumStore.subscribe((state, prev) => {
-      // In-place uniform/material updates on mission changes without WebGL rebuild
-      if (state.currentMissionId !== prev.currentMissionId) {
+      // In-place uniform/material updates on mission or theme changes without WebGL rebuild
+      if (
+        state.currentMissionId !== prev.currentMissionId ||
+        state.theme !== prev.theme
+      ) {
         const isEnt = state.currentMissionId === "entanglement";
         updateBlochSphereUniforms(elements, {
-          sphereColor: isEnt ? 0x2e1065 : 0x1e293b,
-          arrowColor: isEnt ? 0xa855f7 : 0x00f3ff,
+          theme: state.theme,
+          sphereColor: isEnt ? 0x2e1065 : undefined,
+          arrowColor: isEnt ? 0xa855f7 : undefined,
           gridAlpha: 0.15,
         });
       }
@@ -555,6 +597,7 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       container.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
+      container.removeEventListener("pointercancel", onPointerCancel);
       [
         ...geometries,
         ...dualBloch.geometries,

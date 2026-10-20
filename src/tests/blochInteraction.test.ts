@@ -11,6 +11,7 @@ import {
   updatePolarArc,
   computeAzimuthalLinePositions,
   updateAzimuthalLine,
+  getTheme3DColors,
 } from '@/features/quantum-core/blochSceneObjects';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { BlochViewport } from '@/features/quantum-core/BlochViewport';
@@ -191,7 +192,47 @@ describe('Bloch State Vector Tip Handle & Raycasting Kinematics', () => {
       updateAzimuthalLine(elements.azimuthalLine, Math.PI / 4, Math.PI / 3, 1.3);
       expect(elements.azimuthalLine.geometry).toBeDefined();
     });
+
+    it('returns balanced non-saturating opacities and linewidth 2.5 in getTheme3DColors', () => {
+      const darkPalette = getTheme3DColors('dark');
+      expect(darkPalette.linewidth).toBe(2.5);
+      expect(darkPalette.polarArcOpacity).toBeGreaterThanOrEqual(0.70);
+      expect(darkPalette.polarArcOpacity).toBeLessThanOrEqual(0.80);
+      expect(darkPalette.azimuthalLineOpacity).toBeGreaterThanOrEqual(0.70);
+      expect(darkPalette.azimuthalLineOpacity).toBeLessThanOrEqual(0.80);
+
+      const lightPalette = getTheme3DColors('light');
+      expect(lightPalette.linewidth).toBe(2.5);
+      expect(lightPalette.polarArcOpacity).toBeGreaterThanOrEqual(0.70);
+      expect(lightPalette.polarArcOpacity).toBeLessThanOrEqual(0.80);
+      expect(lightPalette.azimuthalLineOpacity).toBeGreaterThanOrEqual(0.70);
+      expect(lightPalette.azimuthalLineOpacity).toBeLessThanOrEqual(0.80);
+    });
+
+    it('dynamically applies theme palette across sphere, ring, axes, arrow, tip, and projection lines', () => {
+      const elements = createBlochSphereScene();
+      updateBlochSphereUniforms(elements, { theme: 'light' });
+
+      const lightPalette = getTheme3DColors('light');
+      const sphereMat = elements.sphere.material as THREE.MeshBasicMaterial;
+      expect(sphereMat.color.getHex()).toBe(lightPalette.sphereColor);
+
+      const ringMat = elements.ring.material as THREE.MeshBasicMaterial;
+      expect(ringMat.color.getHex()).toBe(lightPalette.ringColor);
+
+      const axesMat = elements.axes.material as THREE.LineBasicMaterial;
+      expect(axesMat.color.getHex()).toBe(lightPalette.axesColor);
+
+      const polarMat = elements.polarArc.material;
+      expect(polarMat.color.getHex()).toBe(lightPalette.polarArcColor);
+      expect(polarMat.linewidth).toBe(2.5);
+
+      const azimMat = elements.azimuthalLine.material;
+      expect(azimMat.color.getHex()).toBe(lightPalette.azimuthalLineColor);
+      expect(azimMat.linewidth).toBe(2.5);
+    });
   });
+
 
 
   describe('Dynamic Angle Sync with Quantum Store', () => {

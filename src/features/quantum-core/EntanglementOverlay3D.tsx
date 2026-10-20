@@ -4,7 +4,16 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as THREE from 'three';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { useTranslation } from '@/lib/i18n';
-import { computeSphericalVector } from './blochSceneObjects';
+import {
+  computeSphericalVector,
+  computePolarArcPositions,
+  updatePolarArc,
+  computeAzimuthalLinePositions,
+  updateAzimuthalLine,
+} from './blochSceneObjects';
+import { Line2 } from 'three/examples/jsm/lines/Line2.js';
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 
 export interface DualBlochElements {
   scene: THREE.Scene;
@@ -12,17 +21,21 @@ export interface DualBlochElements {
   sphereA: THREE.Mesh;
   arrowA: THREE.ArrowHelper;
   tipHandleA: THREE.Mesh;
+  polarArcA: Line2;
+  azimuthalLineA: Line2;
   sphereB: THREE.Mesh;
   arrowB: THREE.ArrowHelper;
   tipHandleB: THREE.Mesh;
+  polarArcB: Line2;
+  azimuthalLineB: Line2;
   laserCore: THREE.Line;
   laserParticles: THREE.Points;
   laserPositions: Float32Array;
   laserColors: Float32Array;
   laserSizes: Float32Array;
   particleCount: number;
-  geometries: THREE.BufferGeometry[];
-  materials: THREE.Material[];
+  geometries: (THREE.BufferGeometry | LineGeometry)[];
+  materials: (THREE.Material | LineMaterial)[];
 }
 
 export interface SpinFlipWaveState {
@@ -69,7 +82,35 @@ export function createDualBlochScene(): DualBlochElements {
   const tipHandleA = new THREE.Mesh(tipGeoA, tipMatA);
   tipHandleA.position.set(-1.2, 0, 0);
 
-  scene.add(sphereA, arrowA, tipHandleA);
+  const polarArcGeoA = new LineGeometry();
+  polarArcGeoA.setPositions(computePolarArcPositions(0, 0, 1.0));
+  const polarArcMatA = new LineMaterial({
+    color: 0x00f3ff,
+    linewidth: 2.5,
+    transparent: true,
+    opacity: 0.80,
+    depthWrite: false,
+  });
+  geometries.push(polarArcGeoA); materials.push(polarArcMatA);
+  const polarArcA = new Line2(polarArcGeoA, polarArcMatA);
+  polarArcA.position.set(-2.2, 0, 0);
+  polarArcA.name = 'bloch-polar-arc-a';
+
+  const azimuthalGeoA = new LineGeometry();
+  azimuthalGeoA.setPositions(computeAzimuthalLinePositions(0, 0, 1.0));
+  const azimuthalMatA = new LineMaterial({
+    color: 0xffee00,
+    linewidth: 2.5,
+    transparent: true,
+    opacity: 0.80,
+    depthWrite: false,
+  });
+  geometries.push(azimuthalGeoA); materials.push(azimuthalMatA);
+  const azimuthalLineA = new Line2(azimuthalGeoA, azimuthalMatA);
+  azimuthalLineA.position.set(-2.2, 0, 0);
+  azimuthalLineA.name = 'bloch-azimuthal-line-a';
+
+  scene.add(sphereA, arrowA, tipHandleA, polarArcA, azimuthalLineA);
 
   // --- Qubit B (Bob, X = +2.2) ---
   const sphereGeoB = new THREE.SphereGeometry(1.0, 24, 16);
@@ -93,7 +134,35 @@ export function createDualBlochScene(): DualBlochElements {
   const tipHandleB = new THREE.Mesh(tipGeoB, tipMatB);
   tipHandleB.position.set(3.2, 0, 0);
 
-  scene.add(sphereB, arrowB, tipHandleB);
+  const polarArcGeoB = new LineGeometry();
+  polarArcGeoB.setPositions(computePolarArcPositions(0, 0, 1.0));
+  const polarArcMatB = new LineMaterial({
+    color: 0xa855f7,
+    linewidth: 2.5,
+    transparent: true,
+    opacity: 0.80,
+    depthWrite: false,
+  });
+  geometries.push(polarArcGeoB); materials.push(polarArcMatB);
+  const polarArcB = new Line2(polarArcGeoB, polarArcMatB);
+  polarArcB.position.set(2.2, 0, 0);
+  polarArcB.name = 'bloch-polar-arc-b';
+
+  const azimuthalGeoB = new LineGeometry();
+  azimuthalGeoB.setPositions(computeAzimuthalLinePositions(0, 0, 1.0));
+  const azimuthalMatB = new LineMaterial({
+    color: 0xffee00,
+    linewidth: 2.5,
+    transparent: true,
+    opacity: 0.80,
+    depthWrite: false,
+  });
+  geometries.push(azimuthalGeoB); materials.push(azimuthalMatB);
+  const azimuthalLineB = new Line2(azimuthalGeoB, azimuthalMatB);
+  azimuthalLineB.position.set(2.2, 0, 0);
+  azimuthalLineB.name = 'bloch-azimuthal-line-b';
+
+  scene.add(sphereB, arrowB, tipHandleB, polarArcB, azimuthalLineB);
 
   // --- Quantum Correlation Laser Strand (Line + Points) ---
   const coreGeo = new THREE.BufferGeometry().setFromPoints([
@@ -146,9 +215,13 @@ export function createDualBlochScene(): DualBlochElements {
     sphereA,
     arrowA,
     tipHandleA,
+    polarArcA,
+    azimuthalLineA,
     sphereB,
     arrowB,
     tipHandleB,
+    polarArcB,
+    azimuthalLineB,
     laserCore,
     laserParticles,
     laserPositions,
@@ -158,6 +231,7 @@ export function createDualBlochScene(): DualBlochElements {
     geometries,
     materials,
   };
+
 }
 
 export function updateLaserStrand(
@@ -300,7 +374,27 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
     }
 
     const elements = createDualBlochScene();
-    const { scene, camera, arrowA, tipHandleA, arrowB, tipHandleB, geometries, materials } = elements;
+    const {
+      scene,
+      camera,
+      arrowA,
+      tipHandleA,
+      polarArcA,
+      azimuthalLineA,
+      arrowB,
+      tipHandleB,
+      polarArcB,
+      azimuthalLineB,
+      geometries,
+      materials,
+    } = elements;
+
+    const initW = container.clientWidth || 800;
+    const initH = container.clientHeight || 500;
+    polarArcA.material.resolution.set(initW, initH);
+    azimuthalLineA.material.resolution.set(initW, initH);
+    polarArcB.material.resolution.set(initW, initH);
+    azimuthalLineB.material.resolution.set(initW, initH);
 
     let animId = 0;
     const loop = (nowMs: number) => {
@@ -326,11 +420,15 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
       arrowA.setDirection(dirA);
       arrowA.position.set(-2.2, 0, 0);
       tipHandleA.position.copy(new THREE.Vector3(-2.2, 0, 0).add(dirA.clone().multiplyScalar(1.0)));
+      updatePolarArc(polarArcA, angles.thetaA, angles.phiA, 1.0);
+      updateAzimuthalLine(azimuthalLineA, angles.thetaA, angles.phiA, 1.0);
 
       const dirB = computeSphericalVector(angles.thetaB, angles.phiB);
       arrowB.setDirection(dirB);
       arrowB.position.set(2.2, 0, 0);
       tipHandleB.position.copy(new THREE.Vector3(2.2, 0, 0).add(dirB.clone().multiplyScalar(1.0)));
+      updatePolarArc(polarArcB, angles.thetaB, angles.phiB, 1.0);
+      updateAzimuthalLine(azimuthalLineB, angles.thetaB, angles.phiB, 1.0);
 
       if (renderer) {
         renderer.render(scene, camera);
@@ -346,6 +444,10 @@ export const EntanglementOverlay3D: React.FC<EntanglementOverlay3DProps> = ({
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
+      polarArcA.material.resolution.set(w, h);
+      azimuthalLineA.material.resolution.set(w, h);
+      polarArcB.material.resolution.set(w, h);
+      azimuthalLineB.material.resolution.set(w, h);
     };
     window.addEventListener('resize', onResize);
 

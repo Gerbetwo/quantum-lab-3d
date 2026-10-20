@@ -96,7 +96,46 @@ export function updateAzimuthalLine(
   line.geometry.setPositions(positions);
 }
 
-export function createBlochSphereScene(): BlochSphereElements {
+export type ThemeMode = 'dark' | 'light';
+
+export interface Theme3DColors {
+  sphereColor: number;
+  sphereOpacity: number;
+  ringColor: number;
+  ringOpacity: number;
+  axesColor: number;
+  axesOpacity: number;
+  arrowColor: number;
+  tipColor: number;
+  tipOpacity: number;
+  polarArcColor: number;
+  polarArcOpacity: number;
+  azimuthalLineColor: number;
+  azimuthalLineOpacity: number;
+  linewidth: number;
+}
+
+export function getTheme3DColors(theme: ThemeMode = 'dark'): Theme3DColors {
+  const isDark = theme === 'dark';
+  return {
+    sphereColor: isDark ? 0x1e293b : 0x94a3b8,
+    sphereOpacity: isDark ? 0.15 : 0.20,
+    ringColor: isDark ? 0x334155 : 0x94a3b8,
+    ringOpacity: isDark ? 0.18 : 0.25,
+    axesColor: isDark ? 0x334155 : 0x64748b,
+    axesOpacity: isDark ? 0.30 : 0.35,
+    arrowColor: isDark ? 0x00f3ff : 0x0284c7,
+    tipColor: isDark ? 0x00f3ff : 0x0284c7,
+    tipOpacity: 0.95,
+    polarArcColor: isDark ? 0x00f3ff : 0x0284c7,
+    polarArcOpacity: isDark ? 0.75 : 0.70,
+    azimuthalLineColor: isDark ? 0xffee00 : 0xd97706,
+    azimuthalLineOpacity: isDark ? 0.80 : 0.75,
+    linewidth: 2.5,
+  };
+}
+
+export function createBlochSphereScene(theme?: ThemeMode): BlochSphereElements {
   const geometries: (THREE.BufferGeometry | LineGeometry)[] = [];
   const materials: (THREE.Material | LineMaterial)[] = [];
 
@@ -177,7 +216,23 @@ export function createBlochSphereScene(): BlochSphereElements {
   const azimuthalLine = new Line2(azimuthalGeo, azimuthalMat);
   azimuthalLine.name = 'bloch-azimuthal-line';
 
-  return { sphere, ring, axes, arrowHelper, tipHandle, polarArc, azimuthalLine, geometries, materials };
+  const elements: BlochSphereElements = {
+    sphere,
+    ring,
+    axes,
+    arrowHelper,
+    tipHandle,
+    polarArc,
+    azimuthalLine,
+    geometries,
+    materials,
+  };
+
+  if (theme) {
+    updateBlochSphereUniforms(elements, { theme });
+  }
+
+  return elements;
 }
 
 export function computeSphericalVector(theta: number, phi: number): THREE.Vector3 {
@@ -211,10 +266,48 @@ export function lerpSphericalAngles(
   return { theta: nextTheta, phi: nextPhi };
 }
 
+export interface BlochSphereUniformOptions {
+  sphereColor?: number;
+  arrowColor?: number;
+  opacity?: number;
+  gridAlpha?: number;
+  theme?: ThemeMode;
+  polarArcColor?: number;
+  azimuthalLineColor?: number;
+}
+
 export function updateBlochSphereUniforms(
   elements: BlochSphereElements,
-  options: { sphereColor?: number; arrowColor?: number; opacity?: number; gridAlpha?: number } = {}
+  options: BlochSphereUniformOptions = {}
 ): void {
+  if (options.theme !== undefined) {
+    const palette = getTheme3DColors(options.theme);
+    if (elements.sphere.material instanceof THREE.MeshBasicMaterial) {
+      elements.sphere.material.color.setHex(palette.sphereColor);
+      elements.sphere.material.opacity = palette.sphereOpacity;
+    }
+    if (elements.ring.material instanceof THREE.MeshBasicMaterial) {
+      elements.ring.material.color.setHex(palette.ringColor);
+      elements.ring.material.opacity = palette.ringOpacity;
+    }
+    if (elements.axes.material instanceof THREE.LineBasicMaterial) {
+      elements.axes.material.color.setHex(palette.axesColor);
+      elements.axes.material.opacity = palette.axesOpacity;
+    }
+    elements.arrowHelper.setColor(palette.arrowColor);
+    if (elements.tipHandle.material instanceof THREE.MeshBasicMaterial) {
+      elements.tipHandle.material.color.setHex(palette.tipColor);
+      elements.tipHandle.material.opacity = palette.tipOpacity;
+    }
+    elements.polarArc.material.color.setHex(palette.polarArcColor);
+    elements.polarArc.material.opacity = palette.polarArcOpacity;
+    elements.polarArc.material.linewidth = palette.linewidth;
+
+    elements.azimuthalLine.material.color.setHex(palette.azimuthalLineColor);
+    elements.azimuthalLine.material.opacity = palette.azimuthalLineOpacity;
+    elements.azimuthalLine.material.linewidth = palette.linewidth;
+  }
+
   const alpha = options.gridAlpha ?? options.opacity;
   if (options.sphereColor !== undefined && elements.sphere.material instanceof THREE.MeshBasicMaterial) {
     elements.sphere.material.color.setHex(options.sphereColor);
@@ -228,7 +321,14 @@ export function updateBlochSphereUniforms(
       elements.tipHandle.material.color.setHex(options.arrowColor);
     }
   }
+  if (options.polarArcColor !== undefined) {
+    elements.polarArc.material.color.setHex(options.polarArcColor);
+  }
+  if (options.azimuthalLineColor !== undefined) {
+    elements.azimuthalLine.material.color.setHex(options.azimuthalLineColor);
+  }
 }
+
 
 
 export interface ParticlePool {

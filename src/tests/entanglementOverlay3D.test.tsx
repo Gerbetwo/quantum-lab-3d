@@ -49,6 +49,24 @@ describe('3D Quantum Entanglement Correlation Laser (EntanglementOverlay3D)', ()
       expect(elements.geometries.length).toBeGreaterThanOrEqual(4);
       expect(elements.materials.length).toBeGreaterThanOrEqual(4);
     });
+
+    it('instantiates projection lines (polarArc and azimuthalLine) for both Alice and Bob', () => {
+      const elements = createDualBlochScene();
+      expect(elements.polarArcA).toBeDefined();
+      expect(elements.azimuthalLineA).toBeDefined();
+      expect(elements.polarArcB).toBeDefined();
+      expect(elements.azimuthalLineB).toBeDefined();
+
+      expect(elements.polarArcA.name).toBe('bloch-polar-arc-a');
+      expect(elements.azimuthalLineA.name).toBe('bloch-azimuthal-line-a');
+      expect(elements.polarArcB.name).toBe('bloch-polar-arc-b');
+      expect(elements.azimuthalLineB.name).toBe('bloch-azimuthal-line-b');
+
+      expect(elements.geometries).toContain(elements.polarArcA.geometry);
+      expect(elements.geometries).toContain(elements.azimuthalLineA.geometry);
+      expect(elements.geometries).toContain(elements.polarArcB.geometry);
+      expect(elements.geometries).toContain(elements.azimuthalLineB.geometry);
+    });
   });
 
   describe('updateLaserStrand (Kinematics & Spin-Flip Waves)', () => {
