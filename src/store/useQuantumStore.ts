@@ -242,9 +242,27 @@ export const useQuantumStore = create<QuantumStore>()(
         const { theta, phi } = get();
         let nextTheta = theta;
         let nextPhi = phi;
-        if (gate === "X") nextTheta = Math.PI - theta;
-        else if (gate === "Z") nextPhi = (phi + Math.PI) % (2 * Math.PI);
-        else if (gate === "H") nextTheta = Math.abs(theta - Math.PI / 2) < 0.1 ? 0 : Math.PI / 2;
+        switch (gate) {
+          case "X":
+            nextTheta = Math.PI - theta;
+            break;
+          case "Y":
+            nextTheta = Math.PI - theta;
+            nextPhi = (phi + Math.PI / 2) % (2 * Math.PI);
+            break;
+          case "Z":
+            nextPhi = (phi + Math.PI) % (2 * Math.PI);
+            break;
+          case "H":
+            nextTheta = Math.abs(theta - Math.PI / 2) < 0.1 ? 0 : Math.PI / 2;
+            break;
+          case "S":
+            nextPhi = (phi + Math.PI / 2) % (2 * Math.PI);
+            break;
+          case "T":
+            nextPhi = (phi + Math.PI / 4) % (2 * Math.PI);
+            break;
+        }
         set({ theta: nextTheta, phi: nextPhi });
         soundEngine.playGateSound(gate);
       },
