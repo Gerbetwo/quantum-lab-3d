@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useQuantumStore } from '../useQuantumStore';
+import { useQuantumStore, checkMissionObjectiveCompletion } from '../useQuantumStore';
 import { TOTAL_MISSIONS, CORE_MISSION_IDS } from '@/features/missions/missionRegistry';
 
 describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
@@ -314,6 +314,115 @@ describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
 
       useQuantumStore.getState().setUserPrediction(0.5);
       expect(useQuantumStore.getState().userPredictionProb0).toBe(0.5);
+    });
+  });
+
+  describe('Automated Objective Verification (checkMissionObjectiveCompletion)', () => {
+    it('evaluates superposition objective when theta is near pi/2 or collapsed', () => {
+      const state = useQuantumStore.getState();
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'superposition', theta: 0, lastOutcome: null })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'superposition', theta: Math.PI / 2, lastOutcome: null })).toBe(true);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'superposition', theta: 0, lastOutcome: 0 })).toBe(true);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'superposition', theta: Math.PI, lastOutcome: 1 })).toBe(true);
+    });
+
+    it('evaluates entanglement objective when entangled and measured', () => {
+      const state = useQuantumStore.getState();
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'entanglement', isEntangled: false, lastOutcome: null })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'entanglement', isEntangled: true, lastOutcome: null })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'entanglement', isEntangled: false, lastOutcome: 0 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'entanglement', isEntangled: true, lastOutcome: 0 })).toBe(true);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'entanglement', isEntangled: true, lastOutcome: 1 })).toBe(true);
+    });
+
+    it('evaluates decoherence objective when temperatureK >= 100 K', () => {
+      const state = useQuantumStore.getState();
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'decoherence', temperatureK: 0.015 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'decoherence', temperatureK: 77 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'decoherence', temperatureK: 100 })).toBe(true);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'decoherence', temperatureK: 300 })).toBe(true);
+    });
+
+    it('evaluates gates objective when theta is near pi/2 or pi', () => {
+      const state = useQuantumStore.getState();
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'gates', theta: 0 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'gates', theta: Math.PI / 2 })).toBe(true);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'gates', theta: Math.PI })).toBe(true);
+    });
+
+    it('evaluates grover objective when groverStep >= 2', () => {
+      const state = useQuantumStore.getState();
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'grover', groverStep: 0 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'grover', groverStep: 1 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'grover', groverStep: 2 })).toBe(true);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'grover', groverStep: 3 })).toBe(true);
+    });
+
+    it('evaluates applications (Shor) objective when shorBase is 7 or 13', () => {
+      const state = useQuantumStore.getState();
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'applications', shorBase: 2 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'applications', shorBase: 8 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'applications', shorBase: 11 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'applications', shorBase: 7 })).toBe(true);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'applications', shorBase: 13 })).toBe(true);
+    });
+
+    it('evaluates error-correction objective when qecInjectedError is null', () => {
+      const state = useQuantumStore.getState();
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'error-correction', qecInjectedError: 0 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'error-correction', qecInjectedError: 1 })).toBe(false);
+      expect(checkMissionObjectiveCompletion({ ...state, currentMissionId: 'error-correction', qecInjectedError: null })).toBe(true);
+    });
+
+    it('auto-completes missions via actions across the store', () => {
+      // Mission 0: Superposition via applyGate H
+      useQuantumStore.getState().selectMission('superposition');
+      expect(useQuantumStore.getState().completedMissions).not.toContain(0);
+      useQuantumStore.getState().applyGate('H');
+      expect(useQuantumStore.getState().completedMissions).toContain(0);
+
+      // Mission 1: Entanglement via measure
+      useQuantumStore.getState().selectMission('entanglement');
+      expect(useQuantumStore.getState().completedMissions).not.toContain(1);
+      useQuantumStore.getState().measure();
+      expect(useQuantumStore.getState().completedMissions).toContain(1);
+
+      // Mission 2: Decoherence via setTemperature >= 100
+      useQuantumStore.getState().selectMission('decoherence');
+      expect(useQuantumStore.getState().completedMissions).not.toContain(2);
+      useQuantumStore.getState().setTemperature(100);
+      expect(useQuantumStore.getState().completedMissions).toContain(2);
+
+      // Mission 3: Gates via applyGate X
+      useQuantumStore.getState().selectMission('gates');
+      expect(useQuantumStore.getState().completedMissions).not.toContain(3);
+      useQuantumStore.getState().applyGate('X');
+      expect(useQuantumStore.getState().completedMissions).toContain(3);
+
+      // Mission 4: Grover via setGroverStep
+      useQuantumStore.getState().selectMission('grover');
+      expect(useQuantumStore.getState().completedMissions).not.toContain(4);
+      useQuantumStore.getState().setGroverStep(2);
+      expect(useQuantumStore.getState().completedMissions).toContain(4);
+
+      // Mission 5: Shor via setShorBase
+      useQuantumStore.getState().selectMission('applications');
+      expect(useQuantumStore.getState().completedMissions).not.toContain(5);
+      useQuantumStore.getState().setShorBase(13);
+      expect(useQuantumStore.getState().completedMissions).toContain(5);
+
+      // Mission 6: QEC via injecting then clearing error
+      useQuantumStore.getState().selectMission('error-correction');
+      expect(useQuantumStore.getState().completedMissions).not.toContain(6);
+      useQuantumStore.getState().setQecInjectedError(1);
+      expect(useQuantumStore.getState().completedMissions).not.toContain(6);
+      useQuantumStore.getState().setQecInjectedError(null);
+      expect(useQuantumStore.getState().completedMissions).toContain(6);
+
+      // Idempotency check: Repeated actions do not duplicate completion entries
+      useQuantumStore.getState().setQecInjectedError(null);
+      const mission6Count = useQuantumStore.getState().completedMissions.filter((m) => m === 6).length;
+      expect(mission6Count).toBe(1);
     });
   });
 });

@@ -152,12 +152,41 @@ const INITIAL_PHYSICS = {
 const init = getInitialPersisted();
 const initialTheme = getInitialTheme();
 
+export function checkMissionObjectiveCompletion(state: QuantumStore): boolean {
+  switch (state.currentMissionId) {
+    case 'superposition':
+      return Math.abs(state.theta - Math.PI / 2) < 0.1 || state.lastOutcome !== null;
+    case 'entanglement':
+      return state.isEntangled && state.lastOutcome !== null;
+    case 'decoherence':
+      return state.temperatureK >= 100;
+    case 'gates':
+      return Math.abs(state.theta - Math.PI / 2) < 0.1 || Math.abs(state.theta - Math.PI) < 0.1;
+    case 'grover':
+      return state.groverStep >= 2;
+    case 'applications':
+      return state.shorBase === 7 || state.shorBase === 13;
+    case 'error-correction':
+      return state.qecInjectedError === null;
+    default:
+      return false;
+  }
+}
+
 export const useQuantumStore = create<QuantumStore>()(
   persist(
-    (set, get) => ({
-      theme: initialTheme,
-      language: init.language,
-      appViewState: "TITLE",
+    (set, get) => {
+      const checkAndMarkObjective = () => {
+        const state = get();
+        if (checkMissionObjectiveCompletion(state)) {
+          get().markMissionCompleted(state.currentMissionId);
+        }
+      };
+
+      return {
+        theme: initialTheme,
+        language: init.language,
+        appViewState: "TITLE",
       isPauseMenuOpen: false,
       ...INITIAL_PHYSICS,
       currentMissionId: "superposition",
@@ -210,13 +239,21 @@ export const useQuantumStore = create<QuantumStore>()(
         });
       },
 
-      setGroverStep: (step) =>
+      setGroverStep: (step) => {
         set((s) => ({
           groverStep: typeof step === 'function' ? step(s.groverStep) : step,
-        })),
+        }));
+        checkAndMarkObjective();
+      },
       setGroverTargetIndex: (groverTargetIndex) => set({ groverTargetIndex }),
-      setShorBase: (shorBase) => set({ shorBase }),
-      setQecInjectedError: (qecInjectedError) => set({ qecInjectedError }),
+      setShorBase: (shorBase) => {
+        set({ shorBase });
+        checkAndMarkObjective();
+      },
+      setQecInjectedError: (qecInjectedError) => {
+        set({ qecInjectedError });
+        checkAndMarkObjective();
+      },
 
       toggleSound: () => {
         const next = !get().isSoundEnabled;
@@ -229,13 +266,24 @@ export const useQuantumStore = create<QuantumStore>()(
         set({ isSoundEnabled: enabled });
       },
 
-      setAngles: (theta, phi) => set({ theta, phi }),
-      setTheta: (theta) => set({ theta }),
+      setAngles: (theta, phi) => {
+        set({ theta, phi });
+        checkAndMarkObjective();
+      },
+      setTheta: (theta) => {
+        set({ theta });
+        checkAndMarkObjective();
+      },
       setPhi: (phi) => set({ phi }),
-      setTemperature: (temperatureK) =>
-        set({ temperatureK, coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(temperatureK)) }),
+      setTemperature: (temperatureK) => {
+        set({ temperatureK, coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(temperatureK)) });
+        checkAndMarkObjective();
+      },
       setTemperatureK: (tempK) => get().setTemperature(tempK),
-      setEntangled: (isEntangled) => set({ isEntangled }),
+      setEntangled: (isEntangled) => {
+        set({ isEntangled });
+        checkAndMarkObjective();
+      },
       setLastOutcome: (lastOutcome) => set({ lastOutcome }),
 
       applyGate: (gate) => {
@@ -265,6 +313,7 @@ export const useQuantumStore = create<QuantumStore>()(
         }
         set({ theta: nextTheta, phi: nextPhi });
         soundEngine.playGateSound(gate);
+        checkAndMarkObjective();
       },
 
       measure: () => {
@@ -273,6 +322,7 @@ export const useQuantumStore = create<QuantumStore>()(
         const outcome: 0 | 1 = Math.random() < p0 ? 0 : 1;
         set({ theta: outcome === 0 ? 0 : Math.PI, phi: 0, lastOutcome: outcome });
         soundEngine.playMeasurementSound();
+        checkAndMarkObjective();
         return outcome;
       },
 
@@ -323,7 +373,8 @@ export const useQuantumStore = create<QuantumStore>()(
           shorBase: 7,
           qecInjectedError: null,
         }),
-    }),
+      };
+    },
     {
       name: "quantum_lab_session_v3",
       storage: createJSONStorage(() => (typeof window !== "undefined" && window.localStorage ? window.localStorage : {
