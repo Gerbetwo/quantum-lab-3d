@@ -32,7 +32,11 @@ export type KnownSpatialId =
   | "entanglement-lattice"
   | "qubit-alice"
   | "qubit-bob"
-  | "two-qubit-state";
+  | "two-qubit-state"
+  | "grover-amplitude-bar"
+  | "mean-reflection-plane"
+  | "oracle-phase-inversion"
+  | "diffusion-operator";
 
 /**
  * Metadata mapping a 3D spatial element ID to HUD telemetry symbols and descriptions.
@@ -287,6 +291,38 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     label: "2-Qubit State Vector",
     description: "Composite state vector spanning the 4D bipartite Hilbert space",
     hudSection: "state-vector",
+  },
+  "grover-amplitude-bar": {
+    id: "grover-amplitude-bar",
+    symbol: "α_x",
+    latex: "\\alpha_x |x\\rangle \\implies P(x) = |\\alpha_x|^2",
+    label: "State Amplitude Bar (α_x)",
+    description: "Probability amplitude of computational basis state |x⟩",
+    hudSection: "state-vector",
+  },
+  "mean-reflection-plane": {
+    id: "mean-reflection-plane",
+    symbol: "⟨a⟩",
+    latex: "\\langle a\\rangle = \\frac{1}{N}\\sum_{x=0}^{N-1} \\alpha_x",
+    label: "Mean Reflection Plane ⟨a⟩",
+    description: "Average amplitude plane across which diffusion reflects all state amplitudes",
+    hudSection: "state-vector",
+  },
+  "oracle-phase-inversion": {
+    id: "oracle-phase-inversion",
+    symbol: "O_f",
+    latex: "\\hat{O}_f |x\\rangle = (-1)^{f(x)} |x\\rangle",
+    label: "Oracle Phase Inversion (O_f)",
+    description: "Inverts phase of the target marked state: α_target → -α_target",
+    hudSection: "gates",
+  },
+  "diffusion-operator": {
+    id: "diffusion-operator",
+    symbol: "D",
+    latex: "\\hat{D} = 2|\\mu\\rangle\\langle\\mu| - I \\implies \\alpha_x' = 2\\langle a\\rangle - \\alpha_x",
+    label: "Grover Diffusion Operator (D)",
+    description: "Inversion-about-the-mean reflection amplifying target probability",
+    hudSection: "gates",
   },
 };
 
