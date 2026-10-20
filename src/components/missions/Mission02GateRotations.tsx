@@ -11,10 +11,11 @@ import {
   GATE_RING_SPECS,
   GateRotationRings,
 } from "@/components/canvas/GateRotationRings";
+import { isVectorInBlochTarget } from "@/components/canvas/TargetZone3D";
 import { useSpatialTelemetryBridge } from "@/hooks/useSpatialTelemetryBridge";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { computeSphericalVector } from "@/features/quantum-core/blochSceneObjects";
-import { Sparkles, Orbit } from "lucide-react";
+import { Sparkles, Orbit, Crosshair, CheckCircle2 } from "lucide-react";
 
 export interface Mission02GateRotationsProps {
   className?: string;
@@ -90,6 +91,22 @@ export const Mission02GateRotations: React.FC<Mission02GateRotationsProps> = ({
 
   const [lastGateApplied, setLastGateApplied] = useState<string>("H");
   const [geodesicArcActive, setGeodesicArcActive] = useState<boolean>(false);
+
+  // 3D Target Prediction Zone: Destination state for active gate
+  const targetZone = React.useMemo(() => {
+    if (lastGateApplied === "X") return { theta: Math.PI, phi: 0 };
+    if (lastGateApplied === "Y") return { theta: Math.PI, phi: Math.PI / 2 };
+    if (lastGateApplied === "Z") return { theta: 0, phi: 0 };
+    return { theta: Math.PI / 2, phi: 0 };
+  }, [lastGateApplied]);
+
+  const isTargetAligned = isVectorInBlochTarget(
+    theta,
+    phi,
+    targetZone.theta,
+    targetZone.phi,
+    0.35
+  );
 
   // Reference to particle trigger function wired inside the 3D scene
   const triggerParticleArcRef = useRef<
@@ -238,6 +255,7 @@ export const Mission02GateRotations: React.FC<Mission02GateRotationsProps> = ({
           showAxes
           showPoleLabels
           interactive
+          targetZone={targetZone}
           onSceneReady={handleSceneReady}
         />
       }
@@ -331,6 +349,33 @@ export const Mission02GateRotations: React.FC<Mission02GateRotationsProps> = ({
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                   {activeGateDef.description}
                 </p>
+
+                {/* 3D Target Prediction Zone Status */}
+                <div
+                  data-testid="target-zone-status"
+                  className="p-2 rounded border border-white/10 bg-surface-2/80 space-y-1"
+                >
+                  <div className="flex justify-between items-center text-[10px] uppercase text-muted-foreground">
+                    <span className="flex items-center gap-1 font-bold">
+                      <Crosshair className="w-3 h-3 text-quantum-cyan" />
+                      <span>3D Target Zone</span>
+                    </span>
+                    <span
+                      data-testid="target-alignment-badge"
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
+                        isTargetAligned ? "hud-badge-emerald" : "hud-badge-cyan"
+                      }`}
+                    >
+                      {isTargetAligned ? <CheckCircle2 className="w-2.5 h-2.5 text-success" /> : null}
+                      <span>{isTargetAligned ? "TARGET LOCKED" : "ROTATING"}</span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    {isTargetAligned
+                      ? `Target state spatially reached via Gate [${lastGateApplied}].`
+                      : `Apply gate rotation to land |ψ⟩ in the translucent target zone.`}
+                  </p>
+                </div>
 
                 {/* Geodesic Particle Arc Indicator */}
                 <div

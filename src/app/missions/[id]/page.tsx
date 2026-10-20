@@ -7,6 +7,9 @@ import {
 import { MissionWorkspace } from '@/features/missions/MissionWorkspace';
 import { Mission01StateVector } from '@/components/missions/Mission01StateVector';
 import { Mission02GateRotations } from '@/components/missions/Mission02GateRotations';
+import { Mission05Entanglement } from '@/components/missions/Mission05Entanglement';
+import { Mission06Decoherence } from '@/components/missions/Mission06Decoherence';
+import { Mission07GroverSearch } from '@/components/missions/Mission07GroverSearch';
 import { notFound } from 'next/navigation';
 
 interface MissionPageProps {
@@ -52,6 +55,18 @@ export default async function MissionPage({ params }: MissionPageProps) {
 
   if (id === 'gates') {
     return <Mission02GateRotations />;
+  }
+
+  if (id === 'entanglement') {
+    return <Mission05Entanglement />;
+  }
+
+  if (id === 'decoherence') {
+    return <Mission06Decoherence />;
+  }
+
+  if (id === 'grover') {
+    return <Mission07GroverSearch />;
   }
 
   return <MissionWorkspace missionId={id} />;

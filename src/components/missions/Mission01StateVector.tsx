@@ -5,10 +5,11 @@ import { useQuantumStore } from "@/store/useQuantumStore";
 import { useTranslation } from "@/lib/i18n";
 import { MissionCanvasShell } from "@/components/framework/MissionCanvasShell";
 import { CoreBlochSphere } from "@/components/canvas/CoreBlochSphere";
+import { isVectorInBlochTarget } from "@/components/canvas/TargetZone3D";
 import { useSpatialTelemetryBridge } from "@/hooks/useSpatialTelemetryBridge";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import { CheckCircle2, Lock, Unlock, Compass } from "lucide-react";
+import { CheckCircle2, Lock, Unlock, Compass, Crosshair } from "lucide-react";
 
 export interface Mission01StateVectorProps {
   className?: string;
@@ -17,6 +18,7 @@ export interface Mission01StateVectorProps {
 /**
  * Mission 01: State Vector & Superposition
  * Upgraded with direct 3D canvas interaction, Slerp pole contact,
+ * translucent 3D target zone on the Bloch sphere equator,
  * MissionCanvasShell 3-tier layout, and real-time useSpatialTelemetryBridge synchronization.
  */
 export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
@@ -41,6 +43,16 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
   const p1 = beta * beta;
   const actualProb0Percent = Math.round(p0 * 100);
 
+  // 3D Target Prediction Zone: Equatorial Superposition |+⟩
+  const TARGET_ZONE = React.useMemo(() => ({ theta: Math.PI / 2, phi: 0 }), []);
+  const isTargetAligned = isVectorInBlochTarget(
+    safeTheta,
+    safePhi,
+    TARGET_ZONE.theta,
+    TARGET_ZONE.phi,
+    0.35
+  );
+
   // Zero-Spoiler Prediction State
   const [predictedP0, setPredictedP0] = useState<number>(
     userPredictionProb0 !== null ? Math.round(userPredictionProb0 * 100) : 50
@@ -60,7 +72,15 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
     <MissionCanvasShell
       missionId="superposition"
       className={className}
-      tier2Canvas={<CoreBlochSphere showArcs showAxes showPoleLabels interactive />}
+      tier2Canvas={
+        <CoreBlochSphere
+          showArcs
+          showAxes
+          showPoleLabels
+          interactive
+          targetZone={TARGET_ZONE}
+        />
+      }
       tier2Overlays={
         <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between select-none">
           {/* Top Left: Interactive Instructions & Active Focus Badge */}
@@ -153,7 +173,34 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
                   </div>
                 </div>
 
-                {/* 3. Zero-Spoiler Prediction & Collapse Hypothesis */}
+                {/* 3. 3D Spatial Target Prediction Zone */}
+                <div
+                  data-testid="target-zone-status"
+                  className="p-2 rounded border border-white/10 bg-surface-2/80 space-y-1"
+                >
+                  <div className="flex justify-between items-center text-[10px] uppercase text-muted-foreground">
+                    <span className="flex items-center gap-1 font-bold">
+                      <Crosshair className="w-3 h-3 text-quantum-cyan" />
+                      <span>3D Target Zone</span>
+                    </span>
+                    <span
+                      data-testid="target-alignment-badge"
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
+                        isTargetAligned ? "hud-badge-emerald" : "hud-badge-cyan"
+                      }`}
+                    >
+                      {isTargetAligned ? <CheckCircle2 className="w-2.5 h-2.5 text-success" /> : null}
+                      <span>{isTargetAligned ? "TARGET LOCKED" : "ALIGNING"}</span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    {isTargetAligned
+                      ? "Spatial threshold reached: |ψ⟩ is aligned with the equatorial target zone."
+                      : "Rotate the vector tip into the translucent target ring on the sphere."}
+                  </p>
+                </div>
+
+                {/* 4. Zero-Spoiler Prediction & Collapse Hypothesis */}
                 <div className="pt-2 border-t border-border space-y-2">
                   <div className="flex justify-between items-center text-[10px] uppercase text-muted-foreground">
                     <span>{t("workspace.hypothesis_title")}</span>
@@ -222,12 +269,12 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
                       </span>
                       <span
                         className={
-                          Math.abs(predictedP0 - actualProb0Percent) <= 20
+                          isTargetAligned || Math.abs(predictedP0 - actualProb0Percent) <= 20
                             ? "text-success font-bold flex items-center gap-1"
                             : "text-warning font-medium"
                         }
                       >
-                        {Math.abs(predictedP0 - actualProb0Percent) <= 20 ? (
+                        {isTargetAligned || Math.abs(predictedP0 - actualProb0Percent) <= 20 ? (
                           <>
                             <CheckCircle2 className="w-3 h-3 text-success shrink-0" />
                             <span>{t("workspace.match")}</span>

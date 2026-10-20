@@ -12,23 +12,24 @@ import {
   createBlochSphereGroup,
   type BellStateType,
 } from "@/components/canvas/EntanglementLattice3D";
+import { createBlochTargetZoneMesh, isVectorInBlochTarget } from "@/components/canvas/TargetZone3D";
 import { useSpatialTelemetryBridge } from "@/hooks/useSpatialTelemetryBridge";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { soundEngine } from "@/lib/soundEngine";
-import { Zap, Activity, CheckCircle2, RotateCcw } from "lucide-react";
+import { Zap, Activity, CheckCircle2, RotateCcw, Crosshair } from "lucide-react";
 
 export interface Mission05EntanglementProps {
   className?: string;
   missionId?: string;
 }
 
-const BELL_PRESETS: { type: BellStateType; label: string; formula: string; desc: string }[] = [
-  { type: "phi_plus", label: "|Φ⁺⟩", formula: "(|00⟩ + |11⟩)/√2", desc: "Correlated" },
-  { type: "phi_minus", label: "|Φ⁻⟩", formula: "(|00⟩ - |11⟩)/√2", desc: "Phase-flip" },
-  { type: "psi_plus", label: "|Ψ⁺⟩", formula: "(|01⟩ + |10⟩)/√2", desc: "Bit-flip" },
-  { type: "psi_minus", label: "|Ψ⁻⟩", formula: "(|01⟩ - |10⟩)/√2", desc: "Singlet" },
-  { type: "separable", label: "Sep |00⟩", formula: "|00⟩", desc: "Decoupled" },
+const BELL_PRESETS = [
+  { type: "phi_plus" as const, label: "|Φ⁺⟩", formula: "(|00⟩ + |11⟩)/√2", desc: "Correlated" },
+  { type: "phi_minus" as const, label: "|Φ⁻⟩", formula: "(|00⟩ - |11⟩)/√2", desc: "Phase-flip" },
+  { type: "psi_plus" as const, label: "|Ψ⁺⟩", formula: "(|01⟩ + |10⟩)/√2", desc: "Bit-flip" },
+  { type: "psi_minus" as const, label: "|Ψ⁻⟩", formula: "(|01⟩ - |10⟩)/√2", desc: "Singlet" },
+  { type: "separable" as const, label: "Sep |00⟩", formula: "|00⟩", desc: "Decoupled" },
 ];
 
 const FORMULAS: Record<BellStateType, string> = {
@@ -82,7 +83,11 @@ const DualBlochViewport: React.FC<DualBlochViewportProps> = ({
     const alice = createBlochSphereGroup(-2.2, 0.92, 0x00f3ff, "qubit-alice");
     const bob = createBlochSphereGroup(2.2, 0.92, 0xa855f7, "qubit-bob");
     const lattice = createEntanglementLatticeGroup();
-    scene.add(alice.group, bob.group, lattice.group);
+    const targetMeshA = createBlochTargetZoneMesh(Math.PI / 2, 0, 0.92, 0.35, 0x00f3ff);
+    targetMeshA.mesh.position.x += -2.2;
+    const targetMeshB = createBlochTargetZoneMesh(Math.PI / 2, 0, 0.92, 0.35, 0xa855f7);
+    targetMeshB.mesh.position.x += 2.2;
+    scene.add(alice.group, bob.group, lattice.group, targetMeshA.mesh, targetMeshB.mesh);
     onReadyLattice(lattice);
 
     const raycaster = new THREE.Raycaster();
@@ -149,6 +154,8 @@ const DualBlochViewport: React.FC<DualBlochViewportProps> = ({
       alice.updateVector(anglesRef.current.thetaA, anglesRef.current.phiA);
       bob.updateVector(anglesRef.current.thetaB, anglesRef.current.phiB);
       lattice.update(dt, isEntangled);
+      targetMeshA.updateAlignment(isVectorInBlochTarget(anglesRef.current.thetaA, anglesRef.current.phiA, Math.PI / 2, 0, 0.38));
+      targetMeshB.updateAlignment(isVectorInBlochTarget(anglesRef.current.thetaB, anglesRef.current.phiB, Math.PI / 2, 0, 0.38));
       renderer.render(scene, camera);
       animId = requestAnimationFrame(loop);
     };
@@ -159,10 +166,9 @@ const DualBlochViewport: React.FC<DualBlochViewportProps> = ({
       dom.removeEventListener("pointerdown", onPointerDown);
       dom.removeEventListener("pointermove", onPointerMove);
       dom.removeEventListener("pointerup", onPointerUp);
-      scene.remove(alice.group, bob.group, lattice.group);
-      alice.dispose();
-      bob.dispose();
-      lattice.dispose();
+      scene.remove(alice.group, bob.group, lattice.group, targetMeshA.mesh, targetMeshB.mesh);
+      targetMeshA.dispose(); targetMeshB.dispose();
+      alice.dispose(); bob.dispose(); lattice.dispose();
     };
   }, [onReadyLattice, onVectorDragA, isEntangled]);
 
@@ -182,12 +188,14 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
   className = "",
   missionId = "entanglement",
 }) => {
-  const thetaA = useQuantumStore((s) => s.theta);
-  const phiA = useQuantumStore((s) => s.phi);
-  const setAngles = useQuantumStore((s) => s.setAngles);
-  const isEntangled = useQuantumStore((s) => s.isEntangled);
-  const setEntangled = useQuantumStore((s) => s.setEntangled);
-  const setLastOutcome = useQuantumStore((s) => s.setLastOutcome);
+  const {
+    theta: thetaA,
+    phi: phiA,
+    setAngles,
+    isEntangled,
+    setEntangled,
+    setLastOutcome,
+  } = useQuantumStore();
 
   const activeMapping = useSpatialTelemetryBridge((s) => s.getActiveMapping());
 
@@ -204,19 +212,11 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
   // Steered coordinates for Bob based on entanglement entropy
   const safeThetaA = Number.isFinite(thetaA) ? thetaA : 0;
   const safePhiA = Number.isFinite(phiA) ? phiA : 0;
-  const { thetaB, phiB } = computeSteeredQubitB(
-    bellType,
-    safeThetaA,
-    safePhiA,
-    isEntangled ? entropyDegree : 0
-  );
-
-  const twoQubitAmps = computeTwoQubitState(
-    bellType,
-    safeThetaA,
-    safePhiA,
-    isEntangled ? entropyDegree : 0
-  );
+  const entropy = isEntangled ? entropyDegree : 0;
+  const { thetaB, phiB } = computeSteeredQubitB(bellType, safeThetaA, safePhiA, entropy);
+  const twoQubitAmps = computeTwoQubitState(bellType, safeThetaA, safePhiA, entropy);
+  const isTargetAligned =
+    isVectorInBlochTarget(safeThetaA, safePhiA, Math.PI / 2, 0, 0.38) && isEntangled;
 
   // Set initial Bell state |Φ⁺⟩ on mount
   useEffect(() => {
@@ -230,7 +230,6 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
     setOutcomeA(null);
     setOutcomeB(null);
     setLastOutcome(null);
-
     if (type === "separable") {
       setEntangled(false);
       setEntropyDegree(0);
@@ -238,7 +237,6 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
       setEntangled(true);
       setEntropyDegree(1.0);
     }
-
     latticeRef.current?.triggerIgnition(type);
     soundEngine.playVectorSnap();
   };
@@ -246,33 +244,24 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
   // Instant correlated collapse
   const handleMeasure = useCallback(() => {
     if (isCollapsing) return;
-
-    // Roll stochastic outcome for Alice based on P(A=0) = p00 + p01
     const pA0 = twoQubitAmps.c00.prob + twoQubitAmps.c01.prob;
     const rollA: 0 | 1 = Math.random() < pA0 ? 0 : 1;
-
-    // Determine Bob's collapsed eigenstate based on Bell correlation
     let rollB: 0 | 1 = rollA;
     if (bellType === "psi_minus" || bellType === "psi_plus") {
-      rollB = rollA === 0 ? 1 : 0; // Anti-correlated
+      rollB = rollA === 0 ? 1 : 0;
     } else if (bellType === "separable") {
       rollB = 0;
     }
 
     setIsCollapsing(true);
     soundEngine.playStateCollapse();
-
-    // Snap Alice's angle in store
     setAngles(rollA === 0 ? 0 : Math.PI, 0);
     setLastOutcome(rollA);
-
     setOutcomeA(rollA);
     setOutcomeB(rollB);
 
     if (latticeRef.current) {
-      latticeRef.current.triggerCollapseWave(rollA, () => {
-        setIsCollapsing(false);
-      });
+      latticeRef.current.triggerCollapseWave(rollA, () => setIsCollapsing(false));
     } else {
       setIsCollapsing(false);
     }
@@ -292,15 +281,11 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
       className={className}
       tier2Canvas={
         <DualBlochViewport
-          thetaA={safeThetaA}
-          phiA={safePhiA}
-          thetaB={thetaB}
-          phiB={phiB}
+          thetaA={safeThetaA} phiA={safePhiA}
+          thetaB={thetaB} phiB={phiB}
           isEntangled={isEntangled}
           onVectorDragA={(tA, pA) => setAngles(tA, pA)}
-          onReadyLattice={(l) => {
-            latticeRef.current = l;
-          }}
+          onReadyLattice={(l) => { latticeRef.current = l; }}
         />
       }
       pipelineRibbonProps={{
@@ -329,19 +314,17 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
                     className="p-2 rounded-lg border border-quantum-cyan/50 bg-quantum-cyan/10 text-quantum-cyan space-y-1 transition-all"
                   >
                     <div className="flex items-center justify-between text-[10px] font-bold uppercase">
-                      <span>{"Focused: "}{activeMapping.label}</span>
+                      <span>Focused: {activeMapping.label}</span>
                       <span className="font-mono">{activeMapping.symbol}</span>
                     </div>
                     <div className="text-[11px] font-mono text-foreground font-semibold">
-                      {"LaTeX: "}<code className="text-quantum-cyan">{activeMapping.latex}</code>
+                      LaTeX: <code className="text-quantum-cyan">{activeMapping.latex}</code>
                     </div>
-                    <p className="text-[10px] text-muted-foreground leading-tight">
-                      {activeMapping.description}
-                    </p>
+                    <p className="text-[10px] text-muted-foreground leading-tight">{activeMapping.description}</p>
                   </div>
                 ) : (
                   <div className="p-2 rounded-lg border border-white/5 bg-surface-2/60 text-[10px] text-muted-foreground">
-                    {"Hover spheres or the central lattice to inspect EPR telemetry."}
+                    Hover spheres or the central lattice to inspect EPR telemetry.
                   </div>
                 )}
               </div>
@@ -410,39 +393,59 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
                 {/* 4 Basis state cards */}
                 <div className="grid grid-cols-2 gap-1.5 text-center text-[11px]">
                   {[
-                    { key: "00", amp: twoQubitAmps.c00, col: "cyan" },
-                    { key: "01", amp: twoQubitAmps.c01, col: "purple" },
-                    { key: "10", amp: twoQubitAmps.c10, col: "purple" },
-                    { key: "11", amp: twoQubitAmps.c11, col: "emerald" },
-                  ].map(({ key, amp }) => {
-                    const isHovered = hoveredBasis === key;
-                    return (
-                      <div
-                        key={key}
-                        data-testid={`basis-card-${key}`}
-                        onMouseEnter={() => {
-                          setHoveredBasis(key);
-                          useSpatialTelemetryBridge.getState().setActiveFocusId("two-qubit-state");
-                        }}
-                        onMouseLeave={() => setHoveredBasis(null)}
-                        className={`p-1.5 rounded border transition-all cursor-pointer ${
-                          isHovered
-                            ? "border-quantum-cyan bg-quantum-cyan/20 scale-[1.02]"
-                            : "border-white/10 bg-surface-2/60"
-                        }`}
-                      >
-                        <div className="text-[10px] text-muted-foreground uppercase font-bold">
-                          {"|"}{key}{"⟩"}
-                        </div>
-                        <div className="font-bold tabular-nums text-foreground">
-                          {(amp.prob * 100).toFixed(1)}{"%"}
-                        </div>
-                        <div className="text-[9px] text-muted-foreground tabular-nums">
-                          {"c = "}{amp.real >= 0 ? "+" : ""}{amp.real.toFixed(3)}
-                        </div>
+                    { key: "00", amp: twoQubitAmps.c00 },
+                    { key: "01", amp: twoQubitAmps.c01 },
+                    { key: "10", amp: twoQubitAmps.c10 },
+                    { key: "11", amp: twoQubitAmps.c11 },
+                  ].map(({ key, amp }) => (
+                    <div
+                      key={key}
+                      data-testid={`basis-card-${key}`}
+                      onMouseEnter={() => {
+                        setHoveredBasis(key);
+                        useSpatialTelemetryBridge.getState().setActiveFocusId("two-qubit-state");
+                      }}
+                      onMouseLeave={() => setHoveredBasis(null)}
+                      className={`p-1.5 rounded border transition-all cursor-pointer ${
+                        hoveredBasis === key
+                          ? "border-quantum-cyan bg-quantum-cyan/20 scale-[1.02]"
+                          : "border-white/10 bg-surface-2/60"
+                      }`}
+                    >
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold">|{key}⟩</div>
+                      <div className="font-bold tabular-nums text-foreground">{(amp.prob * 100).toFixed(1)}%</div>
+                      <div className="text-[9px] text-muted-foreground tabular-nums">
+                        c = {amp.real >= 0 ? "+" : ""}{amp.real.toFixed(3)}
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
+                </div>
+
+                {/* 3D Spatial Target Prediction Zone */}
+                <div
+                  data-testid="target-zone-status"
+                  className="p-2 rounded border border-white/10 bg-surface-2/80 space-y-1"
+                >
+                  <div className="flex justify-between items-center text-[10px] uppercase text-muted-foreground">
+                    <span className="flex items-center gap-1 font-bold">
+                      <Crosshair className="w-3 h-3 text-quantum-cyan" />
+                      <span>3D Target Zone</span>
+                    </span>
+                    <span
+                      data-testid="target-alignment-badge"
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
+                        isTargetAligned ? "hud-badge-emerald" : "hud-badge-cyan"
+                      }`}
+                    >
+                      {isTargetAligned ? <CheckCircle2 className="w-2.5 h-2.5 text-success" /> : null}
+                      <span>{isTargetAligned ? "ENTANGLED LOCK" : "ALIGNING"}</span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    {isTargetAligned
+                      ? "Spatial alignment achieved: Qubit A in target zone while entangled."
+                      : "Rotate Qubit A vector into the equatorial target zone."}
+                  </p>
                 </div>
 
                 {/* Instant Collapse Action */}
@@ -467,9 +470,7 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
                     >
                       <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
                         <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                        <span>
-                          {"Alice: |"}{outcomeA}{"⟩ ⟶ Bob: |"}{outcomeB}{"⟩"}
-                        </span>
+                        <span>Alice: |{outcomeA}⟩ ⟶ Bob: |{outcomeB}⟩</span>
                       </div>
                       <span className="text-[9px] text-muted-foreground font-semibold uppercase">
                         {outcomeA === outcomeB ? "CORRELATED" : "ANTI-CORRELATED"}
@@ -485,7 +486,7 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
                     className="w-full text-[10px] py-0.5 text-muted-foreground hover:text-foreground"
                   >
                     <RotateCcw className="w-2.5 h-2.5 mr-1" />
-                    <span>{"Reset Qubits"}</span>
+                    <span>Reset Qubits</span>
                   </Button>
                 </div>
               </div>

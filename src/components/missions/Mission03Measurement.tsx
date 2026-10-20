@@ -13,11 +13,12 @@ import {
   createCollapseRaySystem,
   createSamplingHistogram3D,
 } from "@/components/canvas/MeasurementChamber3D";
+import { isVectorInBlochTarget } from "@/components/canvas/TargetZone3D";
 import { useSpatialTelemetryBridge } from "@/hooks/useSpatialTelemetryBridge";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { soundEngine } from "@/lib/soundEngine";
-import { Zap, BarChart3, RefreshCw, Layers } from "lucide-react";
+import { Zap, BarChart3, RefreshCw, Layers, Crosshair, CheckCircle2 } from "lucide-react";
 
 export interface Mission03MeasurementProps {
   className?: string;
@@ -51,6 +52,19 @@ export const Mission03Measurement: React.FC<Mission03MeasurementProps> = ({
   const { p0, p1 } = computeBornProbabilities(safeTheta);
   const alpha = Math.cos(safeTheta / 2);
   const beta = Math.sin(safeTheta / 2);
+
+  // 3D Spatial Target Prediction Zones: North (|0⟩) and South (|1⟩) apertures
+  const targetZone = React.useMemo(() => {
+    return safeTheta > Math.PI / 2 ? { theta: Math.PI, phi: 0 } : { theta: 0, phi: 0 };
+  }, [safeTheta]);
+
+  const isTargetAligned = isVectorInBlochTarget(
+    safeTheta,
+    safePhi,
+    targetZone.theta,
+    targetZone.phi,
+    0.35
+  );
 
   // Stochastic sampling counts for 3D histogram
   const [shots0, setShots0] = useState<number>(0);
@@ -241,6 +255,7 @@ export const Mission03Measurement: React.FC<Mission03MeasurementProps> = ({
           showAxes
           showPoleLabels
           interactive={!isCollapsing}
+          targetZone={targetZone}
           onSceneReady={handleSceneReady}
         />
       }
@@ -325,6 +340,33 @@ export const Mission03Measurement: React.FC<Mission03MeasurementProps> = ({
                       {"P(|1⟩): "}{(p1 * 100).toFixed(1)}{"%"}
                     </span>
                   </div>
+                </div>
+
+                {/* 3D Target Prediction Zone */}
+                <div
+                  data-testid="target-zone-status"
+                  className="pt-2 border-t border-border space-y-1"
+                >
+                  <div className="flex justify-between items-center text-[10px] uppercase text-muted-foreground">
+                    <span className="flex items-center gap-1 font-bold">
+                      <Crosshair className="w-3 h-3 text-quantum-cyan" />
+                      <span>3D Aperture Target</span>
+                    </span>
+                    <span
+                      data-testid="target-alignment-badge"
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
+                        isTargetAligned ? "hud-badge-emerald" : "hud-badge-cyan"
+                      }`}
+                    >
+                      {isTargetAligned ? <CheckCircle2 className="w-2.5 h-2.5 text-success" /> : null}
+                      <span>{isTargetAligned ? "APERTURE LOCKED" : "SUPERPOSITION"}</span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    {isTargetAligned
+                      ? `State vector spatially aligned with ${targetZone.theta === 0 ? "|0⟩ North" : "|1⟩ South"} aperture.`
+                      : "State in superposition; stochastic measurement will collapse vector."}
+                  </p>
                 </div>
               </div>
             </GlassCard>

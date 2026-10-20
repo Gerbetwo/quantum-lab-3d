@@ -13,6 +13,10 @@ import {
   computeAzimuthalLinePositions,
   computeSphericalVector,
 } from "@/features/quantum-core/blochSceneObjects";
+import {
+  createBlochTargetZoneMesh,
+  isVectorInBlochTarget,
+} from "./TargetZone3D";
 
 export interface CoreBlochSphereProps {
   className?: string;
@@ -21,6 +25,7 @@ export interface CoreBlochSphereProps {
   showAxes?: boolean;
   showPoleLabels?: boolean;
   interactive?: boolean;
+  targetZone?: { theta: number; phi: number } | null;
   onVectorDrag?: (coords: { theta: number; phi: number }, vector: THREE.Vector3) => void;
   onSceneReady?: (ctx: {
     scene: THREE.Scene;
@@ -30,32 +35,20 @@ export interface CoreBlochSphereProps {
   children?: React.ReactNode;
 }
 
-/**
- * Pure spherical linear interpolation (Slerp) between two unit vectors.
- */
-export function slerpUnitVectors(
-  v1: THREE.Vector3,
-  v2: THREE.Vector3,
-  t: number
-): THREE.Vector3 {
+export function slerpUnitVectors(v1: THREE.Vector3, v2: THREE.Vector3, t: number): THREE.Vector3 {
   const dot = Math.max(-1, Math.min(1, v1.dot(v2)));
-  if (dot > 0.999999) {
-    return v1.clone().lerp(v2, t).normalize();
-  }
+  if (dot > 0.999999) return v1.clone().lerp(v2, t).normalize();
   if (dot < -0.999999) {
     const ortho = Math.abs(v1.x) < 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
     const axis = new THREE.Vector3().crossVectors(v1, ortho).normalize();
-    const quat = new THREE.Quaternion().setFromAxisAngle(axis, Math.PI * t);
-    return v1.clone().applyQuaternion(quat);
+    return v1.clone().applyQuaternion(new THREE.Quaternion().setFromAxisAngle(axis, Math.PI * t));
   }
   const omega = Math.acos(dot);
-  const sinOmega = Math.sin(omega);
-  const factor1 = Math.sin((1 - t) * omega) / sinOmega;
-  const factor2 = Math.sin(t * omega) / sinOmega;
+  const sinO = Math.sin(omega);
   return new THREE.Vector3(
-    v1.x * factor1 + v2.x * factor2,
-    v1.y * factor1 + v2.y * factor2,
-    v1.z * factor1 + v2.z * factor2
+    v1.x * (Math.sin((1 - t) * omega) / sinO) + v2.x * (Math.sin(t * omega) / sinO),
+    v1.y * (Math.sin((1 - t) * omega) / sinO) + v2.y * (Math.sin(t * omega) / sinO),
+    v1.z * (Math.sin((1 - t) * omega) / sinO) + v2.z * (Math.sin(t * omega) / sinO)
   ).normalize();
 }
 
@@ -67,49 +60,30 @@ export interface PoleContactResult {
   pole: "north" | "south" | null;
 }
 
-/**
- * Smooth Slerp interpolation on pole contact.
- * Prevents azimuthal gimbal spin when dragging the vector tip into north (|0⟩) or south (|1⟩) poles.
- */
 export function interpolatePoleSlerp(
   vector: THREE.Vector3,
   radius = 1.3,
   thresholdAngle = 0.16
 ): PoleContactResult {
   const unit = vector.clone().normalize();
-  const clampedY = Math.max(-1, Math.min(1, unit.y));
-  const rawTheta = Math.acos(clampedY);
+  const rawTheta = Math.acos(Math.max(-1, Math.min(1, unit.y)));
   let rawPhi = Math.atan2(unit.z, unit.x);
   if (rawPhi < 0) rawPhi += 2 * Math.PI;
 
   const isNorth = rawTheta < thresholdAngle;
-  const isSouth = (Math.PI - rawTheta) < thresholdAngle;
-
+  const isSouth = Math.PI - rawTheta < thresholdAngle;
   if (isNorth || isSouth) {
     const pole: "north" | "south" = isNorth ? "north" : "south";
     const targetPole = isNorth ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, -1, 0);
-    const angle = isNorth ? rawTheta : (Math.PI - rawTheta);
+    const angle = isNorth ? rawTheta : Math.PI - rawTheta;
     const t = 1 - angle / thresholdAngle;
     const smoothT = t * t * (3 - 2 * t);
     const snap = angle < 0.035;
     const finalUnit = snap ? targetPole : slerpUnitVectors(unit, targetPole, smoothT);
     const finalTheta = snap ? (isNorth ? 0 : Math.PI) : Math.acos(Math.max(-1, Math.min(1, finalUnit.y)));
-    return {
-      vector: finalUnit.clone().multiplyScalar(radius),
-      theta: finalTheta,
-      phi: rawPhi,
-      isContact: true,
-      pole,
-    };
+    return { vector: finalUnit.clone().multiplyScalar(radius), theta: finalTheta, phi: rawPhi, isContact: true, pole };
   }
-
-  return {
-    vector: unit.multiplyScalar(radius),
-    theta: rawTheta,
-    phi: rawPhi,
-    isContact: false,
-    pole: null,
-  };
+  return { vector: unit.multiplyScalar(radius), theta: rawTheta, phi: rawPhi, isContact: false, pole: null };
 }
 
 export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
@@ -119,6 +93,7 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
   showAxes = true,
   showPoleLabels = true,
   interactive = true,
+  targetZone = null,
   onVectorDrag,
   onSceneReady,
   children,
@@ -140,6 +115,24 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
     };
   }, [theta, phi]);
 
+  // Performance: Memoize 3D geometries to avoid re-allocation on re-renders
+  const sphereGeo = useMemo(() => new THREE.SphereGeometry(radius, 32, 16), [radius]);
+  const ringGeo = useMemo(() => new THREE.RingGeometry(radius - 0.01, radius + 0.01, 64), [radius]);
+  const poleGeo = useMemo(() => new THREE.SphereGeometry(0.045, 12, 12), []);
+  const tipHandleGeo = useMemo(() => new THREE.SphereGeometry(0.09, 16, 16), []);
+  const axesGeo = useMemo(
+    () =>
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-radius * 1.25, 0, 0),
+        new THREE.Vector3(radius * 1.25, 0, 0),
+        new THREE.Vector3(0, -radius * 1.25, 0),
+        new THREE.Vector3(0, radius * 1.25, 0),
+        new THREE.Vector3(0, 0, -radius * 1.25),
+        new THREE.Vector3(0, 0, radius * 1.25),
+      ]),
+    [radius]
+  );
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -154,7 +147,6 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
     scene.add(new THREE.AmbientLight(0xffffff, 0.95));
 
     // 1. Bloch Sphere Mesh
-    const sphereGeo = new THREE.SphereGeometry(radius, 32, 16);
     const sphereMat = new THREE.MeshBasicMaterial({
       color: isDark ? 0x1e293b : 0x94a3b8,
       wireframe: true,
@@ -166,7 +158,6 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
     scene.add(sphere);
 
     // 2. Equator Ring
-    const ringGeo = new THREE.RingGeometry(radius - 0.01, radius + 0.01, 64);
     const ringMat = new THREE.MeshBasicMaterial({
       color: isDark ? 0x334155 : 0x64748b,
       transparent: true,
@@ -180,11 +171,6 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
     scene.add(ring);
 
     // 3. Coordinate Axes (X, Y, Z)
-    const axesGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-radius * 1.25, 0, 0), new THREE.Vector3(radius * 1.25, 0, 0),
-      new THREE.Vector3(0, -radius * 1.25, 0), new THREE.Vector3(0, radius * 1.25, 0),
-      new THREE.Vector3(0, 0, -radius * 1.25), new THREE.Vector3(0, 0, radius * 1.25),
-    ]);
     const axesMat = new THREE.LineBasicMaterial({
       color: isDark ? 0x334155 : 0x64748b,
       transparent: true,
@@ -196,7 +182,6 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
     scene.add(axes);
 
     // 4. Pole Nodes
-    const poleGeo = new THREE.SphereGeometry(0.045, 12, 12);
     const northMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.8 });
     const southMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.8 });
     const northPoleMesh = new THREE.Mesh(poleGeo, northMat);
@@ -245,7 +230,6 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
     arrowHelper.name = "state-vector";
     scene.add(arrowHelper);
 
-    const tipHandleGeo = new THREE.SphereGeometry(0.09, 16, 16);
     const tipHandleMat = new THREE.MeshBasicMaterial({
       color: 0x00f3ff,
       transparent: true,
@@ -257,9 +241,13 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
     tipHandle.name = "bloch-vector-tip-handle";
     scene.add(tipHandle);
 
-    const geometries: (THREE.BufferGeometry | LineGeometry)[] = [
-      sphereGeo, ringGeo, axesGeo, poleGeo, polarArcGeo, azimuthalGeo, tipHandleGeo
-    ];
+    // Optional 3D Target Zone Mesh
+    let targetMesh: ReturnType<typeof createBlochTargetZoneMesh> | null = null;
+    if (targetZone) {
+      targetMesh = createBlochTargetZoneMesh(targetZone.theta, targetZone.phi, radius);
+      scene.add(targetMesh.mesh);
+    }
+
     const materials: (THREE.Material | LineMaterial)[] = [
       sphereMat, ringMat, axesMat, northMat, southMat, polarArcMat, azimuthalMat, tipHandleMat
     ];
@@ -398,6 +386,16 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
       arrowHelper.setDirection(currentDir);
       tipHandle.position.copy(currentDir).multiplyScalar(radius);
 
+      if (targetMesh && targetZone) {
+        const isAligned = isVectorInBlochTarget(
+          state.theta,
+          state.phi,
+          targetZone.theta,
+          targetZone.phi
+        );
+        targetMesh.updateAlignment(isAligned);
+      }
+
       if (showArcs) {
         const pArcPos = computePolarArcPositions(state.theta, state.phi, radius);
         polarArcGeo.setPositions(pArcPos);
@@ -426,17 +424,18 @@ export const CoreBlochSphere: React.FC<CoreBlochSphereProps> = ({
       cancelAnimationFrame(animId);
       resizeObserver.disconnect();
       cleanupExt?.();
+      targetMesh?.dispose();
       container.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
-      geometries.forEach((g) => g.dispose());
+      polarArcGeo.dispose();
+      azimuthalGeo.dispose();
       materials.forEach((m) => m.dispose());
-      axesGeo.dispose();
       axesMat.dispose();
       arrowHelper.line?.geometry.dispose();
       arrowHelper.cone?.geometry.dispose();
     };
-  }, [radius, showArcs, showAxes, interactive, onVectorDrag, onSceneReady, isDark]);
+  }, [radius, showArcs, showAxes, interactive, targetZone, onVectorDrag, onSceneReady, isDark, axesGeo, poleGeo, ringGeo, sphereGeo, tipHandleGeo]);
 
   return (
     <div

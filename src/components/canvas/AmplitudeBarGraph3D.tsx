@@ -101,13 +101,13 @@ export function createAmplitudeBarGraphGroup(
   const bars: THREE.Mesh[] = [];
   const barEdges: THREE.LineSegments[] = [];
 
+  // Shared geometry instances for high rendering performance
+  const sharedBoxGeo = new THREE.BoxGeometry(barWidth, 1.0, barDepth);
+  const sharedEdgesGeo = new THREE.EdgesGeometry(sharedBoxGeo);
+  geometries.push(sharedBoxGeo, sharedEdgesGeo);
+
   for (let i = 0; i < numStates; i++) {
     const x = startX + i * stepX;
-
-    // Unit box geometry centered at 0
-    const boxGeo = new THREE.BoxGeometry(barWidth, 1.0, barDepth);
-    geometries.push(boxGeo);
-
     const isInitialTarget = i === initialTargetIndex;
     const barMat = new THREE.MeshBasicMaterial({
       color: isInitialTarget ? 0x00f3ff : 0x38bdf8,
@@ -117,7 +117,7 @@ export function createAmplitudeBarGraphGroup(
     });
     materials.push(barMat);
 
-    const barMesh = new THREE.Mesh(boxGeo, barMat);
+    const barMesh = new THREE.Mesh(sharedBoxGeo, barMat);
     barMesh.position.set(x, 0.6, 0);
     barMesh.scale.set(1, 1.2, 1);
     barMesh.name = `amplitude-bar-${i}`;
@@ -130,8 +130,6 @@ export function createAmplitudeBarGraphGroup(
     bars.push(barMesh);
 
     // Wireframe edges for high-tech holographic appearance
-    const edgesGeo = new THREE.EdgesGeometry(boxGeo);
-    geometries.push(edgesGeo);
     const edgesMat = new THREE.LineBasicMaterial({
       color: isInitialTarget ? 0xffffff : 0x00f3ff,
       transparent: true,
@@ -140,7 +138,7 @@ export function createAmplitudeBarGraphGroup(
     });
     materials.push(edgesMat);
 
-    const edges = new THREE.LineSegments(edgesGeo, edgesMat);
+    const edges = new THREE.LineSegments(sharedEdgesGeo, edgesMat);
     edges.position.copy(barMesh.position);
     edges.scale.copy(barMesh.scale);
     group.add(edges);

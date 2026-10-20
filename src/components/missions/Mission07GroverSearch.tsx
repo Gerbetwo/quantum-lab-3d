@@ -13,6 +13,7 @@ import {
   createAmplitudeBarGraphGroup,
   BASIS_LABELS_4,
 } from "@/components/canvas/AmplitudeBarGraph3D";
+import { createBarTargetZoneMesh, isBarInTargetZone } from "@/components/canvas/TargetZone3D";
 import { useSpatialTelemetryBridge } from "@/hooks/useSpatialTelemetryBridge";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
@@ -46,11 +47,7 @@ interface GroverViewportProps {
 }
 
 const GroverViewport: React.FC<GroverViewportProps> = ({
-  amplitudes,
-  targetIndex,
-  isPhaseInverted,
-  onSelectTarget,
-  onReadyGraph,
+  amplitudes, targetIndex, isPhaseInverted, onSelectTarget, onReadyGraph,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const ampsRef = useRef(amplitudes);
@@ -75,14 +72,15 @@ const GroverViewport: React.FC<GroverViewportProps> = ({
     const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
     camera.position.set(0, 2.2, 5.2);
     camera.lookAt(0, 0.6, 0);
-
     scene.add(new THREE.AmbientLight(0xffffff, 0.9));
     const dirLight = new THREE.DirectionalLight(0x00f3ff, 0.5);
     dirLight.position.set(3, 8, 5);
     scene.add(dirLight);
 
+    const stepX = 3.6 / 3, startX = -1.8;
     const barGraph = createAmplitudeBarGraphGroup(4, targetRef.current);
-    scene.add(barGraph.group);
+    const targetZone = createBarTargetZoneMesh(startX + targetRef.current * stepX, 2.0, 0.85, 0.85);
+    scene.add(barGraph.group, targetZone.group);
     onReadyGraph(barGraph);
 
     const raycaster = new THREE.Raycaster();
@@ -100,11 +98,8 @@ const GroverViewport: React.FC<GroverViewportProps> = ({
       getMouseNDC(e);
       raycaster.setFromCamera(mouse, camera);
       const hits = raycaster.intersectObjects(interactiveObjects, false);
-
       if (hits.length > 0 && hits[0].object.userData?.spatialId) {
-        useSpatialTelemetryBridge
-          .getState()
-          .setActiveFocusId(hits[0].object.userData.spatialId);
+        useSpatialTelemetryBridge.getState().setActiveFocusId(hits[0].object.userData.spatialId);
         renderer.domElement.style.cursor = "pointer";
       } else {
         renderer.domElement.style.cursor = "default";
@@ -115,11 +110,8 @@ const GroverViewport: React.FC<GroverViewportProps> = ({
       getMouseNDC(e);
       raycaster.setFromCamera(mouse, camera);
       const hits = raycaster.intersectObjects(barGraph.bars, false);
-      if (hits.length > 0) {
-        const clickedIndex = hits[0].object.userData?.stateIndex;
-        if (typeof clickedIndex === "number") {
-          onSelectTarget(clickedIndex);
-        }
+      if (hits.length > 0 && typeof hits[0].object.userData?.stateIndex === "number") {
+        onSelectTarget(hits[0].object.userData.stateIndex);
       }
     };
 
@@ -134,12 +126,10 @@ const GroverViewport: React.FC<GroverViewportProps> = ({
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
-      barGraph.update(
-        dt,
-        ampsRef.current,
-        targetRef.current,
-        invertedRef.current
-      );
+      barGraph.update(dt, ampsRef.current, targetRef.current, invertedRef.current);
+      targetZone.group.position.x = startX + targetRef.current * stepX;
+      const targetAmp = ampsRef.current[targetRef.current] ?? 0.5;
+      targetZone.updateAlignment(isBarInTargetZone(Math.abs(targetAmp) * 2.4, 1.4));
 
       renderer.render(scene, camera);
       animId = requestAnimationFrame(loop);
@@ -150,7 +140,8 @@ const GroverViewport: React.FC<GroverViewportProps> = ({
       cancelAnimationFrame(animId);
       dom.removeEventListener("pointermove", onPointerMove);
       dom.removeEventListener("pointerdown", onPointerDown);
-      scene.remove(barGraph.group);
+      scene.remove(barGraph.group, targetZone.group);
+      targetZone.dispose();
       barGraph.dispose();
     };
   }, [onReadyGraph, onSelectTarget]);
@@ -189,6 +180,8 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
   const targetProb = probabilities[targetIndex] ?? 0;
   const baselineProb = 1 / amplitudes.length;
   const multiplier = baselineProb > 0 ? targetProb / baselineProb : 1;
+  const targetAmp = amplitudes[targetIndex] ?? 0.5;
+  const isTargetAligned = isBarInTargetZone(Math.abs(targetAmp) * 2.4, 1.4);
 
   // Set Target State
   const handleSelectTarget = useCallback((index: number) => {
@@ -202,8 +195,7 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
 
   // Step 1: Oracle Phase Inversion
   const handlePhaseInversion = useCallback(() => {
-    const inverted = applyOraclePhaseInversion([0.5, 0.5, 0.5, 0.5], targetIndex);
-    setAmplitudes(inverted);
+    setAmplitudes(applyOraclePhaseInversion([0.5, 0.5, 0.5, 0.5], targetIndex));
     setCurrentStep("inversion");
     setOutcome(null);
     soundEngine.playVectorSnap();
@@ -211,7 +203,6 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
 
   // Step 2: Amplitude Amplification (Diffusion Inversion About Mean)
   const handleAmplitudeAmplification = useCallback(() => {
-    // If not yet inverted, invert first, then reflect
     const baseAmps =
       currentStep === "inversion"
         ? amplitudes
@@ -221,18 +212,15 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
     setAmplitudes(reflected);
     setCurrentStep("amplification");
     setOutcome(null);
-
     graphRef.current?.triggerBouncePulse();
     soundEngine.playVectorSnap();
   }, [currentStep, amplitudes, targetIndex]);
 
   // Step 3: Measurement Collapse
   const handleMeasure = useCallback(() => {
-    // Stochastic or deterministic collapse based on Born rule
     const roll = Math.random();
     let cumulative = 0;
     let chosen = targetIndex;
-
     for (let i = 0; i < probabilities.length; i++) {
       cumulative += probabilities[i];
       if (roll <= cumulative) {
@@ -240,7 +228,6 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
         break;
       }
     }
-
     setOutcome(chosen);
     setCurrentStep("measured");
     setLastOutcome(chosen === targetIndex ? 1 : 0);
@@ -324,10 +311,7 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
                     data-testid="oracle-inversion-button"
                     className="w-full text-xs py-1.5 flex items-center justify-between"
                   >
-                    <span className="flex items-center gap-1.5">
-                      <ArrowDownUp className="w-3.5 h-3.5 text-warning" />
-                      1. Oracle Phase Invert (O_f)
-                    </span>
+                    <span className="flex items-center gap-1.5"><ArrowDownUp className="w-3.5 h-3.5 text-warning" />1. Oracle Phase Invert (O_f)</span>
                     <span className="text-[10px] opacity-75">α → -α</span>
                   </Button>
 
@@ -338,10 +322,7 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
                     data-testid="diffusion-amplify-button"
                     className="w-full text-xs py-1.5 flex items-center justify-between"
                   >
-                    <span className="flex items-center gap-1.5">
-                      <TrendingUp className="w-3.5 h-3.5 text-quantum-cyan" />
-                      2. Invert About Mean (D)
-                    </span>
+                    <span className="flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-quantum-cyan" />2. Invert About Mean (D)</span>
                     <span className="text-[10px] opacity-75">2⟨a⟩ - α</span>
                   </Button>
 
@@ -352,10 +333,7 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
                     data-testid="measure-button"
                     className="w-full text-xs py-1.5 flex items-center justify-between"
                   >
-                    <span className="flex items-center gap-1.5">
-                      <Zap className="w-3.5 h-3.5 text-quantum-emerald" />
-                      3. Measure Search Result
-                    </span>
+                    <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-quantum-emerald" />3. Measure Search Result</span>
                     <span className="text-[10px] opacity-75">Collapse</span>
                   </Button>
 
@@ -384,9 +362,7 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
                     <div className="text-[11px] font-mono text-foreground font-semibold">
                       LaTeX: <code className="text-quantum-cyan">{activeMapping.latex}</code>
                     </div>
-                    <p className="text-[10px] text-muted-foreground leading-tight">
-                      {activeMapping.description}
-                    </p>
+                    <p className="text-[10px] text-muted-foreground leading-tight">{activeMapping.description}</p>
                   </div>
                 ) : (
                   <div className="p-2 rounded-lg border border-white/5 bg-surface-2/60 text-[10px] text-muted-foreground">
@@ -439,10 +415,35 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
                     >
                       {meanAmplitude.toFixed(3)}
                     </div>
-                    <div className="text-[9px] text-muted-foreground">
-                      Reflect: 2⟨a⟩ - α
-                    </div>
+                    <div className="text-[9px] text-muted-foreground">Reflect: 2⟨a⟩ - α</div>
                   </div>
+                </div>
+
+                {/* 3D Spatial Target Prediction Zone */}
+                <div
+                  data-testid="target-zone-status"
+                  className="p-2 rounded border border-white/10 bg-surface-2/80 space-y-1"
+                >
+                  <div className="flex justify-between items-center text-[10px] uppercase text-muted-foreground">
+                    <span className="flex items-center gap-1 font-bold">
+                      <Crosshair className="w-3 h-3 text-quantum-cyan" />
+                      <span>3D Target Zone</span>
+                    </span>
+                    <span
+                      data-testid="target-alignment-badge"
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
+                        isTargetAligned ? "hud-badge-emerald" : "hud-badge-cyan"
+                      }`}
+                    >
+                      {isTargetAligned ? <CheckCircle2 className="w-2.5 h-2.5 text-success" /> : null}
+                      <span>{isTargetAligned ? "AMPLITUDE LOCKED" : "ALIGNING"}</span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    {isTargetAligned
+                      ? "Spatial threshold reached: Target amplitude has grown into the 3D target zone."
+                      : "Apply Grover diffusion to amplify the target bar into the floating target volume."}
+                  </p>
                 </div>
 
                 {/* 4-State Probability Distribution Grid */}
@@ -451,33 +452,21 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
                     const prob = probabilities[idx] ?? 0;
                     const isTarget = idx === targetIndex;
                     const amp = amplitudes[idx] ?? 0;
-
                     return (
                       <div
                         key={label}
                         data-testid={`basis-card-${idx}`}
                         onMouseEnter={() => {
-                          useSpatialTelemetryBridge
-                            .getState()
-                            .setActiveFocusId("grover-amplitude-bar");
+                          useSpatialTelemetryBridge.getState().setActiveFocusId("grover-amplitude-bar");
                         }}
                         className={`p-1 rounded border transition-all ${
-                          isTarget
-                            ? "border-quantum-cyan bg-quantum-cyan/20 scale-102"
-                            : "border-white/10 bg-surface-2/60"
+                          isTarget ? "border-quantum-cyan bg-quantum-cyan/20 scale-102" : "border-white/10 bg-surface-2/60"
                         }`}
                       >
                         <div className="text-muted-foreground font-bold">{label}</div>
-                        <div className="font-bold tabular-nums text-foreground">
-                          {(prob * 100).toFixed(0)}%
-                        </div>
-                        <div
-                          className={`text-[9px] tabular-nums font-mono ${
-                            amp < 0 ? "text-warning font-bold" : "text-muted-foreground"
-                          }`}
-                        >
-                          {amp >= 0 ? "+" : ""}
-                          {amp.toFixed(2)}
+                        <div className="font-bold tabular-nums text-foreground">{(prob * 100).toFixed(0)}%</div>
+                        <div className={`text-[9px] tabular-nums font-mono ${amp < 0 ? "text-warning font-bold" : "text-muted-foreground"}`}>
+                          {amp >= 0 ? "+" : ""}{amp.toFixed(2)}
                         </div>
                       </div>
                     );
@@ -494,9 +483,7 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                       <span>Found Target: {BASIS_LABELS_4[outcome]}</span>
                     </div>
-                    <span className="text-[9px] text-quantum-emerald font-mono uppercase">
-                      O(√N) SPEEDUP
-                    </span>
+                    <span className="text-[9px] text-quantum-emerald font-mono uppercase">O(√N) SPEEDUP</span>
                   </div>
                 )}
               </div>

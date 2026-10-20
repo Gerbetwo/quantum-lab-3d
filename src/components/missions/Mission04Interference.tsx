@@ -10,11 +10,12 @@ import {
   createDualPathInterferometerGroup,
   createWaveInterferenceSystem,
 } from "@/components/canvas/Interferometer3D";
+import { isPhaseInTargetSector } from "@/components/canvas/TargetZone3D";
 import { useSpatialTelemetryBridge } from "@/hooks/useSpatialTelemetryBridge";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { soundEngine } from "@/lib/soundEngine";
-import { Waves } from "lucide-react";
+import { Waves, Crosshair, CheckCircle2 } from "lucide-react";
 
 export interface Mission04InterferenceProps {
   className?: string;
@@ -30,12 +31,7 @@ const PHASE_PRESETS = [
 
 /**
  * Mission 04: Phase & Superposition Interference
- * Features:
- * - 3D dual-path Mach-Zehnder interferometer with optical rails & phase shifter.
- * - Interactive complex plane phase rotation disk illustrating vector addition
- *   of amplitude paths (A_constructive vs A_destructive).
- * - Animated 3D wave packet interference ripples merging at detector targets as e^(iφ) changes.
- * - Real-time spatial telemetry synchronization via useSpatialTelemetryBridge.
+ * Dual-path interferometer, 3D target zone on complex phase disk, and spatial threshold alignment.
  */
 export const Mission04Interference: React.FC<Mission04InterferenceProps> = ({
   className = "",
@@ -51,29 +47,16 @@ export const Mission04Interference: React.FC<Mission04InterferenceProps> = ({
   const safePhi = Number.isFinite(phi) ? phi : 0;
   const amplitudes = computeInterferenceAmplitudes(safePhi);
 
-  // SVG Complex Plane dimensions
-  const svgSize = 180;
-  const center = svgSize / 2;
-  const radius = 62;
+  // 3D & Disk Spatial Target Region: Constructive Interference Zone (φ ≈ 0 ± 0.35 rad)
+  const TARGET_PHI = 0;
+  const isTargetAligned = isPhaseInTargetSector(safePhi, TARGET_PHI, 0.35);
+  const targetZone = React.useMemo(() => ({ theta: Math.PI / 2, phi: TARGET_PHI }), []);
 
-  // Vector coordinates on complex plane:
-  // A0 = (0.5, 0)
-  const a0X = center + (radius * 0.5);
-  const a0Y = center;
-
-  // A1 = 0.5 * e^(iφ)
-  const a1Real = 0.5 * Math.cos(safePhi);
-  const a1Imag = 0.5 * Math.sin(safePhi);
-  const a1X = center + radius * a1Real;
-  const a1Y = center - radius * a1Imag;
-
-  // Vector addition: A_constructive = A0 + A1
-  const sumX = center + radius * amplitudes.constructiveReal;
-  const sumY = center - radius * amplitudes.constructiveImag;
-
-  // Vector subtraction: A_destructive = A0 - A1
-  const diffX = center + radius * amplitudes.destructiveReal;
-  const diffY = center + radius * amplitudes.destructiveImag;
+  const svgSize = 180, center = svgSize / 2, radius = 62;
+  const a0X = center + radius * 0.5, a0Y = center;
+  const a1X = center + radius * 0.5 * Math.cos(safePhi), a1Y = center - radius * 0.5 * Math.sin(safePhi);
+  const sumX = center + radius * amplitudes.constructiveReal, sumY = center - radius * amplitudes.constructiveImag;
+  const diffX = center + radius * amplitudes.destructiveReal, diffY = center + radius * amplitudes.destructiveImag;
 
   const [isDraggingDisk, setIsDraggingDisk] = useState<boolean>(false);
   const svgDiskRef = useRef<SVGSVGElement | null>(null);
@@ -211,19 +194,15 @@ export const Mission04Interference: React.FC<Mission04InterferenceProps> = ({
           showAxes
           showPoleLabels
           interactive
+          targetZone={targetZone}
           onSceneReady={handleSceneReady}
         />
       }
       pipelineRibbonProps={{
         activePhase: "transform",
         onTransformGate: (gate) => {
-          if (gate === "S") {
-            setPhi((safePhi + Math.PI / 2) % (2 * Math.PI));
-          } else if (gate === "T") {
-            setPhi((safePhi + Math.PI / 4) % (2 * Math.PI));
-          } else if (gate === "Z") {
-            setPhi((safePhi + Math.PI) % (2 * Math.PI));
-          }
+          const delta = gate === "S" ? Math.PI / 2 : gate === "T" ? Math.PI / 4 : gate === "Z" ? Math.PI : 0;
+          if (delta > 0) setPhi((safePhi + delta) % (2 * Math.PI));
           soundEngine.playVectorSnap();
         },
       }}
@@ -299,6 +278,16 @@ export const Mission04Interference: React.FC<Mission04InterferenceProps> = ({
                       stroke="rgba(255,255,255,0.12)"
                       strokeWidth="1.5"
                       strokeDasharray="3 3"
+                    />
+
+                    {/* Translucent 3D / Disk Target Prediction Zone */}
+                    <path
+                      data-testid="phase-target-zone"
+                      d={`M ${center} ${center} L ${center + radius * Math.cos(-0.35)} ${center - radius * Math.sin(-0.35)} A ${radius} ${radius} 0 0 1 ${center + radius * Math.cos(0.35)} ${center - radius * Math.sin(0.35)} Z`}
+                      fill={isTargetAligned ? "rgba(16, 185, 129, 0.35)" : "rgba(0, 243, 255, 0.18)"}
+                      stroke={isTargetAligned ? "#10b981" : "#00f3ff"}
+                      strokeWidth="1.5"
+                      strokeDasharray="2 2"
                     />
                     <line
                       x1={center - radius - 8}
@@ -468,6 +457,33 @@ export const Mission04Interference: React.FC<Mission04InterferenceProps> = ({
                       ? "DESTRUCTIVE MINIMUM / NODE"
                       : "PARTIAL INTERFERENCE"}
                   </span>
+                </div>
+
+                {/* 3D Target Prediction Zone */}
+                <div
+                  data-testid="target-zone-status"
+                  className="p-1.5 rounded border border-white/10 bg-surface-2/80 space-y-1"
+                >
+                  <div className="flex justify-between items-center text-[10px] uppercase text-muted-foreground">
+                    <span className="flex items-center gap-1 font-bold">
+                      <Crosshair className="w-3 h-3 text-quantum-cyan" />
+                      <span>Phase Target Zone</span>
+                    </span>
+                    <span
+                      data-testid="target-alignment-badge"
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
+                        isTargetAligned ? "hud-badge-emerald" : "hud-badge-cyan"
+                      }`}
+                    >
+                      {isTargetAligned ? <CheckCircle2 className="w-2.5 h-2.5 text-success" /> : null}
+                      <span>{isTargetAligned ? "SECTOR LOCKED" : "ALIGNING"}</span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    {isTargetAligned
+                      ? "Phase φ is aligned within the constructive interference spatial sector."
+                      : "Rotate the phase disk dial into the illuminated green target sector."}
+                  </p>
                 </div>
               </div>
             </GlassCard>
