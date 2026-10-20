@@ -17,6 +17,16 @@ interface MissionWorkspaceProps {
   className?: string;
 }
 
+const MISSION_ACTION_HOOKS: Record<string, string> = {
+  superposition: '⚡ Tap [H] to split the Qubit in two, then [Measure]!',
+  entanglement: "🔗 Drag Alice's arrow or tap [Measure] to collapse both!",
+  decoherence: '🔥 Crank temperature to 300 K to melt the quantum state!',
+  gates: '🌀 Combo [H] → [T] → [X] to paint a 3D light-trail!',
+  grover: '🎯 Pick a target and tap [Apply Oracle] to spike it to 100%!',
+  applications: "🔐 Switch base 'a' to crack the N=15 vault polygon!",
+  'error-correction': '🛡️ Strike a qubit with [Flip], then heal it with [Clean]!',
+};
+
 export function MissionWorkspace({ missionId: propMissionId, className = '' }: MissionWorkspaceProps) {
   const { t } = useTranslation();
   const appViewState = useQuantumStore((s) => s.appViewState);
@@ -74,6 +84,15 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
     >
       <MissionHeader missionId={activeMissionId} />
 
+      {MISSION_ACTION_HOOKS[activeMissionId] && (
+        <div
+          data-testid="mission-cta-pill"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full hud-panel glow-cyan text-xs font-mono font-bold text-quantum-cyan"
+        >
+          <span className="animate-pulse">{MISSION_ACTION_HOOKS[activeMissionId]}</span>
+        </div>
+      )}
+
       <aside
         data-testid="floating-gate-controls"
         aria-label={t('workspace.gate_controls')}
@@ -105,92 +124,96 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
               data-testid="gate-controls-content"
               className="space-y-3 font-mono text-xs max-h-[calc(100vh-10rem)] overflow-y-auto pr-0.5"
             >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase">
-                  <span>{t('workspace.qubit_angles')}</span>
-                  <button
-                    type="button"
-                    onClick={() => resetState()}
-                    data-testid="reset-qubit-button"
-                    title={t('workspace.reset_ground_tooltip')}
-                    className="text-[10px] text-warning hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" /> {t('mission_header.reset_to_zero')}
-                  </button>
-                </div>
+              {(isFoundation || isSandbox) && (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase">
+                      <span>{t('workspace.qubit_angles')}</span>
+                      <button
+                        type="button"
+                        onClick={() => resetState()}
+                        data-testid="reset-qubit-button"
+                        title={t('workspace.reset_ground_tooltip')}
+                        className="text-[10px] text-warning hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <RotateCcw className="w-3 h-3" /> {t('mission_header.reset_to_zero')}
+                      </button>
+                    </div>
 
-                <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-muted-foreground">{t('workspace.theta_polar')}</span>
-                    <span className="font-bold tabular-nums text-quantum-cyan">
-                      {((safeTheta * 180) / Math.PI).toFixed(1)}°
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max={Math.PI}
-                    step="0.01"
-                    value={safeTheta}
-                    onChange={(e) => setTheta(parseFloat(e.target.value))}
-                    data-testid="slider-theta"
-                    aria-label={t('workspace.theta_aria')}
-                    className="w-full accent-cyan cursor-pointer h-1.5 bg-surface-3"
-                  />
-                  <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-                    <span>0° (|0⟩)</span>
-                    <span>90° (|+⟩)</span>
-                    <span>180° (|1⟩)</span>
-                  </div>
-                </div>
+                    <div>
+                      <div className="flex justify-between text-[11px] mb-1">
+                        <span className="text-muted-foreground">{t('workspace.theta_polar')}</span>
+                        <span className="font-bold tabular-nums text-quantum-cyan">
+                          {((safeTheta * 180) / Math.PI).toFixed(1)}°
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max={Math.PI}
+                        step="0.01"
+                        value={safeTheta}
+                        onChange={(e) => setTheta(parseFloat(e.target.value))}
+                        data-testid="slider-theta"
+                        aria-label={t('workspace.theta_aria')}
+                        className="w-full accent-cyan cursor-pointer h-1.5 bg-surface-3"
+                      />
+                      <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
+                        <span>0° (|0⟩)</span>
+                        <span>90° (|+⟩)</span>
+                        <span>180° (|1⟩)</span>
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-muted-foreground">{t('workspace.phi_azimuthal')}</span>
-                    <span className="font-bold tabular-nums text-quantum-purple">
-                      {((safePhi * 180) / Math.PI).toFixed(1)}°
-                    </span>
+                    <div>
+                      <div className="flex justify-between text-[11px] mb-1">
+                        <span className="text-muted-foreground">{t('workspace.phi_azimuthal')}</span>
+                        <span className="font-bold tabular-nums text-quantum-purple">
+                          {((safePhi * 180) / Math.PI).toFixed(1)}°
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max={2 * Math.PI}
+                        step="0.01"
+                        value={safePhi}
+                        onChange={(e) => setPhi(parseFloat(e.target.value))}
+                        data-testid="slider-phi"
+                        aria-label={t('workspace.phi_aria')}
+                        className="w-full accent-quantum-purple cursor-pointer h-1.5 bg-surface-3"
+                      />
+                      <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
+                        <span>0°</span>
+                        <span>180°</span>
+                        <span>360°</span>
+                      </div>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max={2 * Math.PI}
-                    step="0.01"
-                    value={safePhi}
-                    onChange={(e) => setPhi(parseFloat(e.target.value))}
-                    data-testid="slider-phi"
-                    aria-label={t('workspace.phi_aria')}
-                    className="w-full accent-quantum-purple cursor-pointer h-1.5 bg-surface-3"
-                  />
-                  <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-                    <span>0°</span>
-                    <span>180°</span>
-                    <span>360°</span>
+
+                  <div className="pt-2 border-t border-border">
+                    <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase mb-1.5">
+                      <span>{t('workspace.unitary_gates')}</span>
+                      <span className="text-muted-foreground">SU(2)</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {(['X', 'Y', 'Z', 'H'] as const).map((gate) => (
+                        <Button
+                          key={gate}
+                          variant="secondary"
+                          onClick={() => applyGate(gate)}
+                          data-testid={`gate-button-${gate}`}
+                          className="py-1 px-1.5 text-xs font-mono font-bold"
+                        >
+                          [{gate}]
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
 
-              <div className="pt-2 border-t border-border">
-                <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase mb-1.5">
-                  <span>{t('workspace.unitary_gates')}</span>
-                  <span className="text-muted-foreground">SU(2)</span>
-                </div>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(['X', 'Y', 'Z', 'H'] as const).map((gate) => (
-                    <Button
-                      key={gate}
-                      variant="secondary"
-                      onClick={() => applyGate(gate)}
-                      data-testid={`gate-button-${gate}`}
-                      className="py-1 px-1.5 text-xs font-mono font-bold"
-                    >
-                      [{gate}]
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-border space-y-2">
+              <div className={`${isFoundation || isSandbox ? 'pt-2 border-t border-border ' : ''}space-y-2`}>
                 {isSandbox ? (
                   <div className="space-y-3 font-mono text-xs">
                     <div className="p-2.5 rounded-lg bg-surface-2 border border-border flex flex-col gap-2">
