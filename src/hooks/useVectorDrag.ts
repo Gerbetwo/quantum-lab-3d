@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { normalizeAngleTheta, normalizeAnglePhi } from "@/core/qubitMath";
 
@@ -198,6 +198,8 @@ function resolveCamera(
   return camera;
 }
 
+const DEFAULT_CENTER = new THREE.Vector3(0, 0, 0);
+
 /**
  * Custom React hook for translating 2D pointer coordinates on a Three.js canvas
  * into 3D spherical angles (θ ∈ [0, π], φ ∈ [0, 2π]) with raycasting and drag tracking.
@@ -205,7 +207,7 @@ function resolveCamera(
 export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDragReturn {
   const {
     camera: cameraProp,
-    center = new THREE.Vector3(0, 0, 0),
+    center: centerProp = DEFAULT_CENTER,
     radius = 1.0,
     initialTheta = 0,
     initialPhi = 0,
@@ -215,6 +217,11 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
     onDragEnd,
   } = options;
 
+  const center = useMemo(
+    () => (centerProp === DEFAULT_CENTER ? DEFAULT_CENTER : centerProp.clone()),
+    [centerProp]
+  );
+
   const [isDragging, setIsDragging] = useState(false);
   const [theta, setThetaState] = useState(() => normalizeAngleTheta(initialTheta));
   const [phi, setPhiState] = useState(() => normalizeAnglePhi(initialPhi));
@@ -223,27 +230,23 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
   );
 
   const isDraggingRef = useRef(isDragging);
-  isDraggingRef.current = isDragging;
-
   const thetaRef = useRef(theta);
-  thetaRef.current = theta;
-
   const phiRef = useRef(phi);
-  phiRef.current = phi;
 
-  const raycasterRef = useRef<THREE.Raycaster | null>(null);
-  if (!raycasterRef.current) {
-    raycasterRef.current = new THREE.Raycaster();
-  }
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+    thetaRef.current = theta;
+    phiRef.current = phi;
+  }, [isDragging, theta, phi]);
 
-  const camera = resolveCamera(cameraProp);
+  const [raycaster] = useState(() => new THREE.Raycaster());
 
   const calculateFromNdc = useCallback(
     (ndcX: number, ndcY: number): DragCalculationResult | null => {
       const activeCamera = resolveCamera(cameraProp);
       if (!activeCamera) return null;
       return raycastToSphereAngles(
-        raycasterRef.current!,
+        raycaster,
         activeCamera,
         ndcX,
         ndcY,
@@ -251,7 +254,7 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
         radius
       );
     },
-    [cameraProp, center, radius]
+    [cameraProp, raycaster, center, radius]
   );
 
   const updateFromNdc = useCallback(
@@ -390,13 +393,21 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
   );
 
   // Sync internal angles if initial options change dynamically
+  const prevInitialRef = useRef({ theta: initialTheta, phi: initialPhi, radius });
   useEffect(() => {
-    if (!isDraggingRef.current) {
-      const t = normalizeAngleTheta(initialTheta);
-      const p = normalizeAnglePhi(initialPhi);
-      setThetaState(t);
-      setPhiState(p);
-      setTargetVectorState(anglesToSphericalVector(t, p, radius, center));
+    if (
+      prevInitialRef.current.theta !== initialTheta ||
+      prevInitialRef.current.phi !== initialPhi ||
+      prevInitialRef.current.radius !== radius
+    ) {
+      prevInitialRef.current = { theta: initialTheta, phi: initialPhi, radius };
+      if (!isDraggingRef.current) {
+        const t = normalizeAngleTheta(initialTheta);
+        const p = normalizeAnglePhi(initialPhi);
+        setThetaState(t);
+        setPhiState(p);
+        setTargetVectorState(anglesToSphericalVector(t, p, radius, center));
+      }
     }
   }, [initialTheta, initialPhi, radius, center]);
 
