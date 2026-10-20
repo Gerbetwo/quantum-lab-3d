@@ -7,6 +7,10 @@ import {
   computeSphericalVector,
   vectorToSphericalAngles,
   updateBlochSphereUniforms,
+  computePolarArcPositions,
+  updatePolarArc,
+  computeAzimuthalLinePositions,
+  updateAzimuthalLine,
 } from '@/features/quantum-core/blochSceneObjects';
 import { useQuantumStore } from '@/store/useQuantumStore';
 import { BlochViewport } from '@/features/quantum-core/BlochViewport';
@@ -103,6 +107,92 @@ describe('Bloch State Vector Tip Handle & Raycasting Kinematics', () => {
       expect(mat.color.getHex()).toBe(0xa855f7);
     });
   });
+
+  describe('Bloch Sphere Visual Contrast & Readability Enhancements', () => {
+    it('initializes sphere wireframe with subtle dim color (0x1e293b), opacity 0.15, and depthWrite false', () => {
+      const elements = createBlochSphereScene();
+      const sphereMat = elements.sphere.material as THREE.MeshBasicMaterial;
+      expect(sphereMat.color.getHex()).toBe(0x1e293b);
+      expect(sphereMat.opacity).toBeGreaterThanOrEqual(0.12);
+      expect(sphereMat.opacity).toBeLessThanOrEqual(0.15);
+      expect(sphereMat.depthWrite).toBe(false);
+      expect(sphereMat.transparent).toBe(true);
+      expect(sphereMat.wireframe).toBe(true);
+    });
+
+    it('sets depthWrite false on equator ring and axes materials to prevent z-fighting', () => {
+      const elements = createBlochSphereScene();
+      const ringMat = elements.ring.material as THREE.MeshBasicMaterial;
+      expect(ringMat.depthWrite).toBe(false);
+      expect(ringMat.opacity).toBeLessThanOrEqual(0.2);
+
+      const axesMat = elements.axes.material as THREE.LineBasicMaterial;
+      expect(axesMat.depthWrite).toBe(false);
+      expect(axesMat.opacity).toBeLessThanOrEqual(0.35);
+    });
+
+    it('creates polarArc with bright cyan (0x00f3ff), ~0.90 opacity, and depthWrite false', () => {
+      const elements = createBlochSphereScene();
+      expect(elements.polarArc).toBeDefined();
+      expect(elements.polarArc.name).toBe('bloch-polar-arc');
+      const mat = elements.polarArc.material;
+      expect(mat.color.getHex()).toBe(0x00f3ff);
+      expect(mat.opacity).toBeCloseTo(0.9, 1);
+      expect(mat.depthWrite).toBe(false);
+      expect(elements.geometries).toContain(elements.polarArc.geometry);
+      expect(elements.materials).toContain(elements.polarArc.material);
+    });
+
+    it('creates azimuthalLine with electric yellow (0xffee00), opacity 1.0, linewidth 4, and depthWrite false', () => {
+      const elements = createBlochSphereScene();
+      expect(elements.azimuthalLine).toBeDefined();
+      expect(elements.azimuthalLine.name).toBe('bloch-azimuthal-line');
+      const mat = elements.azimuthalLine.material;
+      expect(mat.color.getHex()).toBe(0xffee00);
+      expect(mat.opacity).toBe(1.0);
+      expect(mat.linewidth).toBe(4);
+      expect(mat.depthWrite).toBe(false);
+      expect(elements.geometries).toContain(elements.azimuthalLine.geometry);
+      expect(elements.materials).toContain(elements.azimuthalLine.material);
+    });
+
+    it('updates gridAlpha and sphereColor cleanly via updateBlochSphereUniforms without resetting background', () => {
+      const elements = createBlochSphereScene();
+      updateBlochSphereUniforms(elements, {
+        gridAlpha: 0.15,
+        sphereColor: 0x1e293b,
+        arrowColor: 0x00f3ff,
+      });
+      const sphereMat = elements.sphere.material as THREE.MeshBasicMaterial;
+      expect(sphereMat.opacity).toBe(0.15);
+      expect(sphereMat.color.getHex()).toBe(0x1e293b);
+    });
+
+    it('computes polar arc positions accurately without NaN', () => {
+      const pos0 = computePolarArcPositions(0, 0, 1.3);
+      expect(pos0.length).toBeGreaterThanOrEqual(6);
+      expect(pos0.every((v) => Number.isFinite(v))).toBe(true);
+
+      const posPi2 = computePolarArcPositions(Math.PI / 2, Math.PI / 4, 1.3);
+      expect(posPi2.length).toBeGreaterThanOrEqual(6);
+      expect(posPi2.every((v) => Number.isFinite(v))).toBe(true);
+
+      const elements = createBlochSphereScene();
+      updatePolarArc(elements.polarArc, Math.PI / 3, Math.PI / 2, 1.3);
+      expect(elements.polarArc.geometry).toBeDefined();
+    });
+
+    it('computes azimuthal line projection positions accurately without NaN', () => {
+      const pos = computeAzimuthalLinePositions(Math.PI / 4, Math.PI / 3, 1.3);
+      expect(pos.length).toBe(12); // 4 3D points: [p0, p1, p2, p3]
+      expect(pos.every((v) => Number.isFinite(v))).toBe(true);
+
+      const elements = createBlochSphereScene();
+      updateAzimuthalLine(elements.azimuthalLine, Math.PI / 4, Math.PI / 3, 1.3);
+      expect(elements.azimuthalLine.geometry).toBeDefined();
+    });
+  });
+
 
   describe('Dynamic Angle Sync with Quantum Store', () => {
     it('updates theta and phi in useQuantumStore dynamically as simulated drag updates', () => {

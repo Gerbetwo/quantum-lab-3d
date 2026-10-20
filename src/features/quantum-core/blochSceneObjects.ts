@@ -4,6 +4,9 @@
  */
 
 import * as THREE from 'three';
+import { Line2 } from 'three/examples/jsm/lines/Line2.js';
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 
 export interface BaseSceneContext {
   scene: THREE.Scene;
@@ -26,21 +29,96 @@ export interface BlochSphereElements {
   axes: THREE.LineSegments;
   arrowHelper: THREE.ArrowHelper;
   tipHandle: THREE.Mesh;
-  geometries: THREE.BufferGeometry[];
-  materials: THREE.Material[];
+  polarArc: Line2;
+  azimuthalLine: Line2;
+  geometries: (THREE.BufferGeometry | LineGeometry)[];
+  materials: (THREE.Material | LineMaterial)[];
+}
+
+export function computePolarArcPositions(
+  theta: number,
+  phi: number,
+  radius = 1.3,
+  segments = 32
+): number[] {
+  const clampedTheta = Math.max(0, Math.min(Math.PI, theta));
+  const count = Math.max(2, Math.ceil(segments * (clampedTheta / Math.PI)));
+  const positions: number[] = [];
+  const cosPhi = Math.cos(phi);
+  const sinPhi = Math.sin(phi);
+
+  for (let i = 0; i <= count; i++) {
+    const t = (i / count) * clampedTheta;
+    const x = radius * Math.sin(t) * cosPhi;
+    const y = radius * Math.cos(t);
+    const z = radius * Math.sin(t) * sinPhi;
+    positions.push(x, y, z);
+  }
+  return positions;
+}
+
+export function updatePolarArc(
+  arc: Line2,
+  theta: number,
+  phi: number,
+  radius = 1.3
+): void {
+  const positions = computePolarArcPositions(theta, phi, radius);
+  arc.geometry.setPositions(positions);
+}
+
+export function computeAzimuthalLinePositions(
+  theta: number,
+  phi: number,
+  radius = 1.3
+): number[] {
+  const cosPhi = Math.cos(phi);
+  const sinPhi = Math.sin(phi);
+  const sinTheta = Math.sin(theta);
+  const cosTheta = Math.cos(theta);
+
+  // Origin -> Equator rim (direction phi) -> Equator projection -> Vector tip
+  const p0 = [0, 0, 0];
+  const p1 = [radius * cosPhi, 0, radius * sinPhi];
+  const p2 = [radius * sinTheta * cosPhi, 0, radius * sinTheta * sinPhi];
+  const p3 = [radius * sinTheta * cosPhi, radius * cosTheta, radius * sinTheta * sinPhi];
+
+  return [...p0, ...p1, ...p2, ...p3];
+}
+
+export function updateAzimuthalLine(
+  line: Line2,
+  theta: number,
+  phi: number,
+  radius = 1.3
+): void {
+  const positions = computeAzimuthalLinePositions(theta, phi, radius);
+  line.geometry.setPositions(positions);
 }
 
 export function createBlochSphereScene(): BlochSphereElements {
-  const geometries: THREE.BufferGeometry[] = [];
-  const materials: THREE.Material[] = [];
+  const geometries: (THREE.BufferGeometry | LineGeometry)[] = [];
+  const materials: (THREE.Material | LineMaterial)[] = [];
 
   const sphereGeo = new THREE.SphereGeometry(1.3, 32, 16);
-  const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.15 });
+  const sphereMat = new THREE.MeshBasicMaterial({
+    color: 0x1e293b,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.15,
+    depthWrite: false,
+  });
   geometries.push(sphereGeo); materials.push(sphereMat);
   const sphere = new THREE.Mesh(sphereGeo, sphereMat);
 
   const ringGeo = new THREE.RingGeometry(1.29, 1.31, 64);
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0x334155,
+    transparent: true,
+    opacity: 0.18,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
   geometries.push(ringGeo); materials.push(ringMat);
   const ring = new THREE.Mesh(ringGeo, ringMat);
   ring.rotation.x = Math.PI / 2;
@@ -50,20 +128,56 @@ export function createBlochSphereScene(): BlochSphereElements {
     new THREE.Vector3(0, -1.5, 0), new THREE.Vector3(0, 1.5, 0),
     new THREE.Vector3(0, 0, -1.5), new THREE.Vector3(0, 0, 1.5),
   ]);
-  const axesMat = new THREE.LineBasicMaterial({ color: 0x475569, transparent: true, opacity: 0.4 });
+  const axesMat = new THREE.LineBasicMaterial({
+    color: 0x334155,
+    transparent: true,
+    opacity: 0.30,
+    depthWrite: false,
+  });
   geometries.push(axesGeo); materials.push(axesMat);
   const axes = new THREE.LineSegments(axesGeo, axesMat);
 
   const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 1.3, 0x00f3ff, 0.2, 0.08);
 
   const tipHandleGeo = new THREE.SphereGeometry(0.09, 16, 16);
-  const tipHandleMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.9 });
+  const tipHandleMat = new THREE.MeshBasicMaterial({
+    color: 0x00f3ff,
+    transparent: true,
+    opacity: 0.95,
+    depthWrite: false,
+  });
   geometries.push(tipHandleGeo); materials.push(tipHandleMat);
   const tipHandle = new THREE.Mesh(tipHandleGeo, tipHandleMat);
   tipHandle.name = 'bloch-vector-tip-handle';
   tipHandle.position.set(0, 1.3, 0);
 
-  return { sphere, ring, axes, arrowHelper, tipHandle, geometries, materials };
+  const polarArcGeo = new LineGeometry();
+  polarArcGeo.setPositions(computePolarArcPositions(0, 0, 1.3));
+  const polarArcMat = new LineMaterial({
+    color: 0x00f3ff,
+    linewidth: 3,
+    transparent: true,
+    opacity: 0.90,
+    depthWrite: false,
+  });
+  geometries.push(polarArcGeo); materials.push(polarArcMat);
+  const polarArc = new Line2(polarArcGeo, polarArcMat);
+  polarArc.name = 'bloch-polar-arc';
+
+  const azimuthalGeo = new LineGeometry();
+  azimuthalGeo.setPositions(computeAzimuthalLinePositions(0, 0, 1.3));
+  const azimuthalMat = new LineMaterial({
+    color: 0xffee00,
+    linewidth: 4,
+    transparent: true,
+    opacity: 1.0,
+    depthWrite: false,
+  });
+  geometries.push(azimuthalGeo); materials.push(azimuthalMat);
+  const azimuthalLine = new Line2(azimuthalGeo, azimuthalMat);
+  azimuthalLine.name = 'bloch-azimuthal-line';
+
+  return { sphere, ring, axes, arrowHelper, tipHandle, polarArc, azimuthalLine, geometries, materials };
 }
 
 export function computeSphericalVector(theta: number, phi: number): THREE.Vector3 {
@@ -99,13 +213,14 @@ export function lerpSphericalAngles(
 
 export function updateBlochSphereUniforms(
   elements: BlochSphereElements,
-  options: { sphereColor?: number; arrowColor?: number; opacity?: number } = {}
+  options: { sphereColor?: number; arrowColor?: number; opacity?: number; gridAlpha?: number } = {}
 ): void {
+  const alpha = options.gridAlpha ?? options.opacity;
   if (options.sphereColor !== undefined && elements.sphere.material instanceof THREE.MeshBasicMaterial) {
     elements.sphere.material.color.setHex(options.sphereColor);
   }
-  if (options.opacity !== undefined && elements.sphere.material instanceof THREE.MeshBasicMaterial) {
-    elements.sphere.material.opacity = options.opacity;
+  if (alpha !== undefined && elements.sphere.material instanceof THREE.MeshBasicMaterial) {
+    elements.sphere.material.opacity = alpha;
   }
   if (options.arrowColor !== undefined) {
     elements.arrowHelper.setColor(options.arrowColor);
@@ -114,6 +229,7 @@ export function updateBlochSphereUniforms(
     }
   }
 }
+
 
 export interface ParticlePool {
   mesh: THREE.InstancedMesh;

@@ -14,6 +14,8 @@ import {
   vectorToSphericalAngles,
   lerpSphericalAngles,
   updateBlochSphereUniforms,
+  updatePolarArc,
+  updateAzimuthalLine,
 } from "./blochSceneObjects";
 import {
   createDualBlochScene,
@@ -41,8 +43,17 @@ let singletonRenderer: THREE.WebGLRenderer | null = null;
 
 function acquireRenderer(container: HTMLElement): THREE.WebGLRenderer {
   if (!singletonRenderer) {
-    singletonRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-    singletonRenderer.setPixelRatio(Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 2));
+    singletonRenderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance",
+    });
+    singletonRenderer.setPixelRatio(
+      Math.min(
+        typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
+        2,
+      ),
+    );
   }
   const dom = singletonRenderer.domElement;
   dom.style.display = "block";
@@ -52,7 +63,11 @@ function acquireRenderer(container: HTMLElement): THREE.WebGLRenderer {
     dom.parentElement?.removeChild(dom);
     container.appendChild(dom);
   }
-  singletonRenderer.setSize(container.clientWidth || 800, container.clientHeight || 600, false);
+  singletonRenderer.setSize(
+    container.clientWidth || 800,
+    container.clientHeight || 600,
+    false,
+  );
   return singletonRenderer;
 }
 
@@ -83,8 +98,8 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       const target = e.target as HTMLElement | null;
       if (
         target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
           target.isContentEditable)
       ) {
         return;
@@ -94,47 +109,47 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       const step = 0.08;
 
       switch (e.key) {
-        case 'ArrowUp':
+        case "ArrowUp":
           e.preventDefault();
           state.setTheta(Math.max(0, state.theta - step));
           break;
-        case 'ArrowDown':
+        case "ArrowDown":
           e.preventDefault();
           state.setTheta(Math.min(Math.PI, state.theta + step));
           break;
-        case 'ArrowLeft':
+        case "ArrowLeft":
           e.preventDefault();
           state.setPhi((state.phi - step + 2 * Math.PI) % (2 * Math.PI));
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           e.preventDefault();
           state.setPhi((state.phi + step) % (2 * Math.PI));
           break;
-        case 'h':
-        case 'H':
+        case "h":
+        case "H":
           e.preventDefault();
-          state.applyGate('H');
+          state.applyGate("H");
           break;
-        case 'x':
-        case 'X':
+        case "x":
+        case "X":
           e.preventDefault();
-          state.applyGate('X');
+          state.applyGate("X");
           break;
-        case 'z':
-        case 'Z':
+        case "z":
+        case "Z":
           e.preventDefault();
-          state.applyGate('Z');
+          state.applyGate("Z");
           break;
-        case ' ':
-        case 'Spacebar':
+        case " ":
+        case "Spacebar":
           e.preventDefault();
           state.measure();
           break;
       }
     };
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   useEffect(() => {
@@ -145,20 +160,49 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
     const renderer = acquireRenderer(container);
     const { scene, camera } = createBaseScene(container);
     const elements = createBlochSphereScene();
-    const { sphere, ring, axes, arrowHelper, tipHandle, geometries, materials } = elements;
-    scene.add(sphere, ring, axes, arrowHelper, tipHandle);
+    const {
+      sphere,
+      ring,
+      axes,
+      arrowHelper,
+      tipHandle,
+      polarArc,
+      azimuthalLine,
+      geometries,
+      materials,
+    } = elements;
+    scene.add(sphere, ring, axes, arrowHelper, tipHandle, polarArc, azimuthalLine);
+
+    const initW = container.clientWidth || 800;
+    const initH = container.clientHeight || 600;
+    polarArc.material.resolution.set(initW, initH);
+    azimuthalLine.material.resolution.set(initW, initH);
 
     const particlePool = createParticlePool(250);
     scene.add(particlePool.mesh);
 
-    const ghostArrow = new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 0), 1.3, 0xa855f7, 0.2, 0.08);
+    const ghostArrow = new THREE.ArrowHelper(
+      new THREE.Vector3(0, -1, 0),
+      new THREE.Vector3(0, 0, 0),
+      1.3,
+      0xa855f7,
+      0.2,
+      0.08,
+    );
     ghostArrow.visible = false;
     scene.add(ghostArrow);
 
     const trailPositions = new Float32Array(60 * 3);
     const trailGeo = new THREE.BufferGeometry();
-    trailGeo.setAttribute("position", new THREE.BufferAttribute(trailPositions, 3));
-    const trailMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.85 });
+    trailGeo.setAttribute(
+      "position",
+      new THREE.BufferAttribute(trailPositions, 3),
+    );
+    const trailMat = new THREE.LineBasicMaterial({
+      color: 0x10b981,
+      transparent: true,
+      opacity: 0.85,
+    });
     const trailLine = new THREE.Line(trailGeo, trailMat);
     trailLine.visible = false;
     scene.add(trailLine);
@@ -175,7 +219,12 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
     let activeShorBase = initSt.shorBase;
     let shorScene = createShorWheelScene(runShorDemo(activeShorBase).period);
     const qecScene = createQECLatticeScene(initSt.qecInjectedError);
-    const waveState: SpinFlipWaveState = { active: false, startTime: 0, duration: 1.2, outcome: 0 };
+    const waveState: SpinFlipWaveState = {
+      active: false,
+      startTime: 0,
+      duration: 1.2,
+      outcome: 0,
+    };
     let cameraImpulse = 0;
 
     let isDraggingCamera = false;
@@ -293,11 +342,20 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
 
       if (isMission) {
         if (mId === "entanglement") {
-          if (waveState.active && now / 1000 - waveState.startTime > waveState.duration) {
+          if (
+            waveState.active &&
+            now / 1000 - waveState.startTime > waveState.duration
+          ) {
             waveState.active = false;
           }
           updateLaserStrand(dualBloch, now / 1000, waveState);
-          const angles = computeSynchronizedAngles(state.theta, state.phi, state.lastOutcome, waveState, now / 1000);
+          const angles = computeSynchronizedAngles(
+            state.theta,
+            state.phi,
+            state.lastOutcome,
+            waveState,
+            now / 1000,
+          );
           const dirA = computeSphericalVector(angles.thetaA, angles.phiA);
           dualBloch.arrowA.setDirection(dirA);
           dualBloch.arrowA.setLength(1.3, 0.2, 0.08);
@@ -314,8 +372,16 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
         }
 
         if (mId === "grover") {
-          const gRes = simulateGroverStep(2, state.groverTargetIndex, state.groverStep);
-          updateGroverBars(groverScene, gRes.probabilities, state.groverTargetIndex);
+          const gRes = simulateGroverStep(
+            2,
+            state.groverTargetIndex,
+            state.groverStep,
+          );
+          updateGroverBars(
+            groverScene,
+            gRes.probabilities,
+            state.groverTargetIndex,
+          );
           groverScene.camera.position.x = Math.sin((now / 1000) * 0.6) * 0.4;
           groverScene.camera.lookAt(0, 0.6, 0);
           renderer.render(groverScene.scene, groverScene.camera);
@@ -328,7 +394,9 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
             shorScene.geometries.forEach((g) => g.dispose());
             shorScene.materials.forEach((m) => m.dispose());
             activeShorBase = state.shorBase;
-            shorScene = createShorWheelScene(runShorDemo(activeShorBase).period);
+            shorScene = createShorWheelScene(
+              runShorDemo(activeShorBase).period,
+            );
           }
           updateShorWheelAnimation(shorScene, now / 1000);
           renderer.render(shorScene.scene, shorScene.camera);
@@ -361,29 +429,51 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       }
 
       // Smooth spherical angle easing across gate executions, instant 1:1 on direct drag
-      currentAngles = prefersReducedMotion() || isDraggingHandle
-        ? { theta: targetT, phi: targetP }
-        : lerpSphericalAngles(currentAngles, { theta: targetT, phi: targetP }, dt * 12.0);
+      currentAngles =
+        prefersReducedMotion() || isDraggingHandle
+          ? { theta: targetT, phi: targetP }
+          : lerpSphericalAngles(
+              currentAngles,
+              { theta: targetT, phi: targetP },
+              dt * 12.0,
+            );
 
-      const dir = computeSphericalVector(currentAngles.theta, currentAngles.phi);
+      const dir = computeSphericalVector(
+        currentAngles.theta,
+        currentAngles.phi,
+      );
       arrowHelper.setDirection(dir);
       arrowHelper.setLength(targetLen, 0.2, 0.08);
       tipHandle.position.copy(dir).multiplyScalar(targetLen);
+      updatePolarArc(polarArc, currentAngles.theta, currentAngles.phi, targetLen);
+      updateAzimuthalLine(azimuthalLine, currentAngles.theta, currentAngles.phi, targetLen);
 
       // "decoherence"
       const isDecoherence = mId === "decoherence";
       sphere.material = isDecoherence ? thermalShaderMat : defaultSphereMat;
       decoherenceParticles.points.visible = isDecoherence;
       if (isDecoherence) {
-        updateThermalDistortionUniforms(thermalShaderMat, now / 1000, state.temperatureK);
+        updateThermalDistortionUniforms(
+          thermalShaderMat,
+          now / 1000,
+          state.temperatureK,
+        );
         updateThermalParticles(decoherenceParticles, dt, state.temperatureK);
       }
 
       // "superposition"
-      const showGhost = mId === "superposition" && Math.sin(currentAngles.theta) > 0.25 && state.lastOutcome === null;
+      const showGhost =
+        mId === "superposition" &&
+        Math.sin(currentAngles.theta) > 0.25 &&
+        state.lastOutcome === null;
       ghostArrow.visible = showGhost;
       if (showGhost) {
-        ghostArrow.setDirection(computeSphericalVector(Math.PI - currentAngles.theta, currentAngles.phi + (now / 1000) * 4.0));
+        ghostArrow.setDirection(
+          computeSphericalVector(
+            Math.PI - currentAngles.theta,
+            currentAngles.phi + (now / 1000) * 4.0,
+          ),
+        );
         ring.rotation.z = (now / 1000) * 2.5;
       }
 
@@ -415,11 +505,19 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       const w = container.clientWidth || 800;
       const h = container.clientHeight || 600;
       const aspect = w / h;
-      [camera, dualBloch.camera, groverScene.camera, shorScene.camera, qecScene.camera].forEach((cam) => {
+      [
+        camera,
+        dualBloch.camera,
+        groverScene.camera,
+        shorScene.camera,
+        qecScene.camera,
+      ].forEach((cam) => {
         cam.aspect = aspect;
         cam.updateProjectionMatrix();
       });
       renderer.setSize(w, h, false);
+      polarArc.material.resolution.set(w, h);
+      azimuthalLine.material.resolution.set(w, h);
     };
     const resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(container);
@@ -429,15 +527,21 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       if (state.currentMissionId !== prev.currentMissionId) {
         const isEnt = state.currentMissionId === "entanglement";
         updateBlochSphereUniforms(elements, {
-          sphereColor: isEnt ? 0xa855f7 : 0x00f3ff,
+          sphereColor: isEnt ? 0x2e1065 : 0x1e293b,
           arrowColor: isEnt ? 0xa855f7 : 0x00f3ff,
+          gridAlpha: 0.15,
         });
       }
-      if (state.theta !== prev.theta || state.phi !== prev.phi || state.lastOutcome !== prev.lastOutcome) {
+      if (
+        state.lastOutcome !== null &&
+        state.lastOutcome !== prev.lastOutcome
+      ) {
         cameraImpulse = 1.0;
-      }
-      if (state.lastOutcome !== null && state.lastOutcome !== prev.lastOutcome) {
-        burstParticles(particlePool, [0, state.lastOutcome === 0 ? 1.3 : -1.3, 0], 80);
+        burstParticles(
+          particlePool,
+          [0, state.lastOutcome === 0 ? 1.3 : -1.3, 0],
+          80,
+        );
         waveState.active = true;
         waveState.startTime = performance.now() / 1000;
         waveState.outcome = state.lastOutcome;
@@ -451,9 +555,31 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       container.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
-      [...geometries, ...dualBloch.geometries, ...groverScene.geometries, ...shorScene.geometries, ...qecScene.geometries].forEach((g) => g.dispose());
-      [...materials, ...dualBloch.materials, ...groverScene.materials, ...shorScene.materials, ...qecScene.materials].forEach((m) => m.dispose());
-      [arrowHelper.line?.geometry, arrowHelper.cone?.geometry, particlePool.mesh.geometry, ghostArrow.line?.geometry, ghostArrow.cone?.geometry, trailGeo, trailMat, thermalShaderMat, decoherenceParticles.points.geometry].forEach((res) => res?.dispose());
+      [
+        ...geometries,
+        ...dualBloch.geometries,
+        ...groverScene.geometries,
+        ...shorScene.geometries,
+        ...qecScene.geometries,
+      ].forEach((g) => g.dispose());
+      [
+        ...materials,
+        ...dualBloch.materials,
+        ...groverScene.materials,
+        ...shorScene.materials,
+        ...qecScene.materials,
+      ].forEach((m) => m.dispose());
+      [
+        arrowHelper.line?.geometry,
+        arrowHelper.cone?.geometry,
+        particlePool.mesh.geometry,
+        ghostArrow.line?.geometry,
+        ghostArrow.cone?.geometry,
+        trailGeo,
+        trailMat,
+        thermalShaderMat,
+        decoherenceParticles.points.geometry,
+      ].forEach((res) => res?.dispose());
       // Safeguard: singletonRenderer is preserved across unmounts/mounts
     };
   }, []);
@@ -475,13 +601,13 @@ export const BlochViewport: React.FC<{ className?: string }> = ({
       <div className="shrink-0 border-t border-border bg-surface-2 px-4 py-2.5 text-xs telemetry-mono text-muted-foreground flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-4">
           <span>
-            <strong className="text-axis-x">{'X:'}</strong> {coords.x}
+            <strong className="text-axis-x">{"X:"}</strong> {coords.x}
           </span>
           <span>
-            <strong className="text-axis-y">{'Y:'}</strong> {coords.y}
+            <strong className="text-axis-y">{"Y:"}</strong> {coords.y}
           </span>
           <span>
-            <strong className="text-axis-z">{'Z:'}</strong> {coords.z}
+            <strong className="text-axis-z">{"Z:"}</strong> {coords.z}
           </span>
         </div>
         {lastOutcome !== null && (
