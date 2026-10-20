@@ -1,15 +1,27 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useQuantumStore } from '@/store/useQuantumStore';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation, t as translate } from '@/lib/i18n';
 import { soundEngine } from '@/lib/soundEngine';
 import { Sparkles, Terminal } from 'lucide-react';
 
 export function TitleScreenOverlay() {
-  const { t } = useTranslation();
+  const [isMounted, setIsMounted] = useState(false);
+  const { language } = useTranslation();
   const appViewState = useQuantumStore((s) => s.appViewState);
   const setAppViewState = useQuantumStore((s) => s.setAppViewState);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true);
+  }, []);
+
+  const activeLang = isMounted ? language : 'en';
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>) => translate(key, activeLang, params),
+    [activeLang]
+  );
 
   const handleStart = useCallback(() => {
     soundEngine.unlock();
