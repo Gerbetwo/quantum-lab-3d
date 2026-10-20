@@ -21,7 +21,10 @@ export type KnownSpatialId =
   | "probability-p0"
   | "probability-p1"
   | "equator-ring"
-  | "decoherence-envelope";
+  | "decoherence-envelope"
+  | "measurement-chamber"
+  | "collapse-ray"
+  | "histogram-3d";
 
 /**
  * Metadata mapping a 3D spatial element ID to HUD telemetry symbols and descriptions.
@@ -188,6 +191,30 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     label: "Transverse Coherence Time",
     description: "Phase damping timescale determined by cryostat temperature",
     hudSection: "cryo",
+  },
+  "measurement-chamber": {
+    id: "measurement-chamber",
+    symbol: "M̂",
+    latex: "\\hat{M} = \\{|0\\rangle\\langle 0|, |1\\rangle\\langle 1|\\}",
+    label: "Measurement Chamber",
+    description: "Macroscopic measurement apparatus isolating the quantum state during projection",
+    hudSection: "born-probabilities",
+  },
+  "collapse-ray": {
+    id: "collapse-ray",
+    symbol: "P_k",
+    latex: "|\\psi\\rangle \\to |k\\rangle",
+    label: "Wavefunction Collapse Ray",
+    description: "Stochastic non-unitary projection of the state vector into an eigenstate",
+    hudSection: "born-probabilities",
+  },
+  "histogram-3d": {
+    id: "histogram-3d",
+    symbol: "N_k / N",
+    latex: "\\lim_{N \\to \\infty} \\frac{N_k}{N} = P_k",
+    label: "3D Stochastic Sampling Histogram",
+    description: "Empirical outcome distribution verifying the Born rule via repeated shots",
+    hudSection: "born-probabilities",
   },
 };
 
