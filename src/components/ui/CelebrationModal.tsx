@@ -94,22 +94,22 @@ export function CelebrationModal() {
           <span className="text-xs telemetry-mono font-semibold text-quantum-cyan uppercase tracking-wider">
             {t('celebration.curriculum_complete')}
           </span>
-          <h2 className="text-xl font-bold text-foreground mt-1 tracking-tight">
-            {t('celebration.mastery_title')}
+          <h2 className="text-xl font-bold font-mono text-foreground mt-1 tracking-tight uppercase flex items-center justify-center gap-2">
+            <Trophy className="w-5 h-5 text-quantum-cyan shrink-0" />
+            <span>{t('celebration.mastery_title')}</span>
           </h2>
-          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-            {t('celebration.mastery_body')}{" "}
-            Bloch sphere superposition to Shor&apos;s factorization and 3-qubit error correction.
+          <p className="text-xs text-muted-foreground mt-2 leading-relaxed font-mono">
+            {t('celebration.mastery_body')}
           </p>
         </div>
 
         {/* Unlock Perk Box */}
         <div className="p-3.5 rounded-xl bg-surface-2 border border-border text-left flex items-start gap-3">
           <Sparkles className="w-5 h-5 text-quantum-purple shrink-0 mt-0.5" />
-          <div className="text-xs">
+          <div className="text-xs font-mono">
             <span className="font-bold text-foreground">{t('celebration.sandbox_unlocked')}</span>
             <p className="text-muted-foreground mt-0.5">
-              {t('celebration.sandbox_body')}{" "} real-time cryogenic thermal sweeps (15 mK – 300 K), and zero mission constraints.
+              {t('celebration.sandbox_body')}
             </p>
           </div>
         </div>

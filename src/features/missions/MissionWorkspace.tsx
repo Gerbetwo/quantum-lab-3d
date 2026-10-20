@@ -10,7 +10,7 @@ import { MissionHeader } from '@/components/game/MissionHeader';
 import { MathDock } from '@/features/quantum-core/MathDock';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
-import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw, Lock, Unlock, CheckCircle2, Zap } from 'lucide-react';
 
 interface MissionWorkspaceProps {
   missionId?: string;
@@ -18,13 +18,13 @@ interface MissionWorkspaceProps {
 }
 
 const MISSION_ACTION_HOOKS: Record<string, string> = {
-  superposition: '⚡ Tap [H] to split the Qubit in two, then [Measure]!',
-  entanglement: "🔗 Drag Alice's arrow or tap [Measure] to collapse both!",
-  decoherence: '🔥 Crank temperature to 300 K to melt the quantum state!',
-  gates: '🌀 Combo [H] → [T] → [X] to paint a 3D light-trail!',
-  grover: '🎯 Pick a target and tap [Apply Oracle] to spike it to 100%!',
-  applications: "🔐 Switch base 'a' to crack the N=15 vault polygon!",
-  'error-correction': '🛡️ Strike a qubit with [Flip], then heal it with [Clean]!',
+  superposition: 'Tap [H] to split the Qubit in two, then [Measure]!',
+  entanglement: "Drag Alice's arrow or tap [Measure] to collapse both!",
+  decoherence: 'Crank temperature to 300 K to melt the quantum state!',
+  gates: 'Combo [H] → [T] → [X] to paint a 3D light-trail!',
+  grover: 'Pick a target and tap [Apply Oracle] to spike it to 100%!',
+  applications: "Switch base 'a' to crack the N=15 vault polygon!",
+  'error-correction': 'Strike a qubit with [Flip], then heal it with [Clean]!',
 };
 
 export function MissionWorkspace({ missionId: propMissionId, className = '' }: MissionWorkspaceProps) {
@@ -89,6 +89,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
           data-testid="mission-cta-pill"
           className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full hud-panel glow-cyan text-xs font-mono font-bold text-quantum-cyan"
         >
+          <Zap className="w-3.5 h-3.5 text-quantum-cyan shrink-0" />
           <span className="animate-pulse">{MISSION_ACTION_HOOKS[activeMissionId]}</span>
         </div>
       )}
@@ -245,13 +246,14 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                       <button
                         type="button"
                         onClick={() => setEntangled(!isEntangled)}
-                        className={`w-full py-1.5 px-2 rounded text-xs font-mono font-semibold transition-all cursor-pointer ${
+                        className={`w-full py-1.5 px-2 rounded text-xs font-mono font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                           isEntangled
                             ? 'hud-badge-purple'
                             : 'bg-surface-2 text-muted-foreground border border-border hover:bg-surface-3'
                         }`}
                       >
-                        {isEntangled ? t('workspace.bell_pair_active') : t('workspace.bell_enable')}
+                        {isEntangled && <Zap className="w-3 h-3 text-quantum-purple shrink-0" />}
+                        <span>{isEntangled ? t('workspace.bell_pair_active') : t('workspace.bell_enable')}</span>
                       </button>
 
                       <Button
@@ -277,8 +279,13 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase">
                       <span>{t('workspace.hypothesis_title')}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {isLocked ? t('workspace.locked') : t('workspace.unlocked')}
+                      <span
+                        className={`text-[9px] font-mono px-1.5 py-0.5 rounded border uppercase font-medium flex items-center gap-1 ${
+                          isLocked ? 'hud-badge-amber' : 'hud-badge-cyan'
+                        }`}
+                      >
+                        {isLocked ? <Lock className="w-2.5 h-2.5" /> : <Unlock className="w-2.5 h-2.5" />}
+                        <span>{isLocked ? t('workspace.locked') : t('workspace.unlocked')}</span>
                       </span>
                     </div>
 
@@ -335,11 +342,18 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
                         <span
                           className={
                             Math.abs(predictedP0 - actualProb0) <= 20
-                              ? 'text-success font-bold'
-                              : 'text-warning'
+                              ? 'text-success font-bold flex items-center gap-1'
+                              : 'text-warning font-medium'
                           }
                         >
-                          {Math.abs(predictedP0 - actualProb0) <= 20 ? t('workspace.match') : t('workspace.diverged')}
+                          {Math.abs(predictedP0 - actualProb0) <= 20 ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 text-success shrink-0" />
+                              <span>{t('workspace.match')}</span>
+                            </>
+                          ) : (
+                            t('workspace.diverged')
+                          )}
                         </span>
                       </div>
                     )}

@@ -112,6 +112,42 @@ describe('i18n Localization Registry (src/lib/i18n.ts)', () => {
       expect(t('unknown.non.existent.key', 'es')).toBe('unknown.non.existent.key');
     });
   });
+
+  describe('Tactical Telemetry & Emoji-Free Invariant', () => {
+    it('returns clean uppercase telemetry tags for locked and editable states', () => {
+      expect(t('workspace.locked', 'en')).toBe('LOCKED');
+      expect(t('workspace.unlocked', 'en')).toBe('EDITABLE');
+      expect(t('workspace.locked', 'es')).toBe('BLOQUEADO');
+      expect(t('workspace.unlocked', 'es')).toBe('EDITABLE');
+    });
+
+    it('returns uppercase confirmed status for prediction matches', () => {
+      expect(t('workspace.match', 'en')).toBe('MATCH CONFIRMED');
+      expect(t('workspace.match', 'es')).toBe('COINCIDENCIA CONFIRMADA');
+    });
+
+    it('returns clean titles without emojis for Bell pair, Spin-Flip wave, and Mastery', () => {
+      expect(t('workspace.bell_pair_active', 'en')).toBe('Bell Pair |Φ⁺⟩ Active');
+      expect(t('workspace.bell_pair_active', 'es')).toBe('Par Bell |Φ⁺⟩ Activo');
+      expect(t('entanglement_3d.spin_flip_wave', 'en')).toBe('Spin-Flip Wave');
+      expect(t('entanglement_3d.spin_flip_wave', 'es')).toBe('Onda Spin-Flip');
+      expect(t('celebration.mastery_title', 'en')).toBe('Quantum Mastery Achieved!');
+      expect(t('celebration.mastery_title', 'es')).toBe('¡Dominio Cuántico Alcanzado!');
+    });
+
+    it('verifies that the entire translations dictionary contains zero Unicode emojis', () => {
+      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+      const json = JSON.stringify(DICTIONARY);
+      const matches: string[] = [];
+      let m: RegExpExecArray | null;
+      while ((m = emojiRegex.exec(json)) !== null) {
+        if (m[0].codePointAt(0) !== 0x2194) {
+          matches.push(m[0]);
+        }
+      }
+      expect(matches).toEqual([]);
+    });
+  });
 });
 
 describe('Quantum Store Language State (src/store/useQuantumStore.ts)', () => {
