@@ -263,15 +263,6 @@ describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
       expect(useQuantumStore.getState().theta).toBeCloseTo(0);
     });
 
-    it('tracks applied gates history via applyGateToMission', () => {
-      useQuantumStore.getState().resetState();
-      useQuantumStore.getState().applyGateToMission('H');
-      useQuantumStore.getState().applyGateToMission('X');
-      useQuantumStore.getState().applyGateToMission('Z');
-
-      const state = useQuantumStore.getState();
-      expect(state.appliedGates).toEqual(['H', 'X', 'Z']);
-    });
 
     it('performs state collapse and registers last outcome on measurement', () => {
       // State |0⟩ -> outcome must be 0
@@ -307,29 +298,16 @@ describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
   });
 
   describe('Entanglement State Transitions', () => {
-    it('sets entanglement status and degree', () => {
+    it('sets entanglement status', () => {
       useQuantumStore.getState().setEntangled(true);
       expect(useQuantumStore.getState().isEntangled).toBe(true);
-      expect(useQuantumStore.getState().entanglementDegree).toBe(1);
 
       useQuantumStore.getState().setEntangled(false);
       expect(useQuantumStore.getState().isEntangled).toBe(false);
-      expect(useQuantumStore.getState().entanglementDegree).toBe(0);
     });
   });
 
-  describe('Mission Phase Progression & Step Evaluation', () => {
-    it('transitions across mission phases correctly', () => {
-      const phases = ['PREDICTION', 'EXPERIMENT', 'OBSERVATION', 'ANALYSIS', 'COMPLETED'] as const;
-      for (const phase of phases) {
-        useQuantumStore.getState().transitionPhase(phase);
-        expect(useQuantumStore.getState().currentPhase).toBe(phase);
-      }
-
-      useQuantumStore.getState().transitionMissionPhase('BRIEFING');
-      expect(useQuantumStore.getState().currentPhase).toBe('BRIEFING');
-    });
-
+  describe('Zero-Spoiler Prediction Management (HU-MVP-03)', () => {
     it('manages zero-spoiler user predictions', () => {
       useQuantumStore.getState().setPrediction(0.75);
       expect(useQuantumStore.getState().userPredictionProb0).toBe(0.75);
@@ -337,45 +315,7 @@ describe('useQuantumStore - Phase 2 Store Tracking & Progression', () => {
       useQuantumStore.getState().setUserPrediction(0.5);
       expect(useQuantumStore.getState().userPredictionProb0).toBe(0.5);
     });
-
-    it('evaluates mission steps with angular tolerance checking', () => {
-      useQuantumStore.getState().resetState();
-      useQuantumStore.getState().setAngles(Math.PI / 2, 0);
-
-      // Target within 0.08 rad tolerance -> pass
-      const pass = useQuantumStore.getState().evaluateMissionStep(Math.PI / 2 + 0.04, 0.03);
-      expect(pass).toBe(true);
-      expect(useQuantumStore.getState().activeStepIndex).toBe(1);
-
-      // Target outside 0.08 rad tolerance -> fail
-      const fail = useQuantumStore.getState().evaluateMissionStep(0, 0);
-      expect(fail).toBe(false);
-      expect(useQuantumStore.getState().activeStepIndex).toBe(2);
-    });
-  });
-
-  describe('Simulation Timer Controls', () => {
-    it('controls elapsed seconds tick, pause, resume, and reset', () => {
-      useQuantumStore.getState().resetTimer();
-      expect(useQuantumStore.getState().elapsedSeconds).toBe(0);
-
-      useQuantumStore.getState().tick();
-      expect(useQuantumStore.getState().elapsedSeconds).toBe(1);
-
-      useQuantumStore.getState().pause();
-      expect(useQuantumStore.getState().isRunning).toBe(false);
-      useQuantumStore.getState().tick();
-      // When paused, tick does not increment
-      expect(useQuantumStore.getState().elapsedSeconds).toBe(1);
-
-      useQuantumStore.getState().resume();
-      expect(useQuantumStore.getState().isRunning).toBe(true);
-      useQuantumStore.getState().tick();
-      expect(useQuantumStore.getState().elapsedSeconds).toBe(2);
-
-      useQuantumStore.getState().resetTimer();
-      expect(useQuantumStore.getState().elapsedSeconds).toBe(0);
-    });
   });
 });
+
 

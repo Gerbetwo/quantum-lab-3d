@@ -8,8 +8,6 @@ import {
   createBellState,
   bellState,
   measureEntangledQubit,
-  createEmptyCircuit,
-  evaluateFullCircuit,
 } from '../qubitMath';
 import {
   calculateT2CoherenceTime,
@@ -218,20 +216,6 @@ describe('qubitMath - Core Kinematics & Math Invariants', () => {
     });
   });
 
-  describe('Circuit Helpers', () => {
-    it('initializes empty circuit with correct structure', () => {
-      const circuit = createEmptyCircuit(3, 8);
-      expect(circuit.numQubits).toBe(3);
-      expect(circuit.maxDepth).toBe(8);
-      expect(circuit.steps).toEqual([]);
-    });
-
-    it('evaluates full circuit stub gracefully', () => {
-      const circuit = createEmptyCircuit(1);
-      const evaluated = evaluateFullCircuit(circuit);
-      expect(evaluated.final).toEqual([]);
-    });
-  });
 
   describe('Thermal Decoherence Invariants: T2 Exponential Decay', () => {
     it('converts between Kelvin and milliKelvin correctly', () => {

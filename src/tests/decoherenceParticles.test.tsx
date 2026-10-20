@@ -15,6 +15,7 @@ import { useQuantumStore } from '@/store/useQuantumStore';
 describe('Thermal Decoherence GPU Particle System & Mesh Noise Shader', () => {
   beforeEach(() => {
     useQuantumStore.setState({
+      language: 'en',
       temperatureK: 0.015,
       theta: 0,
       phi: 0,

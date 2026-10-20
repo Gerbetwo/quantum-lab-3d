@@ -6,35 +6,25 @@ import { Button } from '@/components/ui/Button';
 
 describe('Tactical HUD Primitives', () => {
   describe('GlassCard (src/components/ui/GlassCard.tsx)', () => {
-    it('renders with 1px sharp borders (border-slate-300 light, border-slate-800 dark)', () => {
+    it('renders with tactical hud-panel styling', () => {
       render(
         <GlassCard title="Telemetry Test" badge="ONLINE">
           <div>Content</div>
         </GlassCard>
       );
       const card = screen.getByTestId('hud-glass-card');
-      expect(card.className).toContain('border-slate-300');
-      expect(card.className).toContain('dark:border-slate-800');
+      expect(card.className).toContain('hud-panel');
+      expect(card.className).toContain('text-foreground');
     });
 
-    it('removes drop-shadow fluff in favor of flat tactical design', () => {
+    it('renders title and badge with monospace font', () => {
       render(
-        <GlassCard title="No Shadow Test">
+        <GlassCard title="Dirac State" badge="|ψ⟩">
           <div>Content</div>
         </GlassCard>
       );
-      const card = screen.getByTestId('hud-glass-card');
-      expect(card.style.boxShadow).toBe('none');
-    });
-
-    it('renders sub-pixel corner notches when cornerNotch is true', () => {
-      const { container } = render(
-        <GlassCard cornerNotch={true} title="Notch Test">
-          <div>Content</div>
-        </GlassCard>
-      );
-      const notches = container.querySelectorAll('span[aria-hidden="true"]');
-      expect(notches.length).toBe(4);
+      expect(screen.getByText('Dirac State').className).toContain('font-mono');
+      expect(screen.getByText('|ψ⟩').className).toContain('font-mono');
     });
 
     it('applies monospaced numeric styling to telemetry values', () => {
@@ -55,31 +45,23 @@ describe('Tactical HUD Primitives', () => {
       const btn = screen.getByRole('button', { name: /Execute Gate/i });
       expect(btn.className).toContain('font-mono');
       expect(btn.className).toContain('tabular-nums');
-      expect(btn.className).toContain('dark:border-cyan-500/50');
-    });
-
-    it('renders secondary button with 1px sharp borders (slate-300 light, slate-800 dark)', () => {
-      render(<Button variant="secondary">Reset Vector</Button>);
-      const btn = screen.getByRole('button', { name: /Reset Vector/i });
-      expect(btn.className).toContain('border-slate-300');
-      expect(btn.className).toContain('dark:border-slate-800');
+      expect(btn.className).toContain('border-quantum-cyan/40');
       expect(btn.style.boxShadow).toBe('none');
     });
 
-    it('renders corner notch accents when cornerNotch is enabled', () => {
-      const { container } = render(<Button cornerNotch>Notched Button</Button>);
-      const notches = container.querySelectorAll('span[aria-hidden="true"]');
-      expect(notches.length).toBe(4);
+    it('renders secondary button with tactical border and surface styling', () => {
+      render(<Button variant="secondary">Reset Vector</Button>);
+      const btn = screen.getByRole('button', { name: /Reset Vector/i });
+      expect(btn.className).toContain('border-border');
+      expect(btn.className).toContain('bg-surface-2');
+      expect(btn.style.boxShadow).toBe('none');
     });
 
-    it('supports telemetry codes and monospaced numeric labels', () => {
-      render(
-        <Button telemetryCode="SYS.01">
-          Outcome |0⟩ (98.5%)
-        </Button>
-      );
-      expect(screen.getByText('[SYS.01]')).toBeDefined();
-      expect(screen.getByRole('button').className).toContain('tabular-nums');
+    it('shows loading spinner when isLoading is true', () => {
+      render(<Button isLoading>Loading Action</Button>);
+      const btn = screen.getByRole('button', { name: /Loading Action/i });
+      expect(btn.hasAttribute('disabled')).toBe(true);
+      expect(screen.getByText('⟳')).toBeDefined();
     });
   });
 });

@@ -58,7 +58,7 @@ export function AlgorithmControls({ missionId }: AlgorithmControlsProps) {
           ))}
         </div>
         <div className="flex items-center justify-between text-xs telemetry-mono mt-1">
-          <span>{t('algorithm_controls.target_prob', { i: targetIndex, p: targetProb })}: {targetProb}%</span>
+          <span>{t('algorithm_controls.target_prob', { i: targetIndex, p: targetProb })}</span>
           <span className={groverResult.targetFound ? 'text-success font-bold' : 'text-muted-foreground'}>
             {groverResult.targetFound ? t('algorithm_controls.amplified') : t('algorithm_controls.uniform')}
           </span>

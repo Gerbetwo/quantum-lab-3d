@@ -9,7 +9,6 @@ describe('Floating Gate Controls & Edge Navigation (HU-MVP-03, HU-MVP-12)', () =
   beforeEach(() => {
     useQuantumStore.setState({
       currentMissionId: 'superposition',
-      activeMissionId: 'superposition',
       theta: 0,
       phi: 0,
       temperatureK: 0.015,

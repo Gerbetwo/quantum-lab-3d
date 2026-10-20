@@ -18,7 +18,7 @@ describe('3D Bar Graph & Syndrome Lattice Visualizers for Missions 4–6', () =>
   beforeEach(() => {
     useQuantumStore.setState({
       currentMissionId: 'grover',
-      activeMissionId: 'grover',
+      language: 'en',
     });
   });
 

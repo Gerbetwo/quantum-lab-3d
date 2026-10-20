@@ -15,6 +15,7 @@ describe('Algorithm Store State & Deduplication (Phase 2)', () => {
   beforeEach(() => {
     sessionStorage.clear();
     useQuantumStore.getState().resetState();
+    useQuantumStore.setState({ language: 'en' });
   });
 
   describe('useQuantumStore Algorithm State & Reset', () => {

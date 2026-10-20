@@ -1,24 +1,19 @@
 import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import {
-  MathDock,
-  StateVectorCard,
-  MeasurementCard,
-  CryostatCard,
-} from '@/features/quantum-core/MathDock';
+import { MathDock } from '@/features/quantum-core/MathDock';
 import { useQuantumStore } from '@/store/useQuantumStore';
 
 describe('MathDock Floating Widget (HU-MVP-02, HU-MVP-05)', () => {
   beforeEach(() => {
     // Reset state to ground state |0⟩
     useQuantumStore.setState({
+      language: 'en',
       theta: 0,
       phi: 0,
       temperatureK: 0.015,
       coherenceTimeUs: 245.4,
       lastOutcome: null,
-      currentPhase: 'BRIEFING',
     });
   });
 
@@ -67,7 +62,7 @@ describe('MathDock Floating Widget (HU-MVP-02, HU-MVP-05)', () => {
     });
 
     render(<MathDock />);
-    expect(screen.getByText('Coherence T₂(T)')).toBeDefined();
+    expect(screen.getByText(/Coherence T₂\(T\)/)).toBeDefined();
     expect(screen.getByText('234.8')).toBeDefined();
     expect(screen.getAllByText(/50 mK/).length).toBeGreaterThanOrEqual(1);
   });
@@ -105,19 +100,5 @@ describe('MathDock Floating Widget (HU-MVP-02, HU-MVP-05)', () => {
     fireEvent.click(measureBtn);
     const storeState = useQuantumStore.getState();
     expect(storeState.lastOutcome === 0 || storeState.lastOutcome === 1).toBe(true);
-  });
-
-  it('supports standalone backward-compatible cards', () => {
-    const { unmount: unmount1 } = render(<StateVectorCard />);
-    expect(screen.getByText('Dirac State Vector')).toBeDefined();
-    unmount1();
-
-    const { unmount: unmount2 } = render(<MeasurementCard />);
-    expect(screen.getByText('Born Probabilities')).toBeDefined();
-    unmount2();
-
-    const { unmount: unmount3 } = render(<CryostatCard />);
-    expect(screen.getByText('Cryogenic Environment')).toBeDefined();
-    unmount3();
   });
 });

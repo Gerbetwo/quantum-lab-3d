@@ -1,59 +1,386 @@
 @import "tailwindcss";
 
-/* Dark variant: any element that is or is inside .dark */
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *, .theme-dark, .theme-dark *));
 
 /* ==========================================================================
-   THEME TOKENS — MONOCHROME (paper & ink)
-   Only 5 tokens matter: bg, fg, muted, edge, accent.
-   Everything else is derived.
+   1. SEMANTIC THEME TOKENS: DUAL HIGH-PRECISION PALETTES
    ========================================================================== */
-:root {
+
+/* Cleanroom Lab (Light Theme: #F4F6F9 bg, #0284C7 precision blue) */
+:root,
+.theme-light {
   color-scheme: light;
 
-  --background: #ffffff;   /* paper        */
-  --foreground: #0a0a0a;   /* ink          */
-  --muted:      #f5f5f5;   /* faint fill   */
-  --edge:       #d4d4d4;   /* hairline     */
-  --accent:     #0a0a0a;   /* emph. ink    */
+  /* Surfaces & Canvas */
+  --background: #f4f6f9;
+  --foreground: #0b0e14;
+  --card: #ffffff;
+  --card-foreground: #0b0e14;
+  --popover: #ffffff;
+  --popover-foreground: #0b0e14;
+  --surface-1: #ffffff;
+  --surface-2: #eef2f6;
+  --surface-3: #e2e8f0;
+  --edge: #cbd5e1;
+
+  /* Tactical Precision Blue & Interactive Accents */
+  --precision-blue: #0284c7;
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0b0e14;
+  --muted: #e2e8f0;
+  --muted-foreground: #475569; /* WCAG AA: 6.3:1 contrast on #f4f6f9 */
+  --accent: #0284c7;
+  --accent-foreground: #ffffff;
+
+  /* Sharp 1px Tactical Borders */
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #0284c7;
+  --sim-border: 1px solid rgba(2, 132, 199, 0.35);
+  --sim-border-subtle: 1px solid rgba(11, 14, 20, 0.12);
+  --sim-border-strong: 1px solid #0284c7;
+
+  /* Zero-Blur Tactical HUD Panel */
+  --hud-panel-bg: rgba(244, 246, 249, 0.94);
+  --hud-panel-border: var(--sim-border);
+  --hud-panel-shadow: 0 4px 20px -2px rgba(11, 14, 20, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+
+  /* Status & Telemetry (WCAG AA Compliant) */
+  --success: #047857;
+  --warning: #b45309;
+  --destructive: #b91c1c;
+
+  /* Telemetry Axes & Quantum Accents */
+  --axis-x: #0284c7;
+  --axis-y: #6d28d9;
+  --axis-z: #b45309;
+  --quantum-cyan: #0284c7;
+  --quantum-purple: #6d28d9;
+  --quantum-emerald: #047857;
+  --cyan: #0284c7;
+
+  /* Glow Effects */
+  --sim-glow: 0 0 20px rgba(2, 132, 199, 0.25);
+  --glow-cyan-color: rgba(2, 132, 199, 0.25);
+
+  /* Semantic Theme-Aware Badges & Surfaces (High-Contrast Light) */
+  --hud-badge-cyan-bg: rgba(2, 132, 199, 0.12);
+  --hud-badge-cyan-border: rgba(2, 132, 199, 0.35);
+  --hud-badge-cyan-text: #0369a1;
+
+  --hud-badge-purple-bg: rgba(109, 40, 217, 0.12);
+  --hud-badge-purple-border: rgba(109, 40, 217, 0.35);
+  --hud-badge-purple-text: #6d28d9;
+
+  --hud-badge-emerald-bg: rgba(4, 120, 87, 0.12);
+  --hud-badge-emerald-border: rgba(4, 120, 87, 0.35);
+  --hud-badge-emerald-text: #047857;
+
+  --hud-badge-amber-bg: rgba(180, 83, 9, 0.12);
+  --hud-badge-amber-border: rgba(180, 83, 9, 0.35);
+  --hud-badge-amber-text: #b45309;
+
+  --hud-badge-rose-bg: rgba(185, 28, 28, 0.12);
+  --hud-badge-rose-border: rgba(185, 28, 28, 0.35);
+  --hud-badge-rose-text: #b91c1c;
 }
 
-.dark {
+/* Deep Space Cryostat / Obsidian Dark (Dark Theme: #0B0E14 bg, #00F0FF cyan glow) */
+.dark,
+.theme-dark {
   color-scheme: dark;
 
-  --background: #0a0a0a;   /* ink sheet    */
-  --foreground: #fafafa;   /* chalk        */
-  --muted:      #171717;   /* faint fill   */
-  --edge:       #262626;   /* hairline     */
-  --accent:     #fafafa;   /* emph. chalk  */
+  /* Surfaces & Canvas */
+  --background: #0b0e14;
+  --foreground: #f8fafc;
+  --card: #111622;
+  --card-foreground: #f8fafc;
+  --popover: #111622;
+  --popover-foreground: #f8fafc;
+  --surface-1: #111622;
+  --surface-2: #161f30;
+  --surface-3: #1e293b;
+  --edge: rgba(255, 255, 255, 0.1);
+
+  /* Tactical Electric Neon Cyan & Interactive Accents */
+  --precision-blue: #00f0ff;
+  --primary: #00f0ff;
+  --primary-foreground: #0b0e14;
+  --secondary: #1a2234;
+  --secondary-foreground: #f8fafc;
+  --muted: #1a2234;
+  --muted-foreground: #94a3b8; /* WCAG AAA: 7.6:1 contrast on #0b0e14 */
+  --accent: #00f0ff;
+  --accent-foreground: #0b0e14;
+
+  /* Sharp 1px Tactical Borders */
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #00f0ff;
+  --sim-border: 1px solid rgba(0, 240, 255, 0.25);
+  --sim-border-subtle: 1px solid rgba(255, 255, 255, 0.12);
+  --sim-border-strong: 1px solid #00f0ff;
+
+  /* Zero-Blur Tactical HUD Panel */
+  --hud-panel-bg: rgba(11, 14, 20, 0.92);
+  --hud-panel-border: var(--sim-border);
+  --hud-panel-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+
+  /* Status & Telemetry (WCAG AA Compliant) */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --destructive: #f87171;
+
+  /* Telemetry Axes & Quantum Accents */
+  --axis-x: #00f0ff;
+  --axis-y: #a855f7;
+  --axis-z: #f59e0b;
+  --quantum-cyan: #00f0ff;
+  --quantum-purple: #a855f7;
+  --quantum-emerald: #10b981;
+  --cyan: #00f0ff;
+
+  /* Glow Effects */
+  --sim-glow: 0 0 20px rgba(0, 240, 255, 0.3);
+  --glow-cyan-color: rgba(0, 240, 255, 0.25);
+
+  /* Semantic Theme-Aware Badges & Surfaces (High-Contrast Dark) */
+  --hud-badge-cyan-bg: rgba(0, 240, 255, 0.12);
+  --hud-badge-cyan-border: rgba(0, 240, 255, 0.35);
+  --hud-badge-cyan-text: #00f0ff;
+
+  --hud-badge-purple-bg: rgba(168, 85, 247, 0.15);
+  --hud-badge-purple-border: rgba(168, 85, 247, 0.35);
+  --hud-badge-purple-text: #c084fc;
+
+  --hud-badge-emerald-bg: rgba(16, 185, 129, 0.15);
+  --hud-badge-emerald-border: rgba(16, 185, 129, 0.35);
+  --hud-badge-emerald-text: #34d399;
+
+  --hud-badge-amber-bg: rgba(245, 158, 11, 0.15);
+  --hud-badge-amber-border: rgba(245, 158, 11, 0.35);
+  --hud-badge-amber-text: #fbbf24;
+
+  --hud-badge-rose-bg: rgba(244, 63, 94, 0.15);
+  --hud-badge-rose-border: rgba(244, 63, 94, 0.35);
+  --hud-badge-rose-text: #fb7185;
 }
 
-/* Expose tokens as Tailwind utilities: bg-background, text-muted, border-edge, … */
+/* ==========================================================================
+   2. TAILWIND THEME BRIDGE
+   ========================================================================== */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-muted:      var(--muted);
-  --color-edge:       var(--edge);
-  --color-accent:     var(--accent);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --color-axis-x: var(--axis-x);
+  --color-axis-y: var(--axis-y);
+  --color-axis-z: var(--axis-z);
+  --color-quantum-purple: var(--quantum-purple);
+  --color-quantum-cyan: var(--quantum-cyan);
+  --color-quantum-emerald: var(--quantum-emerald);
+  --color-precision-blue: var(--precision-blue);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-edge: var(--edge);
+  --color-cyan: var(--cyan);
 }
 
 /* ==========================================================================
-   BASE
+   3. SHARP TACTICAL BORDERS
    ========================================================================== */
-@layer base {
-  * {
-    border-color: var(--edge);
-  }
+.border-sim {
+  border: var(--sim-border);
+}
 
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-feature-settings: "ss01", "cv01"; /* optional: nicer numerals */
-    -webkit-font-smoothing: antialiased;
-  }
+.border-sim-subtle {
+  border: var(--sim-border-subtle);
+}
 
-  ::selection {
-    background: var(--foreground);
-    color: var(--background);
-  }
+.border-sim-strong {
+  border: var(--sim-border-strong);
+}
+
+/* ==========================================================================
+   4. TACTICAL HUD PANELS & GLASSMORPHISM
+   ========================================================================== */
+/* Zero-Blur Tactical Flight-Deck HUD Panel */
+.hud-panel {
+  background: var(--hud-panel-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: var(--sim-border);
+  box-shadow: var(--hud-panel-shadow);
+}
+
+.hud-panel-glow {
+  background: var(--hud-panel-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: var(--sim-border-strong);
+  box-shadow: var(--sim-glow), var(--hud-panel-shadow);
+}
+
+/* Glassmorphism panel retained for legacy translucent elements */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+:root:not(.dark) .glass-panel,
+.theme-light .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px var(--glow-cyan-color, rgba(0, 240, 255, 0.25));
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+}
+
+/* ==========================================================================
+   5. SEMANTIC THEME-AWARE BADGE & SURFACE UTILITIES
+   ========================================================================== */
+.hud-badge-cyan {
+  background-color: var(--hud-badge-cyan-bg);
+  border: 1px solid var(--hud-badge-cyan-border);
+  color: var(--hud-badge-cyan-text);
+}
+
+.hud-badge-purple {
+  background-color: var(--hud-badge-purple-bg);
+  border: 1px solid var(--hud-badge-purple-border);
+  color: var(--hud-badge-purple-text);
+}
+
+.hud-badge-emerald {
+  background-color: var(--hud-badge-emerald-bg);
+  border: 1px solid var(--hud-badge-emerald-border);
+  color: var(--hud-badge-emerald-text);
+}
+
+.hud-badge-amber {
+  background-color: var(--hud-badge-amber-bg);
+  border: 1px solid var(--hud-badge-amber-border);
+  color: var(--hud-badge-amber-text);
+}
+
+.hud-badge-rose {
+  background-color: var(--hud-badge-rose-bg);
+  border: 1px solid var(--hud-badge-rose-border);
+  color: var(--hud-badge-rose-text);
+}
+
+/* ==========================================================================
+   6. HIGH-CONTRAST TELEMETRY FONT STYLES
+   ========================================================================== */
+.font-telemetry,
+.telemetry-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1, "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
+  letter-spacing: 0.04em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.telemetry-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.telemetry-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+}
+
+.telemetry-header {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+/* ==========================================================================
+   7. BACKGROUND GRADIENT UTILITIES
+   ========================================================================== */
+.bg-quantum-void {
+  background: radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.06) 0%, rgba(11, 14, 20, 1) 70%);
+}
+
+.bg-radial-glow {
+  background: radial-gradient(circle at center, rgba(0, 240, 255, 0.12) 0%, transparent 70%);
+}
+
+.bg-quantum-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+:root:not(.dark) .bg-quantum-grid,
+.theme-light .bg-quantum-grid {
+  background-image:
+    linear-gradient(to right, rgba(11, 14, 20, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(11, 14, 20, 0.05) 1px, transparent 1px);
+}
+
+:root:not(.dark) .bg-quantum-void,
+.theme-light .bg-quantum-void {
+  background: radial-gradient(circle at 50% 20%, rgba(2, 132, 199, 0.08) 0%, rgba(244, 246, 249, 1) 70%);
+}
+
+/* ==========================================================================
+   8. SPECIAL UTILITIES & BASE STYLING
+   ========================================================================== */
+@utility duration-350 {
+  transition-duration: 350ms;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }

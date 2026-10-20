@@ -50,17 +50,28 @@ export interface QuantumStore {
   setShorBase: (base: number) => void;
   setQecInjectedError: (err: number | null) => void;
   toggleSound: () => boolean;
+  setSoundEnabled: (enabled: boolean) => void;
 
   setAngles: (theta: number, phi: number) => void;
   setTheta: (theta: number) => void;
   setPhi: (phi: number) => void;
   setTemperature: (tempK: number) => void;
+  setTemperatureK: (tempK: number) => void;
   setEntangled: (entangled: boolean) => void;
   setLastOutcome: (outcome: 0 | 1 | null) => void;
   applyGate: (gate: string) => void;
   measure: () => 0 | 1;
   setUserPrediction: (prob0: number | null) => void;
+  setPrediction: (prob0: number | null) => void;
   markMissionCompleted: (id: number | MissionId) => void;
+  completeMission: (id: number | MissionId) => void;
+  recordMissionTime: (id?: number | MissionId, time?: number) => void;
+  jumpToMission: (id: MissionId | number) => void;
+  startMission: (id: MissionId | number) => void;
+  launchMission: (id: MissionId | number) => void;
+  setSandboxUnlocked: (unlocked: boolean) => void;
+  unlockSandbox: () => void;
+  resetProgress: () => void;
   resetState: () => void;
 }
 
@@ -216,12 +227,17 @@ export const useQuantumStore = create<QuantumStore>()(
         set({ isSoundEnabled: next });
         return next;
       },
+      setSoundEnabled: (enabled: boolean) => {
+        setAudioEnabled(enabled);
+        set({ isSoundEnabled: enabled });
+      },
 
       setAngles: (theta, phi) => set({ theta, phi }),
       setTheta: (theta) => set({ theta }),
       setPhi: (phi) => set({ phi }),
       setTemperature: (temperatureK) =>
         set({ temperatureK, coherenceTimeUs: calculateT2CoherenceTime(kelvinToMilliKelvin(temperatureK)) }),
+      setTemperatureK: (tempK) => get().setTemperature(tempK),
       setEntangled: (isEntangled) => set({ isEntangled }),
       setLastOutcome: (lastOutcome) => set({ lastOutcome }),
 
@@ -246,6 +262,7 @@ export const useQuantumStore = create<QuantumStore>()(
       },
 
       setUserPrediction: (prob0) => set({ userPredictionProb0: prob0 }),
+      setPrediction: (prob0) => get().setUserPrediction(prob0),
 
       markMissionCompleted: (id) => {
         const idx = typeof id === "number" ? id : getMissionIndex(id);
@@ -258,6 +275,28 @@ export const useQuantumStore = create<QuantumStore>()(
           syncCookies(updated, unlocked);
           soundEngine.playSuccessSound();
         }
+      },
+      completeMission: (id) => get().markMissionCompleted(id),
+      recordMissionTime: () => {},
+
+      jumpToMission: (id) => get().selectMission(id),
+      startMission: (id) => get().selectMission(id),
+      launchMission: (id) => get().selectMission(id),
+
+      setSandboxUnlocked: (isSandboxUnlocked) => {
+        set({ isSandboxUnlocked });
+        syncCookies(get().completedMissions, isSandboxUnlocked);
+      },
+      unlockSandbox: () => get().setSandboxUnlocked(true),
+
+      resetProgress: () => {
+        if (typeof window !== "undefined") {
+          try {
+            Cookies.remove(COOKIE_COMPLETED);
+            Cookies.remove(COOKIE_SANDBOX);
+          } catch (_e) { /* Safe */ }
+        }
+        set({ completedMissions: [], isSandboxUnlocked: false });
       },
 
       resetState: () =>

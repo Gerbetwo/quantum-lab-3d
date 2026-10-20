@@ -15,7 +15,7 @@ describe('3D Quantum Entanglement Correlation Laser (EntanglementOverlay3D)', ()
   beforeEach(() => {
     useQuantumStore.setState({
       currentMissionId: 'superposition',
-      activeMissionId: 'superposition',
+      language: 'en',
       theta: Math.PI / 2,
       phi: 0,
       isEntangled: true,

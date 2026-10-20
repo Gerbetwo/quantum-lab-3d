@@ -17,7 +17,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
   const temperatureK = useQuantumStore((s) => s.temperatureK);
   const setTheta = useQuantumStore((s) => s.setTheta);
   const setPhi = useQuantumStore((s) => s.setPhi);
-  const setTemperatureK = useQuantumStore((s) => s.setTemperatureK);
+  const setTemperature = useQuantumStore((s) => s.setTemperature);
   const applyGate = useQuantumStore((s) => s.applyGate);
   const setEntangled = useQuantumStore((s) => s.setEntangled);
   const isEntangled = useQuantumStore((s) => s.isEntangled);
@@ -119,7 +119,7 @@ export function FoundationsControls({ missionId }: FoundationsControlsProps) {
               type="button"
               size="sm"
               variant={Math.abs(temperatureK - t.val) < 0.001 ? 'primary' : 'secondary'}
-              onClick={() => setTemperatureK(t.val)}
+              onClick={() => setTemperature(t.val)}
               className="normal-case telemetry-mono text-xs"
             >
               {t.label}
