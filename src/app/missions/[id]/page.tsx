@@ -5,6 +5,8 @@ import {
   getMissionById,
 } from '@/features/missions/missionRegistry';
 import { MissionWorkspace } from '@/features/missions/MissionWorkspace';
+import { Mission01StateVector } from '@/components/missions/Mission01StateVector';
+import { Mission02GateRotations } from '@/components/missions/Mission02GateRotations';
 import { notFound } from 'next/navigation';
 
 interface MissionPageProps {
@@ -42,6 +44,14 @@ export default async function MissionPage({ params }: MissionPageProps) {
 
   if (!mission) {
     notFound();
+  }
+
+  if (id === 'superposition') {
+    return <Mission01StateVector />;
+  }
+
+  if (id === 'gates') {
+    return <Mission02GateRotations />;
   }
 
   return <MissionWorkspace missionId={id} />;

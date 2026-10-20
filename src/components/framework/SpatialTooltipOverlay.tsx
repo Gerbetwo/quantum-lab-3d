@@ -45,8 +45,9 @@ export function project3DTo2D(
 ): ScreenCoordinates {
   const p = position.clone().project(camera);
   // NDC: p.x in [-1, 1], p.y in [-1, 1], p.z in [-1, 1].
-  // Points behind the camera near plane have p.z > 1 in Three.js perspective projection.
-  const isVisible = p.z >= -1 && p.z <= 1;
+  const inNear = p.z >= -1;
+  const inFar = p.z <= 1;
+  const isVisible = inNear && inFar;
   const x = ((p.x + 1) * 0.5) * containerWidth;
   const y = ((-p.y + 1) * 0.5) * containerHeight;
 

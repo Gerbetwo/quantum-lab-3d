@@ -27,7 +27,15 @@ function walk(d) {
   try {
     for (const n of readdirSync(d)) {
       const p = join(d, n);
-      if (n === 'node_modules' || n.startsWith('.')) continue;
+      if (
+        n === 'node_modules' ||
+        n.startsWith('.') ||
+        n === '__tests__' ||
+        n.includes('.test.') ||
+        n.includes('.spec.')
+      ) {
+        continue;
+      }
       const s = statSync(p);
       if (s.isDirectory()) out.push(...walk(p));
       else if (/\.(tsx|jsx)$/.test(n)) out.push(p);

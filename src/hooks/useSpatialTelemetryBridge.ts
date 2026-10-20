@@ -11,6 +11,7 @@ export type KnownSpatialId =
   | "gate-axis-x"
   | "gate-axis-y"
   | "gate-axis-z"
+  | "gate-axis-h"
   | "state-vector"
   | "bloch-vector-tip-handle"
   | "north-pole"
@@ -98,6 +99,14 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: "\\hat{\\sigma}_z",
     label: "Pauli-Z Gate Axis",
     description: "Phase-flip rotation axis π around Z (maps |1⟩ ↔ -|1⟩)",
+    hudSection: "gates",
+  },
+  "gate-axis-h": {
+    id: "gate-axis-h",
+    symbol: "H",
+    latex: "\\hat{H} = \\frac{\\hat{\\sigma}_x + \\hat{\\sigma}_z}{\\sqrt{2}}",
+    label: "Hadamard Gate Axis",
+    description: "Diagonal superposition rotation axis π around (X+Z)/√2 (maps |0⟩ ↔ |+⟩)",
     hudSection: "gates",
   },
   "state-vector": {

@@ -230,7 +230,7 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                       {!isUnlocked ? (
                         <>
                           <Lock className="w-3 h-3 text-warning" />
-                          <span>LOCKED</span>
+                          <span>{"LOCKED"}</span>
                         </>
                       ) : (
                         node.difficulty
@@ -265,7 +265,7 @@ export function CampaignSelectOverlay({ forceVisible = false }: CampaignSelectOv
                     {!isUnlocked ? (
                       <>
                         <Lock className="w-3.5 h-3.5" />
-                        <span>LOCKED</span>
+                        <span>{"LOCKED"}</span>
                       </>
                     ) : (
                       <>

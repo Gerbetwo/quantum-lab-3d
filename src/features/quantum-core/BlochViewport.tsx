@@ -39,9 +39,9 @@ import {
 } from "@/features/missions/AlgorithmVisualizer3D";
 import { simulateGroverStep, runShorDemo } from "@/core/algorithms";
 
-let singletonRenderer: THREE.WebGLRenderer | null = null;
+export let singletonRenderer: THREE.WebGLRenderer | null = null;
 
-function acquireRenderer(container: HTMLElement): THREE.WebGLRenderer {
+export function acquireRenderer(container: HTMLElement): THREE.WebGLRenderer {
   if (!singletonRenderer) {
     singletonRenderer = new THREE.WebGLRenderer({
       antialias: true,

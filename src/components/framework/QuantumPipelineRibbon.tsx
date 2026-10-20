@@ -131,7 +131,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
   return (
     <nav
       data-testid="quantum-pipeline-ribbon"
-      aria-label="Quantum Execution Pipeline"
+      aria-label={"Quantum Execution Pipeline"}
       className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 px-3 py-2 rounded-2xl border border-white/10 bg-surface-1/90 backdrop-blur-md shadow-2xl shadow-cyan-950/25 max-w-[95vw] overflow-x-auto select-none ${className}`.trim()}
     >
       {/* PHASE 1: PREPARE */}
@@ -148,8 +148,8 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           type="button"
           onClick={handleReset}
           disabled={disabled}
-          title="Reset State to |0⟩"
-          aria-label="Reset State"
+          title={"Reset State to |0⟩"}
+          aria-label={"Reset State"}
           className="p-1.5 rounded-lg border border-white/10 hover:border-quantum-cyan/50 text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-all disabled:opacity-40"
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -223,12 +223,12 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           type="button"
           onClick={handleMeasure}
           disabled={disabled}
-          title="Collapse Wavefunction"
-          aria-label="Collapse Wavefunction Measurement"
+          title={"Collapse Wavefunction"}
+          aria-label={"Collapse Wavefunction Measurement"}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-quantum-cyan/60 bg-quantum-cyan/15 hover:bg-quantum-cyan/25 text-quantum-cyan text-xs font-mono font-bold tracking-wider transition-all shadow-[0_0_12px_rgba(0,243,255,0.2)] active:scale-95 disabled:opacity-40"
         >
           <Zap className="w-3.5 h-3.5 text-quantum-cyan" />
-          <span>COLLAPSE</span>
+          <span>{"COLLAPSE"}</span>
         </button>
 
         {lastOutcome !== null && (
