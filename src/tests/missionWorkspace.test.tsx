@@ -216,5 +216,44 @@ describe('Floating Gate Controls & Edge Navigation (HU-MVP-03, HU-MVP-12)', () =
       expect(mathDock.className).toContain('bottom-4');
       expect(mathDock.className).toContain('right-4');
     });
+
+    it('renders concise action pill anchored at bottom center with pointer-events-none', () => {
+      render(<MissionWorkspace missionId="superposition" />);
+      const ctaPill = screen.getByTestId('mission-cta-pill');
+      expect(ctaPill).toBeDefined();
+      expect(ctaPill.className).toContain('fixed');
+      expect(ctaPill.className).toContain('bottom-4');
+      expect(ctaPill.className).toContain('left-1/2');
+      expect(ctaPill.className).toContain('-translate-x-1/2');
+      expect(ctaPill.className).toContain('pointer-events-none');
+      expect(ctaPill.textContent).toContain('[H] SPLIT → MEASURE');
+    });
+
+    it('collapses gate controls by default on smaller viewports and supports defaultCollapsed prop', () => {
+      // Test defaultCollapsed prop
+      const { unmount } = render(<MissionWorkspace missionId="superposition" defaultCollapsed={true} />);
+      expect(screen.queryByTestId('gate-controls-content')).toBeNull();
+      const toggle = screen.getByTestId('gate-controls-toggle');
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+      unmount();
+
+      // Test small viewport auto-collapse (< 768px)
+      const originalInnerWidth = window.innerWidth;
+      try {
+        window.innerWidth = 500;
+        render(<MissionWorkspace missionId="superposition" />);
+        expect(screen.queryByTestId('gate-controls-content')).toBeNull();
+      } finally {
+        window.innerWidth = originalInnerWidth;
+      }
+    });
+
+    it('defaults MathDock to collapsed in active campaign missions', () => {
+      useQuantumStore.setState({ appViewState: 'IN_MISSION' });
+      render(<MissionWorkspace missionId="superposition" />);
+      const mathDockToggle = screen.getByTestId('math-dock-toggle');
+      expect(mathDockToggle.getAttribute('aria-expanded')).toBe('false');
+      expect(screen.queryByTestId('math-dock-content')).toBeNull();
+    });
   });
 });

@@ -16,10 +16,19 @@ export interface MathDockProps {
 
 export const MathDock: React.FC<MathDockProps> = ({
   className = '',
-  defaultCollapsed = false,
+  defaultCollapsed,
 }) => {
   const { t } = useTranslation();
-  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const appViewState = useQuantumStore((s) => s.appViewState);
+  const [userCollapsed, setUserCollapsed] = useState<boolean | null>(null);
+
+  const isCollapsed = userCollapsed !== null
+    ? userCollapsed
+    : (defaultCollapsed ?? (appViewState === 'IN_MISSION'));
+
+  const toggleCollapsed = () => {
+    setUserCollapsed(!isCollapsed);
+  };
 
   const theta = useQuantumStore((s) => s.theta);
   const phi = useQuantumStore((s) => s.phi);
@@ -50,7 +59,7 @@ export const MathDock: React.FC<MathDockProps> = ({
         headerRight={
           <button
             type="button"
-            onClick={() => setIsCollapsed((prev) => !prev)}
+            onClick={toggleCollapsed}
             data-testid="math-dock-toggle"
             aria-expanded={!isCollapsed}
             aria-label={isCollapsed ? t('math_dock.expand_tooltip') : t('math_dock.collapse_tooltip')}
@@ -68,7 +77,7 @@ export const MathDock: React.FC<MathDockProps> = ({
         {!isCollapsed && (
           <div data-testid="math-dock-content" className="space-y-3 font-mono text-xs">
             {/* 1. Dirac State Vector Readout */}
-            <div className="space-y-1.5">
+            <div className="space-y-1 font-mono text-xs">
               <div className="flex items-center justify-between text-[10px] tracking-wider text-muted-foreground uppercase">
                 <span>{t('math_dock.state_vector_label')}</span>
                 <span className="tabular-nums">
@@ -77,11 +86,11 @@ export const MathDock: React.FC<MathDockProps> = ({
               </div>
               <div
                 data-testid="state-vector-formula"
-                className="p-2 font-mono text-xs font-semibold text-quantum-cyan bg-surface-2 rounded border border-sim tabular-nums"
+                className="py-1 px-2 font-mono text-xs font-semibold text-quantum-cyan bg-surface-2 rounded border border-sim tabular-nums flex items-center justify-between"
               >
-                |ψ⟩ = {alpha.toFixed(3)}|0⟩ + {beta.toFixed(3)}|1⟩
+                <span>|ψ⟩ = {alpha.toFixed(3)}|0⟩ + {beta.toFixed(3)}|1⟩</span>
               </div>
-              <div className="flex justify-between text-[11px] font-mono text-muted-foreground tabular-nums px-0.5">
+              <div className="flex justify-between text-[10px] font-mono text-muted-foreground tabular-nums px-0.5">
                 <span>α = cos(θ/2) = {alpha.toFixed(3)}</span>
                 <span>β = sin(θ/2) = {beta.toFixed(3)}</span>
               </div>
@@ -94,42 +103,38 @@ export const MathDock: React.FC<MathDockProps> = ({
                 <span className="tabular-nums text-muted-foreground/80">{t('math_dock.born_check')}</span>
               </div>
 
-              <div>
-                <div className="flex justify-between text-[11px] font-mono mb-1">
+              {/* Compact single-line readout for P0 and P1 */}
+              <div
+                data-testid="born-probabilities-readout"
+                className="flex items-center justify-between text-[11px] font-mono py-1 px-2 bg-surface-2 rounded border border-border tabular-nums"
+              >
+                <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground">{t('math_dock.born_p0')}</span>
-                  <span className="font-bold tabular-nums text-quantum-cyan">
-                    {(p0 * 100).toFixed(1)}%{' '}
-                    <span className="font-normal text-[10px] text-muted-foreground/80">({p0.toFixed(3)})</span>
-                  </span>
+                  <span className="font-bold text-quantum-cyan">{(p0 * 100).toFixed(1)}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-surface-3 rounded-none overflow-hidden">
-                  <div
-                    className="h-full bg-quantum-cyan transition-all duration-200"
-                    style={{ width: `${Math.min(100, Math.max(0, p0 * 100))}%` }}
-                  />
+                <span className="text-muted-foreground/40 font-mono">|</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">{t('math_dock.born_p1')}</span>
+                  <span className="font-bold text-quantum-purple">{(p1 * 100).toFixed(1)}%</span>
                 </div>
               </div>
 
-              <div>
-                <div className="flex justify-between text-[11px] font-mono mb-1">
-                  <span className="text-muted-foreground">{t('math_dock.born_p1')}</span>
-                  <span className="font-bold tabular-nums text-quantum-purple">
-                    {(p1 * 100).toFixed(1)}%{' '}
-                    <span className="font-normal text-[10px] text-muted-foreground/80">({p1.toFixed(3)})</span>
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-surface-3 rounded-none overflow-hidden">
-                  <div
-                    className="h-full bg-quantum-purple transition-all duration-200"
-                    style={{ width: `${Math.min(100, Math.max(0, p1 * 100))}%` }}
-                  />
-                </div>
+              {/* Dual-tone split ratio bar */}
+              <div className="w-full h-1.5 bg-surface-3 rounded-none overflow-hidden flex">
+                <div
+                  className="h-full bg-quantum-cyan transition-all duration-200"
+                  style={{ width: `${Math.min(100, Math.max(0, p0 * 100))}%` }}
+                />
+                <div
+                  className="h-full bg-quantum-purple transition-all duration-200"
+                  style={{ width: `${Math.min(100, Math.max(0, p1 * 100))}%` }}
+                />
               </div>
 
               <Button
                 variant="primary"
                 onClick={() => measure()}
-                className="w-full mt-1.5 text-xs py-1"
+                className="w-full mt-1 text-xs py-1"
               >
                 {lastOutcome !== null ? `Outcome |${lastOutcome}⟩ — Re-measure` : t('math_dock.measure_button')}
               </Button>

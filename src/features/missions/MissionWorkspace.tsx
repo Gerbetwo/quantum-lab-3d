@@ -15,19 +15,24 @@ import { ChevronDown, ChevronUp, RotateCcw, Lock, Unlock, CheckCircle2, Zap } fr
 interface MissionWorkspaceProps {
   missionId?: string;
   className?: string;
+  defaultCollapsed?: boolean;
 }
 
 const MISSION_ACTION_HOOKS: Record<string, string> = {
-  superposition: 'Tap [H] to split the Qubit in two, then [Measure]!',
-  entanglement: "Drag Alice's arrow or tap [Measure] to collapse both!",
-  decoherence: 'Crank temperature to 300 K to melt the quantum state!',
-  gates: 'Combo [H] → [T] → [X] to paint a 3D light-trail!',
-  grover: 'Pick a target and tap [Apply Oracle] to spike it to 100%!',
-  applications: "Switch base 'a' to crack the N=15 vault polygon!",
-  'error-correction': 'Strike a qubit with [Flip], then heal it with [Clean]!',
+  superposition: '[H] SPLIT → MEASURE',
+  entanglement: 'ROTATE ALICE → COLLAPSE PAIR',
+  decoherence: 'HEAT 300 K → OBSERVE T₂',
+  gates: 'COMBO [H] → [T] → [X]',
+  grover: 'TARGET → RUN ORACLE',
+  applications: "BASE 'a' → FACTOR N=15",
+  'error-correction': 'INJECT FLIP → RUN CLEAN',
 };
 
-export function MissionWorkspace({ missionId: propMissionId, className = '' }: MissionWorkspaceProps) {
+export function MissionWorkspace({
+  missionId: propMissionId,
+  className = '',
+  defaultCollapsed,
+}: MissionWorkspaceProps) {
   const { t } = useTranslation();
   const appViewState = useQuantumStore((s) => s.appViewState);
   const isSandbox = appViewState === 'SANDBOX';
@@ -60,7 +65,16 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
   const isEntangled = useQuantumStore((s) => s.isEntangled);
   const setEntangled = useQuantumStore((s) => s.setEntangled);
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Collapse gate controls by default on smaller viewports (< 768px)
+  const [userCollapsed, setUserCollapsed] = useState<boolean | null>(null);
+  const isCollapsed = userCollapsed !== null
+    ? userCollapsed
+    : (defaultCollapsed ?? (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
+
+  const toggleCollapsed = () => {
+    setUserCollapsed(!isCollapsed);
+  };
+
   const [predictedP0, setPredictedP0] = useState<number>(
     userPredictionProb0 !== null ? Math.round(userPredictionProb0 * 100) : 50
   );
@@ -87,10 +101,10 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
       {MISSION_ACTION_HOOKS[activeMissionId] && (
         <div
           data-testid="mission-cta-pill"
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full hud-panel glow-cyan text-xs font-mono font-bold text-quantum-cyan"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-2 px-3.5 py-1.5 rounded-full hud-panel glow-cyan text-xs font-mono font-bold text-quantum-cyan tracking-wider uppercase shadow-lg"
         >
           <Zap className="w-3.5 h-3.5 text-quantum-cyan shrink-0" />
-          <span className="animate-pulse">{MISSION_ACTION_HOOKS[activeMissionId]}</span>
+          <span>{MISSION_ACTION_HOOKS[activeMissionId]}</span>
         </div>
       )}
 
@@ -105,7 +119,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
           headerRight={
             <button
               type="button"
-              onClick={() => setIsCollapsed((prev) => !prev)}
+              onClick={toggleCollapsed}
               data-testid="gate-controls-toggle"
               aria-expanded={!isCollapsed}
               aria-label={t('workspace.gate_controls')}
@@ -373,7 +387,7 @@ export function MissionWorkspace({ missionId: propMissionId, className = '' }: M
         </GlassCard>
       </aside>
 
-      <MathDock className="pointer-events-auto" />
+      <MathDock className="pointer-events-auto" defaultCollapsed={!isSandbox} />
     </div>
   );
 }

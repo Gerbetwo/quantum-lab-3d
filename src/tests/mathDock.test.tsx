@@ -101,4 +101,31 @@ describe('MathDock Floating Widget (HU-MVP-02, HU-MVP-05)', () => {
     const storeState = useQuantumStore.getState();
     expect(storeState.lastOutcome === 0 || storeState.lastOutcome === 1).toBe(true);
   });
+
+  it('renders Born probabilities in a streamlined, compact single-line readout', () => {
+    useQuantumStore.setState({
+      theta: Math.PI / 2,
+    });
+    render(<MathDock />);
+    const singleLineReadout = screen.getByTestId('born-probabilities-readout');
+    expect(singleLineReadout).toBeDefined();
+    expect(singleLineReadout.className).toContain('font-mono');
+    expect(singleLineReadout.className).toContain('tabular-nums');
+    expect(singleLineReadout.textContent).toContain('50.0%');
+  });
+
+  it('defaults to a collapsed state when entering active missions', () => {
+    useQuantumStore.setState({
+      appViewState: 'IN_MISSION',
+    });
+    render(<MathDock />);
+    const toggleButton = screen.getByTestId('math-dock-toggle');
+    expect(toggleButton.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByTestId('math-dock-content')).toBeNull();
+
+    // User can still expand on demand
+    fireEvent.click(toggleButton);
+    expect(toggleButton.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByTestId('math-dock-content')).toBeDefined();
+  });
 });
