@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import * as THREE from 'three';
+import { render, fireEvent } from '@testing-library/react';
+import React from 'react';
 import {
   createBlochSphereScene,
   computeSphericalVector,
@@ -7,6 +9,7 @@ import {
   updateBlochSphereUniforms,
 } from '@/features/quantum-core/blochSceneObjects';
 import { useQuantumStore } from '@/store/useQuantumStore';
+import { BlochViewport } from '@/features/quantum-core/BlochViewport';
 
 describe('Bloch State Vector Tip Handle & Raycasting Kinematics', () => {
   describe('vectorToSphericalAngles (Spherical Inverse Kinematics)', () => {
@@ -119,6 +122,89 @@ describe('Bloch State Vector Tip Handle & Raycasting Kinematics', () => {
       const beta = Math.sin(state.theta / 2);
       expect(alpha).toBeCloseTo(Math.SQRT1_2);
       expect(beta).toBeCloseTo(Math.SQRT1_2);
+    });
+  });
+
+  describe('Keyboard 3D Vector Manipulation (BlochViewport)', () => {
+    beforeEach(() => {
+      useQuantumStore.getState().resetState();
+    });
+
+    it('modifies polar angle theta with ArrowDown and ArrowUp', () => {
+      render(React.createElement(BlochViewport));
+      useQuantumStore.getState().setAngles(1.0, 0.0);
+
+      fireEvent.keyDown(window, { key: 'ArrowDown' });
+      expect(useQuantumStore.getState().theta).toBeCloseTo(1.08, 2);
+
+      fireEvent.keyDown(window, { key: 'ArrowUp' });
+      expect(useQuantumStore.getState().theta).toBeCloseTo(1.0, 2);
+    });
+
+    it('clamps theta between 0 and pi', () => {
+      render(React.createElement(BlochViewport));
+      useQuantumStore.getState().setAngles(0.04, 0.0);
+
+      fireEvent.keyDown(window, { key: 'ArrowUp' });
+      expect(useQuantumStore.getState().theta).toBe(0);
+
+      useQuantumStore.getState().setAngles(Math.PI - 0.04, 0.0);
+      fireEvent.keyDown(window, { key: 'ArrowDown' });
+      expect(useQuantumStore.getState().theta).toBe(Math.PI);
+    });
+
+    it('rotates azimuthal angle phi with ArrowRight and ArrowLeft', () => {
+      render(React.createElement(BlochViewport));
+      useQuantumStore.getState().setAngles(Math.PI / 2, 1.0);
+
+      fireEvent.keyDown(window, { key: 'ArrowRight' });
+      expect(useQuantumStore.getState().phi).toBeCloseTo(1.08, 2);
+
+      fireEvent.keyDown(window, { key: 'ArrowLeft' });
+      expect(useQuantumStore.getState().phi).toBeCloseTo(1.0, 2);
+    });
+
+    it('applies quantum gates with H, X, Z keys', () => {
+      render(React.createElement(BlochViewport));
+      useQuantumStore.getState().setAngles(0, 0);
+
+      fireEvent.keyDown(window, { key: 'h' });
+      expect(useQuantumStore.getState().theta).toBeCloseTo(Math.PI / 2, 2);
+
+      fireEvent.keyDown(window, { key: 'x' });
+      expect(useQuantumStore.getState().theta).toBeCloseTo(Math.PI / 2, 2);
+
+      useQuantumStore.getState().setAngles(0, 0);
+      fireEvent.keyDown(window, { key: 'X' });
+      expect(useQuantumStore.getState().theta).toBeCloseTo(Math.PI, 2);
+
+      fireEvent.keyDown(window, { key: 'Z' });
+      expect(useQuantumStore.getState().phi).toBeCloseTo(Math.PI, 2);
+    });
+
+    it('triggers measurement with Spacebar', () => {
+      render(React.createElement(BlochViewport));
+      useQuantumStore.getState().setAngles(0, 0);
+      expect(useQuantumStore.getState().lastOutcome).toBeNull();
+
+      fireEvent.keyDown(window, { key: ' ' });
+      expect(useQuantumStore.getState().lastOutcome).toBe(0);
+    });
+
+    it('ignores keyboard navigation when target is INPUT or TEXTAREA', () => {
+      render(React.createElement(BlochViewport));
+      useQuantumStore.getState().setAngles(1.0, 1.0);
+
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      expect(useQuantumStore.getState().theta).toBe(1.0);
+
+      fireEvent.keyDown(input, { key: 'h' });
+      expect(useQuantumStore.getState().theta).toBe(1.0);
+
+      document.body.removeChild(input);
     });
   });
 });
