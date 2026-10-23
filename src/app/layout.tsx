@@ -1,8 +1,5 @@
-// src/app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
-import { AppShell } from '@/components/layout/AppShell';
-import { SessionProvider } from '@/components/layout/SessionProvider';
 
 export const metadata: Metadata = {
   title: 'QuantumLab 3D',
@@ -17,11 +14,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark theme-dark" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased min-h-screen">
-        <SessionProvider>
-          <AppShell>
-            {children}
-          </AppShell>
-        </SessionProvider>
+        {children}
       </body>
     </html>
   );
