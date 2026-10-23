@@ -1,7 +1,7 @@
 import i18next from 'eslint-plugin-i18next';
+import type { Linter } from 'eslint';
 
-/** @type {import('eslint').Linter.Config[]} */
-const config = [
+const config: Linter.Config[] = [
   {
     files: ['src/components/**/*.{ts,tsx}', 'src/features/**/*.{ts,tsx}', 'src/app/**/*.{ts,tsx}'],
     ignores: ['**/*.test.{ts,tsx}', '**/__tests__/**', 'src/tests/**'],

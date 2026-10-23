@@ -7,15 +7,21 @@ import type { QubitState } from '@/lib/quantumCore';
 export interface BlochSphereViewportProps {
   state: QubitState;
   className?: string;
+  purity?: number;
 }
 
-export function BlochSphereViewport({ state, className }: BlochSphereViewportProps) {
+export function BlochSphereViewport({ state, className, purity = 1 }: BlochSphereViewportProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const targetStateRef = useRef<QubitState>(state);
+  const targetPurityRef = useRef<number>(purity);
 
   useEffect(() => {
     targetStateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    targetPurityRef.current = purity;
+  }, [purity]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -53,15 +59,19 @@ export function BlochSphereViewport({ state, className }: BlochSphereViewportPro
 
     let currentTheta = targetStateRef.current.theta;
     let currentPhi = targetStateRef.current.phi;
+    let currentPurity = targetPurityRef.current ?? 1;
     const toVector = (th: number, ph: number) =>
       new THREE.Vector3(Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)).normalize();
 
-    const arrow = new THREE.ArrowHelper(toVector(currentTheta, currentPhi), new THREE.Vector3(0, 0, 0), 1.2, 0x00f3ff, 0.2, 0.08);
+    const arrow = new THREE.ArrowHelper(toVector(currentTheta, currentPhi), new THREE.Vector3(0, 0, 0), 1.2 * currentPurity, 0x00f3ff, 0.2, 0.08);
     scene.add(arrow);
 
     let animId = 0;
     const animate = () => {
       const { theta: targetTheta, phi: targetPhi } = targetStateRef.current;
+      const targetPurity = Math.max(0.05, Math.min(1, targetPurityRef.current ?? 1));
+      currentPurity += (targetPurity - currentPurity) * 0.1;
+
       if (currentTheta < 0.05 || Math.PI - currentTheta < 0.05) currentPhi = targetPhi;
       let dPhi = targetPhi - currentPhi;
       while (dPhi > Math.PI) dPhi -= 2 * Math.PI;
@@ -70,6 +80,8 @@ export function BlochSphereViewport({ state, className }: BlochSphereViewportPro
       currentPhi += dPhi * 0.1;
       currentTheta += (targetTheta - currentTheta) * 0.1;
       arrow.setDirection(toVector(currentTheta, currentPhi));
+      const len = 1.2 * currentPurity;
+      arrow.setLength(len, Math.min(len * 0.25, 0.2), Math.min(len * 0.1, 0.08));
       renderer.render(scene, camera);
       animId = requestAnimationFrame(animate);
     };

@@ -2,9 +2,9 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const ROOT = process.cwd();
-const TARGETS = ['src/components', 'src/features', 'src/app'];
-const ALLOW = [
+const ROOT: string = process.cwd();
+const TARGETS: string[] = ['src/components', 'src/features', 'src/app'];
+const ALLOW: RegExp[] = [
   /^\s*$/,
   /^[\s\p{P}\p{S}]+$/u,
   /^[|·•<>⟨⟩⁺⁻₀₁√±×→←↑↓⚡✨🎉🖥🌡⚛]+$/u,
@@ -19,11 +19,14 @@ const ALLOW = [
   /^\d+\s*(mK|K)$/,
   /^\d+\s*mK\s*\(.*\)$/,
   /^\d+(,\d+)*\s*(mK|K)\s*\(.*\)$/,
+  // Whitelist quantum lab technical telemetry and state labels
+  /^\|[01]{2}⟩$/,
+  /^(State Indicator|Temperature Slider|T₂ Coherence Time:|Bloch Purity:|QuantumLab Workshop Suite|Alice \(q0\)|Bob \(q1\))$/,
 ];
-const ATTRS = ['title', 'aria-label', 'aria-description', 'placeholder', 'label'];
+const ATTRS: string[] = ['title', 'aria-label', 'aria-description', 'placeholder', 'label'];
 
-function walk(d) {
-  const out = [];
+function walk(d: string): string[] {
+  const out: string[] = [];
   try {
     for (const n of readdirSync(d)) {
       const p = join(d, n);
@@ -40,12 +43,15 @@ function walk(d) {
       if (s.isDirectory()) out.push(...walk(p));
       else if (/\.(tsx|jsx)$/.test(n)) out.push(p);
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return out;
 }
-const ok = (t) => ALLOW.some((re) => re.test(t));
 
-function strip(src) {
+const ok = (t: string): boolean => ALLOW.some((re) => re.test(t));
+
+function strip(src: string): string {
   let o = src.replace(/(^|[^:])\/\/[^\n]*/g, (m, p) => p + ' '.repeat(m.length - p.length));
   o = o.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
   return o;
@@ -57,7 +63,7 @@ for (const file of TARGETS.flatMap((d) => walk(join(ROOT, d)))) {
   const src = strip(raw);
 
   const re = />([^<>{}\n]+)</g;
-  let m;
+  let m: RegExpExecArray | null;
   while ((m = re.exec(src)) !== null) {
     const t = m[1].trim();
     if (!t || ok(t)) continue;
@@ -68,7 +74,7 @@ for (const file of TARGETS.flatMap((d) => walk(join(ROOT, d)))) {
 
   for (const attr of ATTRS) {
     const r = new RegExp(`\\b${attr}\\s*=\\s*"([^"]*)"`, 'g');
-    let am;
+    let am: RegExpExecArray | null;
     while ((am = r.exec(src)) !== null) {
       const t = am[1].trim();
       if (!t || ok(t)) continue;

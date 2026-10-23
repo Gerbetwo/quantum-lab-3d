@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { QuantumLab } from '../QuantumLab';
+import { QuantumLab, WORKSHOP_TABS } from '../QuantumLab';
 
 describe('QuantumLab Workspace Component', () => {
   it('renders initial state vector in superposition with Born probabilities', () => {
@@ -63,5 +63,98 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByText(/1\.000\|0⟩/)).toBeInTheDocument();
     expect(screen.getByText(/P\(\|0⟩\):\s*100\.0%/)).toBeInTheDocument();
     expect(screen.getByText(/P\(\|1⟩\):\s*0\.0%/)).toBeInTheDocument();
+  });
+
+  it('renders all 7 top navigation tabs and switches active step views', () => {
+    render(<QuantumLab />);
+
+    WORKSHOP_TABS.forEach((tab) => {
+      expect(screen.getByRole('button', { name: tab })).toBeInTheDocument();
+    });
+
+    // Switch to Tab 2
+    fireEvent.click(screen.getByRole('button', { name: '2. Gates' }));
+    expect(screen.getByRole('heading', { name: /2\. Quantum Gates/i })).toBeInTheDocument();
+
+    // Switch to Tab 3
+    fireEvent.click(screen.getByRole('button', { name: '3. Measurement' }));
+    expect(screen.getByRole('heading', { name: /3\. Measurement Collapse/i })).toBeInTheDocument();
+  });
+
+  it('interacts with Tab 4 (Entanglement): measures correlated Bell pair', () => {
+    render(<QuantumLab />);
+
+    fireEvent.click(screen.getByRole('button', { name: '4. Entanglement' }));
+    expect(screen.getByRole('heading', { name: /4\. Entanglement/i })).toBeInTheDocument();
+    expect(screen.getByText(/Correlated Pair Telemetry/i)).toBeInTheDocument();
+
+    // Measure pair
+    const measureEntangledBtn = screen.getByRole('button', { name: /Measure Entangled Pair/i });
+    fireEvent.click(measureEntangledBtn);
+
+    // Should display either |00⟩ or |11⟩
+    expect(screen.getByText(/Result:\s*\|(00|11)⟩/)).toBeInTheDocument();
+    expect(screen.getByText(/Perfect Correlation:\s*\|(00|11)⟩/)).toBeInTheDocument();
+  });
+
+  it('interacts with Tab 5 (Decoherence): adjusts temperature slider and updates T2', () => {
+    render(<QuantumLab />);
+
+    fireEvent.click(screen.getByRole('button', { name: '5. Decoherence' }));
+    expect(screen.getByRole('heading', { name: /5\. Decoherence/i })).toBeInTheDocument();
+    expect(screen.getByText(/Decoherence Telemetry/i)).toBeInTheDocument();
+
+    const slider = screen.getByRole('slider');
+    expect(slider).toBeInTheDocument();
+    expect(screen.getByText(/245\.4\s*μs/)).toBeInTheDocument();
+
+    // Change temperature via preset button
+    const preset300 = screen.getByRole('button', { name: '300 mK' });
+    fireEvent.click(preset300);
+
+    // T2 at 300mK = 250 * exp(-300/800) = 171.8 μs
+    expect(screen.getByText(/171\.8\s*μs/)).toBeInTheDocument();
+  });
+
+  it('interacts with Tab 6 (Grover Search): selects target and runs diffusion step', () => {
+    render(<QuantumLab />);
+
+    fireEvent.click(screen.getByRole('button', { name: '6. Grover Search' }));
+    expect(screen.getByRole('heading', { name: /6\. Grover Search/i })).toBeInTheDocument();
+    expect(screen.getByText(/4-State Probability Distribution/i)).toBeInTheDocument();
+
+    // Select target |10⟩ (index 2)
+    const targetButton = screen.getByRole('button', { name: '|10⟩' });
+    fireEvent.click(targetButton);
+
+    // Run diffusion step
+    const runBtn = screen.getByRole('button', { name: /Run Diffusion Step/i });
+    fireEvent.click(runBtn);
+
+    // Target amplitude amplification to 100%
+    expect(screen.getByText(/100\.0%/)).toBeInTheDocument();
+  });
+
+  it('interacts with Tab 7 (Error Correction): injects bit flip and runs syndrome correction', () => {
+    render(<QuantumLab />);
+
+    fireEvent.click(screen.getByRole('button', { name: '7. Error Correction' }));
+    expect(screen.getByRole('heading', { name: /7\. Error Correction/i })).toBeInTheDocument();
+    expect(screen.getByText(/\[q0, q1, q2\] = \[0, 0, 0\]/)).toBeInTheDocument();
+
+    // Inject bit flip into default target (q1)
+    const injectBtn = screen.getByRole('button', { name: /Inject Bit Flip/i });
+    fireEvent.click(injectBtn);
+
+    expect(screen.getByText(/\[q0, q1, q2\] = \[0, 1, 0\]/)).toBeInTheDocument();
+
+    // Run syndrome correction
+    const correctBtn = screen.getByRole('button', { name: /Run Syndrome Correction/i });
+    fireEvent.click(correctBtn);
+
+    // Syndrome detection
+    expect(screen.getByText(/Bit Flip Detected at Qubit 1!/i)).toBeInTheDocument();
+    expect(screen.getByText(/Corrected State:\s*\[0, 0, 0\]/)).toBeInTheDocument();
+    expect(screen.getByText(/\[q0, q1, q2\] = \[0, 0, 0\]/)).toBeInTheDocument();
   });
 });

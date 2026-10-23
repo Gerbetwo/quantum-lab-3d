@@ -21,7 +21,9 @@
     "audit:perf": "tsx scripts/audit-performance.ts",
     "lint:fix": "eslint . --fix",
     "test:a11y": "playwright test tests/e2e/console-audit.spec.ts",
-    "lint:i18n": "node scripts/i18n-audit.mjs"
+    "lint:i18n": "tsx scripts/i18n-audit.ts",
+    "tokens:fix": "tsx scripts/centralize-design-tokens.ts",
+    "lint:tokens": "tsx scripts/lint-tokens.ts"
   },
   "dependencies": {
     "@vitest/coverage-v8": "^5.0.3",
