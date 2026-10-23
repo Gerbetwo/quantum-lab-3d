@@ -31,6 +31,7 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
   const measure = useQuantumStore((s) => s.measure);
   const userPredictionProb0 = useQuantumStore((s) => s.userPredictionProb0);
   const setUserPrediction = useQuantumStore((s) => s.setUserPrediction);
+  const completeMission = useQuantumStore((s) => s.completeMission);
 
   const activeMapping = useSpatialTelemetryBridge((s) => s.getActiveMapping());
 
@@ -67,6 +68,13 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
   const handleUnlockGuess = () => {
     setIsLocked(false);
   };
+
+  // Auto-trigger mission completion upon 3D target alignment or state collapse
+  React.useEffect(() => {
+    if (isTargetAligned || lastOutcome !== null) {
+      completeMission("superposition");
+    }
+  }, [isTargetAligned, lastOutcome, completeMission]);
 
   return (
     <MissionCanvasShell

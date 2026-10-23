@@ -35,7 +35,7 @@ const PHASE_PRESETS = [
  */
 export const Mission04Interference: React.FC<Mission04InterferenceProps> = ({
   className = "",
-  missionId = "gates",
+  missionId = "interference",
 }) => {
   const phi = useQuantumStore((s) => s.phi);
   const setPhi = useQuantumStore((s) => s.setPhi);

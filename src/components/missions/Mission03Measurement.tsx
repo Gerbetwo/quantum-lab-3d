@@ -35,7 +35,7 @@ export interface Mission03MeasurementProps {
  */
 export const Mission03Measurement: React.FC<Mission03MeasurementProps> = ({
   className = "",
-  missionId = "superposition",
+  missionId = "measurement",
 }) => {
   const { t } = useTranslation();
   const theta = useQuantumStore((s) => s.theta);
