@@ -8,6 +8,7 @@ import {
   getObjectiveById,
 } from '@/lib/quantum/objectivesConfig';
 import { TargetGoalCard } from './TargetGoalCard';
+import { SpatialTooltipOverlay } from './SpatialTooltipOverlay';
 import { BlochSphereViewport } from '../BlochSphereViewport';
 import {
   QuantumPipelineRibbon,
@@ -65,7 +66,7 @@ export interface MissionCanvasShellProps {
  * MissionCanvasShell:
  * Standardized 3-Tier Viewport Shell for the tactical quantum visualizer.
  * - Tier 1: Header HUD with embedded TargetGoalCard, useTheme and useTranslation toggles
- * - Tier 2: WebGL Canvas + Spatial Overlays
+ * - Tier 2: WebGL Canvas + Spatial Overlays with active SpatialTooltipOverlay
  * - Tier 3: Quantum Pipeline Ribbon [1. PREPARE] -> [2. TRANSFORM] -> [3. MEASURE]
  */
 export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
@@ -175,6 +176,7 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
       >
         {tier2Overlays}
         {children}
+        <SpatialTooltipOverlay spatialId="state-vector" />
       </div>
 
       {/* TIER 3: Control Ribbon [1. PREPARE] -> [2. TRANSFORM] -> [3. MEASURE] */}

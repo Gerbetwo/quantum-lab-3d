@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSpatialTelemetryBridge } from '@/hooks/useSpatialTelemetryBridge';
 
 export interface ScreenCoordinates {
   x: number;
@@ -13,18 +14,18 @@ export interface ScreenCoordinates {
 
 export interface SpatialTooltipOverlayProps {
   /** 3D position vector in world space to project onto screen */
-  position: THREE.Vector3 | [number, number, number];
+  position?: THREE.Vector3 | [number, number, number];
   /** Three.js camera used for project(). Accepts camera instance or ref */
   camera?: THREE.Camera | null | React.RefObject<THREE.Camera | null>;
   /** Optional container element or ref for measuring pixel bounds. Defaults to window */
   containerRef?: React.RefObject<HTMLElement | null>;
   /** 2D pixel offset [offsetX, offsetY] relative to projected point (default: [0, -12]) */
   offset?: [number, number];
-  /** Optional spatial identifier */
+  /** Optional spatial identifier mapped to useSpatialTelemetryBridge */
   spatialId?: string;
-  /** Explicit visibility toggle (default: true) */
+  /** Explicit visibility toggle */
   visible?: boolean;
-  /** Content to display inside the tooltip */
+  /** Custom content to display inside the tooltip */
   children?: React.ReactNode;
   /** Custom CSS classes */
   className?: string;
@@ -36,6 +37,7 @@ export interface SpatialTooltipOverlayProps {
 
 /**
  * Projects a 3D vector to 2D pixel coordinates using camera.project().
+ * Equation: v_ndc = v_world * M_view * M_projection
  */
 export function project3DTo2D(
   position: THREE.Vector3,
@@ -53,7 +55,8 @@ export function project3DTo2D(
   return { x, y, isVisible, z: p.z };
 }
 
-function toVector3(pos: THREE.Vector3 | [number, number, number]): THREE.Vector3 {
+function toVector3(pos?: THREE.Vector3 | [number, number, number]): THREE.Vector3 {
+  if (!pos) return new THREE.Vector3(0, 0, 0);
   if (pos instanceof THREE.Vector3) return pos;
   return new THREE.Vector3(pos[0], pos[1], pos[2]);
 }
@@ -91,8 +94,8 @@ export function useFrameLoop(callback: () => void, active = true): void {
 
 /**
  * SpatialTooltipOverlay:
- * Projects a 3D mesh vector into 2D absolute pixel coordinates via camera.project(),
- * rendering content inside an accessible, themed tactical HUD card.
+ * Unprojects 3D world vectors (x, y, z) into 2D screen coordinates via camera projection matrices,
+ * displaying interactive LaTeX mathematical telemetry and physical explanations.
  */
 export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
   position,
@@ -107,6 +110,21 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
   onProject,
 }) => {
   const { t } = useTranslation();
+  const hoveredElement = useSpatialTelemetryBridge((s) => s.hoveredElement);
+  const activeFocusId = useSpatialTelemetryBridge((s) => s.activeFocusId);
+
+  const isSpatialMatch = spatialId ? activeFocusId === spatialId || hoveredElement?.id === spatialId : false;
+  const effectiveContent = children || (isSpatialMatch && hoveredElement ? (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1.5 border-b border-border pb-0.5">
+        <span className="text-[10px] font-bold text-primary">{hoveredElement.symbol}</span>
+        <span className="text-[11px] font-semibold text-foreground">{hoveredElement.label}</span>
+      </div>
+      <div className="text-[10px] font-mono text-muted-foreground">{hoveredElement.latex}</div>
+      <div className="text-[9px] text-muted-foreground/80">{hoveredElement.description}</div>
+    </div>
+  ) : null);
+
   const posVec = useMemo(() => toVector3(position), [position]);
 
   const calculateProjection = useCallback((): ScreenCoordinates => {
@@ -155,7 +173,7 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
 
   useFrameLoop(updateCoordinates, visible);
 
-  if (!visible || !screenCoords.isVisible) {
+  if (!visible || !screenCoords.isVisible || !effectiveContent) {
     return null;
   }
 
@@ -176,8 +194,8 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
         ...style,
       }}
     >
-      <div className="px-2.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground text-xs font-mono backdrop-blur-md shadow-lg">
-        {children}
+      <div className="px-2.5 py-1.5 rounded-lg border border-border bg-card/95 text-foreground text-xs font-mono backdrop-blur-md shadow-xl">
+        {effectiveContent}
       </div>
     </div>
   );
