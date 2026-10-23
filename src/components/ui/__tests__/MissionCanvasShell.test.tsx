@@ -68,4 +68,26 @@ describe('MissionCanvasShell', () => {
     fireEvent.click(toggleButton);
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
+
+  it('renders and toggles language via the Tier 1 language toggle button', () => {
+    render(
+      <MissionCanvasShell
+        tier2Canvas={<div data-testid="canvas-slot">Canvas</div>}
+      />
+    );
+
+    const langButton = screen.getByTestId('language-toggle-button');
+    expect(langButton).toBeInTheDocument();
+    expect(langButton).toHaveTextContent('EN');
+
+    // Toggle to Spanish
+    fireEvent.click(langButton);
+    expect(langButton).toHaveTextContent('ES');
+    expect(document.documentElement.lang).toBe('es');
+
+    // Toggle back to English
+    fireEvent.click(langButton);
+    expect(langButton).toHaveTextContent('EN');
+    expect(document.documentElement.lang).toBe('en');
+  });
 });

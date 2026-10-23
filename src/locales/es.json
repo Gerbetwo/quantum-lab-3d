@@ -1,0 +1,119 @@
+{
+  "header": {
+    "title": "QuantumLab 3D",
+    "mission": "Misión: {mission}",
+    "toggle_theme": "Cambiar tema",
+    "toggle_language": "Cambiar idioma",
+    "switch_to_light": "Cambiar a tema claro",
+    "switch_to_dark": "Cambiar a tema oscuro",
+    "lang_en": "EN",
+    "lang_es": "ES"
+  },
+  "ribbon": {
+    "aria_label": "Línea de ejecución cuántica",
+    "prepare": "1. PREPARAR",
+    "transform": "2. TRANSFORMAR",
+    "measure": "3. MEDIR",
+    "collapse": "COLAPSAR",
+    "reset_title": "Restablecer estado a |0⟩",
+    "reset_aria": "Restablecer estado",
+    "collapse_title": "Colapsar función de onda",
+    "collapse_aria": "Medición con colapso de función de onda",
+    "presets": {
+      "zero": {
+        "label": "Fundamental |0⟩",
+        "desc": "Estado fundamental en el polo norte computacional"
+      },
+      "one": {
+        "label": "Excitado |1⟩",
+        "desc": "Estado excitado en el polo sur computacional"
+      },
+      "plus": {
+        "label": "Superposición |+⟩",
+        "desc": "Superposición simétrica sobre el eje +X"
+      },
+      "minus": {
+        "label": "Superposición |-⟩",
+        "desc": "Superposición sobre el eje -X"
+      },
+      "plusi": {
+        "label": "Fase |+i⟩",
+        "desc": "Superposición sobre el eje +Y"
+      },
+      "minusi": {
+        "label": "Fase |-i⟩",
+        "desc": "Superposición sobre el eje -Y"
+      }
+    }
+  },
+  "gates": {
+    "hadamard": {
+      "name": "Hadamard",
+      "desc": "Crea superposición equiprobable"
+    },
+    "pauliX": {
+      "name": "Pauli-X",
+      "desc": "Inversión de bit (compuerta NOT)"
+    },
+    "pauliY": {
+      "name": "Pauli-Y",
+      "desc": "Inversión de bit y fase"
+    },
+    "pauliZ": {
+      "name": "Pauli-Z",
+      "desc": "Inversión de fase"
+    },
+    "phaseS": {
+      "name": "Fase (S)",
+      "desc": "Rotación de fase de π/2"
+    },
+    "phaseT": {
+      "name": "π/8 (T)",
+      "desc": "Rotación de fase de π/4"
+    }
+  },
+  "metrics": {
+    "dirac": "Vector de estado Dirac",
+    "probabilities": "Probabilidades de medición",
+    "p0": "P(|0⟩)",
+    "p1": "P(|1⟩)",
+    "bloch_sphere": "Esfera de Bloch 3D",
+    "purity": "Pureza: {percent}%"
+  },
+  "goals": {
+    "superposition": {
+      "title": "Superposición",
+      "desc": "Prepara estados de superposición cuántica en la esfera de Bloch."
+    },
+    "gates": {
+      "title": "Compuertas cuánticas",
+      "desc": "Rota el vector de estado mediante operadores unitarios."
+    },
+    "measurement": {
+      "title": "Medición",
+      "desc": "Observa el colapso de la función de onda en la base computacional."
+    },
+    "entanglement": {
+      "title": "Entrelazamiento",
+      "desc": "Genera pares EPR entrelazados."
+    },
+    "decoherence": {
+      "title": "Decoherencia térmica",
+      "desc": "Observa el decaimiento de fase al aumentar la temperatura."
+    },
+    "grover": {
+      "title": "Búsqueda de Grover",
+      "desc": "Amplifica la probabilidad del estado objetivo mediante difusión."
+    },
+    "qec": {
+      "title": "Corrección de errores cuánticos",
+      "desc": "Detecta y corrige inversiones de bit con código de 3 cúbits."
+    }
+  },
+  "tooltip": {
+    "info": "Información",
+    "close": "Cerrar",
+    "state_vector": "Vector de estado",
+    "coordinates": "Coordenadas: θ={theta}, φ={phi}"
+  }
+}

@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/hooks/useTranslation';
 import { BlochSphereViewport } from '../BlochSphereViewport';
 import {
   QuantumPipelineRibbon,
   type QuantumPipelineRibbonProps,
 } from './QuantumPipelineRibbon';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Globe } from 'lucide-react';
 
 export interface MissionCanvasShellProps {
   /** Active mission or workshop ID / title */
@@ -15,7 +16,7 @@ export interface MissionCanvasShellProps {
 
   /**
    * Tier 1: Top Header & Objective HUD Slot.
-   * If not provided, defaults to standard header with theme toggle.
+   * If not provided, defaults to standard header with theme and language toggles.
    */
   tier1Header?: React.ReactNode;
 
@@ -49,7 +50,7 @@ export interface MissionCanvasShellProps {
 /**
  * MissionCanvasShell:
  * Standardized 3-Tier Viewport Shell for the tactical quantum visualizer.
- * - Tier 1: Header / Objective HUD with integrated useTheme switcher
+ * - Tier 1: Header / Objective HUD with integrated useTheme and useTranslation toggles
  * - Tier 2: WebGL Canvas + Spatial Overlays
  * - Tier 3: Quantum Pipeline Ribbon [1. PREPARE] -> [2. TRANSFORM] -> [3. MEASURE]
  */
@@ -64,6 +65,7 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
   className = '',
 }) => {
   const { theme, toggleTheme } = useTheme();
+  const { locale, toggleLanguage, t } = useTranslation();
 
   return (
     <div
@@ -96,21 +98,33 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
           <>
             <div className="flex items-center gap-3">
               <span className="font-mono text-xs font-bold tracking-widest text-primary uppercase bg-secondary px-2.5 py-1 rounded border border-border">
-                {'QuantumLab 3D'}
+                {t('header.title')}
               </span>
               <span className="text-xs font-mono text-muted-foreground hidden sm:inline">
-                {'Mission: '}<span className="text-foreground capitalize">{missionId}</span>
+                {t('header.mission', { mission: missionId })}
               </span>
             </div>
 
-            {/* Tier 1 Theme Switcher */}
+            {/* Tier 1 Switchers: Language & Theme */}
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                data-testid="language-toggle-button"
+                aria-label={t('header.toggle_language')}
+                title={t('header.toggle_language')}
+                className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+              >
+                <Globe className="w-3.5 h-3.5 text-primary" />
+                <span>{locale === 'en' ? 'EN' : 'ES'}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={toggleTheme}
                 data-testid="theme-toggle-button"
-                aria-label={'Toggle theme'}
-                title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Theme`}
+                aria-label={t('header.toggle_theme')}
+                title={theme === 'dark' ? t('header.switch_to_light') : t('header.switch_to_dark')}
                 className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
               >
                 {theme === 'dark' ? (

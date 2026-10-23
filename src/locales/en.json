@@ -1,0 +1,119 @@
+{
+  "header": {
+    "title": "QuantumLab 3D",
+    "mission": "Mission: {mission}",
+    "toggle_theme": "Toggle theme",
+    "toggle_language": "Toggle language",
+    "switch_to_light": "Switch to Light Theme",
+    "switch_to_dark": "Switch to Dark Theme",
+    "lang_en": "EN",
+    "lang_es": "ES"
+  },
+  "ribbon": {
+    "aria_label": "Quantum Execution Pipeline",
+    "prepare": "1. PREPARE",
+    "transform": "2. TRANSFORM",
+    "measure": "3. MEASURE",
+    "collapse": "COLLAPSE",
+    "reset_title": "Reset State to |0⟩",
+    "reset_aria": "Reset State",
+    "collapse_title": "Collapse Wavefunction",
+    "collapse_aria": "Collapse Wavefunction Measurement",
+    "presets": {
+      "zero": {
+        "label": "Ground |0⟩",
+        "desc": "North pole computational ground state"
+      },
+      "one": {
+        "label": "Excited |1⟩",
+        "desc": "South pole computational excited state"
+      },
+      "plus": {
+        "label": "Superposition |+⟩",
+        "desc": "Equal superposition on +X axis"
+      },
+      "minus": {
+        "label": "Superposition |-⟩",
+        "desc": "Equal superposition on -X axis"
+      },
+      "plusi": {
+        "label": "Phase |+i⟩",
+        "desc": "Superposition on +Y axis"
+      },
+      "minusi": {
+        "label": "Phase |-i⟩",
+        "desc": "Superposition on -Y axis"
+      }
+    }
+  },
+  "gates": {
+    "hadamard": {
+      "name": "Hadamard",
+      "desc": "Creates equal superposition"
+    },
+    "pauliX": {
+      "name": "Pauli-X",
+      "desc": "Bit flip (NOT gate)"
+    },
+    "pauliY": {
+      "name": "Pauli-Y",
+      "desc": "Bit and phase flip"
+    },
+    "pauliZ": {
+      "name": "Pauli-Z",
+      "desc": "Phase flip"
+    },
+    "phaseS": {
+      "name": "Phase (S)",
+      "desc": "π/2 phase rotation"
+    },
+    "phaseT": {
+      "name": "π/8 (T)",
+      "desc": "π/4 phase rotation"
+    }
+  },
+  "metrics": {
+    "dirac": "Dirac State Vector",
+    "probabilities": "Measurement Probabilities",
+    "p0": "P(|0⟩)",
+    "p1": "P(|1⟩)",
+    "bloch_sphere": "Bloch Sphere 3D",
+    "purity": "Purity: {percent}%"
+  },
+  "goals": {
+    "superposition": {
+      "title": "Superposition",
+      "desc": "Prepare quantum superposition states on the Bloch sphere."
+    },
+    "gates": {
+      "title": "Quantum Gates",
+      "desc": "Rotate the state vector using unitary operators."
+    },
+    "measurement": {
+      "title": "Measurement",
+      "desc": "Observe wavefunction collapse into computational basis."
+    },
+    "entanglement": {
+      "title": "Entanglement",
+      "desc": "Create correlated EPR Bell pairs."
+    },
+    "decoherence": {
+      "title": "Thermal Decoherence",
+      "desc": "Observe phase decay as temperature rises."
+    },
+    "grover": {
+      "title": "Grover Search",
+      "desc": "Amplify target state probability through amplitude amplification."
+    },
+    "qec": {
+      "title": "Quantum Error Correction",
+      "desc": "Detect and correct bit flips with a 3-qubit code."
+    }
+  },
+  "tooltip": {
+    "info": "Information",
+    "close": "Close",
+    "state_vector": "State Vector",
+    "coordinates": "Coordinates: θ={theta}, φ={phi}"
+  }
+}
