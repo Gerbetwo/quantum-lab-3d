@@ -1,26 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   type QubitState,
   computeStateMetrics,
-  applyGate,
-  measureState,
-} from '@/lib/quantumCore';
-import {
-  simulateGroverStep,
-  runShorDemo,
-  detectBitFlipSyndrome,
-  injectBitFlip,
-  bitFlipEncode,
-  type BitTriple,
-  type GroverStepState,
-} from '@/core/algorithms';
-import {
-  measureEntangledQubit,
   applyPhaseDecay,
   calculateT2CoherenceTime,
 } from '@/core/qubitMath';
+import { runShorDemo } from '@/core/algorithms';
+import { useQuantumLabState } from '@/hooks/useQuantumLabState';
 import { BlochSphereViewport } from './BlochSphereViewport';
 import { SingleQubitPanel } from './SingleQubitPanel';
 import { EntanglementPanel, DecoherencePanel } from './EntanglementDecoherencePanels';
@@ -37,36 +25,30 @@ export const WORKSHOP_TABS = [
 ] as const;
 
 export function QuantumLab() {
-  const [activeTab, setActiveTab] = useState<number>(0);
-
-  // Tabs 1-3 State (Single Qubit Kinematics)
-  const [state, setState] = useState<QubitState>({
-    theta: Math.PI / 2,
-    phi: 0,
-  });
-  const [lastOutcome, setLastOutcome] = useState<0 | 1 | null>(null);
-
-  // Tab 4 State (Entanglement)
-  const [entangledPair, setEntangledPair] = useState<{
-    alice: 0 | 1;
-    bob: 0 | 1;
-    state: string;
-  } | null>(null);
-
-  // Tab 5 State (Decoherence)
-  const [temperature, setTemperature] = useState<number>(15);
-
-  // Tab 6 State (Grover Search)
-  const [groverTarget, setGroverTarget] = useState<number>(1);
-  const [groverState, setGroverState] = useState<GroverStepState | null>(null);
-
-  // Tab 7 State (QEC)
-  const [qecTriple, setQecTriple] = useState<BitTriple>(bitFlipEncode(0));
-  const [syndromeInfo, setSyndromeInfo] = useState<{
-    syndrome: number;
-    errorIndex: number;
-    corrected: BitTriple;
-  } | null>(null);
+  const {
+    activeTab,
+    state,
+    lastOutcome,
+    entangledPair,
+    temperature,
+    groverTarget,
+    groverProbs,
+    qecTriple,
+    syndromeInfo,
+    setTab,
+    applySingleQubitGate,
+    measureSingleQubit,
+    resetSingleQubit,
+    measureEntangled,
+    resetEntangled,
+    setTemperature,
+    setGroverTarget,
+    runGroverStep,
+    resetGrover,
+    injectQecBitFlip,
+    runQecCorrection,
+    resetQec,
+  } = useQuantumLabState();
 
   // Single-qubit metrics
   const metrics = computeStateMetrics(state);
@@ -75,55 +57,6 @@ export function QuantumLab() {
   const t2Time = calculateT2CoherenceTime(temperature);
   const phaseDecay = applyPhaseDecay(Math.PI / 2, 0, 0.15, t2Time);
   const vectorPurity = phaseDecay.purity;
-
-  // Single qubit handlers
-  const handleGate = (gate: 'H' | 'X' | 'Z') => {
-    setState((prev) => applyGate(prev, gate));
-    setLastOutcome(null);
-  };
-
-  const handleMeasure = () => {
-    const res = measureState(state);
-    setState(res.newState);
-    setLastOutcome(res.outcome);
-  };
-
-  const handleReset = () => {
-    setState({ theta: 0, phi: 0 });
-    setLastOutcome(null);
-  };
-
-  // Entanglement handlers
-  const handleMeasureEntangled = () => {
-    const res = measureEntangledQubit();
-    setEntangledPair({
-      alice: res.aliceOutcome,
-      bob: res.bobOutcome,
-      state: res.state,
-    });
-  };
-
-  // Grover handlers
-  const handleRunGrover = () => {
-    setGroverState(simulateGroverStep(2, groverTarget, 1));
-  };
-
-  // QEC handlers
-  const handleInjectBitFlip = (idx: 0 | 1 | 2 = 1) => {
-    setQecTriple((prev) => injectBitFlip(prev, idx));
-    setSyndromeInfo(null);
-  };
-
-  const handleRunSyndromeCorrection = () => {
-    const res = detectBitFlipSyndrome(qecTriple);
-    setSyndromeInfo(res);
-    setQecTriple(res.corrected);
-  };
-
-  const handleResetQEC = (bit: 0 | 1 = 0) => {
-    setQecTriple(bitFlipEncode(bit));
-    setSyndromeInfo(null);
-  };
 
   // Viewport state computation for current tab
   const getViewportState = (): { state: QubitState; purity: number } => {
@@ -143,8 +76,9 @@ export function QuantumLab() {
         { theta: Math.PI / 2, phi: Math.PI },
         { theta: Math.PI, phi: 0 },
       ];
+      const isAmplified = groverProbs[groverTarget] > 0.8;
       return {
-        state: groverState ? angles[groverTarget] : { theta: Math.PI / 2, phi: 0 },
+        state: isAmplified ? angles[groverTarget] : { theta: Math.PI / 2, phi: 0 },
         purity: 1.0,
       };
     }
@@ -155,7 +89,6 @@ export function QuantumLab() {
   };
 
   const { state: activeViewportState, purity: activePurity } = getViewportState();
-  const groverProbs = groverState ? groverState.probabilities : [0.25, 0.25, 0.25, 0.25];
   const shorPeriod = runShorDemo(7).period;
 
   return (
@@ -167,7 +100,7 @@ export function QuantumLab() {
             <button
               key={tab}
               type="button"
-              onClick={() => setActiveTab(idx)}
+              onClick={() => setTab(idx)}
               className={`px-3 py-1.5 rounded-lg font-mono text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === idx
                   ? 'bg-secondary border border-primary text-primary shadow-sm shadow-cyan-500/20'
@@ -207,17 +140,17 @@ export function QuantumLab() {
                 state={state}
                 metrics={metrics}
                 lastOutcome={lastOutcome}
-                onGate={handleGate}
-                onMeasure={handleMeasure}
-                onReset={handleReset}
+                onGate={applySingleQubitGate}
+                onMeasure={measureSingleQubit}
+                onReset={resetSingleQubit}
               />
             )}
 
             {activeTab === 3 && (
               <EntanglementPanel
                 entangledPair={entangledPair}
-                onMeasure={handleMeasureEntangled}
-                onReset={() => setEntangledPair(null)}
+                onMeasure={measureEntangled}
+                onReset={resetEntangled}
               />
             )}
 
@@ -235,12 +168,9 @@ export function QuantumLab() {
               <GroverPanel
                 groverTarget={groverTarget}
                 groverProbs={groverProbs}
-                onSelectTarget={(idx) => {
-                  setGroverTarget(idx);
-                  setGroverState(null);
-                }}
-                onRunGrover={handleRunGrover}
-                onReset={() => setGroverState(null)}
+                onSelectTarget={setGroverTarget}
+                onRunGrover={runGroverStep}
+                onReset={resetGrover}
               />
             )}
 
@@ -248,9 +178,9 @@ export function QuantumLab() {
               <QECPanel
                 qecTriple={qecTriple}
                 syndromeInfo={syndromeInfo}
-                onInjectBitFlip={handleInjectBitFlip}
-                onRunSyndromeCorrection={handleRunSyndromeCorrection}
-                onReset={handleResetQEC}
+                onInjectBitFlip={injectQecBitFlip}
+                onRunSyndromeCorrection={runQecCorrection}
+                onReset={resetQec}
               />
             )}
 

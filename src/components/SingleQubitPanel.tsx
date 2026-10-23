@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import type { QubitState, StateMetrics } from '@/lib/quantumCore';
+import type { QubitState, StateMetrics } from '@/core/qubitMath';
 
 export interface SingleQubitPanelProps {
   activeTab: number;
   state: QubitState;
   metrics: StateMetrics;
   lastOutcome: 0 | 1 | null;
-  onGate: (gate: 'H' | 'X' | 'Z') => void;
+  onGate: (gate: 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T') => void;
   onMeasure: () => void;
   onReset: () => void;
 }

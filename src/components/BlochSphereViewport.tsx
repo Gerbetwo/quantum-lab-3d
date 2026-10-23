@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import type { QubitState } from '@/lib/quantumCore';
+import type { QubitState } from '@/core/qubitMath';
 
 export interface BlochSphereViewportProps {
   state: QubitState;

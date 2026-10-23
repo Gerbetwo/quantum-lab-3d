@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { BlochSphereViewport } from '../BlochSphereViewport';
-import type { QubitState } from '@/lib/quantumCore';
+import type { QubitState } from '@/core/qubitMath';
 
 describe('BlochSphereViewport Component', () => {
   it('renders container element and attaches WebGL canvas', () => {

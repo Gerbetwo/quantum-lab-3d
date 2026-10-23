@@ -4,7 +4,7 @@ import {
   applyGate,
   measureState,
   type QubitState,
-} from '../quantumCore';
+} from '@/core/qubitMath';
 
 describe('quantumCore - Pure Single-Qubit Engine', () => {
   describe('computeStateMetrics', () => {
@@ -115,6 +115,44 @@ describe('quantumCore - Pure Single-Qubit Engine', () => {
       const zzPlus = applyGate(applyGate(statePlus, 'Z'), 'Z');
       expect(zzPlus.theta).toBeCloseTo(Math.PI / 2);
       expect(zzPlus.phi).toBeCloseTo(0);
+    });
+
+    it('Pauli-Y applied to |0> yields |1> with pi phase flip', () => {
+      const state0: QubitState = { theta: 0, phi: 0 };
+      const stateY = applyGate(state0, 'Y');
+      expect(stateY.theta).toBe(Math.PI);
+
+      // Y(Y|0⟩) = |0⟩
+      const yy0 = applyGate(stateY, 'Y');
+      expect(yy0.theta).toBe(0);
+    });
+
+    it('Phase gate S advances phase by π/2 and satisfies S² = Z', () => {
+      const statePlus: QubitState = { theta: Math.PI / 2, phi: 0 };
+      const stateS = applyGate(statePlus, 'S');
+
+      expect(stateS.theta).toBeCloseTo(Math.PI / 2);
+      expect(stateS.phi).toBeCloseTo(Math.PI / 2);
+
+      // S² = Z
+      const stateSS = applyGate(stateS, 'S');
+      const stateZ = applyGate(statePlus, 'Z');
+      expect(stateSS.theta).toBeCloseTo(stateZ.theta);
+      expect(stateSS.phi).toBeCloseTo(stateZ.phi);
+    });
+
+    it('T gate advances phase by π/4 and satisfies T² = S', () => {
+      const statePlus: QubitState = { theta: Math.PI / 2, phi: 0 };
+      const stateT = applyGate(statePlus, 'T');
+
+      expect(stateT.theta).toBeCloseTo(Math.PI / 2);
+      expect(stateT.phi).toBeCloseTo(Math.PI / 4);
+
+      // T² = S
+      const stateTT = applyGate(stateT, 'T');
+      const stateS = applyGate(statePlus, 'S');
+      expect(stateTT.theta).toBeCloseTo(stateS.theta);
+      expect(stateTT.phi).toBeCloseTo(stateS.phi);
     });
   });
 

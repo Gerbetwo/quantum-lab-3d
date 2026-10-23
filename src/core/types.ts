@@ -36,3 +36,24 @@ export interface MeasurementResult {
 export type StateVector = ComplexType[];
 export type QubitIndex = number;
 export type GateType = 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T' | 'I';
+
+export interface QubitState {
+  theta: number;
+  phi: number;
+}
+
+export interface StateMetrics {
+  alpha: number;
+  betaReal: number;
+  betaImag: number;
+  prob0: number;
+  prob1: number;
+}
+
+export type BitTriple = [0 | 1, 0 | 1, 0 | 1];
+
+export interface SyndromeResult {
+  syndrome: number;
+  errorIndex: number;
+  corrected: BitTriple;
+}

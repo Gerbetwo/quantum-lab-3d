@@ -7,6 +7,8 @@ import {
   QuantumState,
   QubitBlochState,
   MeasurementResult,
+  QubitState,
+  StateMetrics,
 } from './types';
 
 export function normalizeAngleTheta(theta: number): number {
@@ -93,6 +95,117 @@ export function measureEntangledQubit(randomSeed = Math.random()): {
     bobOutcome: bit,
     state: bit === 0 ? '|00⟩' : '|11⟩',
   };
+}
+
+/**
+ * Calculates alpha = cos(theta/2), betaReal = sin(theta/2)*cos(phi),
+ * betaImag = sin(theta/2)*sin(phi), prob0 = cos^2(theta/2), prob1 = sin^2(theta/2).
+ */
+export function computeStateMetrics(state: QubitState): StateMetrics {
+  const halfTheta = state.theta / 2;
+  const alpha = Math.cos(halfTheta);
+  const sinHalf = Math.sin(halfTheta);
+  const betaReal = sinHalf * Math.cos(state.phi);
+  const betaImag = sinHalf * Math.sin(state.phi);
+  const prob0 = Math.cos(halfTheta) ** 2;
+  const prob1 = Math.sin(halfTheta) ** 2;
+
+  return {
+    alpha,
+    betaReal,
+    betaImag,
+    prob0,
+    prob1,
+  };
+}
+
+/**
+ * Calculates updated spherical angles (theta, phi) after applying unitary matrix rotation.
+ * Supports: H (Hadamard), X (Pauli-X), Y (Pauli-Y), Z (Pauli-Z), S (Phase), T (π/8).
+ */
+export function applyGate(
+  state: QubitState,
+  gate: 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T'
+): QubitState {
+  const x = Math.sin(state.theta) * Math.cos(state.phi);
+  const y = Math.sin(state.theta) * Math.sin(state.phi);
+  const z = Math.cos(state.theta);
+
+  let nx = x;
+  let ny = y;
+  let nz = z;
+
+  switch (gate) {
+    case 'H':
+      nx = z;
+      ny = -y;
+      nz = x;
+      break;
+    case 'X':
+      nx = x;
+      ny = -y;
+      nz = -z;
+      break;
+    case 'Y':
+      nx = -x;
+      ny = y;
+      nz = -z;
+      break;
+    case 'Z':
+      nx = -x;
+      ny = -y;
+      nz = z;
+      break;
+    case 'S':
+      nx = -y;
+      ny = x;
+      nz = z;
+      break;
+    case 'T': {
+      const cos45 = Math.SQRT1_2;
+      const sin45 = Math.SQRT1_2;
+      nx = x * cos45 - y * sin45;
+      ny = x * sin45 + y * cos45;
+      nz = z;
+      break;
+    }
+  }
+
+  const clampedZ = Math.max(-1, Math.min(1, nz));
+  if (Math.abs(clampedZ - 1) < 1e-12) {
+    return { theta: 0, phi: 0 };
+  }
+  if (Math.abs(clampedZ + 1) < 1e-12) {
+    return { theta: Math.PI, phi: 0 };
+  }
+
+  const theta = Math.acos(clampedZ);
+  let phi = Math.atan2(ny, nx);
+  if (phi < 0) {
+    phi += 2 * Math.PI;
+  }
+  if (Math.abs(phi) < 1e-12 || Math.abs(phi - 2 * Math.PI) < 1e-12) {
+    phi = 0;
+  }
+
+  return { theta, phi };
+}
+
+/**
+ * Performs Born-rule stochastic wavefunction collapse based on prob0.
+ * Returns outcome 0 (theta=0, phi=0) or 1 (theta=PI, phi=0).
+ */
+export function measureState(
+  state: QubitState,
+  seed = Math.random()
+): { outcome: 0 | 1; newState: QubitState } {
+  const { prob0 } = computeStateMetrics(state);
+  const outcome: 0 | 1 = seed < prob0 ? 0 : 1;
+  const newState: QubitState = outcome === 0
+    ? { theta: 0, phi: 0 }
+    : { theta: Math.PI, phi: 0 };
+
+  return { outcome, newState };
 }
 
 export * from './types';

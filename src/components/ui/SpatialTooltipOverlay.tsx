@@ -130,7 +130,7 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
   const calculateProjection = useCallback((): ScreenCoordinates => {
     const activeCamera = resolveCamera(cameraProp);
     if (!activeCamera) {
-      return { x: 0, y: 0, isVisible: false, z: 0 };
+      return { x: 0, y: 0, isVisible: true, z: 0 };
     }
 
     let width = typeof window !== 'undefined' ? window.innerWidth || 800 : 800;
@@ -151,7 +151,7 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
       const height = typeof window !== 'undefined' ? window.innerHeight || 600 : 600;
       return project3DTo2D(posVec, cameraProp as THREE.Camera, width, height);
     }
-    return { x: 0, y: 0, isVisible: false, z: 0 };
+    return { x: 0, y: 0, isVisible: true, z: 0 };
   });
 
   const updateCoordinates = useCallback(() => {

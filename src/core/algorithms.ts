@@ -1,7 +1,5 @@
-/**
- * Didactic Quantum Algorithms Mechanics
- * Grover Search, Shor (N=15), 3-Qubit QEC
- */
+import type { BitTriple, SyndromeResult } from './types';
+export type { BitTriple, SyndromeResult };
 
 export interface GroverStepState {
   step: number;
@@ -131,8 +129,6 @@ export function simulate3QubitBitFlipEC(errorInjectedIndex: number | null): QECR
   };
 }
 
-export type BitTriple = [0 | 1, 0 | 1, 0 | 1];
-
 export function bitFlipEncode(bit: 0 | 1): BitTriple {
   return bit === 1 ? [1, 1, 1] : [0, 0, 0];
 }
@@ -143,11 +139,7 @@ export function injectBitFlip(triple: BitTriple, index: 0 | 1 | 2): BitTriple {
   return copy;
 }
 
-export function detectBitFlipSyndrome(triple: BitTriple): {
-  syndrome: number;
-  errorIndex: number;
-  corrected: BitTriple;
-} {
+export function detectBitFlipSyndrome(triple: BitTriple): SyndromeResult {
   const [b0, b1, b2] = triple;
   let errorIndex = -1;
   const corrected: BitTriple = [...triple];
