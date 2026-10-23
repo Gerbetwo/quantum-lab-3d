@@ -3,6 +3,11 @@
 import React from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/hooks/useTranslation';
+import {
+  type QuantumObjective,
+  getObjectiveById,
+} from '@/lib/quantum/objectivesConfig';
+import { TargetGoalCard } from './TargetGoalCard';
 import { BlochSphereViewport } from '../BlochSphereViewport';
 import {
   QuantumPipelineRibbon,
@@ -14,9 +19,18 @@ export interface MissionCanvasShellProps {
   /** Active mission or workshop ID / title */
   missionId?: string;
 
+  /** Active objective definition to display in Tier 1 HUD */
+  activeObjective?: QuantumObjective;
+
+  /** Whether the active objective is currently completed */
+  isObjectiveCompleted?: boolean;
+
+  /** Progress description text (e.g. "85/100 shots") */
+  objectiveProgress?: string;
+
   /**
    * Tier 1: Top Header & Objective HUD Slot.
-   * If not provided, defaults to standard header with theme and language toggles.
+   * If not provided, defaults to standard header with goal card, theme and language toggles.
    */
   tier1Header?: React.ReactNode;
 
@@ -50,12 +64,15 @@ export interface MissionCanvasShellProps {
 /**
  * MissionCanvasShell:
  * Standardized 3-Tier Viewport Shell for the tactical quantum visualizer.
- * - Tier 1: Header / Objective HUD with integrated useTheme and useTranslation toggles
+ * - Tier 1: Header HUD with embedded TargetGoalCard, useTheme and useTranslation toggles
  * - Tier 2: WebGL Canvas + Spatial Overlays
  * - Tier 3: Quantum Pipeline Ribbon [1. PREPARE] -> [2. TRANSFORM] -> [3. MEASURE]
  */
 export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
   missionId = 'superposition',
+  activeObjective: propObjective,
+  isObjectiveCompleted = false,
+  objectiveProgress,
   tier1Header,
   tier2Canvas,
   tier2Overlays,
@@ -66,6 +83,8 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
 }) => {
   const { theme, toggleTheme } = useTheme();
   const { locale, toggleLanguage, t } = useTranslation();
+
+  const activeObjective = propObjective ?? getObjectiveById(missionId);
 
   return (
     <div
@@ -90,7 +109,7 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
       {/* TIER 1: Header / Objective HUD Bar */}
       <header
         data-testid="tier-1-header"
-        className="relative z-10 w-full pointer-events-auto p-3 sm:p-4 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-md"
+        className="relative z-10 w-full pointer-events-auto p-3 sm:p-4 flex items-center justify-between gap-3 border-b border-border bg-card/80 backdrop-blur-md"
       >
         {tier1Header !== undefined ? (
           tier1Header
@@ -100,10 +119,21 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
               <span className="font-mono text-xs font-bold tracking-widest text-primary uppercase bg-secondary px-2.5 py-1 rounded border border-border">
                 {t('header.title')}
               </span>
-              <span className="text-xs font-mono text-muted-foreground hidden sm:inline">
+              <span className="text-xs font-mono text-muted-foreground hidden lg:inline">
                 {t('header.mission', { mission: missionId })}
               </span>
             </div>
+
+            {/* Tier 1 Embedded Target Objective Card */}
+            {activeObjective && (
+              <div className="hidden sm:flex flex-1 justify-center max-w-md mx-2">
+                <TargetGoalCard
+                  objective={activeObjective}
+                  isCompleted={isObjectiveCompleted}
+                  progressText={objectiveProgress}
+                />
+              </div>
+            )}
 
             {/* Tier 1 Switchers: Language & Theme */}
             <div className="flex items-center gap-2">
