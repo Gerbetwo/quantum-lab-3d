@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { normalizeAngleTheta, normalizeAnglePhi } from "@/core/qubitMath";
+import { playVectorSnap } from "@/lib/audio/soundEngine";
 
 export interface SphericalCoordinates {
   /** Polar angle θ in radians, bounded to [0, π] */
@@ -31,6 +32,16 @@ export interface UseVectorDragOptions {
   initialPhi?: number;
   /** Whether drag interaction is enabled (default: true) */
   enabled?: boolean;
+  /** Whether magnetic snapping to canonical Bloch states is active (default: true) */
+  snapEnabled?: boolean;
+  /** Angular snap threshold in radians (default: 0.08 rad ~ 4.5 degrees) */
+  snapThreshold?: number;
+  /** Custom snap targets. Defaults to canonical eigenstates (|0⟩, |1⟩, |+⟩, |-⟩, |+i⟩, |-i⟩) */
+  snapTargets?: SphericalCoordinates[];
+  /** Whether to play procedural snap audio cue on snap threshold entry (default: true) */
+  playSnapAudio?: boolean;
+  /** Optional callback fired when vector enters or leaves snap state */
+  onSnap?: (target: SphericalCoordinates | null) => void;
   /** Optional callback fired when drag starts */
   onDragStart?: (coords: SphericalCoordinates, vector: THREE.Vector3) => void;
   /** Optional callback fired on each pointer move during drag */
@@ -50,6 +61,10 @@ export interface VectorDragState {
   phi: number;
   /** Grouped spherical coordinates */
   spherical: SphericalCoordinates;
+  /** Active snap target if currently within snap threshold, otherwise null */
+  snappedTarget: SphericalCoordinates | null;
+  /** Whether vector is currently snapped */
+  isSnapped: boolean;
 }
 
 export interface UseVectorDragReturn extends VectorDragState {
@@ -80,6 +95,35 @@ export interface UseVectorDragReturn extends VectorDragState {
 
   /** Reset drag state and angles to initial values */
   reset: () => void;
+}
+
+/** Canonical eigenstates and equator axes for magnetic snapping */
+export const CANONICAL_SNAP_TARGETS: SphericalCoordinates[] = [
+  { theta: 0, phi: 0 }, // North pole |0⟩
+  { theta: Math.PI, phi: 0 }, // South pole |1⟩
+  { theta: Math.PI / 2, phi: 0 }, // +X (|+)
+  { theta: Math.PI / 2, phi: Math.PI }, // -X (|-)
+  { theta: Math.PI / 2, phi: Math.PI / 2 }, // +Y (|+i)
+  { theta: Math.PI / 2, phi: (3 * Math.PI) / 2 }, // -Y (|-i)
+];
+
+/**
+ * Check if a unit vector is within angular threshold of any snap target.
+ */
+export function findSnapTarget(
+  unitVector: THREE.Vector3,
+  targets: SphericalCoordinates[] = CANONICAL_SNAP_TARGETS,
+  threshold = 0.08
+): SphericalCoordinates | null {
+  for (const target of targets) {
+    const targetVec = anglesToSphericalVector(target.theta, target.phi, 1.0);
+    const dot = Math.max(-1, Math.min(1, unitVector.dot(targetVec)));
+    const angularDiff = Math.acos(dot);
+    if (angularDiff <= threshold) {
+      return target;
+    }
+  }
+  return null;
 }
 
 /**
@@ -202,7 +246,7 @@ const DEFAULT_CENTER = new THREE.Vector3(0, 0, 0);
 
 /**
  * Custom React hook for translating 2D pointer coordinates on a Three.js canvas
- * into 3D spherical angles (θ ∈ [0, π], φ ∈ [0, 2π]) with raycasting and drag tracking.
+ * into 3D spherical angles (θ ∈ [0, π], φ ∈ [0, 2π]) with raycasting, magnetic snapping, and audio snap cues.
  */
 export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDragReturn {
   const {
@@ -212,6 +256,11 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
     initialTheta = 0,
     initialPhi = 0,
     enabled = true,
+    snapEnabled = true,
+    snapThreshold = 0.08,
+    snapTargets = CANONICAL_SNAP_TARGETS,
+    playSnapAudio = true,
+    onSnap,
     onDragStart,
     onDrag,
     onDragEnd,
@@ -228,10 +277,12 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
   const [targetVector, setTargetVectorState] = useState(() =>
     anglesToSphericalVector(initialTheta, initialPhi, radius, center)
   );
+  const [snappedTarget, setSnappedTarget] = useState<SphericalCoordinates | null>(null);
 
   const isDraggingRef = useRef(isDragging);
   const thetaRef = useRef(theta);
   const phiRef = useRef(phi);
+  const snappedTargetRef = useRef<SphericalCoordinates | null>(null);
 
   useEffect(() => {
     isDraggingRef.current = isDragging;
@@ -259,8 +310,41 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
 
   const updateFromNdc = useCallback(
     (ndcX: number, ndcY: number): DragCalculationResult | null => {
-      const result = calculateFromNdc(ndcX, ndcY);
-      if (!result) return null;
+      const rawResult = calculateFromNdc(ndcX, ndcY);
+      if (!rawResult) return null;
+
+      let result = rawResult;
+      let targetSnap: SphericalCoordinates | null = null;
+
+      if (snapEnabled) {
+        targetSnap = findSnapTarget(rawResult.unitVector, snapTargets, snapThreshold);
+        if (targetSnap) {
+          const snappedVec = anglesToSphericalVector(targetSnap.theta, targetSnap.phi, radius, center);
+          result = {
+            theta: targetSnap.theta,
+            phi: targetSnap.phi,
+            targetVector: snappedVec,
+            unitVector: snappedVec.clone().sub(center).normalize(),
+            ndc: rawResult.ndc,
+          };
+        }
+      }
+
+      // Snap trigger transition detection & procedural audio cue
+      const wasSnapped = snappedTargetRef.current !== null;
+      const isNowSnapped = targetSnap !== null;
+
+      if (isNowSnapped && !wasSnapped) {
+        if (playSnapAudio) {
+          playVectorSnap();
+        }
+        onSnap?.(targetSnap);
+      } else if (!isNowSnapped && wasSnapped) {
+        onSnap?.(null);
+      }
+
+      snappedTargetRef.current = targetSnap;
+      setSnappedTarget(targetSnap);
 
       setThetaState(result.theta);
       setPhiState(result.phi);
@@ -268,7 +352,16 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
 
       return result;
     },
-    [calculateFromNdc]
+    [
+      calculateFromNdc,
+      snapEnabled,
+      snapTargets,
+      snapThreshold,
+      radius,
+      center,
+      playSnapAudio,
+      onSnap,
+    ]
   );
 
   const updateFromPointer = useCallback(
@@ -306,6 +399,8 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
 
   const reset = useCallback(() => {
     setIsDragging(false);
+    snappedTargetRef.current = null;
+    setSnappedTarget(null);
     const t = normalizeAngleTheta(initialTheta);
     const p = normalizeAnglePhi(initialPhi);
     setThetaState(t);
@@ -417,6 +512,8 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
     theta,
     phi,
     spherical: { theta, phi },
+    snappedTarget,
+    isSnapped: snappedTarget !== null,
     onPointerDown,
     onPointerMove,
     onPointerUp,
@@ -428,3 +525,5 @@ export function useVectorDrag(options: UseVectorDragOptions = {}): UseVectorDrag
     reset,
   };
 }
+
+export default useVectorDrag;

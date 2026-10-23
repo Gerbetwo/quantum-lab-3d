@@ -7,7 +7,14 @@ import {
   anglesToSphericalVector,
   vectorToSphericalCoordinates,
   raycastToSphereAngles,
+  findSnapTarget,
+  CANONICAL_SNAP_TARGETS,
 } from "../useVectorDrag";
+import * as soundEngineModule from "@/lib/audio/soundEngine";
+
+vi.mock("@/lib/audio/soundEngine", () => ({
+  playVectorSnap: vi.fn(),
+}));
 
 describe("useVectorDrag - Mathematical Utilities", () => {
   it("translates 2D client coordinates to Normalized Device Coordinates (NDC)", () => {
@@ -200,5 +207,54 @@ describe("useVectorDrag - Hook Interaction & Lifecycle", () => {
 
     expect(result.current.isDragging).toBe(false);
     expect(onDragEnd).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("useVectorDrag - Magnetic Snapping & Procedural Audio Trigger", () => {
+  it("detects canonical snap target when vector is within angular threshold", () => {
+    // Vector pointing very close to North pole |0⟩: (0, 0.999, 0.01)
+    const nearNorth = new THREE.Vector3(0, 0.999, 0.01).normalize();
+    const snap = findSnapTarget(nearNorth, CANONICAL_SNAP_TARGETS, 0.1);
+
+    expect(snap).not.toBeNull();
+    expect(snap?.theta).toBe(0);
+  });
+
+  it("triggers playVectorSnap and onSnap callback on snap threshold entry", () => {
+    vi.clearAllMocks();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+
+    const onSnap = vi.fn();
+
+    const { result } = renderHook(() =>
+      useVectorDrag({
+        camera,
+        snapEnabled: true,
+        snapThreshold: 0.15,
+        playSnapAudio: true,
+        onSnap,
+      })
+    );
+
+    // Initial state: not snapped
+    expect(result.current.isSnapped).toBe(false);
+
+    // Move directly to center NDC (0, 0) which hits (0, 0, 1) -> +Y equator pole |+i⟩
+    act(() => {
+      result.current.updateFromNdc(0, 0);
+    });
+
+    expect(result.current.isSnapped).toBe(true);
+    expect(result.current.snappedTarget).not.toBeNull();
+    expect(soundEngineModule.playVectorSnap).toHaveBeenCalledTimes(1);
+    expect(onSnap).toHaveBeenCalledWith(
+      expect.objectContaining({
+        theta: Math.PI / 2,
+        phi: Math.PI / 2,
+      })
+    );
   });
 });
