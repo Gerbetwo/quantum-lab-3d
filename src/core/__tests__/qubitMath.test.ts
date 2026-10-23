@@ -15,6 +15,7 @@ import {
   kelvinToMilliKelvin,
   milliKelvinToKelvin,
   applyPhaseDecay,
+  thermalCollapseFactor,
 } from '../decoherenceMath';
 
 describe('qubitMath - Core Kinematics & Math Invariants', () => {
@@ -288,6 +289,21 @@ describe('qubitMath - Core Kinematics & Math Invariants', () => {
       const dLong = applyPhaseDecay(initialTheta, initialPhi, 100, t2Us);
       expect(dLong.purity).toBeGreaterThanOrEqual(0);
       expect(dLong.purity).toBeLessThan(0.01);
+    });
+
+    it('thermalCollapseFactor evaluates to 1 at 15 mK and 0 at 300 mK monotonically', () => {
+      expect(thermalCollapseFactor(15)).toBeCloseTo(1.0, 5);
+      expect(thermalCollapseFactor(300)).toBeCloseTo(0.0, 5);
+      expect(thermalCollapseFactor(10)).toBe(1.0); // clamped lower
+      expect(thermalCollapseFactor(400)).toBe(0.0); // clamped upper
+
+      // Strictly monotonic decrease across the cryostat range
+      const stepTemps = [15, 50, 100, 150, 200, 250, 300];
+      for (let i = 0; i < stepTemps.length - 1; i++) {
+        expect(thermalCollapseFactor(stepTemps[i])).toBeGreaterThan(
+          thermalCollapseFactor(stepTemps[i + 1])
+        );
+      }
     });
   });
 });

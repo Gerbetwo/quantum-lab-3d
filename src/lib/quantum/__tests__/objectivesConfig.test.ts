@@ -10,16 +10,16 @@ describe('Objectives Evaluation Engine (7 Concepts)', () => {
     expect(OBJECTIVES).toHaveLength(7);
   });
 
-  it('evaluates Superposition objective: reach state |1⟩ in ≤ 2 gates', () => {
-    // Aligned: θ > π - 0.035 and gates ≤ 2
+  it('evaluates Superposition objective: reach state |+⟩ in ≤ 2 gates', () => {
+    // Aligned: |+⟩ state (|θ - π/2| <= 0.08, |φ| <= 0.08) and gates ≤ 2
     expect(
       evaluateObjective('superposition', {
-        state: { theta: Math.PI - 0.01, phi: 0 },
+        state: { theta: Math.PI / 2, phi: 0 },
         gateCount: 1,
       })
     ).toBe(true);
 
-    // Failed: not at South pole
+    // Failed: not at |+⟩ state (|0⟩ state)
     expect(
       evaluateObjective('superposition', {
         state: { theta: 0, phi: 0 },
@@ -30,7 +30,7 @@ describe('Objectives Evaluation Engine (7 Concepts)', () => {
     // Failed: exceeded gate limit
     expect(
       evaluateObjective('superposition', {
-        state: { theta: Math.PI, phi: 0 },
+        state: { theta: Math.PI / 2, phi: 0 },
         gateCount: 3,
       })
     ).toBe(false);

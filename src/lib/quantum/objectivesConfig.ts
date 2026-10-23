@@ -34,12 +34,14 @@ export const OBJECTIVES: QuantumObjective[] = [
     tabIndex: 0,
     titleKey: 'goals.superposition.title',
     descKey: 'goals.superposition.desc',
-    criteriaText: 'Reach state |1⟩ in ≤ 2 gates (θ > π - 0.035 rad)',
+    criteriaText: 'Prepare state |+⟩ in ≤ 2 gates (θ = π/2, φ = 0)',
     check: (ctx) => {
       if (!ctx.state) return false;
-      const isAtSouthPole = ctx.state.theta >= Math.PI - 0.035;
+      const isAtPlus =
+        Math.abs(ctx.state.theta - Math.PI / 2) <= 0.08 &&
+        (Math.abs(ctx.state.phi) <= 0.08 || Math.abs(ctx.state.phi - 2 * Math.PI) <= 0.08);
       const withinGateLimit = ctx.gateCount !== undefined ? ctx.gateCount <= 2 : true;
-      return isAtSouthPole && withinGateLimit;
+      return isAtPlus && withinGateLimit;
     },
   },
   {

@@ -25,7 +25,7 @@ export function GroverPanel({
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             {t('panels.grover.title')} <span className="text-primary text-sm font-mono font-normal">[N=4]</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -93,14 +93,14 @@ export function GroverPanel({
         <button
           type="button"
           onClick={onRunGrover}
-          className="w-full py-3 px-6 rounded-lg bg-linear-to-r from-primary to-primary hover:from-primary hover:to-primary text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-cyan-500/20 active:scale-95 cursor-pointer"
+          className="w-full py-3 px-6 rounded-lg bg-linear-to-r from-primary to-primary hover:from-primary hover:to-primary text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-primary/20 active:scale-95 cursor-pointer"
         >
           {t('panels.grover.run_diffusion')}
         </button>
         <button
           type="button"
           onClick={onReset}
-          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-white font-medium text-sm transition-all active:scale-95 cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-sm transition-all active:scale-95 cursor-pointer"
         >
           {t('panels.grover.reset')}
         </button>
@@ -134,7 +134,7 @@ export function QECPanel({
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             {t('panels.qec.title')} <span className="text-primary text-sm font-mono font-normal">[3-Qubit]</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -163,7 +163,7 @@ export function QECPanel({
                 }`}
               >
                 <span className="text-muted-foreground text-xs font-mono block">q{idx}</span>
-                <div className="text-2xl font-mono font-bold text-white my-1">|{bit}⟩</div>
+                <div className="text-2xl font-mono font-bold text-foreground my-1">|{bit}⟩</div>
                 <button
                   type="button"
                   onClick={() => onInjectBitFlip(idx as 0 | 1 | 2)}
@@ -215,7 +215,7 @@ export function QECPanel({
           <button
             type="button"
             onClick={onRunSyndromeCorrection}
-            className="py-3 px-4 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
+            className="py-3 px-4 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-success/20 active:scale-95 cursor-pointer"
           >
             {t('panels.qec.run_syndrome_correction')}
           </button>
@@ -224,14 +224,14 @@ export function QECPanel({
           <button
             type="button"
             onClick={() => onReset(0)}
-            className="py-2 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border text-foreground hover:text-white font-mono text-xs cursor-pointer"
+            className="py-2 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border text-foreground hover:text-foreground font-mono text-xs cursor-pointer"
           >
             {t('panels.qec.encode_zero')}
           </button>
           <button
             type="button"
             onClick={() => onReset(1)}
-            className="py-2 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border text-foreground hover:text-white font-mono text-xs cursor-pointer"
+            className="py-2 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border text-foreground hover:text-foreground font-mono text-xs cursor-pointer"
           >
             {t('panels.qec.encode_one')}
           </button>

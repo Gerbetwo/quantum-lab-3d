@@ -153,7 +153,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
                 aria-label={`Prepare ${pLabel}`}
                 className={`px-2 py-1 text-xs font-mono font-semibold rounded-md border transition-all disabled:opacity-40 cursor-pointer ${
                   isSelected
-                    ? 'bg-secondary border-primary text-primary shadow-sm shadow-cyan-500/20'
+                    ? 'bg-secondary border-primary text-primary shadow-sm shadow-primary/20'
                     : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground'
                 }`}
               >

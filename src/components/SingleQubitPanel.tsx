@@ -66,7 +66,7 @@ export function SingleQubitPanel({
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             {stepTitles[activeTab]} <span className="text-primary text-sm font-mono font-normal">[v1.0]</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{stepDescriptions[activeTab]}</p>
@@ -118,7 +118,7 @@ export function SingleQubitPanel({
                 key={gate}
                 type="button"
                 onClick={() => onGate(gate)}
-                className="py-2.5 px-4 rounded-lg bg-secondary hover:bg-muted active:scale-95 border border-primary text-primary font-mono font-bold text-sm transition-all shadow-sm hover:shadow-cyan-500/10 cursor-pointer"
+                className="py-2.5 px-4 rounded-lg bg-secondary hover:bg-muted active:scale-95 border border-primary text-primary font-mono font-bold text-sm transition-all shadow-sm hover:shadow-primary/10 cursor-pointer"
               >
                 {gate === 'H'
                   ? t('panels.singleQubit.gate_hadamard')
@@ -137,7 +137,7 @@ export function SingleQubitPanel({
           <button
             type="button"
             onClick={onMeasure}
-            className="flex-1 py-3 px-6 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
+            className="flex-1 py-3 px-6 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-success/20 active:scale-95 cursor-pointer"
           >
             {t('panels.singleQubit.measure_state')}
           </button>
@@ -150,7 +150,7 @@ export function SingleQubitPanel({
         <button
           type="button"
           onClick={onReset}
-          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-white font-medium text-sm transition-all active:scale-95 cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-sm transition-all active:scale-95 cursor-pointer"
         >
           {t('panels.singleQubit.reset')}
         </button>

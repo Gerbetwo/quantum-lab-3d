@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import en from '@/locales/en.json';
 import es from '@/locales/es.json';
 
@@ -50,14 +50,22 @@ export function getTranslation(
   return interpolate(template, params);
 }
 
-function getInitialLocale(): Locale {
-  if (typeof window === 'undefined') return 'en';
+/** Window event used to keep every mounted useTranslation() instance in sync. */
+export const LOCALE_CHANGE_EVENT = 'ql-lang-change';
+
+function isLocale(value: unknown): value is Locale {
+  return value === 'en' || value === 'es';
+}
+
+/**
+ * Client-only locale preference lookup (storage first, then browser language).
+ * MUST only be called after mount — never during render — to keep SSR/hydration aligned.
+ */
+export function readPreferredLocale(): Locale {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'en' || stored === 'es') {
-      return stored;
-    }
-    if (navigator.language && navigator.language.startsWith('es')) {
+    if (isLocale(stored)) return stored;
+    if (typeof navigator !== 'undefined' && navigator.language?.startsWith('es')) {
       return 'es';
     }
   } catch {
@@ -66,38 +74,60 @@ function getInitialLocale(): Locale {
   return 'en';
 }
 
+function persistAndBroadcast(next: Locale): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, next);
+  } catch {
+    // Storage access error handling
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent<Locale>(LOCALE_CHANGE_EVENT, { detail: next }));
+  }
+}
+
 /**
  * Lightweight, zero-dependency translation hook for QuantumLab 3D.
+ * Always renders 'en' on the server AND on the first client frame (hydration-safe);
+ * the persisted / browser locale is applied in a post-mount effect.
  */
 export function useTranslation() {
-  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+  const [locale, setLocaleState] = useState<Locale>('en');
+  const [isMounted, setIsMounted] = useState(false);
+  const localeRef = useRef<Locale>('en');
 
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = locale;
-    }
+    localeRef.current = locale;
   }, [locale]);
 
-  const setLocale = useCallback((newLocale: Locale) => {
-    setLocaleState(newLocale);
-    try {
-      localStorage.setItem(STORAGE_KEY, newLocale);
-    } catch {
-      // Storage access error handling
+  // Post-mount: read preference + subscribe to cross-instance changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate post-hydration sync with browser storage
+    setLocaleState(readPreferredLocale());
+    setIsMounted(true);
+
+    const onLocaleChange = (e: Event) => {
+      const next = (e as CustomEvent<Locale>).detail;
+      if (isLocale(next)) setLocaleState(next);
+    };
+    window.addEventListener(LOCALE_CHANGE_EVENT, onLocaleChange);
+    return () => window.removeEventListener(LOCALE_CHANGE_EVENT, onLocaleChange);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted && typeof document !== 'undefined') {
+      document.documentElement.lang = locale;
     }
+  }, [locale, isMounted]);
+
+  const setLocale = useCallback((newLocale: Locale) => {
+    localeRef.current = newLocale;
+    setLocaleState(newLocale);
+    persistAndBroadcast(newLocale);
   }, []);
 
   const toggleLocale = useCallback(() => {
-    setLocaleState((prev) => {
-      const next: Locale = prev === 'en' ? 'es' : 'en';
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // Storage access error handling
-      }
-      return next;
-    });
-  }, []);
+    setLocale(localeRef.current === 'en' ? 'es' : 'en');
+  }, [setLocale]);
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
@@ -113,6 +143,7 @@ export function useTranslation() {
     setLanguage: setLocale,
     toggleLocale,
     toggleLanguage: toggleLocale,
+    isMounted,
     t,
   };
 }

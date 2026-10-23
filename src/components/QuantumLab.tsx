@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   computeStateMetrics,
   applyPhaseDecay,
   calculateT2CoherenceTime,
+  thermalCollapseFactor,
 } from '@/core/qubitMath';
 import { runShorDemo } from '@/core/algorithms';
 import { useQuantumLabState } from '@/hooks/useQuantumLabState';
@@ -76,6 +77,17 @@ export function QuantumLab() {
     resetQec,
   } = useQuantumLabState();
 
+  const [activeGate, setActiveGate] = useState<string | null>(null);
+  const gateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerGateAnimation = useCallback((gate: string) => {
+    setActiveGate(gate);
+    if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
+    gateTimeoutRef.current = setTimeout(() => {
+      setActiveGate(null);
+    }, 750);
+  }, []);
+
   // Metrics & calculations
   const metrics = computeStateMetrics(state);
   const t2Time = calculateT2CoherenceTime(temperature);
@@ -139,7 +151,11 @@ export function QuantumLab() {
             purity={1.0}
             interactive={true}
             onStateChange={setSingleQubitState}
-            targetZone={activeTab === 0 ? { theta: Math.PI, phi: 0 } : null}
+            targetZone={activeTab === 0 ? { theta: Math.PI / 2, phi: 0 } : null}
+            showGateRings={activeTab === 1}
+            showMeasurementPlane={activeTab === 2}
+            activeGate={activeGate}
+            lastOutcome={lastOutcome}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
         );
@@ -155,6 +171,7 @@ export function QuantumLab() {
           <CoreBlochSphere
             state={{ theta: Math.PI / 2, phi: 0 }}
             purity={vectorPurity}
+            thermalCollapse={thermalCollapseFactor(temperature)}
             interactive={false}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
@@ -198,7 +215,7 @@ export function QuantumLab() {
               onClick={() => setTab(idx)}
               className={`px-2.5 py-1 rounded-lg font-mono text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === idx
-                  ? 'bg-secondary border border-primary text-primary shadow-sm shadow-cyan-500/20'
+                  ? 'bg-secondary border border-primary text-primary shadow-sm shadow-primary/20'
                   : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary'
               }`}
             >
@@ -249,6 +266,12 @@ export function QuantumLab() {
     </header>
   );
 
+  const vectorTipPos: [number, number, number] = [
+    1.28 * Math.sin(state.theta) * Math.cos(state.phi),
+    1.28 * Math.cos(state.theta),
+    1.28 * Math.sin(state.theta) * Math.sin(state.phi),
+  ];
+
   return (
     <MissionCanvasShell
       missionId={activeObjective?.id ?? 'superposition'}
@@ -259,22 +282,25 @@ export function QuantumLab() {
       tier2Canvas={renderTier2Canvas()}
       tier2Overlays={
         <>
-          {/* Top-Left Viewport Mode Badge */}
-          <div className="absolute top-4 left-4 pointer-events-none flex items-center gap-2 z-10">
-            <span className="text-xs uppercase tracking-widest text-primary font-mono font-semibold bg-background/90 backdrop-blur-md px-2.5 py-1 rounded border border-primary">
-              {WORKSHOP_TABS[activeTab]} 3D
-            </span>
-            {activeTab === 4 && (
-              <span className="text-xs font-mono text-muted-foreground bg-background/90 backdrop-blur-md px-2 py-0.5 rounded border border-border">
-                Purity: {(vectorPurity * 100).toFixed(0)}%
-              </span>
-            )}
-          </div>
-
           <SpatialTooltipOverlay spatialId="state-vector" />
 
-          {/* Right Column: Floating Tactical Control Dashboard */}
-          <div className="absolute top-4 right-4 bottom-24 w-full max-w-md pointer-events-auto overflow-y-auto rounded-2xl border border-border bg-card/90 backdrop-blur-md p-5 sm:p-6 shadow-2xl flex flex-col justify-between scrollbar-thin z-10">
+          {/* Real-time State Vector Angle Status Pill (Mission 1 & Single Qubit viewports) */}
+          {activeTab <= 2 && (
+            <SpatialTooltipOverlay
+              position={vectorTipPos}
+              offset={[0, -18]}
+              className="pointer-events-none"
+            >
+              <div className="flex items-center gap-1.5 px-2 py-0.5 font-mono text-[11px] font-bold text-primary">
+                <span>θ = {Math.round((state.theta * 180) / Math.PI)}°</span>
+                <span className="text-muted-foreground">•</span>
+                <span>φ = {Math.round((state.phi * 180) / Math.PI)}°</span>
+              </div>
+            </SpatialTooltipOverlay>
+          )}
+
+          {/* Right Column: Floating Tactical Control Dashboard (320px on 1080p displays) */}
+          <div className="absolute top-4 right-4 bottom-24 w-full md:w-80 pointer-events-auto overflow-y-auto rounded-2xl border border-border bg-card/90 backdrop-blur-md p-4 sm:p-5 shadow-2xl flex flex-col justify-between scrollbar-thin z-10">
             {activeTab <= 2 && (
               <SingleQubitPanel
                 activeTab={activeTab}
@@ -284,6 +310,7 @@ export function QuantumLab() {
                 onGate={(g) => {
                   applySingleQubitGate(g);
                   playGateSweep(g);
+                  triggerGateAnimation(g);
                 }}
                 onMeasure={() => {
                   measureSingleQubit();
@@ -352,6 +379,7 @@ export function QuantumLab() {
             onTransformGate={(gate) => {
               applySingleQubitGate(gate as 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T');
               playGateSweep(gate);
+              triggerGateAnimation(gate);
             }}
             onMeasure={() => {
               measureSingleQubit();
@@ -372,3 +400,4 @@ export function QuantumLab() {
 }
 
 export default QuantumLab;
+

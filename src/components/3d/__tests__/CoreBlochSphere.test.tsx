@@ -100,4 +100,64 @@ describe('CoreBlochSphere Component', () => {
 
     expect(() => unmount()).not.toThrow();
   });
+
+  it('responds to keyboard arrow and WASD navigation via onStateChange', () => {
+    const onStateChange = vi.fn();
+    render(
+      <CoreBlochSphere
+        state={{ theta: Math.PI / 2, phi: 0 }}
+        interactive={true}
+        onStateChange={onStateChange}
+      />
+    );
+
+    // ArrowUp decreases theta toward |0⟩
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', cancelable: true }));
+    expect(onStateChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        theta: expect.closeTo(Math.PI / 2 - 0.08, 4),
+      })
+    );
+
+    onStateChange.mockClear();
+    // 'd' key increases phi
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', cancelable: true }));
+    expect(onStateChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phi: expect.closeTo(0.08, 4),
+      })
+    );
+  });
+
+  it('supports showGateRings, showMeasurementPlane, and thermalCollapse without recreating context', () => {
+    const { container, rerender, unmount } = render(
+      <CoreBlochSphere
+        state={{ theta: Math.PI / 2, phi: 0 }}
+        showGateRings={false}
+        showMeasurementPlane={false}
+        thermalCollapse={1.0}
+      />
+    );
+
+    const initialCanvas = container.querySelector('canvas');
+    expect(initialCanvas).toBeInTheDocument();
+
+    // Toggle mission visual flags
+    rerender(
+      <CoreBlochSphere
+        state={{ theta: Math.PI / 2, phi: 0 }}
+        showGateRings={true}
+        showMeasurementPlane={true}
+        thermalCollapse={0.0}
+        activeGate="H"
+        lastOutcome={0}
+      />
+    );
+
+    // Single WebGL context safety: canvas must be the exact same instance!
+    const canvasAfterRerender = container.querySelector('canvas');
+    expect(canvasAfterRerender).toBe(initialCanvas);
+
+    unmount();
+  });
 });

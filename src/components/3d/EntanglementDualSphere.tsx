@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { readBlochPalette, observeThemeChanges } from '@/lib/3d/blochTheme';
 
 export interface EntanglementDualSphereProps {
   entangledPair?: { alice: 0 | 1; bob: 0 | 1; state: string } | null;
@@ -37,6 +38,8 @@ export function EntanglementDualSphere({
 
     const geometries: THREE.BufferGeometry[] = [];
     const materials: THREE.Material[] = [];
+    const axesMaterials: THREE.LineBasicMaterial[] = [];
+    const palette = readBlochPalette();
 
     // Helper to build a Bloch sphere at offset X
     const buildSphere = (offsetX: number, label: string, colorHex: number) => {
@@ -79,10 +82,11 @@ export function EntanglementDualSphere({
         new THREE.Vector3(0, 0, 1.2),
       ]);
       const axesMat = new THREE.LineBasicMaterial({
-        color: 0xffffff,
+        color: palette.foreground,
         transparent: true,
-        opacity: 0.2,
+        opacity: palette.axesOpacity * 0.8,
       });
+      axesMaterials.push(axesMat);
       geometries.push(axesGeo);
       materials.push(axesMat);
       group.add(new THREE.LineSegments(axesGeo, axesMat));
@@ -182,9 +186,17 @@ export function EntanglementDualSphere({
 
     resizeObserver?.observe(container);
 
+    const stopThemeObserver = observeThemeChanges((p) => {
+      axesMaterials.forEach((m) => {
+        m.color.setHex(p.foreground);
+        m.opacity = p.axesOpacity * 0.8;
+      });
+    });
+
     return () => {
       cancelAnimationFrame(animId);
       resizeObserver?.disconnect();
+      stopThemeObserver();
       geometries.forEach((g) => g.dispose());
       materials.forEach((m) => m.dispose());
       alice.arrow.dispose();

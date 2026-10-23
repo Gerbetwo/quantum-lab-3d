@@ -20,7 +20,7 @@ export function EntanglementPanel({
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             {t('panels.entanglement.title')} <span className="text-primary text-sm font-mono font-normal">[Bell Pair]</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -106,7 +106,7 @@ export function EntanglementPanel({
           <button
             type="button"
             onClick={onMeasure}
-            className="flex-1 py-3 px-6 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
+            className="flex-1 py-3 px-6 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-success/20 active:scale-95 cursor-pointer"
           >
             {t('panels.entanglement.measure')}
           </button>
@@ -119,7 +119,7 @@ export function EntanglementPanel({
         <button
           type="button"
           onClick={onReset}
-          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-white font-medium text-sm transition-all active:scale-95 cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-sm transition-all active:scale-95 cursor-pointer"
         >
           {t('panels.entanglement.reset')}
         </button>
@@ -149,7 +149,7 @@ export function DecoherencePanel({
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             {t('panels.decoherence.title')} <span className="text-primary text-sm font-mono font-normal">[Cryostat]</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -171,7 +171,7 @@ export function DecoherencePanel({
             max={300}
             value={temperature}
             onChange={(e) => onTemperatureChange(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
+            className="w-full accent-primary cursor-pointer"
           />
           <div className="flex justify-between text-[11px] font-mono text-muted-foreground">
             <span>{t('panels.decoherence.cryo_label')}</span>
@@ -197,7 +197,7 @@ export function DecoherencePanel({
           </div>
           <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
             <div
-              className="h-full bg-linear-to-r from-primary to-emerald-400 transition-all duration-200"
+              className="h-full bg-linear-to-r from-primary to-success transition-all duration-200"
               style={{ width: `${vectorPurity * 100}%` }}
             />
           </div>
@@ -220,7 +220,7 @@ export function DecoherencePanel({
         <button
           type="button"
           onClick={onReset}
-          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-white font-medium text-sm transition-all active:scale-95 cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-sm transition-all active:scale-95 cursor-pointer"
         >
           {t('panels.decoherence.reset')}
         </button>

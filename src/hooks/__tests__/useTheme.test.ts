@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
 import { renderHook, act } from '@testing-library/react';
 import { useTheme } from '../useTheme';
 
@@ -72,5 +74,29 @@ describe('useTheme Hook', () => {
     expect(result.current.theme).toBe('light');
     expect(document.documentElement.classList.contains('theme-light')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
+  });
+
+  it('never overwrites a stored light preference during mount', () => {
+    localStorage.setItem('ql-theme', 'light');
+    renderHook(() => useTheme());
+    expect(localStorage.getItem('ql-theme')).toBe('light');
+  });
+
+  it('renders the dark default on the server regardless of storage (hydration-safe)', () => {
+    localStorage.setItem('ql-theme', 'light');
+    function Probe() {
+      const { theme } = useTheme();
+      return React.createElement('span', null, theme);
+    }
+    expect(renderToString(React.createElement(Probe))).toContain('dark');
+  });
+
+  it('syncs theme across hook instances', () => {
+    const a = renderHook(() => useTheme());
+    const b = renderHook(() => useTheme());
+    act(() => {
+      a.result.current.toggle();
+    });
+    expect(b.result.current.theme).toBe('light');
   });
 });

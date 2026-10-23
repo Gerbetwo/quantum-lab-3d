@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
 import { renderHook, act } from '@testing-library/react';
 import { useTranslation, getTranslation } from '../useTranslation';
 
@@ -67,5 +69,44 @@ describe('useTranslation & getTranslation', () => {
     expect(result.current.locale).toBe('es');
     expect(result.current.language).toBe('es');
     expect(result.current.t('ribbon.collapse')).toBe('COLAPSAR');
+  });
+
+  it('renders English on the server regardless of stored preference (hydration-safe)', () => {
+    localStorage.setItem('ql-lang', 'es');
+    function Probe() {
+      const { t } = useTranslation();
+      return React.createElement('span', null, t('ribbon.prepare'));
+    }
+    const html = renderToString(React.createElement(Probe));
+    expect(html).toContain('1. PREPARE');
+  });
+
+  it('applies the stored locale only after mount', () => {
+    localStorage.setItem('ql-lang', 'es');
+    const { result } = renderHook(() => useTranslation());
+    // renderHook flushes effects → post-mount locale applied
+    expect(result.current.isMounted).toBe(true);
+    expect(result.current.locale).toBe('es');
+    expect(document.documentElement.lang).toBe('es');
+  });
+
+  it('does not overwrite stored preference on mount', () => {
+    localStorage.setItem('ql-lang', 'es');
+    renderHook(() => useTranslation());
+    expect(localStorage.getItem('ql-lang')).toBe('es');
+  });
+
+  it('keeps multiple hook instances in sync via ql-lang-change', () => {
+    const a = renderHook(() => useTranslation());
+    const b = renderHook(() => useTranslation());
+    expect(b.result.current.locale).toBe('en');
+
+    act(() => {
+      a.result.current.toggleLanguage();
+    });
+
+    expect(a.result.current.locale).toBe('es');
+    expect(b.result.current.locale).toBe('es');
+    expect(b.result.current.t('ribbon.prepare')).toBe('1. PREPARAR');
   });
 });
