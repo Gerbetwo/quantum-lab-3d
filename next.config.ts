@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    agentUpgrade: 'security',
   },
   async headers() {
     return [
