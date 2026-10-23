@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { Camera } from 'three';
 
 /**
  * Metadata mapping a 3D spatial element ID to HUD telemetry symbols and descriptions.
@@ -115,6 +116,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
 export interface SpatialTelemetryState {
   activeFocusId: string | null;
   hoveredElement: TelemetrySymbolMapping | null;
+  camera: Camera | null;
+  setCamera: (camera: Camera | null) => void;
   setActiveFocusId: (id: string | null) => void;
   onPointerOver: (id: string) => void;
   onPointerOut: (id: string) => void;
@@ -124,6 +127,9 @@ export interface SpatialTelemetryState {
 export const useSpatialTelemetryBridge = create<SpatialTelemetryState>((set) => ({
   activeFocusId: null,
   hoveredElement: null,
+  camera: null,
+
+  setCamera: (camera: Camera | null) => set({ camera }),
 
   setActiveFocusId: (id: string | null) =>
     set({

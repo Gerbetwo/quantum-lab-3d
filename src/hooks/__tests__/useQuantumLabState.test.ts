@@ -68,6 +68,17 @@ describe('useQuantumLabState - Centralized State Engine', () => {
     expect(result.current.temperature).toBe(100);
   });
 
+  it('updates single qubit state directly via setSingleQubitState (for vector drag)', () => {
+    const { result } = renderHook(() => useQuantumLabState());
+
+    act(() => {
+      result.current.setSingleQubitState({ theta: Math.PI / 4, phi: Math.PI / 3 });
+    });
+    expect(result.current.state.theta).toBeCloseTo(Math.PI / 4);
+    expect(result.current.state.phi).toBeCloseTo(Math.PI / 3);
+    expect(result.current.lastOutcome).toBeNull();
+  });
+
   it('clamps tab selection to [0, 6]', () => {
     const { result } = renderHook(() => useQuantumLabState());
 

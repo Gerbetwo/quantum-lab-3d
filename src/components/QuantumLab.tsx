@@ -9,7 +9,7 @@ import {
 } from '@/core/qubitMath';
 import { runShorDemo } from '@/core/algorithms';
 import { useQuantumLabState } from '@/hooks/useQuantumLabState';
-import { BlochSphereViewport } from './BlochSphereViewport';
+import { CoreBlochSphere } from './3d/CoreBlochSphere';
 import { SingleQubitPanel } from './SingleQubitPanel';
 import { EntanglementPanel, DecoherencePanel } from './EntanglementDecoherencePanels';
 import { GroverPanel, QECPanel } from './AlgorithmWorkshopPanels';
@@ -36,6 +36,7 @@ export function QuantumLab() {
     qecTriple,
     syndromeInfo,
     setTab,
+    setSingleQubitState,
     applySingleQubitGate,
     measureSingleQubit,
     resetSingleQubit,
@@ -115,10 +116,13 @@ export function QuantumLab() {
         <div className="grid grid-cols-1 lg:grid-cols-2">
           {/* Left Column: 3D Bloch Sphere Viewport */}
           <div className="relative min-h-90 sm:min-h-110 lg:min-h-140 bg-background border-b lg:border-b-0 lg:border-r border-border flex items-center justify-center p-4">
-            <BlochSphereViewport
+            <CoreBlochSphere
               state={activeViewportState}
               purity={activePurity}
               className="w-full h-full min-h-85"
+              interactive={activeTab <= 2}
+              onStateChange={activeTab <= 2 ? setSingleQubitState : undefined}
+              targetZone={activeTab === 0 ? { theta: Math.PI, phi: 0 } : null}
             />
             <div className="absolute top-4 left-4 pointer-events-none flex items-center gap-2">
               <span className="text-xs uppercase tracking-widest text-primary font-mono font-semibold bg-background px-2.5 py-1 rounded border border-primary">

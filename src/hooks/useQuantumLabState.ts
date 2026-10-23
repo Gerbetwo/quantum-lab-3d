@@ -48,6 +48,7 @@ export interface QuantumLabState {
 
 export interface QuantumLabActions {
   setTab: (tab: number) => void;
+  setSingleQubitState: (state: QubitState) => void;
   applySingleQubitGate: (gate: 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T') => void;
   measureSingleQubit: (seed?: number) => void;
   resetSingleQubit: () => void;
@@ -91,6 +92,11 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
 
   const setTab = useCallback((tab: number) => {
     setActiveTab(Math.max(0, Math.min(6, tab)));
+  }, []);
+
+  const setSingleQubitState = useCallback((newState: QubitState) => {
+    setState(newState);
+    setLastOutcome(null);
   }, []);
 
   const applySingleQubitGate = useCallback((gate: 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T') => {
@@ -174,6 +180,7 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
     qecTriple,
     syndromeInfo,
     setTab,
+    setSingleQubitState,
     applySingleQubitGate,
     measureSingleQubit,
     resetSingleQubit,

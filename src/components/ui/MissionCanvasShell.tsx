@@ -9,7 +9,7 @@ import {
 } from '@/lib/quantum/objectivesConfig';
 import { TargetGoalCard } from './TargetGoalCard';
 import { SpatialTooltipOverlay } from './SpatialTooltipOverlay';
-import { BlochSphereViewport } from '../BlochSphereViewport';
+import { CoreBlochSphere } from '../3d/CoreBlochSphere';
 import {
   QuantumPipelineRibbon,
   type QuantumPipelineRibbonProps,
@@ -37,7 +37,7 @@ export interface MissionCanvasShellProps {
 
   /**
    * Tier 2: WebGL 3D Canvas Slot.
-   * If not provided, defaults to singleton <BlochSphereViewport />.
+   * If not provided, defaults to singleton <CoreBlochSphere />.
    */
   tier2Canvas?: React.ReactNode;
 
@@ -100,7 +100,7 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
         {tier2Canvas !== undefined ? (
           tier2Canvas
         ) : (
-          <BlochSphereViewport
+          <CoreBlochSphere
             state={{ theta: 0, phi: 0 }}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />

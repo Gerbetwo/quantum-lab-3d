@@ -112,6 +112,7 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
   const { t } = useTranslation();
   const hoveredElement = useSpatialTelemetryBridge((s) => s.hoveredElement);
   const activeFocusId = useSpatialTelemetryBridge((s) => s.activeFocusId);
+  const bridgeCamera = useSpatialTelemetryBridge((s) => s.camera);
 
   const isSpatialMatch = spatialId ? activeFocusId === spatialId || hoveredElement?.id === spatialId : false;
   const effectiveContent = children || (isSpatialMatch && hoveredElement ? (
@@ -128,7 +129,7 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
   const posVec = useMemo(() => toVector3(position), [position]);
 
   const calculateProjection = useCallback((): ScreenCoordinates => {
-    const activeCamera = resolveCamera(cameraProp);
+    const activeCamera = resolveCamera(cameraProp) || bridgeCamera;
     if (!activeCamera) {
       return { x: 0, y: 0, isVisible: true, z: 0 };
     }
@@ -143,13 +144,14 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
     }
 
     return project3DTo2D(posVec, activeCamera, width, height);
-  }, [cameraProp, containerRef, posVec]);
+  }, [cameraProp, bridgeCamera, containerRef, posVec]);
 
   const [screenCoords, setScreenCoords] = useState<ScreenCoordinates>(() => {
-    if (cameraProp && 'isCamera' in cameraProp && (cameraProp as unknown as { isCamera: boolean }).isCamera) {
+    const cam = resolveCamera(cameraProp) || bridgeCamera;
+    if (cam) {
       const width = typeof window !== 'undefined' ? window.innerWidth || 800 : 800;
       const height = typeof window !== 'undefined' ? window.innerHeight || 600 : 600;
-      return project3DTo2D(posVec, cameraProp as THREE.Camera, width, height);
+      return project3DTo2D(posVec, cam, width, height);
     }
     return { x: 0, y: 0, isVisible: true, z: 0 };
   });

@@ -42,4 +42,13 @@ describe('useSpatialTelemetryBridge', () => {
     expect(xMapping.symbol).toBe('X');
     expect(xMapping.description).toContain('Bit-flip');
   });
+
+  it('manages camera instance via setCamera', () => {
+    expect(useSpatialTelemetryBridge.getState().camera).toBeNull();
+    const mockCamera = { isCamera: true } as unknown as import('three').Camera;
+    useSpatialTelemetryBridge.getState().setCamera(mockCamera);
+    expect(useSpatialTelemetryBridge.getState().camera).toBe(mockCamera);
+    useSpatialTelemetryBridge.getState().setCamera(null);
+    expect(useSpatialTelemetryBridge.getState().camera).toBeNull();
+  });
 });
