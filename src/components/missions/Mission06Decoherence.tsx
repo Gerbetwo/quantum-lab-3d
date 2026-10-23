@@ -272,9 +272,9 @@ export const Mission06Decoherence: React.FC<Mission06DecoherenceProps> = ({
         onMeasure: handleMeasure,
       }}
       tier2Overlays={
-        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between select-none">
+        <div className="absolute inset-0 pointer-events-none max-h-full overflow-y-auto pt-16 px-4 pb-4 sm:pt-20 sm:px-6 sm:pb-6 flex flex-col md:flex-row justify-between items-start gap-4 select-none">
           {/* Top Left: Cryogenic Guide & Spatial Telemetry Bridge */}
-          <div className="flex flex-col gap-2 max-w-sm pointer-events-auto">
+          <div className="w-full md:w-80 lg:w-96 pointer-events-auto shrink-0 space-y-2">
             <GlassCard
               title="Cryostat Thermal Chamber"
               badge={temperatureK <= 0.02 ? "Pristine Coherence" : "Thermal Degradation"}
@@ -312,7 +312,7 @@ export const Mission06Decoherence: React.FC<Mission06DecoherenceProps> = ({
           </div>
 
           {/* Top Right: Cryo Controls & T2 Telemetry */}
-          <div className="fixed top-16 right-4 w-88 pointer-events-auto space-y-2.5">
+          <div className="w-full md:w-88 lg:w-96 pointer-events-auto shrink-0 space-y-2.5">
             <GlassCard title="Cryogenic Thermal Control" badge="T₂ Decay">
               <div className="space-y-2.5 font-mono text-xs">
                 {/* 1. Presets */}
@@ -429,3 +429,5 @@ export const Mission06Decoherence: React.FC<Mission06DecoherenceProps> = ({
     />
   );
 };
+
+export default Mission06Decoherence;

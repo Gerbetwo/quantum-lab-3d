@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuantumStore } from "@/store/useQuantumStore";
 import { useTranslation } from "@/lib/i18n";
 import { MissionCanvasShell } from "@/components/framework/MissionCanvasShell";
@@ -44,7 +44,7 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
   const actualProb0Percent = Math.round(p0 * 100);
 
   // 3D Target Prediction Zone: Equatorial Superposition |+⟩
-  const TARGET_ZONE = React.useMemo(() => ({ theta: Math.PI / 2, phi: 0 }), []);
+  const TARGET_ZONE = useMemo(() => ({ theta: Math.PI / 2, phi: 0 }), []);
   const isTargetAligned = isVectorInBlochTarget(
     safeTheta,
     safePhi,
@@ -82,17 +82,19 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
         />
       }
       tier2Overlays={
-        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between select-none">
-          {/* Top Left: Interactive Instructions & Active Focus Badge */}
-          <div className="flex flex-col gap-2 max-w-sm pointer-events-auto">
+        <div className="absolute inset-0 pointer-events-none max-h-full overflow-y-auto pt-16 px-4 pb-4 sm:pt-20 sm:px-6 sm:pb-6 flex flex-col md:flex-row justify-between items-start gap-4 select-none">
+          {/* Left Side: State Vector Navigation & Focus Telemetry */}
+          <div className="w-full md:w-80 lg:w-96 pointer-events-auto shrink-0">
             <GlassCard
-              title={"State Vector Navigation"}
+              title="State Vector Navigation"
               badge="3D Direct Touch"
             >
               <div className="space-y-2 text-xs font-mono">
                 <p className="text-muted-foreground text-[11px] leading-relaxed flex items-center gap-1.5">
                   <Compass className="w-3.5 h-3.5 text-quantum-cyan shrink-0" />
-                  <span>{"Drag the vector tip directly on the Bloch sphere surface to rotate |ψ⟩."}</span>
+                  <span>
+                    Drag the vector tip directly on the Bloch sphere surface to rotate |ψ⟩.
+                  </span>
                 </p>
 
                 {/* Spatial Telemetry Bridge Dynamic Binding */}
@@ -121,8 +123,8 @@ export const Mission01StateVector: React.FC<Mission01StateVectorProps> = ({
             </GlassCard>
           </div>
 
-          {/* Top Right: Dirac & Born Telemetry Card */}
-          <div className="fixed top-16 right-4 w-80 pointer-events-auto space-y-2.5">
+          {/* Right Side: Dirac & Born Telemetry Card */}
+          <div className="w-full md:w-80 lg:w-96 pointer-events-auto shrink-0 space-y-2.5">
             <GlassCard title={t("math_dock.dirac_telemetry_title")} badge="|ψ⟩">
               <div className="space-y-2.5 font-mono text-xs">
                 {/* 1. Dirac State Vector Readout */}

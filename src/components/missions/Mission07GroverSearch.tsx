@@ -267,9 +267,9 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
         onMeasure: handleMeasure,
       }}
       tier2Overlays={
-        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between select-none">
+        <div className="absolute inset-0 pointer-events-none max-h-full overflow-y-auto pt-16 px-4 pb-4 sm:pt-20 sm:px-6 sm:pb-6 flex flex-col md:flex-row justify-between items-start gap-4 select-none">
           {/* Top Left: Strategy Deck & Spatial Telemetry Bridge */}
-          <div className="flex flex-col gap-2 max-w-sm pointer-events-auto">
+          <div className="w-full md:w-80 lg:w-96 pointer-events-auto shrink-0 space-y-2">
             <GlassCard
               title="Grover Search Strategy"
               badge={`Phase: ${currentStep.toUpperCase()}`}
@@ -311,7 +311,7 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
                     data-testid="oracle-inversion-button"
                     className="w-full text-xs py-1.5 flex items-center justify-between"
                   >
-                    <span className="flex items-center gap-1.5"><ArrowDownUp className="w-3.5 h-3.5 text-warning" />1. Oracle Phase Invert (O_f)</span>
+                    <span className="flex items-center gap-1.5"><ArrowDownUp className="w-3.5 h-3.5 text-warning" />Oracle Phase Invert (O_f)</span>
                     <span className="text-[10px] opacity-75">α → -α</span>
                   </Button>
 
@@ -374,7 +374,7 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
           </div>
 
           {/* Top Right: Telemetry Readouts & Scoreboard */}
-          <div className="fixed top-16 right-4 w-88 pointer-events-auto space-y-2.5">
+          <div className="w-full md:w-88 lg:w-96 pointer-events-auto shrink-0 space-y-2.5">
             {/* 1. Target Amplification Scoreboard */}
             <GlassCard title="Amplitude Amplification" badge="Grover Boost">
               <div className="space-y-2.5 font-mono text-xs">
@@ -494,3 +494,5 @@ export const Mission07GroverSearch: React.FC<Mission07GroverSearchProps> = ({
     />
   );
 };
+
+export default Mission07GroverSearch;

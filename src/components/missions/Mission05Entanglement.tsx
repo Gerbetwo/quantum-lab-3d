@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import * as THREE from "three";
 import { useQuantumStore } from "@/store/useQuantumStore";
 import { MissionCanvasShell } from "@/components/framework/MissionCanvasShell";
+import { CoreBlochSphere } from "@/components/canvas/CoreBlochSphere";
 import { acquireRenderer } from "@/features/quantum-core/BlochViewport";
 import {
   computeTwoQubitState,
@@ -294,9 +295,9 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
         disabled: isCollapsing,
       }}
       tier2Overlays={
-        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between select-none">
+        <div className="absolute inset-0 pointer-events-none max-h-full overflow-y-auto pt-16 px-4 pb-4 sm:pt-20 sm:px-6 sm:pb-6 flex flex-col md:flex-row justify-between items-start gap-4 select-none">
           {/* Top Left: Entanglement Channel Guide & Active Spatial Telemetry */}
-          <div className="flex flex-col gap-2 max-w-sm pointer-events-auto">
+          <div className="w-full md:w-80 lg:w-96 pointer-events-auto shrink-0 space-y-2">
             <GlassCard
               title={"Entanglement Channel (EPR)"}
               badge={isEntangled ? "Entangled (1.0 ebit)" : "Separable (0 ebits)"}
@@ -332,7 +333,7 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
           </div>
 
           {/* Top Right: 2-Qubit State Vector Telemetry & Controls */}
-          <div className="fixed top-16 right-4 w-88 pointer-events-auto space-y-2.5">
+          <div className="w-full md:w-88 lg:w-96 pointer-events-auto shrink-0 space-y-2.5">
             {/* 1. Bell State Presets */}
             <GlassCard title={"Bell State Preparation"} badge="EPR Pair">
               <div className="space-y-2">
@@ -497,3 +498,5 @@ export const Mission05Entanglement: React.FC<Mission05EntanglementProps> = ({
     />
   );
 };
+
+export default Mission05Entanglement;

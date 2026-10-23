@@ -264,9 +264,9 @@ export const Mission02GateRotations: React.FC<Mission02GateRotationsProps> = ({
         onTransformGate: (gate) => handleApplyGate(gate),
       }}
       tier2Overlays={
-        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between select-none">
+        <div className="absolute inset-0 pointer-events-none max-h-full overflow-y-auto pt-16 px-4 pb-4 sm:pt-20 sm:px-6 sm:pb-6 flex flex-col md:flex-row justify-between items-start gap-4 select-none">
           {/* Top Left: Dynamic Rotation Rings Legend & Active Ring Controls */}
-          <div className="flex flex-col gap-2 max-w-sm pointer-events-auto">
+          <div className="w-full md:w-80 lg:w-96 pointer-events-auto shrink-0 space-y-2">
             <GlassCard
               title={"Dynamic Gate Rotation Rings"}
               badge="Geodesic Arcs"
@@ -310,7 +310,7 @@ export const Mission02GateRotations: React.FC<Mission02GateRotationsProps> = ({
           </div>
 
           {/* Top Right: Unitary Transformation Matrix & Geodesic Arc HUD */}
-          <div className="fixed top-16 right-4 w-80 pointer-events-auto space-y-2.5">
+          <div className="w-full md:w-80 lg:w-96 pointer-events-auto shrink-0 space-y-2.5">
             <GlassCard
               title={"Unitary Matrix Telemetry"}
               badge={`U_${activeGateDef.symbol}`}

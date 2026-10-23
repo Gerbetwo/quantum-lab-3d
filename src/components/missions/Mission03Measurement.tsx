@@ -266,9 +266,9 @@ export const Mission03Measurement: React.FC<Mission03MeasurementProps> = ({
         lastOutcome: storeLastOutcome,
       }}
       tier2Overlays={
-        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between select-none">
+        <div className="absolute inset-0 pointer-events-none max-h-full overflow-y-auto pt-16 px-4 pb-4 sm:pt-20 sm:px-6 sm:pb-6 flex flex-col md:flex-row justify-between items-start gap-4 select-none">
           {/* Top Left: Chamber Guide & Active Spatial Telemetry Card */}
-          <div className="flex flex-col gap-2 max-w-sm pointer-events-auto">
+          <div className="w-full md:w-80 lg:w-96 pointer-events-auto shrink-0 space-y-2">
             <GlassCard
               title={"Measurement Chamber"}
               badge="Active Isolation"
@@ -306,7 +306,7 @@ export const Mission03Measurement: React.FC<Mission03MeasurementProps> = ({
           </div>
 
           {/* Top Right: Born Probabilities & 3D Sampling Scoreboard */}
-          <div className="fixed top-16 right-4 w-84 pointer-events-auto space-y-2.5">
+          <div className="w-full md:w-84 lg:w-96 pointer-events-auto shrink-0 space-y-2.5">
             {/* 1. Born Rule Theoretical Probabilities */}
             <GlassCard title={t("math_dock.dirac_telemetry_title")} badge="Born Invariant">
               <div className="space-y-2 font-mono text-xs">
@@ -465,3 +465,5 @@ export const Mission03Measurement: React.FC<Mission03MeasurementProps> = ({
     />
   );
 };
+
+export default Mission03Measurement;
