@@ -22,7 +22,7 @@ describe('QuantumLab Workspace Component', () => {
     render(<QuantumLab />);
 
     // Initial state is |+⟩. Applying H should yield |0⟩
-    const hButton = screen.getByRole('button', { name: /Hadamard/i });
+    const hButton = screen.getByRole('button', { name: /^Hadamard/i });
     fireEvent.click(hButton);
 
     expect(screen.getByText(/1\.000\|0⟩/)).toBeInTheDocument();
@@ -30,7 +30,7 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByText(/P\(\|1⟩\):\s*0\.0%/)).toBeInTheDocument();
 
     // Applying X to |0⟩ should yield |1⟩
-    const xButton = screen.getByRole('button', { name: /Pauli-X/i });
+    const xButton = screen.getByRole('button', { name: /^Pauli-X/i });
     fireEvent.click(xButton);
 
     expect(screen.getByText(/1\.000\|1⟩/)).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByText(/P\(\|1⟩\):\s*100\.0%/)).toBeInTheDocument();
 
     // Applying Z to |1⟩ should keep it in |1⟩
-    const zButton = screen.getByRole('button', { name: /Pauli-Z/i });
+    const zButton = screen.getByRole('button', { name: /^Pauli-Z/i });
     fireEvent.click(zButton);
     expect(screen.getByText(/P\(\|1⟩\):\s*100\.0%/)).toBeInTheDocument();
   });
@@ -64,6 +64,26 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByText(/P\(\|0⟩\):\s*100\.0%/)).toBeInTheDocument();
     expect(screen.getByText(/P\(\|1⟩\):\s*0\.0%/)).toBeInTheDocument();
   });
+
+  it('interacts with Tier 3 QuantumPipelineRibbon controls and gates', () => {
+    render(<QuantumLab />);
+
+    // Apply Hadamard via ribbon
+    const ribbonHadamard = screen.getByRole('button', { name: /Apply Hadamard Gate/i });
+    fireEvent.click(ribbonHadamard);
+    expect(screen.getByText(/1\.000\|0⟩/)).toBeInTheDocument();
+
+    // Prepare |1⟩ preset via ribbon
+    const ribbonPreset1 = screen.getByRole('button', { name: /Prepare Excited \|1⟩/i });
+    fireEvent.click(ribbonPreset1);
+    expect(screen.getByText(/1\.000\|1⟩/)).toBeInTheDocument();
+
+    // Measure via ribbon collapse button
+    const ribbonCollapse = screen.getByRole('button', { name: /Collapse Wavefunction Measurement/i });
+    fireEvent.click(ribbonCollapse);
+    expect(screen.getByText(/Outcome:\s*\|(0|1)⟩/)).toBeInTheDocument();
+  });
+
 
   it('renders all 7 top navigation tabs and switches active step views', () => {
     render(<QuantumLab />);
