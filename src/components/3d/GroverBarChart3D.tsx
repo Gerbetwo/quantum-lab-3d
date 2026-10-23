@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { useOrbitCamera } from '@/hooks/useOrbitCamera';
 
 export interface GroverBarChart3DProps {
   groverProbs?: number[];
@@ -17,6 +18,14 @@ export function GroverBarChart3D({
   const containerRef = useRef<HTMLDivElement>(null);
   const probsRef = useRef<number[]>(groverProbs);
   const targetRef = useRef<number>(targetIndex);
+
+  const orbit = useOrbitCamera(containerRef, {
+    initialRadius: 7.0,
+    minRadius: 3.0,
+    maxRadius: 15.0,
+    initialTheta: Math.PI / 3,
+    initialPhi: Math.PI / 4,
+  });
 
   useEffect(() => {
     probsRef.current = groverProbs;
@@ -119,6 +128,8 @@ export function GroverBarChart3D({
     let animId = 0;
 
     const animate = () => {
+      orbit.updateCamera(camera);
+
       const probs = probsRef.current;
       const target = targetRef.current;
       const meanProb = probs.reduce((acc, p) => acc + p, 0) / 4;
@@ -175,13 +186,17 @@ export function GroverBarChart3D({
         container.removeChild(renderer.domElement);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- singleton WebGL canvas lifecycle
   }, []);
 
   return (
     <div
       data-testid="grover-bar-chart-3d"
       ref={containerRef}
-      className={`relative w-full h-full min-h-60 select-none ${className}`.trim()}
+      onPointerDown={orbit.onPointerDown}
+      onPointerMove={orbit.onPointerMove}
+      onPointerUp={orbit.onPointerUp}
+      className={`relative w-full h-full min-h-60 select-none cursor-grab active:cursor-grabbing ${className}`.trim()}
     />
   );
 }

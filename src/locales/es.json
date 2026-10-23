@@ -158,7 +158,24 @@
       "inject_bit_flip": "Invertir bit",
       "run_syndrome_correction": "Ejecutar corrección de síndrome",
       "encode_zero": "Codificar |000⟩",
-      "encode_one": "Codificar |111⟩"
+      "encode_one": "Codificar |111⟩",
+      "parity_nodes": "Nodos de verificación de paridad de síndrome",
+      "parity_ok": "Paridad coincidente",
+      "parity_violated": "Violación de paridad",
+      "s1_label": "S₁ = q₀ ⊕ q₁",
+      "s2_label": "S₂ = q₁ ⊕ q₂"
+    },
+    "telemetryPanel": {
+      "collapse": "Ocultar telemetría",
+      "expand": "Expandir telemetría",
+      "handle_title": "Telemetría cuántica y puente de control",
+      "quick_actions": "Acciones rápidas",
+      "active_mission": "Misión activa",
+      "drawer_summary": "Panel de telemetría",
+      "objective_met": "Objetivo cumplido",
+      "kinematic_angles": "Ángulos cinemáticos",
+      "polar_theta": "Polar θ",
+      "azimuthal_phi": "Azimutal φ"
     },
     "entanglement": {
       "title": "4. Entrelazamiento",

@@ -18,6 +18,7 @@ import {
   isVectorInBlochTarget,
   type TargetZoneMesh,
 } from '@/lib/3d/TargetZone3D';
+import { calculateThermalJitter, CRYO_MIN_MK } from '@/core/decoherenceMath';
 
 export { slerpUnitVectors };
 
@@ -29,6 +30,7 @@ export interface CoreBlochSphereProps {
   className?: string;
   purity?: number;
   thermalCollapse?: number;
+  temperature?: number;
   activeGate?: string | null;
   interactive?: boolean;
   onStateChange?: (state: QubitState) => void;
@@ -44,6 +46,7 @@ export function CoreBlochSphere({
   className = '',
   purity = 1,
   thermalCollapse = 1,
+  temperature = 15,
   activeGate = null,
   interactive = true,
   onStateChange,
@@ -58,6 +61,7 @@ export function CoreBlochSphere({
   const targetStateRef = useRef<QubitState>(state);
   const targetPurityRef = useRef<number>(purity);
   const targetCollapseRef = useRef<number>(thermalCollapse);
+  const targetTemperatureRef = useRef<number>(temperature);
   const prevGateRef = useRef<string | null>(null);
   const prevOutcomeRef = useRef<0 | 1 | null>(null);
   const targetZoneRef = useRef<{ theta: number; phi: number } | null>(targetZone);
@@ -73,6 +77,7 @@ export function CoreBlochSphere({
   useEffect(() => { targetStateRef.current = state; }, [state]);
   useEffect(() => { targetPurityRef.current = purity; }, [purity]);
   useEffect(() => { targetCollapseRef.current = thermalCollapse; }, [thermalCollapse]);
+  useEffect(() => { targetTemperatureRef.current = temperature; }, [temperature]);
   useEffect(() => { targetZoneRef.current = targetZone; }, [targetZone]);
   useEffect(() => { onAlignmentChangeRef.current = onAlignmentChange; }, [onAlignmentChange]);
 
@@ -254,13 +259,7 @@ export function CoreBlochSphere({
     scene.add(ringsGroup);
 
     // 5. Geodesic Particle Tracer System
-    const {
-      mesh: particleMesh,
-      guideLine,
-      triggerArc,
-      update: updateParticles,
-      dispose: disposeParticles,
-    } = createGeodesicParticleSystem(80, 1.25);
+    const { mesh: particleMesh, guideLine, triggerArc, update: updateParticles, dispose: disposeParticles } = createGeodesicParticleSystem(80, 1.25);
     triggerArcRef.current = triggerArc;
     scene.add(particleMesh);
     scene.add(guideLine);
@@ -349,8 +348,16 @@ export function CoreBlochSphere({
       axes.scale.setScalar(curCollapse);
       axesMat.opacity = initialPalette.axesOpacity * curCollapse;
 
-      // State vector position & length (governed by purity)
-      const vec = toVector(curTh, curPh);
+      // State vector position & length (governed by purity and thermal jitter)
+      let finalTh = curTh;
+      let finalPh = curPh;
+      const curTemp = targetTemperatureRef.current;
+      if (typeof curTemp === 'number' && curTemp > CRYO_MIN_MK) {
+        const { dTheta, dPhi } = calculateThermalJitter(curTemp, now);
+        finalTh = Math.max(0.001, Math.min(Math.PI - 0.001, curTh + dTheta));
+        finalPh = curPh + dPhi;
+      }
+      const vec = toVector(finalTh, finalPh);
       arrow.setDirection(vec);
       const vecLen = Math.max(0.05, 1.2 * curPur);
       arrow.setLength(vecLen, Math.min(vecLen * 0.25, 0.2), Math.min(vecLen * 0.1, 0.08));

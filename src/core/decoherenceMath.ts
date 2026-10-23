@@ -66,3 +66,34 @@ export function thermalCollapseFactor(tMilliK: number): number {
   const f = (purityAtTemperature(t) - pMin) / (pMax - pMin);
   return Math.max(0, Math.min(1, f));
 }
+
+/**
+ * Vector length governed by state purity: L = 1.2 * purity.
+ * Monotonically shrinks as temperature rises (15 mK -> 300 mK) and expands back as temperature cools.
+ */
+export function calculateVectorLength(purity: number): number {
+  const clampedPurity = Math.max(0, Math.min(1, purity));
+  return Number((1.2 * clampedPurity).toFixed(4));
+}
+
+/**
+ * Computes a temperature-proportional pseudo-stochastic angular jitter (dTheta, dPhi).
+ * Fully stabilizes to zero jitter at base cryostat temperature (15 mK),
+ * and scales up smoothly to ~0.05 rad at 300 mK.
+ */
+export function calculateThermalJitter(
+  tempInMilliKelvin: number,
+  timeMs: number
+): { dTheta: number; dPhi: number } {
+  if (tempInMilliKelvin <= CRYO_MIN_MK) {
+    return { dTheta: 0, dPhi: 0 };
+  }
+  const clampedTemp = Math.min(CRYO_MAX_MK, tempInMilliKelvin);
+  const normT = (clampedTemp - CRYO_MIN_MK) / (CRYO_MAX_MK - CRYO_MIN_MK);
+  const amplitude = normT * 0.05;
+  const tSec = timeMs * 0.001;
+  const dTheta = Math.sin(tSec * 14.5) * Math.cos(tSec * 9.2) * amplitude;
+  const dPhi = Math.cos(tSec * 16.3) * Math.sin(tSec * 11.1) * amplitude;
+  return { dTheta, dPhi };
+}
+

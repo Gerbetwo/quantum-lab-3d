@@ -24,16 +24,12 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { MissionCanvasShell } from './ui/MissionCanvasShell';
 import { TargetGoalCard } from './ui/TargetGoalCard';
 import { SpatialTooltipOverlay } from './ui/SpatialTooltipOverlay';
-import { QuantumPipelineRibbon } from './ui/QuantumPipelineRibbon';
+import { UnifiedBottomTelemetryPanel } from './UnifiedBottomTelemetryPanel';
 
 import { CoreBlochSphere } from './3d/CoreBlochSphere';
 import { EntanglementDualSphere } from './3d/EntanglementDualSphere';
 import { GroverBarChart3D } from './3d/GroverBarChart3D';
 import { QECArray3D } from './3d/QECArray3D';
-
-import { SingleQubitPanel } from './SingleQubitPanel';
-import { EntanglementPanel, DecoherencePanel } from './EntanglementDecoherencePanels';
-import { GroverPanel, QECPanel } from './AlgorithmWorkshopPanels';
 import { Sun, Moon, Globe } from 'lucide-react';
 
 export const WORKSHOP_TABS = [
@@ -78,6 +74,7 @@ export function QuantumLab() {
   } = useQuantumLabState();
 
   const [activeGate, setActiveGate] = useState<string | null>(null);
+  const [correctionTrigger, setCorrectionTrigger] = useState<number>(0);
   const gateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const triggerGateAnimation = useCallback((gate: string) => {
@@ -172,6 +169,7 @@ export function QuantumLab() {
             state={{ theta: Math.PI / 2, phi: 0 }}
             purity={vectorPurity}
             thermalCollapse={thermalCollapseFactor(temperature)}
+            temperature={temperature}
             interactive={false}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
@@ -189,6 +187,7 @@ export function QuantumLab() {
           <QECArray3D
             qecTriple={qecTriple}
             syndromeInfo={syndromeInfo}
+            correctionTrigger={correctionTrigger}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
         );
@@ -298,102 +297,57 @@ export function QuantumLab() {
               </div>
             </SpatialTooltipOverlay>
           )}
-
-          {/* Right Column: Floating Tactical Control Dashboard (320px on 1080p displays) */}
-          <div className="absolute top-4 right-4 bottom-24 w-full md:w-80 pointer-events-auto overflow-y-auto rounded-2xl border border-border bg-card/90 backdrop-blur-md p-4 sm:p-5 shadow-2xl flex flex-col justify-between scrollbar-thin z-10">
-            {activeTab <= 2 && (
-              <SingleQubitPanel
-                activeTab={activeTab}
-                state={state}
-                metrics={metrics}
-                lastOutcome={lastOutcome}
-                onGate={(g) => {
-                  applySingleQubitGate(g);
-                  playGateSweep(g);
-                  triggerGateAnimation(g);
-                }}
-                onMeasure={() => {
-                  measureSingleQubit();
-                  playCollapseDrop();
-                }}
-                onReset={() => {
-                  resetSingleQubit();
-                  playVectorSnap();
-                }}
-              />
-            )}
-
-            {activeTab === 3 && (
-              <EntanglementPanel
-                entangledPair={entangledPair}
-                onMeasure={measureEntangled}
-                onReset={resetEntangled}
-              />
-            )}
-
-            {activeTab === 4 && (
-              <DecoherencePanel
-                temperature={temperature}
-                t2Time={t2Time}
-                vectorPurity={vectorPurity}
-                onTemperatureChange={setTemperature}
-                onReset={() => setTemperature(15)}
-              />
-            )}
-
-            {activeTab === 5 && (
-              <GroverPanel
-                groverTarget={groverTarget}
-                groverProbs={groverProbs}
-                onSelectTarget={setGroverTarget}
-                onRunGrover={runGroverStep}
-                onReset={resetGrover}
-              />
-            )}
-
-            {activeTab === 6 && (
-              <QECPanel
-                qecTriple={qecTriple}
-                syndromeInfo={syndromeInfo}
-                onInjectBitFlip={injectQecBitFlip}
-                onRunSyndromeCorrection={runQecCorrection}
-                onReset={resetQec}
-              />
-            )}
-
-            {/* Shor Didactic Telemetry Footer */}
-            <div className="text-[11px] font-mono text-muted-foreground flex justify-between items-center border-t border-border/50 pt-2.5 mt-4">
-              <span>QuantumLab Workshop Suite</span>
-              <span>Shor N=15 Reference (r={shorPeriod})</span>
-            </div>
-          </div>
         </>
       }
       tier3Ribbon={
-        activeTab <= 2 ? (
-          <QuantumPipelineRibbon
-            onPreparePreset={(preset) => {
-              setSingleQubitState({ theta: preset.theta, phi: preset.phi });
-              playVectorSnap();
-            }}
-            onTransformGate={(gate) => {
-              applySingleQubitGate(gate as 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T');
-              playGateSweep(gate);
-              triggerGateAnimation(gate);
-            }}
-            onMeasure={() => {
-              measureSingleQubit();
-              playCollapseDrop();
-            }}
-            onReset={() => {
-              resetSingleQubit();
-              playVectorSnap();
-            }}
-            lastOutcome={lastOutcome}
-          />
-        ) : (
-          <div className="hidden" />
-        )
+        <UnifiedBottomTelemetryPanel
+          activeTab={activeTab}
+          state={state}
+          metrics={metrics}
+          lastOutcome={lastOutcome}
+          onGate={(g) => {
+            applySingleQubitGate(g);
+            playGateSweep(g);
+            triggerGateAnimation(g);
+          }}
+          onMeasure={() => {
+            measureSingleQubit();
+            playCollapseDrop();
+          }}
+          onReset={() => {
+            resetSingleQubit();
+            playVectorSnap();
+          }}
+          onPreparePreset={(preset) => {
+            setSingleQubitState({ theta: preset.theta, phi: preset.phi });
+            playVectorSnap();
+          }}
+          entangledPair={entangledPair}
+          onMeasureEntangled={measureEntangled}
+          onResetEntangled={resetEntangled}
+          temperature={temperature}
+          t2Time={t2Time}
+          vectorPurity={vectorPurity}
+          onTemperatureChange={setTemperature}
+          onResetTemperature={() => setTemperature(15)}
+          groverTarget={groverTarget}
+          groverProbs={groverProbs}
+          onSelectGroverTarget={setGroverTarget}
+          onRunGrover={runGroverStep}
+          onResetGrover={resetGrover}
+          qecTriple={qecTriple}
+          syndromeInfo={syndromeInfo}
+          onInjectBitFlip={injectQecBitFlip}
+          onRunSyndromeCorrection={() => {
+            runQecCorrection();
+            setCorrectionTrigger((prev) => prev + 1);
+          }}
+          onResetQec={resetQec}
+          activeObjective={activeObjective}
+          isObjectiveCompleted={isObjectiveCompleted}
+          objectiveProgress={getObjectiveProgress()}
+          shorPeriod={shorPeriod}
+        />
       }
     />
   );

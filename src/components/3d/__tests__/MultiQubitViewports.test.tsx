@@ -61,16 +61,34 @@ describe('Multi-Qubit 3D Viewport Components', () => {
       expect(container.querySelector('[data-testid="qec-array-3d"]')).toBeInTheDocument();
       expect(container.querySelector('canvas')).toBeInTheDocument();
 
-      // Error injection
+      // Error injection & corrective pulse trigger
       rerender(
         <QECArray3D
           qecTriple={[0, 1, 0]}
           syndromeInfo={{ syndrome: 2, errorIndex: 1, corrected: [0, 0, 0] }}
+          isCorrecting={true}
+          correctionTrigger={1}
         />
       );
 
       unmount();
       expect(container.querySelector('canvas')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Universal Orbit Camera Pointer Handlers on Missions 4, 6, 7', () => {
+    it('attaches onPointerDown, onPointerMove, onPointerUp handlers to all viewports', () => {
+      const { container: c4 } = render(<EntanglementDualSphere entangledPair={null} />);
+      const el4 = c4.querySelector('[data-testid="entanglement-dual-sphere"]')!;
+      expect(el4).toHaveClass('cursor-grab');
+
+      const { container: c6 } = render(<GroverBarChart3D />);
+      const el6 = c6.querySelector('[data-testid="grover-bar-chart-3d"]')!;
+      expect(el6).toHaveClass('cursor-grab');
+
+      const { container: c7 } = render(<QECArray3D />);
+      const el7 = c7.querySelector('[data-testid="qec-array-3d"]')!;
+      expect(el7).toHaveClass('cursor-grab');
     });
   });
 });

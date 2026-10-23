@@ -129,6 +129,8 @@ export function QECPanel({
   onReset,
 }: QECPanelProps) {
   const { t } = useTranslation();
+  const s1 = qecTriple[0] ^ qecTriple[1];
+  const s2 = qecTriple[1] ^ qecTriple[2];
 
   return (
     <>
@@ -173,6 +175,58 @@ export function QECPanel({
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* 2 Floating Syndrome Parity Check Nodes (S1 = q0 ⊕ q1, S2 = q1 ⊕ q2) */}
+        <div className="p-4 rounded-xl bg-background border border-border space-y-3">
+          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
+            {t('panels.qec.parity_nodes')}
+          </span>
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className={`p-3 rounded-lg border transition-all ${
+                s1 === 1
+                  ? 'bg-secondary border-destructive ring-1 ring-destructive'
+                  : 'bg-card border-border'
+              }`}
+            >
+              <div className="flex justify-between items-center text-xs font-mono">
+                <span className="text-muted-foreground font-bold">{t('panels.qec.s1_label')}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    s1 === 1 ? 'bg-destructive/20 text-destructive' : 'bg-success/20 text-success'
+                  }`}
+                >
+                  {s1 === 1 ? t('panels.qec.parity_violated') : t('panels.qec.parity_ok')}
+                </span>
+              </div>
+              <div className="text-xl font-mono font-bold text-foreground mt-1.5">
+                |{s1}⟩
+              </div>
+            </div>
+
+            <div
+              className={`p-3 rounded-lg border transition-all ${
+                s2 === 1
+                  ? 'bg-secondary border-destructive ring-1 ring-destructive'
+                  : 'bg-card border-border'
+              }`}
+            >
+              <div className="flex justify-between items-center text-xs font-mono">
+                <span className="text-muted-foreground font-bold">{t('panels.qec.s2_label')}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    s2 === 1 ? 'bg-destructive/20 text-destructive' : 'bg-success/20 text-success'
+                  }`}
+                >
+                  {s2 === 1 ? t('panels.qec.parity_violated') : t('panels.qec.parity_ok')}
+                </span>
+              </div>
+              <div className="text-xl font-mono font-bold text-foreground mt-1.5">
+                |{s2}⟩
+              </div>
+            </div>
           </div>
         </div>
 

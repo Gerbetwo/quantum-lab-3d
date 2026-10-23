@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { readBlochPalette, observeThemeChanges } from '@/lib/3d/blochTheme';
+import { useOrbitCamera } from '@/hooks/useOrbitCamera';
 
 export interface EntanglementDualSphereProps {
   entangledPair?: { alice: 0 | 1; bob: 0 | 1; state: string } | null;
@@ -15,6 +16,14 @@ export function EntanglementDualSphere({
 }: EntanglementDualSphereProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pairRef = useRef(entangledPair);
+
+  const orbit = useOrbitCamera(containerRef, {
+    initialRadius: 6.5,
+    minRadius: 2.5,
+    maxRadius: 14.0,
+    initialTheta: Math.PI / 2.5,
+    initialPhi: Math.PI / 2,
+  });
 
   useEffect(() => {
     pairRef.current = entangledPair;
@@ -133,6 +142,8 @@ export function EntanglementDualSphere({
     const animate = () => {
       t += 0.03;
 
+      orbit.updateCamera(camera);
+
       const currentPair = pairRef.current;
 
       // Update Alice and Bob vectors
@@ -206,13 +217,17 @@ export function EntanglementDualSphere({
         container.removeChild(renderer.domElement);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- singleton WebGL canvas lifecycle
   }, []);
 
   return (
     <div
       data-testid="entanglement-dual-sphere"
       ref={containerRef}
-      className={`relative w-full h-full min-h-60 select-none ${className}`.trim()}
+      onPointerDown={orbit.onPointerDown}
+      onPointerMove={orbit.onPointerMove}
+      onPointerUp={orbit.onPointerUp}
+      className={`relative w-full h-full min-h-60 select-none cursor-grab active:cursor-grabbing ${className}`.trim()}
     />
   );
 }

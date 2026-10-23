@@ -16,6 +16,8 @@ import {
   milliKelvinToKelvin,
   applyPhaseDecay,
   thermalCollapseFactor,
+  calculateVectorLength,
+  calculateThermalJitter,
 } from '../decoherenceMath';
 
 describe('qubitMath - Core Kinematics & Math Invariants', () => {
@@ -305,5 +307,50 @@ describe('qubitMath - Core Kinematics & Math Invariants', () => {
         );
       }
     });
+
+    it('scales vector length L = 1.2 * purity shrinking at 300 mK and expanding at 15 mK', () => {
+      // Full purity (1.0) -> L = 1.2
+      expect(calculateVectorLength(1.0)).toBeCloseTo(1.2, 4);
+      expect(calculateVectorLength(0.0)).toBe(0);
+
+      // Temperature 15 mK vs 300 mK
+      const t2_15 = calculateT2CoherenceTime(15);
+      const purity_15 = applyPhaseDecay(Math.PI / 2, 0, 0.15, t2_15).purity;
+      const len_15 = calculateVectorLength(purity_15);
+
+      const t2_300 = calculateT2CoherenceTime(300);
+      const purity_300 = applyPhaseDecay(Math.PI / 2, 0, 0.15, t2_300).purity;
+      const len_300 = calculateVectorLength(purity_300);
+
+      // As T rises 15 mK -> 300 mK, vector length shrinks
+      expect(len_15).toBeGreaterThan(len_300);
+
+      // As T reduces 300 mK -> 15 mK, vector length expands back
+      const len_cooled = calculateVectorLength(purity_15);
+      expect(len_cooled).toBe(len_15);
+    });
+
+    it('calculates temperature-proportional thermal jitter stabilizing to 0 at 15 mK', () => {
+      // Zero jitter at base cryostat temperature (15 mK)
+      const jitter15 = calculateThermalJitter(15, 1000);
+      expect(jitter15.dTheta).toBe(0);
+      expect(jitter15.dPhi).toBe(0);
+
+      // Below 15 mK clamps to zero
+      const jitterSub = calculateThermalJitter(10, 1000);
+      expect(jitterSub.dTheta).toBe(0);
+      expect(jitterSub.dPhi).toBe(0);
+
+      // Above 15 mK jitter emerges and stabilizes back when cooled
+      const jitter300 = calculateThermalJitter(300, 500);
+      expect(Math.abs(jitter300.dTheta) + Math.abs(jitter300.dPhi)).toBeGreaterThan(0);
+      expect(Math.abs(jitter300.dTheta)).toBeLessThanOrEqual(0.05);
+      expect(Math.abs(jitter300.dPhi)).toBeLessThanOrEqual(0.05);
+
+      const jitterCooldown = calculateThermalJitter(15, 500);
+      expect(jitterCooldown.dTheta).toBe(0);
+      expect(jitterCooldown.dPhi).toBe(0);
+    });
   });
 });
+
