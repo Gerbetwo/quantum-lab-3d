@@ -63,86 +63,85 @@ export function SingleQubitPanel({
   ];
 
   return (
-    <>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            {stepTitles[activeTab]} <span className="text-primary text-sm font-mono font-normal">[v1.0]</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">{stepDescriptions[activeTab]}</p>
-        </div>
+    <div className="space-y-3.5">
+      <div>
+        <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center justify-between">
+          <span>{stepTitles[activeTab]}</span>
+          <span className="text-primary text-[10px] font-mono px-1.5 py-0.5 rounded bg-secondary border border-border">v1.0</span>
+        </h2>
+        <p className="text-xs text-muted-foreground mt-0.5">{stepDescriptions[activeTab]}</p>
+      </div>
 
-        {/* State Vector Readout */}
-        <div className="p-4 rounded-xl bg-background border border-border space-y-1.5">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            {t('panels.singleQubit.state_vector_readout')}
-          </span>
-          <div className="text-xl sm:text-2xl font-mono text-primary font-bold tracking-wide">
-            {formatDirac(metrics)}
-          </div>
-          <div className="text-xs font-mono text-muted-foreground">
-            θ: {(state.theta / Math.PI).toFixed(3)}π rad &bull; φ: {(state.phi / Math.PI).toFixed(3)}π rad
-          </div>
+      {/* State Vector Readout */}
+      <div className="p-3 rounded-xl bg-background/90 border border-border space-y-1">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
+          {t('panels.singleQubit.state_vector_readout')}
+        </span>
+        <div className="text-lg sm:text-xl font-mono text-primary font-bold tracking-wide">
+          {formatDirac(metrics)}
         </div>
-
-        {/* Born Probabilities */}
-        <div className="p-4 rounded-xl bg-background border border-border space-y-3">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            {t('panels.singleQubit.born_probabilities')}
-          </span>
-          <div className="flex justify-between items-center text-sm font-mono font-semibold">
-            <span className="text-primary">{t('panels.singleQubit.p0', { p0: p0Percent })}</span>
-            <span className="text-foreground">{t('panels.singleQubit.p1', { p1: p1Percent })}</span>
-          </div>
-          <div
-            className="w-full h-3.5 bg-secondary rounded-full overflow-hidden flex"
-            role="progressbar"
-            aria-label="[Born Probabilities]"
-            aria-valuenow={Math.round(metrics.prob0 * 100)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <div className="h-full bg-primary transition-all duration-300" style={{ width: `${metrics.prob0 * 100}%` }} />
-            <div className="h-full bg-secondary transition-all duration-300" style={{ width: `${metrics.prob1 * 100}%` }} />
-          </div>
+        <div className="text-[11px] font-mono text-muted-foreground">
+          θ: {(state.theta / Math.PI).toFixed(3)}π rad &bull; φ: {(state.phi / Math.PI).toFixed(3)}π rad
         </div>
+      </div>
 
-        {/* Gate Action Buttons */}
-        <div className="space-y-2">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            {t('panels.singleQubit.quantum_gates')}
-          </span>
-          <div className="grid grid-cols-3 gap-3">
-            {(['H', 'X', 'Z'] as const).map((gate) => (
-              <button
-                key={gate}
-                type="button"
-                onClick={() => onGate(gate)}
-                className="py-2.5 px-4 rounded-lg bg-secondary hover:bg-muted active:scale-95 border border-primary text-primary font-mono font-bold text-sm transition-all shadow-sm hover:shadow-primary/10 cursor-pointer"
-              >
-                {gate === 'H'
-                  ? t('panels.singleQubit.gate_hadamard')
-                  : gate === 'X'
-                    ? t('panels.singleQubit.gate_pauli_x')
-                    : t('panels.singleQubit.gate_pauli_z')}
-              </button>
-            ))}
-          </div>
+      {/* Born Probabilities */}
+      <div className="p-3 rounded-xl bg-background/90 border border-border space-y-2">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
+          {t('panels.singleQubit.born_probabilities')}
+        </span>
+        <div className="flex justify-between items-center text-xs font-mono font-semibold">
+          <span className="text-primary">{t('panels.singleQubit.p0', { p0: p0Percent })}</span>
+          <span className="text-foreground">{t('panels.singleQubit.p1', { p1: p1Percent })}</span>
+        </div>
+        <div
+          className="w-full h-2.5 bg-secondary rounded-full overflow-hidden flex"
+          role="progressbar"
+          aria-label="[Born Probabilities]"
+          aria-valuenow={Math.round(metrics.prob0 * 100)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div className="h-full bg-primary transition-all duration-300" style={{ width: `${metrics.prob0 * 100}%` }} />
+          <div className="h-full bg-secondary transition-all duration-300" style={{ width: `${metrics.prob1 * 100}%` }} />
+        </div>
+      </div>
+
+      {/* Gate Action Buttons */}
+      <div className="space-y-1.5">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
+          {t('panels.singleQubit.quantum_gates')}
+        </span>
+        <div className="grid grid-cols-3 gap-2">
+          {(['H', 'X', 'Z'] as const).map((gate) => (
+            <button
+              key={gate}
+              type="button"
+              onClick={() => onGate(gate)}
+              className="py-1.5 px-2 rounded-lg bg-secondary hover:bg-muted active:scale-95 border border-primary text-primary font-mono font-bold text-xs transition-all shadow-sm hover:shadow-primary/10 cursor-pointer"
+            >
+              {gate === 'H'
+                ? t('panels.singleQubit.gate_hadamard')
+                : gate === 'X'
+                  ? t('panels.singleQubit.gate_pauli_x')
+                  : t('panels.singleQubit.gate_pauli_z')}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Measurement & Reset */}
-      <div className="pt-4 border-t border-border/80 space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className="pt-2 border-t border-border/80 space-y-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onMeasure}
-            className="flex-1 py-3 px-6 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-success/20 active:scale-95 cursor-pointer"
+            className="flex-1 py-2 px-3 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-xs tracking-wide transition-all shadow-md shadow-success/20 active:scale-95 cursor-pointer"
           >
             {t('panels.singleQubit.measure_state')}
           </button>
           {lastOutcome !== null && (
-            <div className="px-4 py-2.5 rounded-lg bg-secondary border border-success text-success font-mono text-base font-bold text-center">
+            <div className="px-2.5 py-1.5 rounded-lg bg-secondary border border-success text-success font-mono text-xs font-bold text-center">
               {t('panels.singleQubit.outcome', { outcome: lastOutcome })}
             </div>
           )}
@@ -150,11 +149,11 @@ export function SingleQubitPanel({
         <button
           type="button"
           onClick={onReset}
-          className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-sm transition-all active:scale-95 cursor-pointer"
+          className="w-full py-1.5 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-xs transition-all active:scale-95 cursor-pointer"
         >
           {t('panels.singleQubit.reset')}
         </button>
       </div>
-    </>
+    </div>
   );
 }

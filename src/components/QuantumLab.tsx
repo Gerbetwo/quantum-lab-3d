@@ -1,45 +1,46 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from "react";
 import {
   computeStateMetrics,
   applyPhaseDecay,
   calculateT2CoherenceTime,
   thermalCollapseFactor,
-} from '@/core/qubitMath';
-import { runShorDemo } from '@/core/algorithms';
-import { useQuantumLabState } from '@/hooks/useQuantumLabState';
+} from "@/core/qubitMath";
+import { runShorDemo } from "@/core/algorithms";
+import { useQuantumLabState } from "@/hooks/useQuantumLabState";
 import {
   getObjectiveByTabIndex,
   evaluateObjective,
-} from '@/lib/quantum/objectivesConfig';
+} from "@/lib/quantum/objectivesConfig";
 import {
   playGateSweep,
   playCollapseDrop,
   playVectorSnap,
-} from '@/lib/audio/soundEngine';
-import { useTheme } from '@/hooks/useTheme';
-import { useTranslation } from '@/hooks/useTranslation';
+} from "@/lib/audio/soundEngine";
+import { useTheme } from "@/hooks/useTheme";
+import { useTranslation } from "@/hooks/useTranslation";
 
-import { MissionCanvasShell } from './ui/MissionCanvasShell';
-import { TargetGoalCard } from './ui/TargetGoalCard';
-import { SpatialTooltipOverlay } from './ui/SpatialTooltipOverlay';
-import { UnifiedBottomTelemetryPanel } from './UnifiedBottomTelemetryPanel';
+import { MissionCanvasShell } from "./ui/MissionCanvasShell";
+import { TargetGoalCard } from "./ui/TargetGoalCard";
+import { SpatialTooltipOverlay } from "./ui/SpatialTooltipOverlay";
+import { UnifiedBottomTelemetryPanel } from "./UnifiedBottomTelemetryPanel";
+import { QuantumPipelineRibbon } from "./ui/QuantumPipelineRibbon";
 
-import { CoreBlochSphere } from './3d/CoreBlochSphere';
-import { EntanglementDualSphere } from './3d/EntanglementDualSphere';
-import { GroverBarChart3D } from './3d/GroverBarChart3D';
-import { QECArray3D } from './3d/QECArray3D';
-import { Sun, Moon, Globe } from 'lucide-react';
+import { CoreBlochSphere } from "./3d/CoreBlochSphere";
+import { EntanglementDualSphere } from "./3d/EntanglementDualSphere";
+import { GroverBarChart3D } from "./3d/GroverBarChart3D";
+import { QECArray3D } from "./3d/QECArray3D";
+import { Sun, Moon, Globe } from "lucide-react";
 
 export const WORKSHOP_TABS = [
-  '1. Superposition',
-  '2. Gates',
-  '3. Measurement',
-  '4. Entanglement',
-  '5. Decoherence',
-  '6. Grover Search',
-  '7. Error Correction',
+  "1. Superposition",
+  "2. Gates",
+  "3. Measurement",
+  "4. Entanglement",
+  "5. Decoherence",
+  "6. Grover Search",
+  "7. Error Correction",
 ] as const;
 
 export function QuantumLab() {
@@ -101,7 +102,9 @@ export function QuantumLab() {
         observedP0: metrics.prob0,
         expectedP0: metrics.prob0,
         phasePhi: state.phi,
-        entangledPair: entangledPair ? { alice: entangledPair.alice, bob: entangledPair.bob } : null,
+        entangledPair: entangledPair
+          ? { alice: entangledPair.alice, bob: entangledPair.bob }
+          : null,
         temperature,
         purity: vectorPurity,
         groverTargetProb: groverProbs[groverTarget],
@@ -114,13 +117,15 @@ export function QuantumLab() {
   const getObjectiveProgress = (): string => {
     switch (activeTab) {
       case 0:
-        return gateCount <= 2 ? `${gateCount}/2 gates` : 'Budget exceeded';
+        return gateCount <= 2 ? `${gateCount}/2 gates` : "Budget exceeded";
       case 1:
         return `P(|0⟩): ${(metrics.prob0 * 100).toFixed(0)}%`;
       case 2:
         return `φ = ${(state.phi / Math.PI).toFixed(2)}π`;
       case 3:
-        return entangledPair ? `Observed: ${entangledPair.state}` : 'Unmeasured';
+        return entangledPair
+          ? `Observed: ${entangledPair.state}`
+          : "Unmeasured";
       case 4:
         return `T = ${temperature} mK, ${(vectorPurity * 100).toFixed(0)}% purity`;
       case 5:
@@ -128,11 +133,11 @@ export function QuantumLab() {
       case 6:
         return syndromeInfo
           ? syndromeInfo.errorIndex === -1
-            ? 'Clean'
+            ? "Clean"
             : `Fixed q${syndromeInfo.errorIndex}`
-          : 'Ready';
+          : "Ready";
       default:
-        return '';
+        return "";
     }
   };
 
@@ -196,13 +201,13 @@ export function QuantumLab() {
     }
   };
 
-  // Tier 1 Header HUD
+  // Tier 1 Header HUD: Floating Perimeter Islands
   const renderTier1Header = (
     <header
       data-testid="tier-1-header"
-      className="relative z-10 w-full pointer-events-auto p-2.5 sm:p-3 flex items-center justify-between gap-3 border-b border-border bg-card/85 backdrop-blur-md"
+      className="pointer-events-none w-full flex items-center justify-between gap-3"
     >
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin py-0.5">
+      <div className="pointer-events-auto flex items-center gap-2 p-1.5 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md overflow-x-auto scrollbar-thin">
         <span className="font-mono text-xs font-bold tracking-widest text-primary uppercase bg-secondary px-2.5 py-1 rounded border border-border shrink-0">
           QuantumLab
         </span>
@@ -214,8 +219,8 @@ export function QuantumLab() {
               onClick={() => setTab(idx)}
               className={`px-2.5 py-1 rounded-lg font-mono text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === idx
-                  ? 'bg-secondary border border-primary text-primary shadow-sm shadow-primary/20'
-                  : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  ? "bg-secondary border border-primary text-primary shadow-sm shadow-primary/20"
+                  : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
             >
               {tab}
@@ -226,7 +231,7 @@ export function QuantumLab() {
 
       {/* Real-time Target Goal Card */}
       {activeObjective && (
-        <div className="hidden md:flex flex-1 justify-center max-w-sm mx-2">
+        <div className="pointer-events-auto hidden md:flex flex-1 justify-center max-w-sm mx-2">
           <TargetGoalCard
             objective={activeObjective}
             isCompleted={isObjectiveCompleted}
@@ -236,26 +241,26 @@ export function QuantumLab() {
       )}
 
       {/* Language & Theme Controls */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md shrink-0">
         <button
           type="button"
           onClick={toggleLanguage}
           data-testid="language-toggle-button"
-          aria-label={t('header.toggle_language')}
+          aria-label={t("header.toggle_language")}
           className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
         >
           <Globe className="w-3.5 h-3.5 text-primary" />
-          <span>{locale === 'en' ? 'EN' : 'ES'}</span>
+          <span>{locale === "en" ? "EN" : "ES"}</span>
         </button>
 
         <button
           type="button"
           onClick={toggleTheme}
           data-testid="theme-toggle-button"
-          aria-label={t('header.toggle_theme')}
+          aria-label={t("header.toggle_theme")}
           className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
         >
-          {theme === 'dark' ? (
+          {theme === "dark" ? (
             <Sun className="w-4 h-4 text-warning" />
           ) : (
             <Moon className="w-4 h-4 text-primary" />
@@ -273,7 +278,7 @@ export function QuantumLab() {
 
   return (
     <MissionCanvasShell
-      missionId={activeObjective?.id ?? 'superposition'}
+      missionId={activeObjective?.id ?? "superposition"}
       activeObjective={activeObjective}
       isObjectiveCompleted={isObjectiveCompleted}
       objectiveProgress={getObjectiveProgress()}
@@ -283,32 +288,37 @@ export function QuantumLab() {
         <>
           <SpatialTooltipOverlay spatialId="state-vector" />
 
-          {/* Real-time State Vector Angle Status Pill (Mission 1 & Single Qubit viewports) */}
-          {activeTab <= 2 && (
-            <SpatialTooltipOverlay
-              position={vectorTipPos}
-              offset={[0, -18]}
-              className="pointer-events-none"
-            >
-              <div className="flex items-center gap-1.5 px-2 py-0.5 font-mono text-[11px] font-bold text-primary">
-                <span>θ = {Math.round((state.theta * 180) / Math.PI)}°</span>
-                <span className="text-muted-foreground">•</span>
-                <span>φ = {Math.round((state.phi * 180) / Math.PI)}°</span>
-              </div>
-            </SpatialTooltipOverlay>
-          )}
+          {/* Clean Inspector Dock */}
+          <UnifiedBottomTelemetryPanel
+            activeTab={activeTab}
+            state={state}
+            metrics={metrics}
+            lastOutcome={lastOutcome}
+            entangledPair={entangledPair}
+            temperature={temperature}
+            t2Time={t2Time}
+            vectorPurity={vectorPurity}
+            groverTarget={groverTarget}
+            groverProbs={groverProbs}
+            qecTriple={qecTriple}
+            syndromeInfo={syndromeInfo}
+            isObjectiveCompleted={isObjectiveCompleted}
+            shorPeriod={shorPeriod}
+          />
         </>
       }
       tier3Ribbon={
-        <UnifiedBottomTelemetryPanel
+        <QuantumPipelineRibbon
           activeTab={activeTab}
           state={state}
-          metrics={metrics}
-          lastOutcome={lastOutcome}
-          onGate={(g) => {
-            applySingleQubitGate(g);
-            playGateSweep(g);
-            triggerGateAnimation(g);
+          onPreparePreset={(preset) => {
+            setSingleQubitState({ theta: preset.theta, phi: preset.phi });
+            playVectorSnap();
+          }}
+          onTransformGate={(gate) => {
+            applySingleQubitGate(gate);
+            playGateSweep(gate);
+            triggerGateAnimation(gate);
           }}
           onMeasure={() => {
             measureSingleQubit();
@@ -318,35 +328,24 @@ export function QuantumLab() {
             resetSingleQubit();
             playVectorSnap();
           }}
-          onPreparePreset={(preset) => {
-            setSingleQubitState({ theta: preset.theta, phi: preset.phi });
-            playVectorSnap();
-          }}
+          lastOutcome={lastOutcome}
           entangledPair={entangledPair}
           onMeasureEntangled={measureEntangled}
           onResetEntangled={resetEntangled}
           temperature={temperature}
-          t2Time={t2Time}
-          vectorPurity={vectorPurity}
           onTemperatureChange={setTemperature}
           onResetTemperature={() => setTemperature(15)}
           groverTarget={groverTarget}
-          groverProbs={groverProbs}
           onSelectGroverTarget={setGroverTarget}
           onRunGrover={runGroverStep}
           onResetGrover={resetGrover}
           qecTriple={qecTriple}
-          syndromeInfo={syndromeInfo}
           onInjectBitFlip={injectQecBitFlip}
           onRunSyndromeCorrection={() => {
             runQecCorrection();
             setCorrectionTrigger((prev) => prev + 1);
           }}
           onResetQec={resetQec}
-          activeObjective={activeObjective}
-          isObjectiveCompleted={isObjectiveCompleted}
-          objectiveProgress={getObjectiveProgress()}
-          shorPeriod={shorPeriod}
         />
       }
     />
@@ -354,4 +353,3 @@ export function QuantumLab() {
 }
 
 export default QuantumLab;
-

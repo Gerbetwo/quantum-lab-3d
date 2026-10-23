@@ -90,9 +90,9 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
   return (
     <div
       data-testid="mission-canvas-shell"
-      className={`relative w-full h-screen overflow-hidden select-none bg-background text-foreground flex flex-col ${className}`.trim()}
+      className={`fixed inset-0 w-screen h-screen overflow-hidden select-none bg-background text-foreground ${className}`.trim()}
     >
-      {/* TIER 2: WebGL Canvas Layer (Fixed full viewport) */}
+      {/* TIER 2: Full-Viewport WebGL Canvas Layer */}
       <div
         data-testid="tier-2-canvas-container"
         className="fixed inset-0 z-0 w-full h-full pointer-events-auto"
@@ -107,89 +107,94 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
         )}
       </div>
 
-      {/* TIER 1: Header / Objective HUD Bar */}
-      <header
-        data-testid="tier-1-header"
-        className="relative z-10 w-full pointer-events-auto p-3 sm:p-4 flex items-center justify-between gap-3 border-b border-border bg-card/80 backdrop-blur-md"
-      >
-        {tier1Header !== undefined ? (
-          tier1Header
-        ) : (
-          <>
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-xs font-bold tracking-widest text-primary uppercase bg-secondary px-2.5 py-1 rounded border border-border">
-                {t('header.title')}
-              </span>
-              <span className="text-xs font-mono text-muted-foreground hidden lg:inline">
-                {t('header.mission', { mission: missionId })}
-              </span>
-            </div>
-
-            {/* Tier 1 Embedded Target Objective Card */}
-            {activeObjective && (
-              <div className="hidden sm:flex flex-1 justify-center max-w-md mx-2">
-                <TargetGoalCard
-                  objective={activeObjective}
-                  isCompleted={isObjectiveCompleted}
-                  progressText={objectiveProgress}
-                />
+      {/* TACTICAL HUD OVERLAY TIER: Zero-pointer-event shell covering canvas */}
+      <div className="fixed inset-0 z-10 pointer-events-none flex flex-col justify-between overflow-hidden">
+        {/* TIER 1: Floating Top Bar (Header HUD) */}
+        <header
+          data-testid="tier-1-header"
+          className="pointer-events-none w-full p-2.5 sm:p-3 flex items-center justify-between gap-3"
+        >
+          {tier1Header !== undefined ? (
+            tier1Header
+          ) : (
+            <>
+              <div className="pointer-events-auto flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md">
+                <span className="font-mono text-xs font-bold tracking-widest text-primary uppercase bg-secondary px-2 py-0.5 rounded border border-border">
+                  {t('header.title')}
+                </span>
+                <span className="text-xs font-mono text-muted-foreground hidden lg:inline">
+                  {t('header.mission', { mission: missionId })}
+                </span>
               </div>
+
+              {/* Tier 1 Embedded Target Objective Card */}
+              {activeObjective && (
+                <div className="pointer-events-auto hidden sm:flex flex-1 justify-center max-w-md mx-2">
+                  <TargetGoalCard
+                    objective={activeObjective}
+                    isCompleted={isObjectiveCompleted}
+                    progressText={objectiveProgress}
+                  />
+                </div>
+              )}
+
+              {/* Tier 1 Switchers: Language & Theme */}
+              <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md">
+                <button
+                  type="button"
+                  onClick={toggleLanguage}
+                  data-testid="language-toggle-button"
+                  aria-label={t('header.toggle_language')}
+                  title={t('header.toggle_language')}
+                  className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                >
+                  <Globe className="w-3.5 h-3.5 text-primary" />
+                  <span>{locale === 'en' ? 'EN' : 'ES'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  data-testid="theme-toggle-button"
+                  aria-label={t('header.toggle_theme')}
+                  title={theme === 'dark' ? t('header.switch_to_light') : t('header.switch_to_dark')}
+                  className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-warning" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-primary" />
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </header>
+
+        {/* TIER 2 OVERLAYS: Spatial Tooltips, Side Telemetry Dock */}
+        <div
+          data-testid="tier-2-overlays"
+          className="pointer-events-none relative flex-1 w-full overflow-hidden"
+        >
+          {tier2Overlays}
+          {children}
+          <SpatialTooltipOverlay spatialId="state-vector" />
+        </div>
+
+        {/* TIER 3: Floating Execution Ribbon [1. PREPARE] -> [2. TRANSFORM] -> [3. MEASURE] */}
+        <footer
+          data-testid="tier-3-ribbon"
+          className="pointer-events-none w-full flex justify-center pb-2 sm:pb-3"
+        >
+          <div className="pointer-events-auto">
+            {tier3Ribbon !== undefined ? (
+              tier3Ribbon
+            ) : (
+              <QuantumPipelineRibbon {...pipelineRibbonProps} />
             )}
-
-            {/* Tier 1 Switchers: Language & Theme */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleLanguage}
-                data-testid="language-toggle-button"
-                aria-label={t('header.toggle_language')}
-                title={t('header.toggle_language')}
-                className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
-              >
-                <Globe className="w-3.5 h-3.5 text-primary" />
-                <span>{locale === 'en' ? 'EN' : 'ES'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={toggleTheme}
-                data-testid="theme-toggle-button"
-                aria-label={t('header.toggle_theme')}
-                title={theme === 'dark' ? t('header.switch_to_light') : t('header.switch_to_dark')}
-                className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
-              >
-                {theme === 'dark' ? (
-                  <Sun className="w-4 h-4 text-warning" />
-                ) : (
-                  <Moon className="w-4 h-4 text-primary" />
-                )}
-              </button>
-            </div>
-          </>
-        )}
-      </header>
-
-      {/* TIER 2 OVERLAYS: Spatial Tooltips, Telemetry Cards */}
-      <div
-        data-testid="tier-2-overlays"
-        className="relative z-10 flex-1 w-full pointer-events-none overflow-hidden"
-      >
-        {tier2Overlays}
-        {children}
-        <SpatialTooltipOverlay spatialId="state-vector" />
+          </div>
+        </footer>
       </div>
-
-      {/* TIER 3: Control Ribbon [1. PREPARE] -> [2. TRANSFORM] -> [3. MEASURE] */}
-      <footer
-        data-testid="tier-3-ribbon"
-        className="relative z-20 pointer-events-auto"
-      >
-        {tier3Ribbon !== undefined ? (
-          tier3Ribbon
-        ) : (
-          <QuantumPipelineRibbon {...pipelineRibbonProps} />
-        )}
-      </footer>
     </div>
   );
 };

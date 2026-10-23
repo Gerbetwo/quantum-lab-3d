@@ -90,9 +90,9 @@ export function CoreBlochSphere({
     },
   });
 
-  // Spherical Orbit Camera & Wheel Zoom controller
+  // Spherical Orbit Camera & Wheel Zoom controller (always active for tactical viewing)
   const orbit = useOrbitCamera(containerRef, {
-    enabled: interactive,
+    enabled: true,
     initialRadius: 3.5,
     minRadius: 1.8,
     maxRadius: 7.0,
@@ -121,22 +121,23 @@ export function CoreBlochSphere({
     },
   });
 
-  // Pointer event router: Direct vector drag on arrow or Shift+drag; Camera orbit on background
+  // Pointer event router: Direct vector drag on arrow; Camera orbit on background
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!interactive) return;
-
-      let isHittingVector = e.shiftKey;
-      if (!isHittingVector && cameraRef.current && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const ndc = pointerCoordsToNdc(e.clientX, e.clientY, rect);
-        raycasterRef.current.setFromCamera(new THREE.Vector2(ndc.x, ndc.y), cameraRef.current);
-        raycasterRef.current.params.Line = { threshold: 0.18 };
-        const vectorParts = interactiveObjectsRef.current.filter((o) => o.userData?.spatialId === 'state-vector');
-        isHittingVector = raycasterRef.current.intersectObjects(vectorParts, true).length > 0;
+      let isHittingVector = false;
+      if (interactive) {
+        isHittingVector = e.shiftKey;
+        if (!isHittingVector && cameraRef.current && containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          const ndc = pointerCoordsToNdc(e.clientX, e.clientY, rect);
+          raycasterRef.current.setFromCamera(new THREE.Vector2(ndc.x, ndc.y), cameraRef.current);
+          raycasterRef.current.params.Line = { threshold: 0.18 };
+          const vectorParts = interactiveObjectsRef.current.filter((o) => o.userData?.spatialId === 'state-vector');
+          isHittingVector = raycasterRef.current.intersectObjects(vectorParts, true).length > 0;
+        }
       }
 
-      if (isHittingVector) {
+      if (isHittingVector && interactive) {
         isVectorInteractingRef.current = true;
         onDragPointerDown(e);
       } else {
@@ -149,12 +150,10 @@ export function CoreBlochSphere({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (interactive) {
-        if (isVectorInteractingRef.current || isDragging) {
-          onDragPointerMove(e);
-        } else if (orbit.isOrbitingRef.current) {
-          orbit.onPointerMove(e);
-        }
+      if (isVectorInteractingRef.current || isDragging) {
+        onDragPointerMove(e);
+      } else if (orbit.isOrbitingRef.current) {
+        orbit.onPointerMove(e);
       }
 
       // Telemetry hover check when idle
@@ -172,7 +171,7 @@ export function CoreBlochSphere({
         else if (activeFocusId) clearFocus();
       }
     },
-    [interactive, isDragging, onDragPointerMove, orbit, onPointerOver, activeFocusId, clearFocus]
+    [isDragging, onDragPointerMove, orbit, onPointerOver, activeFocusId, clearFocus]
   );
 
   const handlePointerUp = useCallback(
@@ -181,22 +180,24 @@ export function CoreBlochSphere({
         onDragPointerUp(e);
         isVectorInteractingRef.current = false;
       }
-      orbit.onPointerUp();
+      orbit.onPointerUp(e);
     },
     [isDragging, onDragPointerUp, orbit]
   );
 
   const handlePointerCancel = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      onDragPointerCancel(e);
-      orbit.onPointerUp();
-      isVectorInteractingRef.current = false;
+      if (isVectorInteractingRef.current || isDragging) {
+        onDragPointerCancel(e);
+        isVectorInteractingRef.current = false;
+      }
+      orbit.onPointerCancel(e);
     },
-    [onDragPointerCancel, orbit]
+    [isDragging, onDragPointerCancel, orbit]
   );
 
   const handlePointerLeave = useCallback(() => {
-    orbit.onPointerUp();
+    orbit.onPointerLeave();
     clearFocus();
   }, [orbit, clearFocus]);
 

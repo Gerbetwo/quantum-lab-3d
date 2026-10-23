@@ -36,6 +36,12 @@ export function useOrbitCamera(
       if (!enabled) return;
       isOrbitingRef.current = true;
       lastMouseRef.current = { x: e.clientX, y: e.clientY };
+      try {
+        const target = e.target as HTMLElement | null;
+        target?.setPointerCapture?.(e.pointerId);
+      } catch {
+        // Safe fallback in test environments
+      }
     },
     [enabled]
   );
@@ -56,7 +62,29 @@ export function useOrbitCamera(
     []
   );
 
-  const onPointerUp = useCallback(() => {
+  const onPointerUp = useCallback(
+    (e?: React.PointerEvent<HTMLElement> | PointerEvent) => {
+      isOrbitingRef.current = false;
+      if (e) {
+        try {
+          const target = e.target as HTMLElement | null;
+          target?.releasePointerCapture?.(e.pointerId);
+        } catch {
+          // Safe fallback
+        }
+      }
+    },
+    []
+  );
+
+  const onPointerCancel = useCallback(
+    (e?: React.PointerEvent<HTMLElement> | PointerEvent) => {
+      onPointerUp(e);
+    },
+    [onPointerUp]
+  );
+
+  const onPointerLeave = useCallback(() => {
     isOrbitingRef.current = false;
   }, []);
 
@@ -97,6 +125,8 @@ export function useOrbitCamera(
     onPointerDown,
     onPointerMove,
     onPointerUp,
+    onPointerCancel,
+    onPointerLeave,
     updateCamera,
   };
 }

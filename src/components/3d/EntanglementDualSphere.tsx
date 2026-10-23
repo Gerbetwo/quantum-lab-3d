@@ -227,6 +227,8 @@ export function EntanglementDualSphere({
       onPointerDown={orbit.onPointerDown}
       onPointerMove={orbit.onPointerMove}
       onPointerUp={orbit.onPointerUp}
+      onPointerCancel={orbit.onPointerCancel}
+      onPointerLeave={orbit.onPointerLeave}
       className={`relative w-full h-full min-h-60 select-none cursor-grab active:cursor-grabbing ${className}`.trim()}
     />
   );
