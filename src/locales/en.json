@@ -115,5 +115,79 @@
     "close": "Close",
     "state_vector": "State Vector",
     "coordinates": "Coordinates: θ={theta}, φ={phi}"
+  },
+  "panels": {
+    "singleQubit": {
+      "step_0_title": "1. Superposition",
+      "step_0_desc": "Single-qubit quantum simulation workspace with real-time state kinematics.",
+      "step_1_title": "2. Quantum Gates",
+      "step_1_desc": "Apply unitary transformation gates (H, X, Z) to rotate the state on the sphere.",
+      "step_2_title": "3. Measurement Collapse",
+      "step_2_desc": "Projective measurement collapses superposition into an eigenstate |0⟩ or |1⟩.",
+      "state_vector_readout": "State Vector Readout",
+      "born_probabilities": "Born Probabilities",
+      "p0": "P(|0⟩): {p0}%",
+      "p1": "P(|1⟩): {p1}%",
+      "quantum_gates": "Quantum Gates",
+      "gate_hadamard": "Hadamard (H)",
+      "gate_pauli_x": "Pauli-X (X)",
+      "gate_pauli_z": "Pauli-Z (Z)",
+      "measure_state": "Measure State",
+      "outcome": "Outcome: |{outcome}⟩",
+      "reset": "Reset to |0⟩"
+    },
+    "grover": {
+      "title": "6. Grover Search",
+      "desc": "Oracle phase inversion and amplitude diffusion amplify target probability to 100%.",
+      "select_target": "Select Target Index (0-3)",
+      "probability_distribution": "4-State Probability Distribution",
+      "target_badge": "★ Target",
+      "run_diffusion": "Run Diffusion Step",
+      "reset": "Reset Superposition"
+    },
+    "qec": {
+      "title": "7. Error Correction",
+      "desc": "Detect and correct single-qubit bit flips via syndrome measurement without collapsing the logical state.",
+      "state_display": "3-Qubit State Display",
+      "flip_qubit": "Flip q{idx}",
+      "syndrome_diagnostics": "Syndrome Diagnostics",
+      "no_error": "No Bit Flip Detected (Code Clean)",
+      "error_detected": "Bit Flip Detected at Qubit {index}!",
+      "syndrome_status": "Syndrome: {syndrome} • Corrected State: [{corrected}]",
+      "hint": "Select a qubit or click \"Inject Bit Flip\", then run syndrome correction.",
+      "inject_bit_flip": "Inject Bit Flip",
+      "run_syndrome_correction": "Run Syndrome Correction",
+      "encode_zero": "Encode |000⟩",
+      "encode_one": "Encode |111⟩"
+    },
+    "entanglement": {
+      "title": "4. Entanglement",
+      "desc": "Correlated Bell state |Φ⁺⟩ = 1/√2(|00⟩ + |11⟩) with instantaneous measurement correlation.",
+      "state_indicator": "State Indicator",
+      "observed": "Observed (100%)",
+      "zero_percent": "0%",
+      "born_50": "50% Born Probability",
+      "telemetry": "Correlated Pair Telemetry",
+      "alice": "Alice (q0)",
+      "bob": "Bob (q1)",
+      "correlation_label": "Correlation:",
+      "perfect_correlation": "Perfect Correlation: {state}",
+      "unbroken": "Unbroken Entanglement (EPR)",
+      "measure": "Measure Entangled Pair",
+      "result": "Result: {state}",
+      "reset": "Reset to |Φ⁺⟩ Pair"
+    },
+    "decoherence": {
+      "title": "5. Decoherence",
+      "desc": "Thermal noise degrades qubit coherence. T₂ coherence decay damps vector purity into the Bloch sphere interior.",
+      "temperature_slider": "Temperature Slider",
+      "cryo_label": "15 mK (Cryo)",
+      "mid_label": "150 mK",
+      "noise_label": "300 mK (Noise)",
+      "telemetry": "Decoherence Telemetry",
+      "t2_time": "T₂ Coherence Time:",
+      "purity": "Bloch Purity:",
+      "reset": "Reset Temperature (15 mK)"
+    }
   }
 }

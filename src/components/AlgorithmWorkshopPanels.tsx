@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { BitTriple } from '@/core/algorithms';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export interface GroverPanelProps {
   groverTarget: number;
@@ -18,22 +19,24 @@ export function GroverPanel({
   onRunGrover,
   onReset,
 }: GroverPanelProps) {
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-            6. Grover Search <span className="text-primary text-sm font-mono font-normal">[N=4]</span>
+            {t('panels.grover.title')} <span className="text-primary text-sm font-mono font-normal">[N=4]</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Oracle phase inversion and amplitude diffusion amplify target probability to 100%.
+            {t('panels.grover.desc')}
           </p>
         </div>
 
         {/* Target Index Selection */}
         <div className="space-y-2">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            Select Target Index (0-3)
+            {t('panels.grover.select_target')}
           </span>
           <div className="grid grid-cols-4 gap-2">
             {(['|00⟩', '|01⟩', '|10⟩', '|11⟩'] as const).map((label, idx) => (
@@ -56,7 +59,7 @@ export function GroverPanel({
         {/* 4-State Probability Bar Chart */}
         <div className="p-4 rounded-xl bg-background border border-border space-y-3">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            4-State Probability Distribution
+            {t('panels.grover.probability_distribution')}
           </span>
           <div className="space-y-2.5">
             {(['|00⟩', '|01⟩', '|10⟩', '|11⟩'] as const).map((label, idx) => {
@@ -67,7 +70,7 @@ export function GroverPanel({
                 <div key={label} className="space-y-1">
                   <div className="flex justify-between items-center text-xs font-mono">
                     <span className={isTarget ? 'text-primary font-bold' : 'text-muted-foreground'}>
-                      {label} {isTarget ? '★ Target' : ''}
+                      {label} {isTarget ? t('panels.grover.target_badge') : ''}
                     </span>
                     <span className={isTarget ? 'text-primary font-bold' : 'text-muted-foreground'}>{pct}%</span>
                   </div>
@@ -92,14 +95,14 @@ export function GroverPanel({
           onClick={onRunGrover}
           className="w-full py-3 px-6 rounded-lg bg-linear-to-r from-primary to-primary hover:from-primary hover:to-primary text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-cyan-500/20 active:scale-95 cursor-pointer"
         >
-          Run Diffusion Step
+          {t('panels.grover.run_diffusion')}
         </button>
         <button
           type="button"
           onClick={onReset}
           className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-white font-medium text-sm transition-all active:scale-95 cursor-pointer"
         >
-          Reset Superposition
+          {t('panels.grover.reset')}
         </button>
       </div>
     </>
@@ -125,15 +128,17 @@ export function QECPanel({
   onRunSyndromeCorrection,
   onReset,
 }: QECPanelProps) {
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-            7. Error Correction <span className="text-primary text-sm font-mono font-normal">[3-Qubit]</span>
+            {t('panels.qec.title')} <span className="text-primary text-sm font-mono font-normal">[3-Qubit]</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Detect and correct single-qubit bit flips via syndrome measurement without collapsing the logical state.
+            {t('panels.qec.desc')}
           </p>
         </div>
 
@@ -141,7 +146,7 @@ export function QECPanel({
         <div className="p-4 rounded-xl bg-background border border-border space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-              3-Qubit State Display
+              {t('panels.qec.state_display')}
             </span>
             <span className="text-primary font-mono text-sm font-bold">
               [q0, q1, q2] = [{qecTriple.join(', ')}]
@@ -164,7 +169,7 @@ export function QECPanel({
                   onClick={() => onInjectBitFlip(idx as 0 | 1 | 2)}
                   className="text-[11px] font-mono px-2 py-0.5 rounded bg-secondary hover:bg-muted text-primary border border-border cursor-pointer"
                 >
-                  Flip q{idx}
+                  {t('panels.qec.flip_qubit', { idx })}
                 </button>
               </div>
             ))}
@@ -174,22 +179,25 @@ export function QECPanel({
         {/* Syndrome Diagnostics */}
         <div className="p-4 rounded-xl bg-background border border-border space-y-2">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            Syndrome Diagnostics
+            {t('panels.qec.syndrome_diagnostics')}
           </span>
           {syndromeInfo ? (
             <div className="space-y-1.5 text-xs font-mono">
               <div className="text-success font-bold">
                 {syndromeInfo.errorIndex === -1
-                  ? 'No Bit Flip Detected (Code Clean)'
-                  : `Bit Flip Detected at Qubit ${syndromeInfo.errorIndex}!`}
+                  ? t('panels.qec.no_error')
+                  : t('panels.qec.error_detected', { index: syndromeInfo.errorIndex })}
               </div>
               <div className="text-muted-foreground">
-                Syndrome: {syndromeInfo.syndrome} &bull; Corrected State: [{syndromeInfo.corrected.join(', ')}]
+                {t('panels.qec.syndrome_status', {
+                  syndrome: syndromeInfo.syndrome,
+                  corrected: syndromeInfo.corrected.join(', '),
+                })}
               </div>
             </div>
           ) : (
             <div className="text-xs font-mono text-muted-foreground">
-              Select a qubit or click &quot;Inject Bit Flip&quot;, then run syndrome correction.
+              {t('panels.qec.hint')}
             </div>
           )}
         </div>
@@ -202,14 +210,14 @@ export function QECPanel({
             onClick={() => onInjectBitFlip()}
             className="py-3 px-4 rounded-lg bg-secondary hover:bg-rose-800/80 border border-destructive text-destructive font-bold text-sm tracking-wide transition-all active:scale-95 cursor-pointer"
           >
-            Inject Bit Flip
+            {t('panels.qec.inject_bit_flip')}
           </button>
           <button
             type="button"
             onClick={onRunSyndromeCorrection}
             className="py-3 px-4 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
           >
-            Run Syndrome Correction
+            {t('panels.qec.run_syndrome_correction')}
           </button>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -218,14 +226,14 @@ export function QECPanel({
             onClick={() => onReset(0)}
             className="py-2 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border text-foreground hover:text-white font-mono text-xs cursor-pointer"
           >
-            Encode |000⟩
+            {t('panels.qec.encode_zero')}
           </button>
           <button
             type="button"
             onClick={() => onReset(1)}
             className="py-2 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border text-foreground hover:text-white font-mono text-xs cursor-pointer"
           >
-            Encode |111⟩
+            {t('panels.qec.encode_one')}
           </button>
         </div>
       </div>

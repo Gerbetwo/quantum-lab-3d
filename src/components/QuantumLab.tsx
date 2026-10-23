@@ -350,7 +350,7 @@ export function QuantumLab() {
               playVectorSnap();
             }}
             onTransformGate={(gate) => {
-              applySingleQubitGate(gate as any);
+              applySingleQubitGate(gate as 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T');
               playGateSweep(gate);
             }}
             onMeasure={() => {

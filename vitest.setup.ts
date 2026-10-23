@@ -67,3 +67,8 @@ vi.mock('three', async () => {
     WebGLRenderer: MockWebGLRenderer,
   };
 });
+
+// Mock canvas-confetti globally to prevent jsdom canvas 2d context errors
+vi.mock('canvas-confetti', () => ({
+  default: vi.fn(),
+}));

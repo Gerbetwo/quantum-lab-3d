@@ -4,6 +4,11 @@ import React from 'react';
 import { TargetGoalCard } from '../TargetGoalCard';
 import { getObjectiveById } from '@/lib/quantum/objectivesConfig';
 import * as soundEngineModule from '@/lib/audio/soundEngine';
+import confetti from 'canvas-confetti';
+
+vi.mock('canvas-confetti', () => ({
+  default: vi.fn(),
+}));
 
 vi.mock('@/lib/audio/soundEngine', () => ({
   playCompletionTriad: vi.fn(),
@@ -49,5 +54,12 @@ describe('TargetGoalCard', () => {
 
     expect(screen.getByText('COMPLETED')).toBeInTheDocument();
     expect(soundEngineModule.playCompletionTriad).toHaveBeenCalledTimes(1);
+    expect(confetti).toHaveBeenCalledTimes(1);
+    expect(confetti).toHaveBeenCalledWith(
+      expect.objectContaining({
+        particleCount: 50,
+        spread: 60,
+      })
+    );
   });
 });

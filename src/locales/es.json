@@ -115,5 +115,79 @@
     "close": "Cerrar",
     "state_vector": "Vector de estado",
     "coordinates": "Coordenadas: θ={theta}, φ={phi}"
+  },
+  "panels": {
+    "singleQubit": {
+      "step_0_title": "1. Superposición",
+      "step_0_desc": "Espacio de simulación cuántica de un solo cúbit con cinemática de estado en tiempo real.",
+      "step_1_title": "2. Compuertas cuánticas",
+      "step_1_desc": "Aplica compuertas de transformación unitaria (H, X, Z) para rotar el estado sobre la esfera.",
+      "step_2_title": "3. Colapso de medición",
+      "step_2_desc": "La medición proyectiva colapsa la superposición en un autoestado |0⟩ o |1⟩.",
+      "state_vector_readout": "Lectura del vector de estado",
+      "born_probabilities": "Probabilidades de Born",
+      "p0": "P(|0⟩): {p0}%",
+      "p1": "P(|1⟩): {p1}%",
+      "quantum_gates": "Compuertas cuánticas",
+      "gate_hadamard": "Hadamard (H)",
+      "gate_pauli_x": "Pauli-X (X)",
+      "gate_pauli_z": "Pauli-Z (Z)",
+      "measure_state": "Medir estado",
+      "outcome": "Resultado: |{outcome}⟩",
+      "reset": "Restablecer a |0⟩"
+    },
+    "grover": {
+      "title": "6. Búsqueda de Grover",
+      "desc": "La inversión de fase por oráculo y la difusión de amplitudes amplifican la probabilidad objetivo al 100%.",
+      "select_target": "Seleccionar índice objetivo (0-3)",
+      "probability_distribution": "Distribución de probabilidad de 4 estados",
+      "target_badge": "★ Objetivo",
+      "run_diffusion": "Ejecutar paso de difusión",
+      "reset": "Restablecer superposición"
+    },
+    "qec": {
+      "title": "7. Corrección de errores",
+      "desc": "Detecta y corrige inversiones de bit individuales mediante medición de síndrome sin colapsar el estado lógico.",
+      "state_display": "Visualización del estado de 3 cúbits",
+      "flip_qubit": "Invertir q{idx}",
+      "syndrome_diagnostics": "Diagnóstico de síndrome",
+      "no_error": "No se detectó inversión de bit (código limpio)",
+      "error_detected": "¡Inversión de bit detectada en cúbit {index}!",
+      "syndrome_status": "Síndrome: {syndrome} • Estado corregido: [{corrected}]",
+      "hint": "Selecciona un cúbit o haz clic en \"Invertir bit\", luego ejecuta la corrección de síndrome.",
+      "inject_bit_flip": "Invertir bit",
+      "run_syndrome_correction": "Ejecutar corrección de síndrome",
+      "encode_zero": "Codificar |000⟩",
+      "encode_one": "Codificar |111⟩"
+    },
+    "entanglement": {
+      "title": "4. Entrelazamiento",
+      "desc": "Estado de Bell correlacionado |Φ⁺⟩ = 1/√2(|00⟩ + |11⟩) con correlación de medición instantánea.",
+      "state_indicator": "Indicador de estado",
+      "observed": "Observado (100%)",
+      "zero_percent": "0%",
+      "born_50": "50% Probabilidad de Born",
+      "telemetry": "Telemetría del par correlacionado",
+      "alice": "Alice (q0)",
+      "bob": "Bob (q1)",
+      "correlation_label": "Correlación:",
+      "perfect_correlation": "Correlación perfecta: {state}",
+      "unbroken": "Entrelazamiento intacto (EPR)",
+      "measure": "Medir par entrelazado",
+      "result": "Resultado: {state}",
+      "reset": "Restablecer a par |Φ⁺⟩"
+    },
+    "decoherence": {
+      "title": "5. Decoherencia",
+      "desc": "El ruido térmico degrada la coherencia del cúbit. El decaimiento T₂ amortigua la pureza del vector hacia el interior de la esfera.",
+      "temperature_slider": "Control deslizante de temperatura",
+      "cryo_label": "15 mK (Crio)",
+      "mid_label": "150 mK",
+      "noise_label": "300 mK (Ruido)",
+      "telemetry": "Telemetría de decoherencia",
+      "t2_time": "Tiempo de coherencia T₂:",
+      "purity": "Pureza de Bloch:",
+      "reset": "Restablecer temperatura (15 mK)"
+    }
   }
 }

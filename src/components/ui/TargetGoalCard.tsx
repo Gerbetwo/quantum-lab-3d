@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import confetti from 'canvas-confetti';
 import type { QuantumObjective } from '@/lib/quantum/objectivesConfig';
 import { playCompletionTriad } from '@/lib/audio/soundEngine';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -29,6 +30,12 @@ export const TargetGoalCard: React.FC<TargetGoalCardProps> = ({
 
   useEffect(() => {
     if (isCompleted && !wasCompletedRef.current) {
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.2 },
+        colors: ['#00f0ff', '#10b981', '#a855f7'],
+      });
       playCompletionTriad();
     }
     wasCompletedRef.current = isCompleted;

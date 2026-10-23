@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { QubitState, StateMetrics } from '@/core/qubitMath';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export interface SingleQubitPanelProps {
   activeTab: number;
@@ -45,16 +46,21 @@ export function SingleQubitPanel({
   onMeasure,
   onReset,
 }: SingleQubitPanelProps) {
+  const { t } = useTranslation();
   const p0Percent = (metrics.prob0 * 100).toFixed(1);
   const p1Percent = (metrics.prob1 * 100).toFixed(1);
 
   const stepDescriptions = [
-    'Single-qubit quantum simulation workspace with real-time state kinematics.',
-    'Apply unitary transformation gates (H, X, Z) to rotate the state on the sphere.',
-    'Projective measurement collapses superposition into an eigenstate |0⟩ or |1⟩.',
+    t('panels.singleQubit.step_0_desc'),
+    t('panels.singleQubit.step_1_desc'),
+    t('panels.singleQubit.step_2_desc'),
   ];
 
-  const stepTitles = ['1. Superposition', '2. Quantum Gates', '3. Measurement Collapse'];
+  const stepTitles = [
+    t('panels.singleQubit.step_0_title'),
+    t('panels.singleQubit.step_1_title'),
+    t('panels.singleQubit.step_2_title'),
+  ];
 
   return (
     <>
@@ -69,7 +75,7 @@ export function SingleQubitPanel({
         {/* State Vector Readout */}
         <div className="p-4 rounded-xl bg-background border border-border space-y-1.5">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            State Vector Readout
+            {t('panels.singleQubit.state_vector_readout')}
           </span>
           <div className="text-xl sm:text-2xl font-mono text-primary font-bold tracking-wide">
             {formatDirac(metrics)}
@@ -82,11 +88,11 @@ export function SingleQubitPanel({
         {/* Born Probabilities */}
         <div className="p-4 rounded-xl bg-background border border-border space-y-3">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            Born Probabilities
+            {t('panels.singleQubit.born_probabilities')}
           </span>
           <div className="flex justify-between items-center text-sm font-mono font-semibold">
-            <span className="text-primary">P(|0⟩): {p0Percent}%</span>
-            <span className="text-foreground">P(|1⟩): {p1Percent}%</span>
+            <span className="text-primary">{t('panels.singleQubit.p0', { p0: p0Percent })}</span>
+            <span className="text-foreground">{t('panels.singleQubit.p1', { p1: p1Percent })}</span>
           </div>
           <div
             className="w-full h-3.5 bg-secondary rounded-full overflow-hidden flex"
@@ -104,7 +110,7 @@ export function SingleQubitPanel({
         {/* Gate Action Buttons */}
         <div className="space-y-2">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-            Quantum Gates
+            {t('panels.singleQubit.quantum_gates')}
           </span>
           <div className="grid grid-cols-3 gap-3">
             {(['H', 'X', 'Z'] as const).map((gate) => (
@@ -114,7 +120,11 @@ export function SingleQubitPanel({
                 onClick={() => onGate(gate)}
                 className="py-2.5 px-4 rounded-lg bg-secondary hover:bg-muted active:scale-95 border border-primary text-primary font-mono font-bold text-sm transition-all shadow-sm hover:shadow-cyan-500/10 cursor-pointer"
               >
-                {gate === 'H' ? 'Hadamard (H)' : gate === 'X' ? 'Pauli-X (X)' : 'Pauli-Z (Z)'}
+                {gate === 'H'
+                  ? t('panels.singleQubit.gate_hadamard')
+                  : gate === 'X'
+                    ? t('panels.singleQubit.gate_pauli_x')
+                    : t('panels.singleQubit.gate_pauli_z')}
               </button>
             ))}
           </div>
@@ -129,11 +139,11 @@ export function SingleQubitPanel({
             onClick={onMeasure}
             className="flex-1 py-3 px-6 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-sm tracking-wide transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
           >
-            Measure State
+            {t('panels.singleQubit.measure_state')}
           </button>
           {lastOutcome !== null && (
             <div className="px-4 py-2.5 rounded-lg bg-secondary border border-success text-success font-mono text-base font-bold text-center">
-              Outcome: |{lastOutcome}⟩
+              {t('panels.singleQubit.outcome', { outcome: lastOutcome })}
             </div>
           )}
         </div>
@@ -142,7 +152,7 @@ export function SingleQubitPanel({
           onClick={onReset}
           className="w-full py-2.5 px-4 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-white font-medium text-sm transition-all active:scale-95 cursor-pointer"
         >
-          Reset to |0⟩
+          {t('panels.singleQubit.reset')}
         </button>
       </div>
     </>
