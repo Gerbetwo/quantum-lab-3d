@@ -12,6 +12,7 @@ export interface UseOrbitCameraOptions {
   enabled?: boolean;
   autoRotate?: boolean;
   autoRotateSpeed?: number;
+  target?: THREE.Vector3 | [number, number, number];
 }
 
 export function useOrbitCamera(
@@ -27,6 +28,7 @@ export function useOrbitCamera(
     enabled = true,
     autoRotate = false,
     autoRotateSpeed = 0.005,
+    target = [0, 0, 0],
   } = options;
 
   const radiusRef = useRef(initialRadius);
@@ -36,6 +38,21 @@ export function useOrbitCamera(
   const autoRotateRef = useRef(autoRotate);
   const autoRotateSpeedRef = useRef(autoRotateSpeed);
   const lastMouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const targetRef = useRef<THREE.Vector3>(
+    target instanceof THREE.Vector3
+      ? target.clone()
+      : new THREE.Vector3(target[0], target[1], target[2])
+  );
+
+  useEffect(() => {
+    if (options.target) {
+      if (options.target instanceof THREE.Vector3) {
+        targetRef.current.copy(options.target);
+      } else {
+        targetRef.current.set(options.target[0], options.target[1], options.target[2]);
+      }
+    }
+  }, [options.target]);
 
   useEffect(() => {
     autoRotateRef.current = Boolean(options.autoRotate);
@@ -53,8 +70,8 @@ export function useOrbitCamera(
       isOrbitingRef.current = true;
       lastMouseRef.current = { x: e.clientX, y: e.clientY };
       try {
-        const target = e.target as HTMLElement | null;
-        target?.setPointerCapture?.(e.pointerId);
+        const targetEl = (e.currentTarget || e.target) as HTMLElement | null;
+        targetEl?.setPointerCapture?.(e.pointerId);
       } catch {
         // Safe fallback in test environments
       }
@@ -83,8 +100,8 @@ export function useOrbitCamera(
       isOrbitingRef.current = false;
       if (e) {
         try {
-          const target = e.target as HTMLElement | null;
-          target?.releasePointerCapture?.(e.pointerId);
+          const targetEl = (e.currentTarget || e.target) as HTMLElement | null;
+          targetEl?.releasePointerCapture?.(e.pointerId);
         } catch {
           // Safe fallback
         }
@@ -128,12 +145,13 @@ export function useOrbitCamera(
     const r = radiusRef.current;
     const th = thetaRef.current;
     const ph = phiRef.current;
+    const tgt = targetRef.current;
     camera.position.set(
-      r * Math.sin(th) * Math.cos(ph),
-      r * Math.cos(th),
-      r * Math.sin(th) * Math.sin(ph)
+      tgt.x + r * Math.sin(th) * Math.cos(ph),
+      tgt.y + r * Math.cos(th),
+      tgt.z + r * Math.sin(th) * Math.sin(ph)
     );
-    camera.lookAt(0, 0, 0);
+    camera.lookAt(tgt.x, tgt.y, tgt.z);
   }, []);
 
   return {

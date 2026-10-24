@@ -4,6 +4,8 @@ import {
   isAudioEnabled,
   setAudioEnabled,
   toggleAudio,
+  getVolume,
+  setVolume,
   playVectorSnap,
   playGateSweep,
   playCollapseDrop,
@@ -121,6 +123,29 @@ describe('SoundEngine Web Audio Synthesizer', () => {
     expect(isAudioEnabled()).toBe(false);
     toggleAudio();
     expect(isAudioEnabled()).toBe(true);
+  });
+
+  it('manages master volume within [0, 1] range', () => {
+    setVolume(0.5);
+    expect(getVolume()).toBe(0.5);
+
+    // Clamps to [0, 1]
+    setVolume(1.5);
+    expect(getVolume()).toBe(1.0);
+
+    setVolume(-0.5);
+    expect(getVolume()).toBe(0.0);
+
+    setVolume(0.8);
+    expect(getVolume()).toBe(0.8);
+  });
+
+  it('scales output gain linearly with master volume', () => {
+    setVolume(0.5);
+    playVectorSnap();
+
+    // 0.12 * 0.5 = 0.06
+    expect(mockGain.gain.setValueAtTime).toHaveBeenCalledWith(0.06, 10);
   });
 
   it('plays vector snap with frequency ramp 880 Hz -> 220 Hz for 80ms', () => {

@@ -8,12 +8,16 @@ export interface GroverBarChart3DProps {
   groverProbs?: number[];
   targetIndex?: number;
   className?: string;
+  autoRotate?: boolean;
+  animationSpeed?: number;
 }
 
 export function GroverBarChart3D({
   groverProbs = [0.25, 0.25, 0.25, 0.25],
   targetIndex = 1,
   className = '',
+  autoRotate = false,
+  animationSpeed = 1,
 }: GroverBarChart3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const probsRef = useRef<number[]>(groverProbs);
@@ -25,6 +29,9 @@ export function GroverBarChart3D({
     maxRadius: 15.0,
     initialTheta: Math.PI / 3,
     initialPhi: Math.PI / 4,
+    target: [0, 1.2, 0],
+    autoRotate,
+    autoRotateSpeed: 0.005 * animationSpeed,
   });
 
   useEffect(() => {

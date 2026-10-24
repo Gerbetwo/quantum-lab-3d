@@ -14,6 +14,7 @@ import {
   QuantumPipelineRibbon,
   type QuantumPipelineRibbonProps,
 } from "./QuantumPipelineRibbon";
+import { VolumeControl } from "./VolumeControl";
 import { Sun, Moon, Globe, ArrowLeft } from "lucide-react";
 
 export interface MissionCanvasShellProps {
@@ -209,6 +210,8 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
           data-testid="bottom-right-floating-bar"
           className="fixed bottom-4 right-4 z-30 pointer-events-auto bg-card/85 backdrop-blur-md border border-border shadow-lg p-1.5 rounded-xl flex items-center gap-1.5"
         >
+          <VolumeControl />
+
           <button
             type="button"
             onClick={toggleLanguage}

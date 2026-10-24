@@ -104,4 +104,22 @@ describe('useOrbitCamera Hook', () => {
 
     expect(camera.position.length()).toBeCloseTo(3.5, 2);
   });
+
+  it('offsets camera position and looks at custom target', () => {
+    const el = document.createElement('div');
+    const containerRef = { current: el };
+    const { result } = renderHook(() =>
+      useOrbitCamera(containerRef, {
+        initialRadius: 5.0,
+        target: [0, 1.2, 0],
+      })
+    );
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    result.current.updateCamera(camera);
+
+    // Camera position should be offset by target y = 1.2
+    const diff = camera.position.clone().sub(new THREE.Vector3(0, 1.2, 0));
+    expect(diff.length()).toBeCloseTo(5.0, 2);
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import type { QubitState } from "@/core/qubitMath";
 import type { BitTriple } from "@/core/types";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -11,6 +11,8 @@ import {
   Pause,
   Orbit,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   ShieldAlert,
 } from "lucide-react";
 import {
@@ -85,40 +87,20 @@ export interface QuantumPipelineRibbonProps {
 }
 
 export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
-  activeTab = 0,
-  lastOutcome = null,
-  disabled = false,
-  className = "",
-  onPreparePreset,
-  onReset,
-  onTransformGate,
-  onMeasure,
-  isPlayingAnimation = false,
-  animationSpeed = 1,
-  onTogglePlayPause,
-  onSpeedChange,
-  onReplayAnimation,
-  autoRotateCamera = false,
-  onToggleAutoRotateCamera,
-  entangledPair,
-  onMeasureEntangled,
-  onResetEntangled,
-  temperature = 15,
-  onTemperatureChange,
-  onResetTemperature,
-  groverTarget = 1,
-  onSelectGroverTarget,
-  onRunGrover,
-  onResetGrover,
-  qecTriple = [0, 0, 0],
-  onInjectBitFlip,
-  onRunSyndromeCorrection,
-  onResetQec,
+  activeTab = 0, lastOutcome = null, disabled = false, className = "",
+  onPreparePreset, onReset, onTransformGate, onMeasure,
+  isPlayingAnimation = false, animationSpeed = 1, onTogglePlayPause, onSpeedChange, onReplayAnimation,
+  autoRotateCamera = false, onToggleAutoRotateCamera,
+  entangledPair, onMeasureEntangled, onResetEntangled,
+  temperature = 15, onTemperatureChange, onResetTemperature,
+  groverTarget = 1, onSelectGroverTarget, onRunGrover, onResetGrover,
+  qecTriple = [0, 0, 0], onInjectBitFlip, onRunSyndromeCorrection, onResetQec,
 }) => {
   const { t } = useTranslation();
+  const [isOrbitDrawerOpen, setIsOrbitDrawerOpen] = useState<boolean>(false);
 
   const renderAnimationControls = () => (
-    <div className="flex items-center gap-1 pl-2 border-l border-border/60">
+    <div className="relative flex items-center gap-1 pl-2 border-l border-border/60">
       {onTogglePlayPause && (
         <button
           type="button"
@@ -166,20 +148,75 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
         </div>
       )}
 
-      {onToggleAutoRotateCamera && (
-        <button
-          type="button"
-          onClick={onToggleAutoRotateCamera}
-          disabled={disabled}
-          aria-label={t("ribbon.toggle_orbit")}
-          title={autoRotateCamera ? t("ribbon.controls.disable_orbit") : t("ribbon.controls.enable_orbit")}
-          className={`flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-bold rounded border cursor-pointer transition-all disabled:opacity-40 ${
-            autoRotateCamera ? "bg-secondary border-primary text-primary" : "bg-card border-border text-muted-foreground hover:text-foreground"
-          }`}
+      {/* Compact Orbit Controls Toggle */}
+      <button
+        type="button"
+        onClick={() => setIsOrbitDrawerOpen((prev) => !prev)}
+        disabled={disabled}
+        data-testid="orbit-drawer-toggle"
+        aria-expanded={isOrbitDrawerOpen}
+        aria-label={t("ribbon.toggle_orbit_drawer")}
+        title={t("ribbon.toggle_orbit_drawer")}
+        className={`flex items-center gap-1 p-1.5 rounded-lg border transition-all cursor-pointer disabled:opacity-40 ${
+          isOrbitDrawerOpen || autoRotateCamera
+            ? "border-primary bg-secondary text-primary"
+            : "border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <Orbit className="w-3.5 h-3.5" />
+        {isOrbitDrawerOpen ? (
+          <ChevronDown className="w-3 h-3 text-primary" />
+        ) : (
+          <ChevronUp className="w-3 h-3 text-muted-foreground" />
+        )}
+      </button>
+
+      {/* Collapsible Orbit Controls HUD Drawer */}
+      {isOrbitDrawerOpen && (
+        <div
+          data-testid="orbit-controls-drawer"
+          className="absolute bottom-full mb-2 right-0 p-2 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-2xl flex items-center gap-2 pointer-events-auto z-40 animate-in fade-in zoom-in-95 duration-150"
         >
-          <Orbit className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">{t("ribbon.orbit")}</span>
-        </button>
+          <span className="text-[10px] font-mono uppercase font-semibold text-muted-foreground whitespace-nowrap pl-1">
+            {t("ribbon.orbit_controls")}
+          </span>
+
+          {onToggleAutoRotateCamera && (
+            <button
+              type="button"
+              data-testid="orbit-auto-rotate-toggle"
+              onClick={onToggleAutoRotateCamera}
+              disabled={disabled}
+              aria-label={t("ribbon.toggle_orbit")}
+              title={autoRotateCamera ? t("ribbon.controls.disable_orbit") : t("ribbon.controls.enable_orbit")}
+              className={`flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-bold rounded border cursor-pointer transition-all disabled:opacity-40 whitespace-nowrap ${
+                autoRotateCamera
+                  ? "bg-secondary border-primary text-primary"
+                  : "bg-card border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Orbit className="w-3 h-3" />
+              <span>{t("ribbon.orbit")}</span>
+            </button>
+          )}
+
+          {/* Gate Rotation Ring Presets */}
+          <div className="flex items-center gap-1 pl-1 border-l border-border/60">
+            {(["X", "Y", "Z", "H"] as const).map((gateRing) => (
+              <button
+                key={gateRing}
+                type="button"
+                data-testid={`ring-button-${gateRing.toLowerCase()}`}
+                onClick={() => onTransformGate?.(gateRing)}
+                disabled={disabled}
+                title={`Ring Axis ${gateRing}`}
+                className="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded border border-border bg-card hover:bg-secondary text-foreground cursor-pointer disabled:opacity-40"
+              >
+                {gateRing}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -287,7 +324,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
         aria-label={t("ribbon.entanglement_aria")}
         className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-3 px-4 py-2 rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-2xl select-none ${className}`.trim()}
       >
-        <span className="text-xs font-mono font-bold text-primary">EPR |Φ⁺⟩</span>
+        <span className="text-xs font-mono font-bold text-primary">{t("ribbon.epr_pair")}</span>
         <button
           type="button"
           data-testid="measure-entangled-button"
@@ -361,7 +398,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
         aria-label={t("ribbon.grover_aria")}
         className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-3 px-4 py-2 rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-2xl select-none ${className}`.trim()}
       >
-        <span className="text-xs font-mono font-bold text-primary uppercase">Target State:</span>
+        <span className="text-xs font-mono font-bold text-primary uppercase">{t("ribbon.target_state")}</span>
         <div className="flex items-center gap-1">
           {["|00⟩", "|01⟩", "|10⟩", "|11⟩"].map((lbl, idx) => (
             <button

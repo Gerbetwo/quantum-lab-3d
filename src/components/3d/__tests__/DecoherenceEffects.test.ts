@@ -11,12 +11,12 @@ import {
 
 describe('DecoherenceEffects (Thermal Animation & Shaders)', () => {
   describe('calculateDecoherenceVisualMetrics', () => {
-    it('returns zero degradation and baseline values at cryogenic base temperature (15 mK, purity 1)', () => {
+    it('returns zero degradation and frozen baseline values at cryogenic base temperature (15 mK, purity 1)', () => {
       const metrics = calculateDecoherenceVisualMetrics(15, 1.0);
       expect(metrics.temperatureMilliK).toBe(15);
       expect(metrics.normalizedDegradation).toBe(0);
       expect(metrics.distortionAmplitude).toBe(0);
-      expect(metrics.particleSpeed).toBeCloseTo(0.3);
+      expect(metrics.particleSpeed).toBe(0);
       expect(metrics.t2CoherenceTimeUs).toBeGreaterThan(240);
     });
 

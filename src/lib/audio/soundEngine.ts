@@ -5,6 +5,7 @@
 
 let runtimeAudioOverride: boolean | null = null;
 let gestureListenersAttached = false;
+let masterVolume: number = 0.8;
 
 export function isAudioEnabled(): boolean {
   if (typeof process !== 'undefined' && process.env) {
@@ -22,6 +23,14 @@ export function toggleAudio(): boolean {
   const next = !isAudioEnabled();
   setAudioEnabled(next);
   return next;
+}
+
+export function getVolume(): number {
+  return masterVolume;
+}
+
+export function setVolume(volume: number): void {
+  masterVolume = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 0.8));
 }
 
 export class SoundEngine {
@@ -94,7 +103,7 @@ export class SoundEngine {
       osc.frequency.setValueAtTime(880, now);
       osc.frequency.exponentialRampToValueAtTime(220, now + duration);
 
-      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.setValueAtTime(0.12 * masterVolume, now);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
       osc.connect(gain);
@@ -139,7 +148,7 @@ export class SoundEngine {
       osc.frequency.setValueAtTime(startFreq, now);
       osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
 
-      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.setValueAtTime(0.14 * masterVolume, now);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
       osc.connect(gain);
@@ -174,7 +183,7 @@ export class SoundEngine {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(130, now);
       osc.frequency.exponentialRampToValueAtTime(32, now + duration);
-      oscGain.gain.setValueAtTime(0.25, now);
+      oscGain.gain.setValueAtTime(0.25 * masterVolume, now);
       oscGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
       osc.connect(oscGain);
@@ -198,7 +207,7 @@ export class SoundEngine {
       const noise = ctx.createBufferSource();
       const noiseGain = ctx.createGain();
       noise.buffer = buffer;
-      noiseGain.gain.setValueAtTime(0.1, now);
+      noiseGain.gain.setValueAtTime(0.1 * masterVolume, now);
       noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + noiseDur);
 
       noise.connect(noiseGain);
@@ -234,7 +243,7 @@ export class SoundEngine {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, now + idx * 0.03);
         gain.gain.setValueAtTime(0, now + idx * 0.03);
-        gain.gain.linearRampToValueAtTime(0.07, now + idx * 0.03 + 0.02);
+        gain.gain.linearRampToValueAtTime(0.07 * masterVolume, now + idx * 0.03 + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
         osc.connect(gain);
@@ -249,6 +258,26 @@ export class SoundEngine {
     } catch {
       // Safe fallback
     }
+  }
+
+  public getVolume(): number {
+    return getVolume();
+  }
+
+  public setVolume(vol: number): void {
+    setVolume(vol);
+  }
+
+  public isAudioEnabled(): boolean {
+    return isAudioEnabled();
+  }
+
+  public setAudioEnabled(enabled: boolean): void {
+    setAudioEnabled(enabled);
+  }
+
+  public toggleAudio(): boolean {
+    return toggleAudio();
   }
 
   // Backward compatibility aliases

@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { EntanglementDualSphere } from '../EntanglementDualSphere';
 import { GroverBarChart3D } from '../GroverBarChart3D';
 import { QECArray3D } from '../QECArray3D';
@@ -95,6 +95,29 @@ describe('Multi-Qubit 3D Viewport Components', () => {
       expect(el7).toHaveClass('cursor-grab');
       expect(el7).toHaveClass('pointer-events-auto');
       expect(el7).toHaveClass('touch-none');
+    });
+
+    it('processes pointer drag events smoothly across viewports without blocking', () => {
+      const { container: c4 } = render(<EntanglementDualSphere autoRotate={true} animationSpeed={1.5} />);
+      const el4 = c4.querySelector('[data-testid="entanglement-dual-sphere"]')!;
+
+      fireEvent.pointerDown(el4, { clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(el4, { clientX: 150, clientY: 120 });
+      fireEvent.pointerUp(el4, { clientX: 150, clientY: 120 });
+
+      const { container: c6 } = render(<GroverBarChart3D autoRotate={true} animationSpeed={2} />);
+      const el6 = c6.querySelector('[data-testid="grover-bar-chart-3d"]')!;
+
+      fireEvent.pointerDown(el6, { clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(el6, { clientX: 150, clientY: 120 });
+      fireEvent.pointerUp(el6, { clientX: 150, clientY: 120 });
+
+      const { container: c7 } = render(<QECArray3D autoRotate={true} animationSpeed={1} />);
+      const el7 = c7.querySelector('[data-testid="qec-array-3d"]')!;
+
+      fireEvent.pointerDown(el7, { clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(el7, { clientX: 150, clientY: 120 });
+      fireEvent.pointerUp(el7, { clientX: 150, clientY: 120 });
     });
   });
 });

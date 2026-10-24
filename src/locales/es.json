@@ -16,7 +16,11 @@
     "switch_to_light": "Cambiar a tema claro",
     "switch_to_dark": "Cambiar a tema oscuro",
     "lang_en": "EN",
-    "lang_es": "ES"
+    "lang_es": "ES",
+    "toggle_audio": "Alternar sonido",
+    "mute_audio": "Silenciar audio",
+    "unmute_audio": "Activar sonido",
+    "volume": "Volumen: {level}%"
   },
   "landing": {
     "title": "QuantumLab 3D",
@@ -37,7 +41,11 @@
     "collapse_aria": "Medición con colapso de función de onda",
     "replay": "Repetir animación",
     "toggle_orbit": "Alternar rotación automática",
+    "toggle_orbit_drawer": "Alternar controles de órbita",
+    "orbit_controls": "Controles de cámara y órbita",
     "orbit": "Órbita",
+    "target_state": "Estado objetivo:",
+    "epr_pair": "EPR |Φ⁺⟩",
     "entanglement_aria": "Cinta de entrelazamiento",
     "decoherence_aria": "Cinta de decoherencia",
     "grover_aria": "Cinta de búsqueda de Grover",

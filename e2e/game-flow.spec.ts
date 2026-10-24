@@ -74,7 +74,10 @@ test.describe('Flight-Deck Game Loop E2E Sweep', () => {
       await page.mouse.up();
     }
 
-    // 4. Quantum State Collapse Measurement
+    // 4. Quantum State Collapse Measurement (Navigate to Mission 3: Measurement)
+    await dropdownTrigger.click();
+    await page.getByTestId('mission-select-2').click();
+
     const measureBtn = page.getByTestId('measure-collapse-button');
     await expect(measureBtn).toBeVisible();
     await measureBtn.click();
@@ -92,11 +95,11 @@ test.describe('Flight-Deck Game Loop E2E Sweep', () => {
     await expect(langToggle).toContainText('EN');
     await langToggle.click();
     await expect(langToggle).toContainText('ES');
-    await expect(dropdownTrigger).toContainText('2. Compuertas');
+    await expect(dropdownTrigger).toContainText('3. Medición');
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
     await langToggle.click();
     await expect(langToggle).toContainText('EN');
-    await expect(dropdownTrigger).toContainText('2. Gates');
+    await expect(dropdownTrigger).toContainText('3. Measurement');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 
     // 6. Navigate across multi-qubit missions
@@ -192,11 +195,22 @@ test.describe('Flight-Deck Game Loop E2E Sweep', () => {
 
     await page.goto('/');
     await expect(page.locator('canvas')).toBeVisible();
+    const enterBtn = page.getByTestId('enter-workspace-button');
+    if (await enterBtn.isVisible()) {
+      await enterBtn.click();
+    }
 
     // Cycle through dropdown mission switches, gate executions, collapse and toggles
     const dropdownTrigger = page.getByTestId('mission-dropdown-trigger');
 
+    // Mission 2: Gates
+    await dropdownTrigger.click();
+    await page.getByTestId('mission-select-1').click();
     await page.getByTestId('gate-button-X').click();
+
+    // Mission 3: Measurement
+    await dropdownTrigger.click();
+    await page.getByTestId('mission-select-2').click();
     await page.getByTestId('measure-collapse-button').click();
 
     await dropdownTrigger.click();

@@ -13,6 +13,8 @@ export interface EntanglementDualSphereProps {
   interactive?: boolean;
   onStateChange?: (state: QubitState) => void;
   className?: string;
+  autoRotate?: boolean;
+  animationSpeed?: number;
 }
 
 export function EntanglementDualSphere({
@@ -21,6 +23,8 @@ export function EntanglementDualSphere({
   interactive = true,
   onStateChange,
   className = '',
+  autoRotate = false,
+  animationSpeed = 1,
 }: EntanglementDualSphereProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pairRef = useRef(entangledPair);
@@ -41,6 +45,8 @@ export function EntanglementDualSphere({
     maxRadius: 14.0,
     initialTheta: Math.PI / 2.5,
     initialPhi: Math.PI / 2,
+    autoRotate,
+    autoRotateSpeed: 0.005 * animationSpeed,
   });
 
   useEffect(() => {

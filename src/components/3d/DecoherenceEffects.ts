@@ -23,6 +23,18 @@ export function calculateDecoherenceVisualMetrics(
   const clampedTemp = Math.max(CRYO_MIN_MK, Math.min(300000, Number.isFinite(temperatureMilliK) ? temperatureMilliK : CRYO_MIN_MK));
   const t2 = calculateT2CoherenceTime(clampedTemp);
 
+  // If at cryogenic minimum (15 mK) and pure state, freeze velocity, distortion, and degradation to 0
+  if (clampedTemp <= CRYO_MIN_MK && purity >= 0.9999) {
+    return {
+      temperatureMilliK: CRYO_MIN_MK,
+      t2CoherenceTimeUs: t2,
+      normalizedDegradation: 0,
+      distortionAmplitude: 0,
+      particleSpeed: 0,
+      jitterVariance: 0,
+    };
+  }
+
   // Normalize temperature degradation: 15 mK = 0.0, 300 mK = 1.0 (or higher if ambient)
   const tempDegradation = Math.max(0, Math.min(1, (clampedTemp - CRYO_MIN_MK) / (CRYO_MAX_MK - CRYO_MIN_MK)));
   const purityDegradation = Math.max(0, Math.min(1, 1.0 - purity));
@@ -211,7 +223,12 @@ export function updateThermalParticles(
 
   const isThermal = metrics.normalizedDegradation > 0.005;
   points.visible = isThermal;
-  if (!isThermal) return;
+  if (!isThermal || temperatureMilliK <= CRYO_MIN_MK) {
+    for (let i = 0; i < system.velocities.length; i++) {
+      system.velocities[i] = 0;
+    }
+    return;
+  }
 
   const posAttr = points.geometry.getAttribute('position') as THREE.BufferAttribute;
   const colAttr = points.geometry.getAttribute('color') as THREE.BufferAttribute;

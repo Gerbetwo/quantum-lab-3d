@@ -12,6 +12,8 @@ export interface QECArray3DProps {
   isCorrecting?: boolean;
   correctionTrigger?: number;
   className?: string;
+  autoRotate?: boolean;
+  animationSpeed?: number;
 }
 
 export function QECArray3D({
@@ -21,6 +23,8 @@ export function QECArray3D({
   isCorrecting = false,
   correctionTrigger = 0,
   className = '',
+  autoRotate = false,
+  animationSpeed = 1,
 }: QECArray3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tripleRef = useRef<BitTriple>(qecTriple);
@@ -35,6 +39,8 @@ export function QECArray3D({
     maxRadius: 14.0,
     initialTheta: Math.PI / 2.5,
     initialPhi: Math.PI / 2,
+    autoRotate,
+    autoRotateSpeed: 0.005 * animationSpeed,
   });
 
   useEffect(() => {

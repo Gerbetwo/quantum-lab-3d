@@ -154,4 +154,49 @@ describe('QuantumPipelineRibbon Progressive Unlocking & Workflows', () => {
       ).toBeInTheDocument();
     });
   });
+
+  describe('Collapsible Orbit Controls HUD Drawer', () => {
+    it('defaults to collapsed and toggles open on orbit drawer toggle click', () => {
+      const onToggleAutoRotate = vi.fn();
+      const onTransformGate = vi.fn();
+
+      render(
+        <QuantumPipelineRibbon
+          activeTab={0}
+          onToggleAutoRotateCamera={onToggleAutoRotate}
+          onTransformGate={onTransformGate}
+        />
+      );
+
+      // Collapsed by default
+      expect(screen.queryByTestId('orbit-controls-drawer')).not.toBeInTheDocument();
+
+      const toggleBtn = screen.getByTestId('orbit-drawer-toggle');
+      expect(toggleBtn).toBeInTheDocument();
+      expect(toggleBtn).toHaveAttribute('aria-expanded', 'false');
+
+      // Click to expand
+      fireEvent.click(toggleBtn);
+      expect(toggleBtn).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByTestId('orbit-controls-drawer')).toBeInTheDocument();
+
+      // Auto-rotate button inside drawer
+      const autoRotateBtn = screen.getByTestId('orbit-auto-rotate-toggle');
+      fireEvent.click(autoRotateBtn);
+      expect(onToggleAutoRotate).toHaveBeenCalledTimes(1);
+
+      // Gate ring buttons inside drawer
+      const ringX = screen.getByTestId('ring-button-x');
+      fireEvent.click(ringX);
+      expect(onTransformGate).toHaveBeenCalledWith('X');
+
+      const ringH = screen.getByTestId('ring-button-h');
+      fireEvent.click(ringH);
+      expect(onTransformGate).toHaveBeenCalledWith('H');
+
+      // Click toggle again to collapse
+      fireEvent.click(toggleBtn);
+      expect(screen.queryByTestId('orbit-controls-drawer')).not.toBeInTheDocument();
+    });
+  });
 });

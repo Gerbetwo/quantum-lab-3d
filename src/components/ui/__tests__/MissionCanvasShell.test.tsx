@@ -25,6 +25,7 @@ describe('MissionCanvasShell', () => {
     expect(screen.getByTestId('custom-test-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('quantum-pipeline-ribbon')).toBeInTheDocument();
     expect(screen.getByTestId('theme-toggle-button')).toBeInTheDocument();
+    expect(screen.getByTestId('volume-control')).toBeInTheDocument();
   });
 
   it('supports overriding Tier 1, Tier 2, and Tier 3 with custom nodes', () => {

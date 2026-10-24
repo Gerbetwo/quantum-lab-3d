@@ -73,7 +73,7 @@ export function UnifiedBottomTelemetryPanel({
   qecTriple,
   syndromeInfo,
   isObjectiveCompleted = false,
-  shorPeriod = 4,
+  shorPeriod: _shorPeriod = 4,
   className = "",
   defaultExpanded = true,
   onGate: _onGate,
@@ -283,12 +283,6 @@ export function UnifiedBottomTelemetryPanel({
               </div>
             </div>
           )}
-
-          {/* Footer Telemetry */}
-          <div className="text-[10px] font-mono text-muted-foreground flex justify-between items-center border-t border-border/50 pt-2">
-            <span>{t("header.title") || "QuantumLab"} Inspector</span>
-            <span>Shor r={shorPeriod}</span>
-          </div>
         </div>
       )}
     </div>

@@ -215,6 +215,8 @@ export function QuantumLab({ initialLandingVisible = true }: QuantumLabProps = {
             state={state}
             interactive={true}
             onStateChange={setSingleQubitState}
+            autoRotate={autoRotateCamera}
+            animationSpeed={animationSpeed}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
         );
@@ -239,6 +241,8 @@ export function QuantumLab({ initialLandingVisible = true }: QuantumLabProps = {
           <GroverBarChart3D
             groverProbs={groverProbs}
             targetIndex={groverTarget}
+            autoRotate={autoRotateCamera}
+            animationSpeed={animationSpeed}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
         );
@@ -248,6 +252,8 @@ export function QuantumLab({ initialLandingVisible = true }: QuantumLabProps = {
             qecTriple={qecTriple}
             syndromeInfo={syndromeInfo}
             correctionTrigger={correctionTrigger}
+            autoRotate={autoRotateCamera}
+            animationSpeed={animationSpeed}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
         );
