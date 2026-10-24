@@ -8,17 +8,27 @@ import {
 } from '../GateRotationRings';
 
 describe('GateRotationRings & Geodesic Particles', () => {
-  it('returns unit rotation axis for X, Y, Z, and H', () => {
+  it('returns unit rotation axis for X, Y, Z, and H matching Three.js visual coordinate mapping', () => {
     const axisX = getGateRotationAxis('X');
     expect(axisX.x).toBe(1);
     expect(axisX.y).toBe(0);
     expect(axisX.z).toBe(0);
 
+    const axisY = getGateRotationAxis('Y');
+    expect(axisY.x).toBe(0);
+    expect(axisY.y).toBe(0);
+    expect(axisY.z).toBe(1);
+
+    const axisZ = getGateRotationAxis('Z');
+    expect(axisZ.x).toBe(0);
+    expect(axisZ.y).toBe(1);
+    expect(axisZ.z).toBe(0);
+
     const axisH = getGateRotationAxis('H');
     expect(axisH.length()).toBeCloseTo(1.0, 5);
     expect(axisH.x).toBeCloseTo(1 / Math.SQRT2, 5);
-    expect(axisH.y).toBe(0);
-    expect(axisH.z).toBeCloseTo(1 / Math.SQRT2, 5);
+    expect(axisH.y).toBeCloseTo(1 / Math.SQRT2, 5);
+    expect(axisH.z).toBe(0);
   });
 
   it('computes sampled geodesic arc points between two vectors', () => {

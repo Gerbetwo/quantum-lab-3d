@@ -80,3 +80,18 @@ export interface TwoQubitMeasurementResult {
   state: string;
   probability: number;
 }
+
+export type Matrix2x2 = [[ComplexType, ComplexType], [ComplexType, ComplexType]];
+export type Matrix4x4 = ComplexType[][];
+
+export interface ReducedDensityMatrixResult {
+  rhoAB: Matrix4x4;
+  rhoA: Matrix2x2;
+  rhoB: Matrix2x2;
+  vectorA: { x: number; y: number; z: number; r: number };
+  vectorB: { x: number; y: number; z: number; r: number };
+  purityA: number;
+  purityB: number;
+  entropyA: number;
+  entropyB: number;
+}

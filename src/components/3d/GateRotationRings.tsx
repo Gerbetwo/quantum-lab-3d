@@ -16,47 +16,48 @@ export const GATE_RING_SPECS: GateRingSpec[] = [
     axis: new THREE.Vector3(1, 0, 0),
     colorHex: 0x00f0ff, // Neon cyan
     spatialId: 'gate-axis-x',
-    label: 'Pauli-X (π around X)',
+    label: 'Pauli-X (π around X_phys -> +X)',
   },
   {
     gate: 'Y',
-    axis: new THREE.Vector3(0, 1, 0),
+    axis: new THREE.Vector3(0, 0, 1),
     colorHex: 0x10b981, // Emerald green
     spatialId: 'gate-axis-y',
-    label: 'Pauli-Y (π around Y)',
+    label: 'Pauli-Y (π around Y_phys -> +Z)',
   },
   {
     gate: 'Z',
-    axis: new THREE.Vector3(0, 0, 1),
+    axis: new THREE.Vector3(0, 1, 0),
     colorHex: 0xa855f7, // Quantum purple
     spatialId: 'gate-axis-z',
-    label: 'Pauli-Z (π around Z)',
+    label: 'Pauli-Z (π around Z_phys -> +Y)',
   },
   {
     gate: 'H',
-    axis: new THREE.Vector3(1 / Math.SQRT2, 0, 1 / Math.SQRT2).normalize(),
+    axis: new THREE.Vector3(1 / Math.SQRT2, 1 / Math.SQRT2, 0).normalize(),
     colorHex: 0xf59e0b, // Amber / gold
     spatialId: 'gate-axis-h',
-    label: 'Hadamard (π around (X+Z)/√2)',
+    label: 'Hadamard (π around (X+Z)/√2 -> (+X++Y)/√2)',
   },
 ];
 
 /**
- * Returns the 3D unit rotation axis for standard single-qubit gates.
- * H axis is explicitly (X + Z)/√2.
+ * Returns the 3D unit rotation axis for standard single-qubit gates in Three.js visual space.
+ * Physical Z_phys maps to Three.js +Y, X_phys to +X, Y_phys to +Z.
+ * H axis is explicitly (X_phys + Z_phys)/√2 -> Vector3(1/√2, 1/√2, 0).
  */
 export function getGateRotationAxis(gate: string): THREE.Vector3 {
   switch (gate.toUpperCase()) {
     case 'X':
       return new THREE.Vector3(1, 0, 0);
     case 'Y':
-      return new THREE.Vector3(0, 1, 0);
+      return new THREE.Vector3(0, 0, 1);
     case 'Z':
     case 'S':
     case 'T':
-      return new THREE.Vector3(0, 0, 1);
+      return new THREE.Vector3(0, 1, 0);
     case 'H':
-      return new THREE.Vector3(1 / Math.SQRT2, 0, 1 / Math.SQRT2).normalize();
+      return new THREE.Vector3(1 / Math.SQRT2, 1 / Math.SQRT2, 0).normalize();
     default:
       return new THREE.Vector3(0, 1, 0);
   }

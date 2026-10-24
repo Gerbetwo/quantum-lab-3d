@@ -3,7 +3,7 @@
 import React from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useTheme } from '@/hooks/useTheme';
-import { ArrowRight, ExternalLink, Sun, Moon, Globe, Atom } from 'lucide-react';
+import { ArrowRight, ExternalLink, Sun, Moon, Globe, Atom, Github } from 'lucide-react';
 
 export interface DeveloperInfo {
   name: string;
@@ -128,6 +128,21 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
                 </a>
               ))}
+            </div>
+
+            {/* Subtle GitHub Repository Link */}
+            <div className="pt-2 flex justify-center">
+              <a
+                href="https://github.com/Gerbetwo/quantum-lab-3d"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="repo-link"
+                className="inline-flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground/70 hover:text-primary transition-colors duration-200"
+              >
+                <Github className="w-3.5 h-3.5" />
+                <span>Gerbetwo/quantum-lab-3d</span>
+                <ExternalLink className="w-3 h-3 opacity-60" />
+              </a>
             </div>
           </div>
         </div>

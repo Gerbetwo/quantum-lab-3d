@@ -18,20 +18,27 @@ export function calculateT2CoherenceTime(tempInMilliKelvin: number): number {
   return Number(t2Microseconds.toFixed(3));
 }
 
+/**
+ * Evaluates thermal phase decay and purity reduction over time.
+ * Purity: γ(T, t) = e^(-t / T₂(T)).
+ * Bloch vector radius: r(T) = max(0, min(1, γ)).
+ */
 export function applyPhaseDecay(
   initialTheta: number,
   initialPhi: number,
   elapsedTimeMs: number,
   t2Us: number
-): { theta: number; phi: number; purity: number } {
+): { theta: number; phi: number; purity: number; r: number } {
   const t2Ms = t2Us / 1000;
-  const decayFactor = Math.exp(-elapsedTimeMs / t2Ms);
+  const decayFactor = t2Ms > 0 ? Math.exp(-elapsedTimeMs / t2Ms) : 0;
   const purity = Math.max(0, Math.min(1, decayFactor));
+  const r = purity;
 
   return {
     theta: initialTheta,
     phi: initialPhi,
     purity,
+    r,
   };
 }
 

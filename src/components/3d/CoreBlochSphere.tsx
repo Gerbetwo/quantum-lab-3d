@@ -11,6 +11,7 @@ import { useBlochKeyboard } from '@/hooks/useBlochKeyboard';
 import { readBlochPalette, observeThemeChanges } from '@/lib/3d/blochTheme';
 import { createBlochTargetZoneMesh, isVectorInBlochTarget, type TargetZoneMesh } from '@/lib/3d/TargetZone3D';
 import { calculateThermalJitter, CRYO_MIN_MK } from '@/core/decoherenceMath';
+import { acquireRenderer, releaseRenderer, disposeObject3D } from '@/lib/three/rendererSingleton';
 import {
   createThermalDistortionShaderMaterial,
   createDecoherenceParticleSystem,
@@ -202,10 +203,7 @@ export function CoreBlochSphere({
     useSpatialTelemetryBridge.getState().setCamera(camera);
     orbit.updateCamera(camera);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    container.appendChild(renderer.domElement);
+    const renderer = acquireRenderer(container);
 
     raycasterRef.current.params.Line = { threshold: 0.12 };
     const initialPalette = readBlochPalette();
@@ -328,13 +326,13 @@ export function CoreBlochSphere({
       // Update camera transform via orbit controller
       orbit.updateCamera(camera);
 
-      // Thermal collapse scaling (wireframe, ring, axes)
-      sphereMesh.scale.setScalar(curCollapse);
-      sphereMat.uniforms.uOpacity.value = currentPalette.wireOpacity * curCollapse;
-      ring.scale.setScalar(curCollapse);
-      ringMat.opacity = currentPalette.ringOpacity * curCollapse;
-      axes.scale.setScalar(curCollapse);
-      axesMat.opacity = currentPalette.axesOpacity * curCollapse;
+      // Outer containment shell remains fixed at R=1.2, preserving GPU vertex noise shader
+      sphereMesh.scale.set(1, 1, 1);
+      sphereMat.uniforms.uOpacity.value = currentPalette.wireOpacity;
+      ring.scale.set(1, 1, 1);
+      ringMat.opacity = currentPalette.ringOpacity;
+      axes.scale.set(1, 1, 1);
+      axesMat.opacity = currentPalette.axesOpacity;
 
       // Thermal decoherence animation: mesh vertex distortion, particle dispersion, and red shift
       const curTemp = targetTemperatureRef.current ?? CRYO_MIN_MK;
@@ -344,7 +342,7 @@ export function CoreBlochSphere({
       updateThermalDistortionUniforms(sphereMat, now / 1000, curTemp, curPur, noiseIntensityRef.current ?? 1.0);
       updateThermalParticles(decoherenceParticles, dt * spd, curTemp, curPur);
 
-      // State vector position & length (governed by purity and thermal jitter)
+      // State vector position & interior radius shrinkage r(T) = curPur inside translucent sphere
       let finalTh = curTh;
       let finalPh = curPh;
       if (typeof curTemp === 'number' && curTemp > CRYO_MIN_MK) {
@@ -354,7 +352,7 @@ export function CoreBlochSphere({
       }
       const vec = toVector(finalTh, finalPh);
       arrow.setDirection(vec);
-      const vecLen = Math.max(0.05, 1.2 * curPur);
+      const vecLen = Math.max(0.01, 1.2 * curPur);
       arrow.setLength(vecLen, Math.min(vecLen * 0.25, 0.2), Math.min(vecLen * 0.1, 0.08));
 
       // Dynamic red hue shift across state vector
@@ -368,8 +366,8 @@ export function CoreBlochSphere({
 
       // Probability projection disk height & radius (P0 = cos²(theta/2))
       if (projectionDisk.visible) {
-        projectionDisk.position.y = vec.y * 1.2 * curCollapse;
-        const diskRadius = Math.max(0.05, 1.2 * Math.sin(curTh) * curCollapse);
+        projectionDisk.position.y = vec.y * 1.2;
+        const diskRadius = Math.max(0.05, 1.2 * Math.sin(curTh));
         projectionDisk.scale.set(diskRadius / 1.2, diskRadius / 1.2, 1);
       }
 
@@ -426,10 +424,8 @@ export function CoreBlochSphere({
         targetZoneMeshRef.current = null;
       }
       [sphereGeo, sphereMat, ringGeo, ringMat, axesGeo, axesMat, diskGeo, diskMat, arrow].forEach((d) => d.dispose());
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
+      disposeObject3D(scene);
+      releaseRenderer(container);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate singleton Three.js scene lifecycle; reactive props updated via dedicated effects
   }, []); // Run once! Single WebGL context safety

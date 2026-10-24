@@ -10,6 +10,13 @@ import {
   measureEntangledQubit,
   computeTwoQubitTensorState,
   measureTwoQubitState,
+  applyGate,
+  quantumToVisualCoordinates,
+  visualToQuantumCoordinates,
+  blochSphericalToVisualVector,
+  computeBellReducedDensityMatrices,
+  collapseEntangledDensityMatrices,
+  entropyFromBlochRadius,
 } from '../qubitMath';
 import {
   calculateT2CoherenceTime,
@@ -433,6 +440,161 @@ describe('qubitMath - Core Kinematics & Math Invariants', () => {
       // Fidelity decreases with temperature
       expect(sCold.fidelity).toBeGreaterThan(sWarm.fidelity);
       expect(sWarm.fidelity).toBeGreaterThan(sHot.fidelity);
+    });
+  });
+
+  describe('Module 1: Physics Coordinate Mapping & Unitary Rotations', () => {
+    it('standardizes coordinate mapping from quantum physical to Three.js visual space', () => {
+      // Quantization axis Z_phys (North Pole |0⟩) -> Three.js +Y
+      const north = quantumToVisualCoordinates(0, 0, 1);
+      expect(north.x).toBe(0);
+      expect(north.y).toBe(1);
+      expect(north.z).toBe(0);
+
+      // Quantization axis -Z_phys (South Pole |1⟩) -> Three.js -Y
+      const south = quantumToVisualCoordinates(0, 0, -1);
+      expect(south.x).toBe(0);
+      expect(south.y).toBe(-1);
+      expect(south.z).toBe(0);
+
+      // Bit-Flip axis X_phys (|+⟩) -> Three.js +X
+      const plusX = quantumToVisualCoordinates(1, 0, 0);
+      expect(plusX.x).toBe(1);
+      expect(plusX.y).toBe(0);
+      expect(plusX.z).toBe(0);
+
+      // Phase-Bit axis Y_phys (|+i⟩) -> Three.js +Z
+      const plusY = quantumToVisualCoordinates(0, 1, 0);
+      expect(plusY.x).toBe(0);
+      expect(plusY.y).toBe(0);
+      expect(plusY.z).toBe(1);
+
+      // Inverses
+      expect(visualToQuantumCoordinates(0, 1, 0)).toEqual({ x: 0, y: 0, z: 1 });
+      expect(visualToQuantumCoordinates(1, 0, 0)).toEqual({ x: 1, y: 0, z: 0 });
+      expect(visualToQuantumCoordinates(0, 0, 1)).toEqual({ x: 0, y: 1, z: 0 });
+    });
+
+    it('evaluates blochSphericalToVisualVector accurately across canonical states', () => {
+      const v0 = blochSphericalToVisualVector(0, 0); // |0⟩
+      expect(v0.y).toBeCloseTo(1.0);
+      expect(v0.x).toBeCloseTo(0.0);
+      expect(v0.z).toBeCloseTo(0.0);
+
+      const v1 = blochSphericalToVisualVector(Math.PI, 0); // |1⟩
+      expect(v1.y).toBeCloseTo(-1.0);
+      expect(v1.x).toBeCloseTo(0.0);
+      expect(v1.z).toBeCloseTo(0.0);
+
+      const vPlus = blochSphericalToVisualVector(Math.PI / 2, 0); // |+⟩
+      expect(vPlus.x).toBeCloseTo(1.0);
+      expect(vPlus.y).toBeCloseTo(0.0);
+      expect(vPlus.z).toBeCloseTo(0.0);
+
+      const vPlusI = blochSphericalToVisualVector(Math.PI / 2, Math.PI / 2); // |+i⟩
+      expect(vPlusI.z).toBeCloseTo(1.0);
+      expect(vPlusI.x).toBeCloseTo(0.0);
+      expect(vPlusI.y).toBeCloseTo(0.0);
+    });
+
+    it('computes gate rotations via SU(2)/Quaternions without gimbal lock near poles', () => {
+      // Pauli-X: |0⟩ -> |1⟩
+      const stateX = applyGate({ theta: 0, phi: 0 }, 'X');
+      expect(stateX.theta).toBeCloseTo(Math.PI, 5);
+
+      // Hadamard on |0⟩ -> |+⟩ (theta = π/2, phi = 0)
+      const stateH0 = applyGate({ theta: 0, phi: 0 }, 'H');
+      expect(stateH0.theta).toBeCloseTo(Math.PI / 2, 5);
+      expect(stateH0.phi).toBeCloseTo(0, 5);
+
+      // Hadamard on |+⟩ -> |0⟩ (theta = 0, phi = 0)
+      const stateHPlus = applyGate({ theta: Math.PI / 2, phi: 0 }, 'H');
+      expect(stateHPlus.theta).toBeCloseTo(0, 5);
+
+      // Hadamard on |1⟩ -> |-⟩ (theta = π/2, phi = π)
+      const stateH1 = applyGate({ theta: Math.PI, phi: 0 }, 'H');
+      expect(stateH1.theta).toBeCloseTo(Math.PI / 2, 5);
+      expect(stateH1.phi).toBeCloseTo(Math.PI, 5);
+
+      // Near pole singularity robustness (theta = 1e-7, phi = 1.23)
+      const nearPole = { theta: 1e-7, phi: 1.23 };
+      const rotNearPoleH = applyGate(nearPole, 'H');
+      expect(Number.isFinite(rotNearPoleH.theta)).toBe(true);
+      expect(Number.isFinite(rotNearPoleH.phi)).toBe(true);
+      expect(rotNearPoleH.theta).toBeCloseTo(Math.PI / 2, 4);
+
+      const rotNearPoleX = applyGate(nearPole, 'X');
+      expect(rotNearPoleX.theta).toBeCloseTo(Math.PI, 4);
+    });
+  });
+
+  describe('Module 2: Entanglement Physics & Reduced Density Matrix Representation', () => {
+    it('evaluates reduced density matrix for unmeasured Bell state |Φ+⟩ with r = 0.0 (maximally mixed)', () => {
+      const bell = computeBellReducedDensityMatrices();
+
+      // Density matrix elements for |Φ+⟩ = 1/√2(|00⟩ + |11⟩)
+      expect(bell.rhoAB[0][0].real).toBeCloseTo(0.5);
+      expect(bell.rhoAB[3][3].real).toBeCloseTo(0.5);
+      expect(bell.rhoAB[0][3].real).toBeCloseTo(0.5);
+      expect(bell.rhoAB[3][0].real).toBeCloseTo(0.5);
+
+      // Reduced density matrix for Qubit A: ρ_A = I/2
+      expect(bell.rhoA[0][0].real).toBeCloseTo(0.5);
+      expect(bell.rhoA[1][1].real).toBeCloseTo(0.5);
+      expect(bell.rhoA[0][1].real).toBeCloseTo(0.0);
+      expect(bell.rhoA[1][0].real).toBeCloseTo(0.0);
+
+      // Reduced density matrix for Qubit B: ρ_B = I/2
+      expect(bell.rhoB[0][0].real).toBeCloseTo(0.5);
+      expect(bell.rhoB[1][1].real).toBeCloseTo(0.5);
+
+      // Local polarization vectors shrink to origin: r = 0.0
+      expect(bell.vectorA.r).toBe(0.0);
+      expect(bell.vectorB.r).toBe(0.0);
+
+      // Von Neumann entropy = 1.0 (maximally mixed)
+      expect(bell.entropyA).toBe(1.0);
+      expect(bell.entropyB).toBe(1.0);
+      expect(entropyFromBlochRadius(0.0)).toBe(1.0);
+    });
+
+    it('instantly collapses reduced density matrices back to pure states (r = 1.0) upon local measurement', () => {
+      // Outcome 0 -> |00⟩
+      const collapse0 = collapseEntangledDensityMatrices(0);
+      expect(collapse0.vectorA.r).toBe(1.0);
+      expect(collapse0.vectorB.r).toBe(1.0);
+      expect(collapse0.vectorA.z).toBe(1.0); // |0⟩ is North Pole (z = 1)
+      expect(collapse0.vectorB.z).toBe(1.0);
+      expect(collapse0.entropyA).toBe(0.0);
+      expect(collapse0.entropyB).toBe(0.0);
+      expect(collapse0.purityA).toBe(1.0);
+
+      // Outcome 1 -> |11⟩
+      const collapse1 = collapseEntangledDensityMatrices(1);
+      expect(collapse1.vectorA.r).toBe(1.0);
+      expect(collapse1.vectorB.r).toBe(1.0);
+      expect(collapse1.vectorA.z).toBe(-1.0); // |1⟩ is South Pole (z = -1)
+      expect(collapse1.vectorB.z).toBe(-1.0);
+      expect(collapse1.entropyA).toBe(0.0);
+      expect(collapse1.entropyB).toBe(0.0);
+    });
+  });
+
+  describe('Module 3: Thermal Decoherence & Mixed State Interior Shrinkage (r < 1)', () => {
+    it('returns Bloch vector radius r = purity matching exponential decay γ(T, t)', () => {
+      const t2Us = 250; // 0.25 ms
+      const decay0 = applyPhaseDecay(Math.PI / 2, 0, 0, t2Us);
+      expect(decay0.purity).toBe(1.0);
+      expect(decay0.r).toBe(1.0);
+
+      const decayHalf = applyPhaseDecay(Math.PI / 2, 0, 0.25, t2Us);
+      expect(decayHalf.r).toBeCloseTo(Math.exp(-1), 3);
+      expect(decayHalf.r).toBeLessThan(1.0);
+      expect(decayHalf.r).toBeGreaterThan(0.0);
+
+      const decayLong = applyPhaseDecay(Math.PI / 2, 0, 50, t2Us);
+      expect(decayLong.r).toBeLessThan(0.01);
+      expect(decayLong.r).toBeGreaterThanOrEqual(0.0);
     });
   });
 });

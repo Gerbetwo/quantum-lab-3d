@@ -11,6 +11,9 @@ import {
   StateMetrics,
   TwoQubitTensorState,
   TwoQubitMeasurementResult,
+  Matrix2x2,
+  Matrix4x4,
+  ReducedDensityMatrixResult,
 } from './types';
 import { purityAtTemperature } from './decoherenceMath';
 
@@ -39,6 +42,39 @@ export function computeStateVector(theta: number, phi: number): QuantumState {
     },
     theta: normTheta,
     phi: normPhi,
+  };
+}
+
+/**
+ * Coordinate Transformations: Standardizing Quantum Physical Space to Three.js Visual Space.
+ * - Quantization / Phase Axis (Z_phys): Maps to Three.js +Y (0, 1, 0) [North Pole = |0⟩, South Pole = |1⟩]
+ * - Bit-Flip Axis (X_phys): Maps to Three.js +X (1, 0, 0)
+ * - Phase-Bit Axis (Y_phys): Maps to Three.js +Z (0, 0, 1)
+ */
+export function quantumToVisualCoordinates(xPhys: number, yPhys: number, zPhys: number): { x: number; y: number; z: number } {
+  return {
+    x: xPhys,
+    y: zPhys,
+    z: yPhys,
+  };
+}
+
+export function visualToQuantumCoordinates(xVisual: number, yVisual: number, zVisual: number): { x: number; y: number; z: number } {
+  return {
+    x: xVisual,
+    y: zVisual,
+    z: yVisual,
+  };
+}
+
+export function blochSphericalToVisualVector(theta: number, phi: number): { x: number; y: number; z: number } {
+  const normTheta = normalizeAngleTheta(theta);
+  const normPhi = normalizeAnglePhi(phi);
+  const sT = Math.sin(normTheta);
+  return {
+    x: sT * Math.cos(normPhi),
+    y: Math.cos(normTheta),
+    z: sT * Math.sin(normPhi),
   };
 }
 
@@ -123,56 +159,76 @@ export function computeStateMetrics(state: QubitState): StateMetrics {
 }
 
 /**
- * Calculates updated spherical angles (theta, phi) after applying unitary matrix rotation.
+ * Applies unitary gate rotation via SU(2) / Quaternion kinematics to prevent Gimbal Lock near the poles.
+ * Rotates physical Bloch vector v_phys = (x, y, z) by quaternion q = (w, u):
+ *   v' = v + 2 * u × (u × v + w * v)
  * Supports: H (Hadamard), X (Pauli-X), Y (Pauli-Y), Z (Pauli-Z), S (Phase), T (π/8).
  */
 export function applyGate(
   state: QubitState,
   gate: 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T'
 ): QubitState {
-  const x = Math.sin(state.theta) * Math.cos(state.phi);
-  const y = Math.sin(state.theta) * Math.sin(state.phi);
-  const z = Math.cos(state.theta);
+  const normTheta = normalizeAngleTheta(state.theta);
+  const normPhi = normalizeAnglePhi(state.phi);
 
-  let nx = x;
-  let ny = y;
-  let nz = z;
+  const vx = Math.sin(normTheta) * Math.cos(normPhi);
+  const vy = Math.sin(normTheta) * Math.sin(normPhi);
+  const vz = Math.cos(normTheta);
+
+  // Unit quaternion representation q = (w, ux, uy, uz) in physical coordinates:
+  let w = 0;
+  let ux = 0;
+  let uy = 0;
+  let uz = 0;
 
   switch (gate) {
-    case 'H':
-      nx = z;
-      ny = -y;
-      nz = x;
+    case 'X': // π rotation around physical X axis (1, 0, 0)
+      w = 0;
+      ux = 1;
+      uy = 0;
+      uz = 0;
       break;
-    case 'X':
-      nx = x;
-      ny = -y;
-      nz = -z;
+    case 'Y': // π rotation around physical Y axis (0, 1, 0)
+      w = 0;
+      ux = 0;
+      uy = 1;
+      uz = 0;
       break;
-    case 'Y':
-      nx = -x;
-      ny = y;
-      nz = -z;
+    case 'Z': // π rotation around physical Z axis (0, 0, 1)
+      w = 0;
+      ux = 0;
+      uy = 0;
+      uz = 1;
       break;
-    case 'Z':
-      nx = -x;
-      ny = -y;
-      nz = z;
+    case 'H': // π rotation around physical (X + Z)/√2 axis
+      w = 0;
+      ux = 1 / Math.SQRT2;
+      uy = 0;
+      uz = 1 / Math.SQRT2;
       break;
-    case 'S':
-      nx = -y;
-      ny = x;
-      nz = z;
+    case 'S': // π/2 rotation around physical Z axis (0, 0, 1)
+      w = Math.SQRT1_2; // cos(π/4)
+      ux = 0;
+      uy = 0;
+      uz = Math.SQRT1_2; // sin(π/4)
       break;
-    case 'T': {
-      const cos45 = Math.SQRT1_2;
-      const sin45 = Math.SQRT1_2;
-      nx = x * cos45 - y * sin45;
-      ny = x * sin45 + y * cos45;
-      nz = z;
+    case 'T': // π/4 rotation around physical Z axis (0, 0, 1)
+      w = Math.cos(Math.PI / 8);
+      ux = 0;
+      uy = 0;
+      uz = Math.sin(Math.PI / 8);
       break;
-    }
   }
+
+  // Cross product: t = 2 * (u × v)
+  const tx = 2 * (uy * vz - uz * vy);
+  const ty = 2 * (uz * vx - ux * vz);
+  const tz = 2 * (ux * vy - uy * vx);
+
+  // v' = v + w * t + (u × t)
+  const nx = vx + w * tx + (uy * tz - uz * ty);
+  const ny = vy + w * ty + (uz * tx - ux * tz);
+  const nz = vz + w * tz + (ux * ty - uy * tx);
 
   const clampedZ = Math.max(-1, Math.min(1, nz));
   if (Math.abs(clampedZ - 1) < 1e-12) {
@@ -322,6 +378,156 @@ export function measureTwoQubitState(
     return { outcome: '10', alice: 1, bob: 0, state: '|10⟩', probability: normP10 };
   }
   return { outcome: '11', alice: 1, bob: 1, state: '|11⟩', probability: p11 / total };
+}
+
+/**
+ * Computes global 4x4 density matrix ρ_AB = |ψ_AB⟩⟨ψ_AB| for C⁴ state space.
+ */
+export function computeDensityMatrix4x4(
+  c00: { real: number; imag: number },
+  c01: { real: number; imag: number },
+  c10: { real: number; imag: number },
+  c11: { real: number; imag: number }
+): Matrix4x4 {
+  const psi = [c00, c01, c10, c11];
+  const rho: Matrix4x4 = [];
+  for (let i = 0; i < 4; i++) {
+    rho[i] = [];
+    for (let j = 0; j < 4; j++) {
+      // psi[i] * conj(psi[j])
+      rho[i][j] = {
+        real: psi[i].real * psi[j].real + psi[i].imag * psi[j].imag,
+        imag: psi[i].imag * psi[j].real - psi[i].real * psi[j].imag,
+      };
+    }
+  }
+  return rho;
+}
+
+/**
+ * Computes reduced density matrix for Qubit A: ρ_A = Tr_B(|ψ_AB⟩⟨ψ_AB|).
+ */
+export function computeReducedDensityMatrixA(rhoAB: Matrix4x4): Matrix2x2 {
+  return [
+    [
+      { real: rhoAB[0][0].real + rhoAB[1][1].real, imag: rhoAB[0][0].imag + rhoAB[1][1].imag },
+      { real: rhoAB[0][2].real + rhoAB[1][3].real, imag: rhoAB[0][2].imag + rhoAB[1][3].imag },
+    ],
+    [
+      { real: rhoAB[2][0].real + rhoAB[3][1].real, imag: rhoAB[2][0].imag + rhoAB[3][1].imag },
+      { real: rhoAB[2][2].real + rhoAB[3][3].real, imag: rhoAB[2][2].imag + rhoAB[3][3].imag },
+    ],
+  ];
+}
+
+/**
+ * Computes reduced density matrix for Qubit B: ρ_B = Tr_A(|ψ_AB⟩⟨ψ_AB|).
+ */
+export function computeReducedDensityMatrixB(rhoAB: Matrix4x4): Matrix2x2 {
+  return [
+    [
+      { real: rhoAB[0][0].real + rhoAB[2][2].real, imag: rhoAB[0][0].imag + rhoAB[2][2].imag },
+      { real: rhoAB[0][1].real + rhoAB[2][3].real, imag: rhoAB[0][1].imag + rhoAB[2][3].imag },
+    ],
+    [
+      { real: rhoAB[1][0].real + rhoAB[3][2].real, imag: rhoAB[1][0].imag + rhoAB[3][2].imag },
+      { real: rhoAB[1][1].real + rhoAB[3][3].real, imag: rhoAB[1][1].imag + rhoAB[3][3].imag },
+    ],
+  ];
+}
+
+/**
+ * Calculates local polarization magnitude (Bloch vector length) r = √(x² + y² + z²).
+ * For maximally entangled Bell state: r = 0.0 (vector shrinks to origin (0,0,0), maximally mixed ρ = I/2).
+ * For pure separable states: r = 1.0 (vector lies on unit sphere surface).
+ */
+export function blochVectorFromDensityMatrix(rho: Matrix2x2): { x: number; y: number; z: number; r: number } {
+  const x = rho[0][1].real + rho[1][0].real;
+  const y = rho[1][0].imag - rho[0][1].imag;
+  const z = rho[0][0].real - rho[1][1].real;
+  const r = Math.max(0, Math.min(1, Math.sqrt(x * x + y * y + z * z)));
+  return {
+    x: Number(x.toFixed(6)),
+    y: Number(y.toFixed(6)),
+    z: Number(z.toFixed(6)),
+    r: Number(r.toFixed(6)),
+  };
+}
+
+/**
+ * Computes von Neumann entropy S(ρ) = -Tr(ρ log2 ρ) from Bloch vector length r.
+ */
+export function entropyFromBlochRadius(r: number): number {
+  const clampedR = Math.max(0, Math.min(1, r));
+  if (clampedR > 0.9999) return 0;
+  if (clampedR < 0.0001) return 1;
+  const lambda1 = (1 + clampedR) / 2;
+  const lambda2 = (1 - clampedR) / 2;
+  let s = 0;
+  if (lambda1 > 1e-12) s -= lambda1 * Math.log2(lambda1);
+  if (lambda2 > 1e-12) s -= lambda2 * Math.log2(lambda2);
+  return Number(Math.max(0, s).toFixed(4));
+}
+
+/**
+ * Computes full density matrix state for canonical Bell state |Φ+⟩ = 1/√2(|00⟩ + |11⟩).
+ * In unmeasured state: rA = 0, rB = 0, entropy = 1.0 (maximally mixed).
+ */
+export function computeBellReducedDensityMatrices(): ReducedDensityMatrixResult {
+  const invSqrt2 = 1 / Math.SQRT2;
+  const rhoAB = computeDensityMatrix4x4(
+    { real: invSqrt2, imag: 0 },
+    { real: 0, imag: 0 },
+    { real: 0, imag: 0 },
+    { real: invSqrt2, imag: 0 }
+  );
+
+  const rhoA = computeReducedDensityMatrixA(rhoAB);
+  const rhoB = computeReducedDensityMatrixB(rhoAB);
+  const vectorA = blochVectorFromDensityMatrix(rhoA);
+  const vectorB = blochVectorFromDensityMatrix(rhoB);
+  const purityA = Number((vectorA.r ** 2 + 1) / 2);
+  const purityB = Number((vectorB.r ** 2 + 1) / 2);
+
+  return {
+    rhoAB,
+    rhoA,
+    rhoB,
+    vectorA,
+    vectorB,
+    purityA,
+    purityB,
+    entropyA: entropyFromBlochRadius(vectorA.r),
+    entropyB: entropyFromBlochRadius(vectorB.r),
+  };
+}
+
+/**
+ * Performs local measurement on Qubit A, instantly collapsing both reduced density matrices
+ * back to pure states (r = 1.0) at the corresponding computational eigenstates (|00⟩ or |11⟩).
+ */
+export function collapseEntangledDensityMatrices(outcome: 0 | 1): ReducedDensityMatrixResult {
+  const c00 = outcome === 0 ? { real: 1, imag: 0 } : { real: 0, imag: 0 };
+  const c11 = outcome === 1 ? { real: 1, imag: 0 } : { real: 0, imag: 0 };
+  const zero = { real: 0, imag: 0 };
+
+  const rhoAB = computeDensityMatrix4x4(c00, zero, zero, c11);
+  const rhoA = computeReducedDensityMatrixA(rhoAB);
+  const rhoB = computeReducedDensityMatrixB(rhoAB);
+  const vectorA = blochVectorFromDensityMatrix(rhoA);
+  const vectorB = blochVectorFromDensityMatrix(rhoB);
+
+  return {
+    rhoAB,
+    rhoA,
+    rhoB,
+    vectorA,
+    vectorB,
+    purityA: 1.0,
+    purityB: 1.0,
+    entropyA: 0.0,
+    entropyB: 0.0,
+  };
 }
 
 export * from './types';

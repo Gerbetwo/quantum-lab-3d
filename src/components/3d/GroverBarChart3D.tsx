@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { useOrbitCamera } from '@/hooks/useOrbitCamera';
+import { acquireRenderer, releaseRenderer, disposeObject3D } from '@/lib/three/rendererSingleton';
 
 export interface GroverBarChart3DProps {
   groverProbs?: number[];
@@ -53,10 +54,7 @@ export function GroverBarChart3D({
     camera.position.set(0, 2.8, 6.4);
     camera.lookAt(0, 1.2, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    container.appendChild(renderer.domElement);
+    const renderer = acquireRenderer(container);
 
     const geometries: THREE.BufferGeometry[] = [];
     const materials: THREE.Material[] = [];
@@ -188,10 +186,8 @@ export function GroverBarChart3D({
       geometries.forEach((g) => g.dispose());
       materials.forEach((m) => m.dispose());
       grid.dispose();
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
+      disposeObject3D(scene);
+      releaseRenderer(container);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- singleton WebGL canvas lifecycle
   }, []);

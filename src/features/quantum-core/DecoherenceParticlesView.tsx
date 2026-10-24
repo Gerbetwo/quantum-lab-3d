@@ -11,6 +11,8 @@ import {
   createDecoherenceParticleSystem,
   updateThermalParticles,
 } from './DecoherenceParticles';
+import { applyPhaseDecay, calculateT2CoherenceTime, kelvinToMilliKelvin } from '@/core/decoherenceMath';
+import { acquireRenderer, releaseRenderer, disposeObject3D } from '@/lib/three/rendererSingleton';
 
 export interface DecoherenceParticlesProps {
   className?: string;
@@ -34,10 +36,7 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
 
     let renderer: THREE.WebGLRenderer | null = null;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-      renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2));
-      renderer.setSize(container.clientWidth || 800, container.clientHeight || 500, false);
-      container.appendChild(renderer.domElement);
+      renderer = acquireRenderer(container);
     } catch (_e) {
       renderer = null;
     }
@@ -80,6 +79,13 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
       const dir = computeSphericalVector(state.theta, state.phi);
       arrowHelper.setDirection(dir);
 
+      // Mixed state interior vector shrinkage r(T) < 1 inside containment shell
+      const tempMilliK = kelvinToMilliKelvin(currentTemp);
+      const t2 = calculateT2CoherenceTime(tempMilliK);
+      const phase = applyPhaseDecay(state.theta, state.phi, 0.15, t2);
+      const radiusLength = Math.max(0.01, 1.3 * phase.r);
+      arrowHelper.setLength(radiusLength, Math.min(radiusLength * 0.25, 0.2), Math.min(radiusLength * 0.1, 0.08));
+
       if (renderer) renderer.render(scene, camera);
       animId = requestAnimationFrame(loop);
     };
@@ -102,12 +108,11 @@ export const DecoherenceParticles: React.FC<DecoherenceParticlesProps> = ({
       sphereMat.dispose();
       ringGeo.dispose();
       ringMat.dispose();
+      arrowHelper.dispose();
       particleSystem.points.geometry.dispose();
       (particleSystem.points.material as THREE.Material).dispose();
-      if (renderer && renderer.domElement.parentElement === container) {
-        container.removeChild(renderer.domElement);
-        renderer.dispose();
-      }
+      disposeObject3D(scene);
+      releaseRenderer(container);
     };
   }, [initialTemperatureK]);
 
