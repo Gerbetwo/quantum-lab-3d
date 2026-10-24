@@ -25,6 +25,7 @@ import { SpatialTooltipOverlay } from "./ui/SpatialTooltipOverlay";
 import { UnifiedBottomTelemetryPanel } from "./UnifiedBottomTelemetryPanel";
 import { QuantumPipelineRibbon } from "./ui/QuantumPipelineRibbon";
 import { GlassCard } from "./ui/GlassCard";
+import { TitleScreen } from "./ui/TitleScreen";
 
 import { CoreBlochSphere } from "./3d/CoreBlochSphere";
 import { EntanglementDualSphere } from "./3d/EntanglementDualSphere";
@@ -43,7 +44,13 @@ export const WORKSHOP_TABS = [
   "7. Error Correction",
 ] as const;
 
-export function QuantumLab() {
+export interface QuantumLabProps {
+  /** Initial visibility of the Hero Title Screen (default: true) */
+  initialLandingVisible?: boolean;
+}
+
+export function QuantumLab({ initialLandingVisible = true }: QuantumLabProps = {}) {
+  const [isLandingVisible, setIsLandingVisible] = useState<boolean>(initialLandingVisible);
   const { t } = useTranslation();
   const tabKeys = [
     "superposition",
@@ -375,65 +382,77 @@ export function QuantumLab() {
   );
 
   return (
-    <MissionCanvasShell
-      missionId={activeObjective?.id ?? "superposition"}
-      activeObjective={activeObjective}
-      isObjectiveCompleted={isObjectiveCompleted}
-      objectiveProgress={getObjectiveProgress()}
-      tier1Header={renderTier1Header}
-      tier2Canvas={renderTier2Canvas()}
-      tier2Overlays={
-        <SpatialTooltipOverlay spatialId="state-vector" showCoordinates={true} />
-      }
-      tier3Ribbon={
-        <QuantumPipelineRibbon
-          activeTab={activeTab}
-          state={state}
-          onPreparePreset={(preset) => {
-            setSingleQubitState({ theta: preset.theta, phi: preset.phi });
-            playVectorSnap();
-          }}
-          onTransformGate={(gate) => {
-            applySingleQubitGate(gate);
-            playGateSweep(gate);
-            triggerGateAnimation(gate);
-          }}
-          onMeasure={() => {
-            measureSingleQubit();
-            playCollapseDrop();
-          }}
-          onReset={() => {
-            resetSingleQubit();
-            playVectorSnap();
-          }}
-          lastOutcome={lastOutcome}
-          isPlayingAnimation={isPlayingAnimation}
-          onTogglePlayPause={togglePlayPause}
-          animationSpeed={animationSpeed}
-          onSpeedChange={setAnimationSpeed}
-          onReplayAnimation={replayAnimation}
-          autoRotateCamera={autoRotateCamera}
-          onToggleAutoRotateCamera={toggleAutoRotateCamera}
-          entangledPair={entangledPair}
-          onMeasureEntangled={measureEntangled}
-          onResetEntangled={resetEntangled}
-          temperature={temperature}
-          onTemperatureChange={setTemperature}
-          onResetTemperature={() => setTemperature(15)}
-          groverTarget={groverTarget}
-          onSelectGroverTarget={setGroverTarget}
-          onRunGrover={runGroverStep}
-          onResetGrover={resetGrover}
-          qecTriple={qecTriple}
-          onInjectBitFlip={injectQecBitFlip}
-          onRunSyndromeCorrection={() => {
-            runQecCorrection();
-            setCorrectionTrigger((prev) => prev + 1);
-          }}
-          onResetQec={resetQec}
-        />
-      }
-    />
+    <>
+      <MissionCanvasShell
+        missionId={activeObjective?.id ?? "superposition"}
+        activeObjective={activeObjective}
+        isObjectiveCompleted={isObjectiveCompleted}
+        objectiveProgress={getObjectiveProgress()}
+        tier1Header={isLandingVisible ? null : renderTier1Header}
+        tier2Canvas={renderTier2Canvas()}
+        tier2Overlays={
+          isLandingVisible ? null : (
+            <SpatialTooltipOverlay spatialId="state-vector" showCoordinates={true} />
+          )
+        }
+        tier3Ribbon={
+          isLandingVisible ? null : (
+            <QuantumPipelineRibbon
+              activeTab={activeTab}
+              state={state}
+              onPreparePreset={(preset) => {
+                setSingleQubitState({ theta: preset.theta, phi: preset.phi });
+                playVectorSnap();
+              }}
+              onTransformGate={(gate) => {
+                applySingleQubitGate(gate);
+                playGateSweep(gate);
+                triggerGateAnimation(gate);
+              }}
+              onMeasure={() => {
+                measureSingleQubit();
+                playCollapseDrop();
+              }}
+              onReset={() => {
+                resetSingleQubit();
+                playVectorSnap();
+              }}
+              lastOutcome={lastOutcome}
+              isPlayingAnimation={isPlayingAnimation}
+              onTogglePlayPause={togglePlayPause}
+              animationSpeed={animationSpeed}
+              onSpeedChange={setAnimationSpeed}
+              onReplayAnimation={replayAnimation}
+              autoRotateCamera={autoRotateCamera}
+              onToggleAutoRotateCamera={toggleAutoRotateCamera}
+              entangledPair={entangledPair}
+              onMeasureEntangled={measureEntangled}
+              onResetEntangled={resetEntangled}
+              temperature={temperature}
+              onTemperatureChange={setTemperature}
+              onResetTemperature={() => setTemperature(15)}
+              groverTarget={groverTarget}
+              onSelectGroverTarget={setGroverTarget}
+              onRunGrover={runGroverStep}
+              onResetGrover={resetGrover}
+              qecTriple={qecTriple}
+              onInjectBitFlip={injectQecBitFlip}
+              onRunSyndromeCorrection={() => {
+                runQecCorrection();
+                setCorrectionTrigger((prev) => prev + 1);
+              }}
+              onResetQec={resetQec}
+            />
+          )
+        }
+        bottomRightControls={isLandingVisible ? null : undefined}
+        onReturnToTitle={isLandingVisible ? undefined : () => setIsLandingVisible(true)}
+      />
+
+      {isLandingVisible && (
+        <TitleScreen onEnter={() => setIsLandingVisible(false)} />
+      )}
+    </>
   );
 }
 

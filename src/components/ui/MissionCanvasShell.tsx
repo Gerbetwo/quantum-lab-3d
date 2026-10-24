@@ -14,7 +14,7 @@ import {
   QuantumPipelineRibbon,
   type QuantumPipelineRibbonProps,
 } from "./QuantumPipelineRibbon";
-import { Sun, Moon, Globe } from "lucide-react";
+import { Sun, Moon, Globe, ArrowLeft } from "lucide-react";
 
 export interface MissionCanvasShellProps {
   /** Active mission or workshop ID / title */
@@ -62,6 +62,12 @@ export interface MissionCanvasShellProps {
    */
   bottomRightControls?: React.ReactNode;
 
+  /**
+   * Callback to return to the Title / Landing Screen.
+   * If provided, renders a floating action button at fixed bottom-4 left-4 z-40.
+   */
+  onReturnToTitle?: () => void;
+
   /** Additional overlay children rendered inside the tactical HUD container */
   children?: React.ReactNode;
 
@@ -87,6 +93,7 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
   tier3Ribbon,
   pipelineRibbonProps,
   bottomRightControls,
+  onReturnToTitle,
   children,
   className = "",
 }) => {
@@ -173,6 +180,26 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
           </div>
         </footer>
       </div>
+
+      {/* FIXED BOTTOM-LEFT FLOATING BAR: Return to Title Action Button */}
+      {onReturnToTitle && (
+        <div
+          data-testid="bottom-left-floating-bar"
+          className="fixed bottom-4 left-4 z-40 pointer-events-auto"
+        >
+          <button
+            type="button"
+            onClick={onReturnToTitle}
+            data-testid="return-to-title-button"
+            aria-label={t("landing.return_to_title")}
+            title={t("landing.return_to_title")}
+            className="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-mono font-bold border border-border bg-card/85 backdrop-blur-md hover:bg-secondary text-foreground hover:text-primary transition-all flex items-center gap-1.5 cursor-pointer shadow-lg active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4 text-primary" />
+            <span className="hidden sm:inline">{t("landing.return_to_title")}</span>
+          </button>
+        </div>
+      )}
 
       {/* FIXED BOTTOM-RIGHT FLOATING BAR: Theme & Language HUD */}
       {bottomRightControls !== undefined ? (

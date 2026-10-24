@@ -18,6 +18,13 @@
     "lang_en": "EN",
     "lang_es": "ES"
   },
+  "landing": {
+    "title": "QuantumLab 3D",
+    "subtitle": "Simulador Interactivo de Mecánica Cuántica y Cinemática",
+    "enter_workspace": "Iniciar Experimento",
+    "developers_title": "Desarrollado por",
+    "return_to_title": "Volver al Inicio"
+  },
   "ribbon": {
     "aria_label": "Línea de ejecución cuántica",
     "prepare": "1. PREPARAR",

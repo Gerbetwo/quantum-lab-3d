@@ -18,6 +18,13 @@
     "lang_en": "EN",
     "lang_es": "ES"
   },
+  "landing": {
+    "title": "QuantumLab 3D",
+    "subtitle": "Interactive Quantum Mechanics & Kinematics Simulator",
+    "enter_workspace": "Enter Workspace",
+    "developers_title": "Created by",
+    "return_to_title": "Return to Title"
+  },
   "ribbon": {
     "aria_label": "Quantum Execution Pipeline",
     "prepare": "1. PREPARE",

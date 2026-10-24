@@ -91,4 +91,33 @@ describe('MissionCanvasShell', () => {
     expect(langButton).toHaveTextContent('EN');
     expect(document.documentElement.lang).toBe('en');
   });
+
+  it('renders floating bottom-left return button when onReturnToTitle is provided', () => {
+    let returned = false;
+    render(
+      <MissionCanvasShell
+        tier2Canvas={<div data-testid="canvas-slot">Canvas</div>}
+        onReturnToTitle={() => {
+          returned = true;
+        }}
+      />
+    );
+
+    const returnBtn = screen.getByTestId('return-to-title-button');
+    expect(returnBtn).toBeInTheDocument();
+    expect(returnBtn).toHaveAttribute('aria-label', 'Return to Title');
+
+    fireEvent.click(returnBtn);
+    expect(returned).toBe(true);
+  });
+
+  it('does not render return button when onReturnToTitle is undefined', () => {
+    render(
+      <MissionCanvasShell
+        tier2Canvas={<div data-testid="canvas-slot">Canvas</div>}
+      />
+    );
+
+    expect(screen.queryByTestId('return-to-title-button')).not.toBeInTheDocument();
+  });
 });

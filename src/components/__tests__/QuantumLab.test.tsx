@@ -4,8 +4,33 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QuantumLab, WORKSHOP_TABS } from '../QuantumLab';
 
 describe('QuantumLab Workspace Component', () => {
-  it('renders initial state vector in superposition with Born probabilities', () => {
+  it('renders title screen landing overlay by default with title, subtitle, and CTA', () => {
     render(<QuantumLab />);
+    expect(screen.getByTestId('title-screen')).toBeInTheDocument();
+    expect(screen.getByTestId('enter-workspace-button')).toBeInTheDocument();
+    expect(screen.getByText('Created by')).toBeInTheDocument();
+    expect(screen.getByText('Gerbetwo')).toBeInTheDocument();
+    expect(screen.getByText('kriv-bit')).toBeInTheDocument();
+  });
+
+  it('transitions to workspace upon clicking Enter Workspace and returns via return button', () => {
+    render(<QuantumLab />);
+    expect(screen.getByTestId('title-screen')).toBeInTheDocument();
+
+    // Click Enter Workspace
+    fireEvent.click(screen.getByTestId('enter-workspace-button'));
+    expect(screen.queryByTestId('title-screen')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mission-canvas-shell')).toBeInTheDocument();
+    expect(screen.getByTestId('return-to-title-button')).toBeInTheDocument();
+
+    // Click Return to Title
+    fireEvent.click(screen.getByTestId('return-to-title-button'));
+    expect(screen.getByTestId('title-screen')).toBeInTheDocument();
+    expect(screen.queryByTestId('return-to-title-button')).not.toBeInTheDocument();
+  });
+
+  it('renders initial state vector in superposition with Born probabilities', () => {
+    render(<QuantumLab initialLandingVisible={false} />);
 
     // Default state theta = PI/2, phi = 0 -> |+⟩ = 0.707|0⟩ + 0.707|1⟩
     expect(screen.getByText(/State Vector Readout/i)).toBeInTheDocument();
@@ -19,7 +44,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('applies Hadamard, Pauli-X, and Pauli-Z gates upon ribbon gate clicks', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     // Switch to Mission 2 where Phase 2 TRANSFORM gates are unlocked
     fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
@@ -48,7 +73,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('performs measurement collapse and displays outcome badge', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     // Switch to Mission 3 where Phase 3 MEASURE collapse is unlocked
     fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
@@ -62,7 +87,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('resets state to ground state |0> when preparing ground preset', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     // Initially |+⟩, click prepare ground |0⟩ preset
     const groundPreset = screen.getByRole('button', { name: /Prepare Ground \|0⟩/i });
@@ -74,7 +99,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('interacts with Tier 3 QuantumPipelineRibbon controls and gates', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     // Switch to Mission 3 where all phases (PREPARE, TRANSFORM, MEASURE) are unlocked
     fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
@@ -97,7 +122,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('opens mission dropdown menu and switches active mission views', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     // Trigger mission dropdown
     const dropdownTrigger = screen.getByTestId('mission-dropdown-trigger');
@@ -120,7 +145,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('interacts with Tab 4 (Entanglement): measures correlated Bell pair', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
     fireEvent.click(screen.getByRole('button', { name: '4. Entanglement' }));
@@ -137,7 +162,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('interacts with Tab 5 (Decoherence): adjusts temperature slider and updates T2', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
     fireEvent.click(screen.getByRole('button', { name: '5. Decoherence' }));
@@ -156,7 +181,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('interacts with Tab 6 (Grover Search): selects target and runs diffusion step', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
     fireEvent.click(screen.getByRole('button', { name: '6. Grover Search' }));
@@ -176,7 +201,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('interacts with Tab 7 (Error Correction): injects bit flip and runs syndrome correction', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
     fireEvent.click(screen.getByRole('button', { name: '7. Error Correction' }));
@@ -200,7 +225,7 @@ describe('QuantumLab Workspace Component', () => {
   });
 
   it('dynamically switches language between EN and ES updating goal cards and tabs', () => {
-    render(<QuantumLab />);
+    render(<QuantumLab initialLandingVisible={false} />);
 
     // Initially in EN: superposition goal is completed at initial |+⟩ state
     expect(screen.getByText('COMPLETED')).toBeInTheDocument();

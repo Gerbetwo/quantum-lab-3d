@@ -10,6 +10,10 @@ test.describe('Flight-Deck Game Loop E2E Sweep', () => {
     });
     await page.reload();
     await expect(page.locator('canvas')).toBeVisible();
+    const enterBtn = page.getByTestId('enter-workspace-button');
+    if (await enterBtn.isVisible()) {
+      await enterBtn.click();
+    }
   });
 
   test('verifies full flow: Header Dropdown -> Interactive 3D Manipulation -> Ribbon Execution -> Floating Toggles', async ({ page }) => {
@@ -298,5 +302,48 @@ test.describe('Flight-Deck Game Loop E2E Sweep', () => {
 
     // Verify single WebGL context retained throughout the language toggles
     await expect(page.locator('canvas[data-engine]')).toHaveCount(1);
+  });
+
+  test('verifies hero title screen, developer showcase links, and return navigation button', async ({ page }) => {
+    // Navigate back to Title Screen using return button
+    const returnBtn = page.getByTestId('return-to-title-button');
+    await expect(returnBtn).toBeVisible();
+    await returnBtn.click();
+
+    const titleScreen = page.getByTestId('title-screen');
+    await expect(titleScreen).toBeVisible();
+
+    // Verify Title & Subtitle
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('QuantumLab 3D');
+    await expect(titleScreen).toContainText('Interactive Quantum Mechanics & Kinematics Simulator');
+
+    // Verify Developer Showcase cards
+    const gerbetwoCard = page.getByTestId('dev-card-gerbetwo');
+    await expect(gerbetwoCard).toBeVisible();
+    await expect(gerbetwoCard).toHaveAttribute('href', 'https://github.com/Gerbetwo');
+    await expect(gerbetwoCard).toHaveAttribute('target', '_blank');
+    await expect(gerbetwoCard).toHaveAttribute('rel', 'noopener noreferrer');
+
+    const krivbitCard = page.getByTestId('dev-card-kriv-bit');
+    await expect(krivbitCard).toBeVisible();
+    await expect(krivbitCard).toHaveAttribute('href', 'https://github.com/kriv-bit');
+    await expect(krivbitCard).toHaveAttribute('target', '_blank');
+    await expect(krivbitCard).toHaveAttribute('rel', 'noopener noreferrer');
+
+    // Single WebGL context retained while title screen is shown
+    await expect(page.locator('canvas')).toHaveCount(1);
+
+    // Enter workspace again
+    const enterBtn = page.getByTestId('enter-workspace-button');
+    await expect(enterBtn).toBeVisible();
+    await enterBtn.click();
+
+    // TitleScreen hidden, workspace HUD & return button visible
+    await expect(titleScreen).toBeHidden();
+    await expect(page.getByTestId('tier-1-header')).toBeVisible();
+    await expect(returnBtn).toBeVisible();
+
+    // Canvas still singleton
+    await expect(page.locator('canvas')).toHaveCount(1);
   });
 });

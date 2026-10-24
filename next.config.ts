@@ -21,7 +21,7 @@ const securityHeaders = [
         .join(' '),
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https://github.com https://avatars.githubusercontent.com",
       "connect-src 'self'",
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",
