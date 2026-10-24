@@ -109,11 +109,11 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByText(/Correlated Pair Telemetry/i)).toBeInTheDocument();
 
     // Measure pair
-    const measureEntangledBtn = screen.getByRole('button', { name: /Measure Entangled Pair/i });
+    const measureEntangledBtn = screen.getAllByRole('button', { name: /Measure Entangled Pair/i })[0];
     fireEvent.click(measureEntangledBtn);
 
     // Should display either |00⟩ or |11⟩
-    expect(screen.getByText(/Result:\s*\|(00|11)⟩/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Result:\s*\|(00|11)⟩/)[0]).toBeInTheDocument();
     expect(screen.getByText(/Perfect Correlation:\s*\|(00|11)⟩/)).toBeInTheDocument();
   });
 
@@ -124,16 +124,16 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByRole('heading', { name: /5\. Decoherence/i })).toBeInTheDocument();
     expect(screen.getByText(/Decoherence Telemetry/i)).toBeInTheDocument();
 
-    const slider = screen.getByRole('slider');
+    const slider = screen.getAllByRole('slider')[0];
     expect(slider).toBeInTheDocument();
-    expect(screen.getByText(/245\.4\s*μs/)).toBeInTheDocument();
+    expect(screen.getAllByText(/245\.4\s*μs/)[0]).toBeInTheDocument();
 
     // Change temperature via preset button
-    const preset300 = screen.getByRole('button', { name: '300 mK' });
+    const preset300 = screen.getAllByRole('button', { name: '300 mK' })[0];
     fireEvent.click(preset300);
 
     // T2 at 300mK = 250 * exp(-300/800) = 171.8 μs
-    expect(screen.getByText(/171\.8\s*μs/)).toBeInTheDocument();
+    expect(screen.getAllByText(/171\.8\s*μs/)[0]).toBeInTheDocument();
   });
 
   it('interacts with Tab 6 (Grover Search): selects target and runs diffusion step', () => {
@@ -144,11 +144,11 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByText(/4-State Probability Distribution/i)).toBeInTheDocument();
 
     // Select target |10⟩ (index 2)
-    const targetButton = screen.getByRole('button', { name: '|10⟩' });
+    const targetButton = screen.getAllByRole('button', { name: '|10⟩' })[0];
     fireEvent.click(targetButton);
 
     // Run diffusion step
-    const runBtn = screen.getByRole('button', { name: /Run Diffusion Step/i });
+    const runBtn = screen.getAllByRole('button', { name: /Run Diffusion Step/i })[0];
     fireEvent.click(runBtn);
 
     // Target amplitude amplification to 100%
@@ -163,13 +163,13 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByText(/\[q0, q1, q2\] = \[0, 0, 0\]/)).toBeInTheDocument();
 
     // Inject bit flip into default target (q1)
-    const injectBtn = screen.getByRole('button', { name: /Inject Bit Flip/i });
+    const injectBtn = screen.getAllByRole('button', { name: /Inject Bit Flip/i })[0];
     fireEvent.click(injectBtn);
 
     expect(screen.getByText(/\[q0, q1, q2\] = \[0, 1, 0\]/)).toBeInTheDocument();
 
     // Run syndrome correction
-    const correctBtn = screen.getByRole('button', { name: /Run Syndrome Correction/i });
+    const correctBtn = screen.getAllByRole('button', { name: /Run Syndrome Correction/i })[0];
     fireEvent.click(correctBtn);
 
     // Syndrome detection

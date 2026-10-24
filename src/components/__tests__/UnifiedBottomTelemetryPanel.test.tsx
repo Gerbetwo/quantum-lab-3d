@@ -93,7 +93,7 @@ describe('UnifiedBottomTelemetryPanel', () => {
       />
     );
 
-    expect(screen.getByRole('slider')).toBeInTheDocument();
+    expect(screen.getAllByRole('slider')[0]).toBeInTheDocument();
     const preset300 = screen.getByRole('button', { name: '300 mK' });
     fireEvent.click(preset300);
     expect(onTempChange).toHaveBeenCalledWith(300);

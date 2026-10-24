@@ -3,21 +3,13 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import type { QubitState } from '@/core/qubitMath';
-import {
-  createGateRingsGroup,
-  createGeodesicParticleSystem,
-  slerpUnitVectors,
-} from './GateRotationRings';
+import { createGateRingsGroup, createGeodesicParticleSystem, slerpUnitVectors } from './GateRotationRings';
 import { useSpatialTelemetryBridge } from '@/hooks/useSpatialTelemetryBridge';
 import { useVectorDrag, pointerCoordsToNdc } from '@/hooks/useVectorDrag';
 import { useOrbitCamera } from '@/hooks/useOrbitCamera';
 import { useBlochKeyboard } from '@/hooks/useBlochKeyboard';
 import { readBlochPalette, observeThemeChanges } from '@/lib/3d/blochTheme';
-import {
-  createBlochTargetZoneMesh,
-  isVectorInBlochTarget,
-  type TargetZoneMesh,
-} from '@/lib/3d/TargetZone3D';
+import { createBlochTargetZoneMesh, isVectorInBlochTarget, type TargetZoneMesh } from '@/lib/3d/TargetZone3D';
 import { calculateThermalJitter, CRYO_MIN_MK } from '@/core/decoherenceMath';
 
 export { slerpUnitVectors };
@@ -39,6 +31,10 @@ export interface CoreBlochSphereProps {
   showGateRings?: boolean;
   showMeasurementPlane?: boolean;
   lastOutcome?: 0 | 1 | null;
+  autoRotate?: boolean;
+  noiseIntensity?: number;
+  animationSpeed?: number;
+  isPlaying?: boolean;
 }
 
 export function CoreBlochSphere({
@@ -55,6 +51,10 @@ export function CoreBlochSphere({
   showGateRings = false,
   showMeasurementPlane = false,
   lastOutcome = null,
+  autoRotate = false,
+  noiseIntensity = 1.0,
+  animationSpeed = 1.0,
+  isPlaying = true,
 }: CoreBlochSphereProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -62,6 +62,9 @@ export function CoreBlochSphere({
   const targetPurityRef = useRef<number>(purity);
   const targetCollapseRef = useRef<number>(thermalCollapse);
   const targetTemperatureRef = useRef<number>(temperature);
+  const noiseIntensityRef = useRef<number>(noiseIntensity);
+  const animationSpeedRef = useRef<number>(animationSpeed);
+  const isPlayingRef = useRef<boolean>(isPlaying);
   const prevGateRef = useRef<string | null>(null);
   const prevOutcomeRef = useRef<0 | 1 | null>(null);
   const targetZoneRef = useRef<{ theta: number; phi: number } | null>(targetZone);
@@ -74,12 +77,17 @@ export function CoreBlochSphere({
   const clearFocus = useSpatialTelemetryBridge((s) => s.clearFocus);
   const activeFocusId = useSpatialTelemetryBridge((s) => s.activeFocusId);
 
-  useEffect(() => { targetStateRef.current = state; }, [state]);
-  useEffect(() => { targetPurityRef.current = purity; }, [purity]);
-  useEffect(() => { targetCollapseRef.current = thermalCollapse; }, [thermalCollapse]);
-  useEffect(() => { targetTemperatureRef.current = temperature; }, [temperature]);
-  useEffect(() => { targetZoneRef.current = targetZone; }, [targetZone]);
-  useEffect(() => { onAlignmentChangeRef.current = onAlignmentChange; }, [onAlignmentChange]);
+  useEffect(() => {
+    targetStateRef.current = state;
+    targetPurityRef.current = purity;
+    targetCollapseRef.current = thermalCollapse;
+    targetTemperatureRef.current = temperature;
+    noiseIntensityRef.current = noiseIntensity;
+    animationSpeedRef.current = animationSpeed;
+    isPlayingRef.current = isPlaying;
+    targetZoneRef.current = targetZone;
+    onAlignmentChangeRef.current = onAlignmentChange;
+  }, [state, purity, thermalCollapse, temperature, noiseIntensity, animationSpeed, isPlaying, targetZone, onAlignmentChange]);
 
   // Keyboard navigation (Arrow keys & WASD)
   useBlochKeyboard(targetStateRef, {
@@ -96,6 +104,8 @@ export function CoreBlochSphere({
     initialRadius: 3.5,
     minRadius: 1.8,
     maxRadius: 7.0,
+    autoRotate,
+    autoRotateSpeed: 0.005 * (isPlaying ? animationSpeed : 0),
   });
 
   // State Vector drag hook with magnetic snapping
@@ -174,27 +184,21 @@ export function CoreBlochSphere({
     [isDragging, onDragPointerMove, orbit, onPointerOver, activeFocusId, clearFocus]
   );
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (isVectorInteractingRef.current || isDragging) {
-        onDragPointerUp(e);
-        isVectorInteractingRef.current = false;
-      }
-      orbit.onPointerUp(e);
-    },
-    [isDragging, onDragPointerUp, orbit]
-  );
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isVectorInteractingRef.current || isDragging) {
+      onDragPointerUp(e);
+      isVectorInteractingRef.current = false;
+    }
+    orbit.onPointerUp(e);
+  }, [isDragging, onDragPointerUp, orbit]);
 
-  const handlePointerCancel = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (isVectorInteractingRef.current || isDragging) {
-        onDragPointerCancel(e);
-        isVectorInteractingRef.current = false;
-      }
-      orbit.onPointerCancel(e);
-    },
-    [isDragging, onDragPointerCancel, orbit]
-  );
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isVectorInteractingRef.current || isDragging) {
+      onDragPointerCancel(e);
+      isVectorInteractingRef.current = false;
+    }
+    orbit.onPointerCancel(e);
+  }, [isDragging, onDragPointerCancel, orbit]);
 
   const handlePointerLeave = useCallback(() => {
     orbit.onPointerLeave();
@@ -236,14 +240,13 @@ export function CoreBlochSphere({
     const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
     scene.add(sphereMesh);
 
-    // 2. Equator Ring
+    // 2. Equator Ring & 3. Coordinate Axes
     const ringGeo = new THREE.RingGeometry(1.18, 1.22, 64);
     const ringMat = new THREE.MeshBasicMaterial({ color: initialPalette.primary, side: THREE.DoubleSide, transparent: true, opacity: initialPalette.ringOpacity });
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = Math.PI / 2;
     scene.add(ring);
 
-    // 3. Coordinate Axes
     const axesGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-1.4, 0, 0), new THREE.Vector3(1.4, 0, 0),
       new THREE.Vector3(0, -1.4, 0), new THREE.Vector3(0, 1.4, 0),
@@ -303,14 +306,10 @@ export function CoreBlochSphere({
 
     // Live theme subscriber
     const stopThemeObserver = observeThemeChanges((p) => {
-      sphereMat.color.setHex(p.primary);
-      sphereMat.opacity = p.wireOpacity * curCollapse;
-      ringMat.color.setHex(p.primary);
-      ringMat.opacity = p.ringOpacity * curCollapse;
-      axesMat.color.setHex(p.foreground);
-      axesMat.opacity = p.axesOpacity * curCollapse;
-      diskMat.color.setHex(p.purple);
-      diskMat.opacity = p.diskOpacity;
+      sphereMat.color.setHex(p.primary); sphereMat.opacity = p.wireOpacity * curCollapse;
+      ringMat.color.setHex(p.primary); ringMat.opacity = p.ringOpacity * curCollapse;
+      axesMat.color.setHex(p.foreground); axesMat.opacity = p.axesOpacity * curCollapse;
+      diskMat.color.setHex(p.purple); diskMat.opacity = p.diskOpacity;
       arrow.setColor(p.primary);
     });
 
@@ -322,12 +321,14 @@ export function CoreBlochSphere({
       const dt = Math.min(0.1, (now - lastTime) / 1000);
       lastTime = now;
 
+      const spd = isPlayingRef.current ? animationSpeedRef.current : 0;
+
       // Smooth kinematic interpolation
       const targetPurity = Math.max(0.01, Math.min(1, targetPurityRef.current ?? 1));
-      curPur += (targetPurity - curPur) * 0.12;
+      curPur += (targetPurity - curPur) * 0.12 * (isPlayingRef.current ? spd : 1);
 
       const targetCollapse = Math.max(0.001, Math.min(1, targetCollapseRef.current ?? 1));
-      curCollapse += (targetCollapse - curCollapse) * 0.12;
+      curCollapse += (targetCollapse - curCollapse) * 0.12 * (isPlayingRef.current ? spd : 1);
 
       const { theta: targetTheta, phi: targetPhi } = targetStateRef.current;
       if (curTh < 0.05 || Math.PI - curTh < 0.05) curPh = targetPhi;
@@ -335,8 +336,8 @@ export function CoreBlochSphere({
       while (dPhi > Math.PI) dPhi -= 2 * Math.PI;
       while (dPhi < -Math.PI) dPhi += 2 * Math.PI;
 
-      curPh += dPhi * 0.15;
-      curTh += (targetTheta - curTh) * 0.15;
+      curPh += dPhi * 0.15 * (isPlayingRef.current ? spd : 1);
+      curTh += (targetTheta - curTh) * 0.15 * (isPlayingRef.current ? spd : 1);
 
       // Update camera transform via orbit controller
       orbit.updateCamera(camera);
@@ -354,7 +355,7 @@ export function CoreBlochSphere({
       let finalPh = curPh;
       const curTemp = targetTemperatureRef.current;
       if (typeof curTemp === 'number' && curTemp > CRYO_MIN_MK) {
-        const { dTheta, dPhi } = calculateThermalJitter(curTemp, now);
+        const { dTheta, dPhi } = calculateThermalJitter(curTemp, now, noiseIntensityRef.current ?? 1.0);
         finalTh = Math.max(0.001, Math.min(Math.PI - 0.001, curTh + dTheta));
         finalPh = curPh + dPhi;
       }
@@ -385,7 +386,7 @@ export function CoreBlochSphere({
         onAlignmentChangeRef.current?.(isAligned);
       }
 
-      updateParticles(dt);
+      updateParticles(dt * spd);
 
       renderer.render(scene, camera);
       animId = requestAnimationFrame(animate);
@@ -461,10 +462,7 @@ export function CoreBlochSphere({
   // Gate transition geodesic particle arc
   useEffect(() => {
     if (activeGate && activeGate !== prevGateRef.current && triggerArcRef.current) {
-      triggerArcRef.current(
-        toVector(state.theta, state.phi),
-        toVector(targetStateRef.current.theta, targetStateRef.current.phi)
-      );
+      triggerArcRef.current(toVector(state.theta, state.phi), toVector(targetStateRef.current.theta, targetStateRef.current.phi));
       prevGateRef.current = activeGate;
     }
   }, [activeGate, state]);
@@ -473,8 +471,7 @@ export function CoreBlochSphere({
   useEffect(() => {
     if (lastOutcome !== null && lastOutcome !== prevOutcomeRef.current && triggerArcRef.current) {
       const collapseTarget = lastOutcome === 0 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, -1, 0);
-      const curVec = toVector(targetStateRef.current.theta, targetStateRef.current.phi);
-      triggerArcRef.current(curVec, collapseTarget, 0xa855f7);
+      triggerArcRef.current(toVector(targetStateRef.current.theta, targetStateRef.current.phi), collapseTarget, 0xa855f7);
       prevOutcomeRef.current = lastOutcome;
     }
   }, [lastOutcome]);

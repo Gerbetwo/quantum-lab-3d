@@ -83,14 +83,15 @@ export function calculateVectorLength(purity: number): number {
  */
 export function calculateThermalJitter(
   tempInMilliKelvin: number,
-  timeMs: number
+  timeMs: number,
+  noiseIntensity: number = 1.0
 ): { dTheta: number; dPhi: number } {
   if (tempInMilliKelvin <= CRYO_MIN_MK) {
     return { dTheta: 0, dPhi: 0 };
   }
   const clampedTemp = Math.min(CRYO_MAX_MK, tempInMilliKelvin);
   const normT = (clampedTemp - CRYO_MIN_MK) / (CRYO_MAX_MK - CRYO_MIN_MK);
-  const amplitude = normT * 0.05;
+  const amplitude = normT * 0.05 * Math.max(0, noiseIntensity);
   const tSec = timeMs * 0.001;
   const dTheta = Math.sin(tSec * 14.5) * Math.cos(tSec * 9.2) * amplitude;
   const dPhi = Math.cos(tSec * 16.3) * Math.sin(tSec * 11.1) * amplitude;

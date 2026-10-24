@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   computeStateMetrics,
   applyPhaseDecay,
@@ -58,6 +58,11 @@ export function QuantumLab() {
     groverProbs,
     qecTriple,
     syndromeInfo,
+    isPlayingAnimation,
+    animationSpeed,
+    replayTrigger,
+    autoRotateCamera,
+    noiseIntensity,
     setTab,
     setSingleQubitState,
     applySingleQubitGate,
@@ -72,19 +77,32 @@ export function QuantumLab() {
     injectQecBitFlip,
     runQecCorrection,
     resetQec,
+    togglePlayPause,
+    setAnimationSpeed,
+    replayAnimation,
+    toggleAutoRotateCamera,
+    setNoiseIntensity,
   } = useQuantumLabState();
 
   const [activeGate, setActiveGate] = useState<string | null>(null);
   const [correctionTrigger, setCorrectionTrigger] = useState<number>(0);
+  const lastGateRef = useRef<string>("H");
   const gateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const triggerGateAnimation = useCallback((gate: string) => {
+    lastGateRef.current = gate;
     setActiveGate(gate);
     if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
     gateTimeoutRef.current = setTimeout(() => {
       setActiveGate(null);
     }, 750);
   }, []);
+
+  useEffect(() => {
+    if (replayTrigger > 0) {
+      triggerGateAnimation(lastGateRef.current);
+    }
+  }, [replayTrigger, triggerGateAnimation]);
 
   // Metrics & calculations
   const metrics = computeStateMetrics(state);
@@ -158,6 +176,9 @@ export function QuantumLab() {
             showMeasurementPlane={activeTab === 2}
             activeGate={activeGate}
             lastOutcome={lastOutcome}
+            autoRotate={autoRotateCamera}
+            animationSpeed={animationSpeed}
+            isPlaying={isPlayingAnimation}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
         );
@@ -175,6 +196,10 @@ export function QuantumLab() {
             purity={vectorPurity}
             thermalCollapse={thermalCollapseFactor(temperature)}
             temperature={temperature}
+            noiseIntensity={noiseIntensity}
+            autoRotate={autoRotateCamera}
+            animationSpeed={animationSpeed}
+            isPlaying={isPlayingAnimation}
             interactive={false}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
@@ -201,13 +226,14 @@ export function QuantumLab() {
     }
   };
 
-  // Tier 1 Header HUD: Floating Perimeter Islands
+  // Tier 1 Header HUD: Top Bar with tabs, target card, inspector and system toggles
   const renderTier1Header = (
     <header
       data-testid="tier-1-header"
-      className="pointer-events-none w-full flex items-center justify-between gap-3"
+      className="pointer-events-none w-full flex items-center justify-between gap-2 sm:gap-3"
     >
-      <div className="pointer-events-auto flex items-center gap-2 p-1.5 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md overflow-x-auto scrollbar-thin">
+      {/* Top-left: Workshop Navigation Tabs */}
+      <div className="pointer-events-auto flex items-center gap-2 p-1.5 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md overflow-x-auto scrollbar-thin max-w-[50vw] lg:max-w-none">
         <span className="font-mono text-xs font-bold tracking-widest text-primary uppercase bg-secondary px-2.5 py-1 rounded border border-border shrink-0">
           QuantumLab
         </span>
@@ -229,9 +255,9 @@ export function QuantumLab() {
         </div>
       </div>
 
-      {/* Real-time Target Goal Card */}
+      {/* Top-center: Real-time Target Goal Card (desktop) */}
       {activeObjective && (
-        <div className="pointer-events-auto hidden md:flex flex-1 justify-center max-w-sm mx-2">
+        <div className="pointer-events-auto hidden lg:flex flex-1 justify-center max-w-sm lg:max-w-md mx-2">
           <TargetGoalCard
             objective={activeObjective}
             isCompleted={isObjectiveCompleted}
@@ -240,41 +266,85 @@ export function QuantumLab() {
         </div>
       )}
 
-      {/* Language & Theme Controls */}
-      <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md shrink-0">
-        <button
-          type="button"
-          onClick={toggleLanguage}
-          data-testid="language-toggle-button"
-          aria-label={t("header.toggle_language")}
-          className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
-        >
-          <Globe className="w-3.5 h-3.5 text-primary" />
-          <span>{locale === "en" ? "EN" : "ES"}</span>
-        </button>
+      {/* Top-right: Integrated Telemetry Inspector + Language & Theme Controls */}
+      <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <UnifiedBottomTelemetryPanel
+          activeTab={activeTab}
+          state={state}
+          metrics={metrics}
+          lastOutcome={lastOutcome}
+          entangledPair={entangledPair}
+          temperature={temperature}
+          t2Time={t2Time}
+          vectorPurity={vectorPurity}
+          groverTarget={groverTarget}
+          groverProbs={groverProbs}
+          qecTriple={qecTriple}
+          syndromeInfo={syndromeInfo}
+          isObjectiveCompleted={isObjectiveCompleted}
+          shorPeriod={shorPeriod}
+          onGate={(gate) => {
+            applySingleQubitGate(gate);
+            playGateSweep(gate);
+            triggerGateAnimation(gate);
+          }}
+          onMeasure={() => {
+            measureSingleQubit();
+            playCollapseDrop();
+          }}
+          onReset={() => {
+            resetSingleQubit();
+            playVectorSnap();
+          }}
+          onStateChange={setSingleQubitState}
+          onMeasureEntangled={measureEntangled}
+          onResetEntangled={resetEntangled}
+          onTemperatureChange={setTemperature}
+          onResetTemperature={() => setTemperature(15)}
+          onSelectGroverTarget={setGroverTarget}
+          onRunGrover={runGroverStep}
+          onResetGrover={resetGrover}
+          onInjectBitFlip={injectQecBitFlip}
+          onRunSyndromeCorrection={() => {
+            runQecCorrection();
+            setCorrectionTrigger((prev) => prev + 1);
+          }}
+          onResetQec={resetQec}
+          noiseIntensity={noiseIntensity}
+          onNoiseIntensityChange={setNoiseIntensity}
+          autoRotateCamera={autoRotateCamera}
+          onToggleAutoRotateCamera={toggleAutoRotateCamera}
+        />
 
-        <button
-          type="button"
-          onClick={toggleTheme}
-          data-testid="theme-toggle-button"
-          aria-label={t("header.toggle_theme")}
-          className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
-        >
-          {theme === "dark" ? (
-            <Sun className="w-4 h-4 text-warning" />
-          ) : (
-            <Moon className="w-4 h-4 text-primary" />
-          )}
-        </button>
+        <div className="flex items-center gap-1.5 p-1 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md shrink-0">
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            data-testid="language-toggle-button"
+            aria-label={t("header.toggle_language")}
+            className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+          >
+            <Globe className="w-3.5 h-3.5 text-primary" />
+            <span>{locale === "en" ? "EN" : "ES"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            data-testid="theme-toggle-button"
+            aria-label={t("header.toggle_theme")}
+            className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
+          >
+            {theme === "dark" ? (
+              <Sun className="w-4 h-4 text-warning" />
+            ) : (
+              <Moon className="w-4 h-4 text-primary" />
+            )}
+          </button>
+        </div>
       </div>
     </header>
   );
-
-  const vectorTipPos: [number, number, number] = [
-    1.28 * Math.sin(state.theta) * Math.cos(state.phi),
-    1.28 * Math.cos(state.theta),
-    1.28 * Math.sin(state.theta) * Math.sin(state.phi),
-  ];
 
   return (
     <MissionCanvasShell
@@ -285,27 +355,7 @@ export function QuantumLab() {
       tier1Header={renderTier1Header}
       tier2Canvas={renderTier2Canvas()}
       tier2Overlays={
-        <>
-          <SpatialTooltipOverlay spatialId="state-vector" />
-
-          {/* Clean Inspector Dock */}
-          <UnifiedBottomTelemetryPanel
-            activeTab={activeTab}
-            state={state}
-            metrics={metrics}
-            lastOutcome={lastOutcome}
-            entangledPair={entangledPair}
-            temperature={temperature}
-            t2Time={t2Time}
-            vectorPurity={vectorPurity}
-            groverTarget={groverTarget}
-            groverProbs={groverProbs}
-            qecTriple={qecTriple}
-            syndromeInfo={syndromeInfo}
-            isObjectiveCompleted={isObjectiveCompleted}
-            shorPeriod={shorPeriod}
-          />
-        </>
+        <SpatialTooltipOverlay spatialId="state-vector" />
       }
       tier3Ribbon={
         <QuantumPipelineRibbon
@@ -329,6 +379,13 @@ export function QuantumLab() {
             playVectorSnap();
           }}
           lastOutcome={lastOutcome}
+          isPlayingAnimation={isPlayingAnimation}
+          onTogglePlayPause={togglePlayPause}
+          animationSpeed={animationSpeed}
+          onSpeedChange={setAnimationSpeed}
+          onReplayAnimation={replayAnimation}
+          autoRotateCamera={autoRotateCamera}
+          onToggleAutoRotateCamera={toggleAutoRotateCamera}
           entangledPair={entangledPair}
           onMeasureEntangled={measureEntangled}
           onResetEntangled={resetEntangled}

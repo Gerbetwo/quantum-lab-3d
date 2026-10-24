@@ -133,6 +133,8 @@ export interface DecoherencePanelProps {
   vectorPurity: number;
   onTemperatureChange: (temp: number) => void;
   onReset: () => void;
+  noiseIntensity?: number;
+  onNoiseIntensityChange?: (intensity: number) => void;
 }
 
 export function DecoherencePanel({
@@ -141,6 +143,8 @@ export function DecoherencePanel({
   vectorPurity,
   onTemperatureChange,
   onReset,
+  noiseIntensity = 1.0,
+  onNoiseIntensityChange,
 }: DecoherencePanelProps) {
   const { t } = useTranslation();
 
@@ -199,6 +203,31 @@ export function DecoherencePanel({
             className="h-full bg-linear-to-r from-primary to-success transition-all duration-200"
             style={{ width: `${vectorPurity * 100}%` }}
           />
+        </div>
+      </div>
+
+      {/* Thermal Noise Intensity Slider */}
+      <div className="p-3 rounded-xl bg-background/90 border border-border space-y-1.5">
+        <div className="flex justify-between items-center text-xs font-mono">
+          <span className="text-muted-foreground font-semibold uppercase text-[10px]">
+            Thermal Noise Intensity
+          </span>
+          <span className="text-primary font-bold text-xs">{(noiseIntensity * 100).toFixed(0)}%</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={3}
+          step={0.1}
+          value={noiseIntensity}
+          aria-label="Thermal noise intensity"
+          onChange={(e) => onNoiseIntensityChange?.(Number(e.target.value))}
+          className="w-full accent-primary cursor-pointer h-1.5 bg-secondary rounded-lg"
+        />
+        <div className="flex justify-between text-[9px] font-mono text-muted-foreground">
+          <span>0% (Quiet)</span>
+          <span>100% (Nominal)</span>
+          <span>300% (High Jitter)</span>
         </div>
       </div>
 

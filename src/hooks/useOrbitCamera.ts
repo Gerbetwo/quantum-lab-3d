@@ -10,6 +10,8 @@ export interface UseOrbitCameraOptions {
   initialTheta?: number;
   initialPhi?: number;
   enabled?: boolean;
+  autoRotate?: boolean;
+  autoRotateSpeed?: number;
 }
 
 export function useOrbitCamera(
@@ -23,13 +25,27 @@ export function useOrbitCamera(
     initialTheta = Math.PI / 3,
     initialPhi = Math.PI / 4,
     enabled = true,
+    autoRotate = false,
+    autoRotateSpeed = 0.005,
   } = options;
 
   const radiusRef = useRef(initialRadius);
   const thetaRef = useRef(initialTheta);
   const phiRef = useRef(initialPhi);
   const isOrbitingRef = useRef(false);
+  const autoRotateRef = useRef(autoRotate);
+  const autoRotateSpeedRef = useRef(autoRotateSpeed);
   const lastMouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  useEffect(() => {
+    autoRotateRef.current = Boolean(options.autoRotate);
+  }, [options.autoRotate]);
+
+  useEffect(() => {
+    if (options.autoRotateSpeed !== undefined) {
+      autoRotateSpeedRef.current = options.autoRotateSpeed;
+    }
+  }, [options.autoRotateSpeed]);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLElement> | PointerEvent) => {
@@ -106,6 +122,9 @@ export function useOrbitCamera(
   }, [containerRef, enabled, minRadius, maxRadius]);
 
   const updateCamera = useCallback((camera: THREE.Camera) => {
+    if (autoRotateRef.current && !isOrbitingRef.current) {
+      phiRef.current += autoRotateSpeedRef.current;
+    }
     const r = radiusRef.current;
     const th = thetaRef.current;
     const ph = phiRef.current;
@@ -122,6 +141,7 @@ export function useOrbitCamera(
     thetaRef,
     phiRef,
     isOrbitingRef,
+    autoRotateRef,
     onPointerDown,
     onPointerMove,
     onPointerUp,

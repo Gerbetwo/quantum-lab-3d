@@ -12,6 +12,7 @@ export interface SingleQubitPanelProps {
   onGate: (gate: 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T') => void;
   onMeasure: () => void;
   onReset: () => void;
+  onStateChange?: (state: QubitState) => void;
 }
 
 export function formatDirac(m: StateMetrics): string {
@@ -45,6 +46,7 @@ export function SingleQubitPanel({
   onGate,
   onMeasure,
   onReset,
+  onStateChange,
 }: SingleQubitPanelProps) {
   const { t } = useTranslation();
   const p0Percent = (metrics.prob0 * 100).toFixed(1);
@@ -82,6 +84,47 @@ export function SingleQubitPanel({
         </div>
         <div className="text-[11px] font-mono text-muted-foreground">
           θ: {(state.theta / Math.PI).toFixed(3)}π rad &bull; φ: {(state.phi / Math.PI).toFixed(3)}π rad
+        </div>
+      </div>
+
+      {/* Precision Angle Sliders */}
+      <div className="p-3 rounded-xl bg-background/90 border border-border space-y-2">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
+          Precision Kinematic Sliders
+        </span>
+        <div className="space-y-2 text-xs font-mono">
+          <div>
+            <div className="flex justify-between items-center text-[10px] mb-0.5">
+              <span className="text-muted-foreground">Polar θ</span>
+              <span className="text-primary font-bold">{Math.round((state.theta * 180) / Math.PI)}°</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={Math.PI}
+              step="0.01"
+              value={state.theta}
+              aria-label="Polar angle theta"
+              onChange={(e) => onStateChange?.({ theta: parseFloat(e.target.value), phi: state.phi })}
+              className="w-full accent-primary h-1.5 bg-secondary rounded-lg cursor-pointer"
+            />
+          </div>
+          <div>
+            <div className="flex justify-between items-center text-[10px] mb-0.5">
+              <span className="text-muted-foreground">Azimuthal φ</span>
+              <span className="text-foreground font-bold">{Math.round((state.phi * 180) / Math.PI)}°</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={2 * Math.PI}
+              step="0.01"
+              value={state.phi}
+              aria-label="Azimuthal angle phi"
+              onChange={(e) => onStateChange?.({ theta: state.theta, phi: parseFloat(e.target.value) })}
+              className="w-full accent-primary h-1.5 bg-secondary rounded-lg cursor-pointer"
+            />
+          </div>
         </div>
       </div>
 

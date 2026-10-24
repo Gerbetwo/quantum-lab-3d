@@ -11,6 +11,12 @@ import {
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
+import { SingleQubitPanel } from "./SingleQubitPanel";
+import {
+  EntanglementPanel,
+  DecoherencePanel,
+} from "./EntanglementDecoherencePanels";
+import { GroverPanel, QECPanel } from "./AlgorithmWorkshopPanels";
 
 export interface UnifiedBottomTelemetryPanelProps {
   activeTab: number;
@@ -29,6 +35,29 @@ export interface UnifiedBottomTelemetryPanelProps {
   shorPeriod?: number;
   className?: string;
   defaultExpanded?: boolean;
+
+  // Interaction handlers
+  onGate?: (gate: "H" | "X" | "Y" | "Z" | "S" | "T") => void;
+  onMeasure?: () => void;
+  onReset?: () => void;
+  onPreparePreset?: (preset: { theta: number; phi: number }) => void;
+  onStateChange?: (state: QubitState) => void;
+  onMeasureEntangled?: () => void;
+  onResetEntangled?: () => void;
+  onTemperatureChange?: (temp: number) => void;
+  onResetTemperature?: () => void;
+  onSelectGroverTarget?: (idx: number) => void;
+  onRunGrover?: () => void;
+  onResetGrover?: () => void;
+  onInjectBitFlip?: (idx?: 0 | 1 | 2) => void;
+  onRunSyndromeCorrection?: () => void;
+  onResetQec?: (bit?: 0 | 1) => void;
+
+  // Additional control enhancements
+  noiseIntensity?: number;
+  onNoiseIntensityChange?: (intensity: number) => void;
+  autoRotateCamera?: boolean;
+  onToggleAutoRotateCamera?: () => void;
 }
 
 export function UnifiedBottomTelemetryPanel({
@@ -47,7 +76,23 @@ export function UnifiedBottomTelemetryPanel({
   isObjectiveCompleted = false,
   shorPeriod = 4,
   className = "",
-  defaultExpanded = false,
+  defaultExpanded = true,
+  onGate,
+  onMeasure,
+  onReset,
+  onStateChange,
+  onMeasureEntangled,
+  onResetEntangled,
+  onTemperatureChange,
+  onResetTemperature,
+  onSelectGroverTarget,
+  onRunGrover,
+  onResetGrover,
+  onInjectBitFlip,
+  onRunSyndromeCorrection,
+  onResetQec,
+  noiseIntensity = 1.0,
+  onNoiseIntensityChange,
 }: UnifiedBottomTelemetryPanelProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
@@ -62,13 +107,13 @@ export function UnifiedBottomTelemetryPanel({
       case 1:
       case 2:
         return (
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-1.5 text-xs font-mono">
             <span className="text-foreground">
               P(|0⟩): {(metrics.prob0 * 100).toFixed(0)}%
             </span>
             <span className="text-muted-foreground">•</span>
-            <span className="text-foreground">
-              P(|1⟩): {(metrics.prob1 * 100).toFixed(0)}%
+            <span className="text-primary hidden sm:inline">
+              θ:{Math.round((state.theta * 180) / Math.PI)}°
             </span>
             {lastOutcome !== null && (
               <span className="px-1.5 py-0.5 rounded bg-success/20 text-success font-bold text-[11px]">
@@ -79,7 +124,7 @@ export function UnifiedBottomTelemetryPanel({
         );
       case 3:
         return (
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-1.5 text-xs font-mono">
             <span className="text-primary font-bold">
               {entangledPair
                 ? `State: ${entangledPair.state}`
@@ -89,27 +134,27 @@ export function UnifiedBottomTelemetryPanel({
         );
       case 4:
         return (
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-1.5 text-xs font-mono">
             <span className="text-primary font-bold">{temperature} mK</span>
             <span className="text-muted-foreground">•</span>
-            <span className="text-foreground">T₂: {t2Time.toFixed(1)} μs</span>
+            <span className="text-foreground hidden sm:inline">T₂: {t2Time.toFixed(1)} μs</span>
           </div>
         );
       case 5:
         return (
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-1.5 text-xs font-mono">
             <span className="text-primary font-bold">
               Target: {groverTargetLabels[groverTarget]}
             </span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-foreground">
+            <span className="text-muted-foreground hidden sm:inline">•</span>
+            <span className="text-foreground hidden sm:inline">
               P: {((groverProbs[groverTarget] ?? 0.25) * 100).toFixed(0)}%
             </span>
           </div>
         );
       case 6:
         return (
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-1.5 text-xs font-mono">
             <span className="text-primary font-bold">
               [{qecTriple.join(", ")}]
             </span>
@@ -118,7 +163,7 @@ export function UnifiedBottomTelemetryPanel({
               className={
                 s1 === 1 || s2 === 1
                   ? "text-destructive font-bold"
-                  : "text-success"
+                  : "text-success font-bold"
               }
             >
               S₁={s1}, S₂={s2}
@@ -133,117 +178,124 @@ export function UnifiedBottomTelemetryPanel({
   return (
     <div
       data-testid="unified-bottom-telemetry-panel"
-      className={`fixed right-3 sm:right-4 top-16 z-20 pointer-events-auto flex flex-col items-end transition-all duration-300 ${className}`.trim()}
+      className={`relative inline-block text-left select-none pointer-events-auto ${className}`.trim()}
     >
-      {/* Dock Toggle Handle */}
+      {/* Topbar Dock Handle */}
       <div
         data-testid="telemetry-panel-handle"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between gap-2.5 px-3 py-1.5 rounded-xl border border-border bg-card/90 backdrop-blur-md hover:bg-secondary cursor-pointer select-none shadow-lg"
+        className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border border-border bg-card/85 backdrop-blur-md hover:bg-secondary cursor-pointer shadow-sm transition-colors active:scale-95"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <Activity className="w-3.5 h-3.5 text-primary shrink-0 animate-pulse" />
-          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground hidden sm:inline">
             Inspector
           </span>
-          {!isExpanded && (
-            <>
-              <div className="h-3 w-px bg-border shrink-0" />
-              {renderSummary()}
-            </>
-          )}
+          <div className="h-3 w-px bg-border shrink-0 hidden sm:block" />
+          {renderSummary()}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 ml-1">
           {isObjectiveCompleted && (
-            <div className="hidden sm:flex items-center gap-1 text-[11px] font-mono text-success font-bold">
+            <div className="hidden md:flex items-center gap-1 text-[11px] font-mono text-success font-bold">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Met</span>
             </div>
           )}
 
-          <button
-            type="button"
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-secondary border border-border text-foreground hover:bg-muted cursor-pointer"
-          >
+          <div className="p-0.5 rounded text-[11px] font-mono text-foreground">
             {isExpanded ? (
               <ChevronUp className="w-3.5 h-3.5" />
             ) : (
               <ChevronDown className="w-3.5 h-3.5" />
             )}
-          </button>
+          </div>
         </div>
       </div>
 
-      {/* Expanded Readout Card */}
+      {/* Expanded Readout Dropdown Drawer floating below top-right header */}
       {isExpanded && (
         <div
           data-testid="telemetry-expanded-drawer"
-          className="mt-2 w-80 sm:w-88 max-h-[calc(100vh-10rem)] overflow-y-auto scrollbar-thin rounded-2xl bg-card/95 backdrop-blur-md border border-border shadow-2xl p-4 space-y-3"
+          className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-thin rounded-2xl bg-card/95 backdrop-blur-md border border-border shadow-2xl p-3.5 sm:p-4 space-y-3.5 z-30"
         >
-          {/* Kinematic Angle Readout */}
-          <div className="p-2.5 rounded-xl bg-background/80 border border-border space-y-1.5">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-primary" />
-              Kinematic Angles
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div className="p-1.5 rounded bg-card border border-border">
-                <span className="text-muted-foreground block text-[9px]">
-                  Polar θ
-                </span>
-                <span className="text-primary font-bold text-xs">
-                  {Math.round((state.theta * 180) / Math.PI)}°
-                </span>
-              </div>
-              <div className="p-1.5 rounded bg-card border border-border">
-                <span className="text-muted-foreground block text-[9px]">
-                  Azimuthal φ
-                </span>
-                <span className="text-foreground font-bold text-xs">
-                  {Math.round((state.phi * 180) / Math.PI)}°
-                </span>
-              </div>
-            </div>
-          </div>
+          {/* Active Tab Mission Subpanel */}
+          {activeTab <= 2 && (
+            <SingleQubitPanel
+              activeTab={activeTab}
+              state={state}
+              metrics={metrics}
+              lastOutcome={lastOutcome}
+              onGate={(g) => onGate?.(g)}
+              onMeasure={() => onMeasure?.()}
+              onReset={() => onReset?.()}
+              onStateChange={onStateChange}
+            />
+          )}
 
-          {/* Probabilities & Readouts */}
-          <div className="p-2.5 rounded-xl bg-background/80 border border-border space-y-1.5 text-xs font-mono">
-            <span className="text-[10px] uppercase text-muted-foreground font-semibold block">
-              Born State Probabilities
-            </span>
-            <div className="flex justify-between items-center font-bold">
-              <span className="text-primary">
-                P(|0⟩): {(metrics.prob0 * 100).toFixed(1)}%
-              </span>
-              <span className="text-foreground">
-                P(|1⟩): {(metrics.prob1 * 100).toFixed(1)}%
-              </span>
-            </div>
-          </div>
+          {activeTab === 3 && (
+            <EntanglementPanel
+              entangledPair={entangledPair}
+              onMeasure={() => onMeasureEntangled?.()}
+              onReset={() => onResetEntangled?.()}
+            />
+          )}
 
-          {/* Mode-specific status summary */}
+          {activeTab === 4 && (
+            <DecoherencePanel
+              temperature={temperature}
+              t2Time={t2Time}
+              vectorPurity={vectorPurity}
+              onTemperatureChange={(tVal) => onTemperatureChange?.(tVal)}
+              onReset={() => onResetTemperature?.()}
+              noiseIntensity={noiseIntensity}
+              onNoiseIntensityChange={onNoiseIntensityChange}
+            />
+          )}
+
+          {activeTab === 5 && (
+            <GroverPanel
+              groverTarget={groverTarget}
+              groverProbs={groverProbs}
+              onSelectTarget={(idx) => onSelectGroverTarget?.(idx)}
+              onRunGrover={() => onRunGrover?.()}
+              onReset={() => onResetGrover?.()}
+            />
+          )}
+
           {activeTab === 6 && (
-            <div className="p-2.5 rounded-xl bg-background/80 border border-border space-y-1 text-xs font-mono">
-              <span className="text-[10px] uppercase text-muted-foreground font-semibold block">
-                QEC Diagnostics
+            <QECPanel
+              qecTriple={qecTriple}
+              syndromeInfo={syndromeInfo}
+              onInjectBitFlip={(idx) => onInjectBitFlip?.(idx)}
+              onRunSyndromeCorrection={() => onRunSyndromeCorrection?.()}
+              onReset={() => onResetQec?.(0)}
+            />
+          )}
+
+          {/* Quick Precision Kinematic Angle Sliders (always accessible in Inspector drawer) */}
+          {activeTab > 2 && (
+            <div className="p-2.5 rounded-xl bg-background/80 border border-border space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-primary" />
+                Kinematic Angles
               </span>
-              <div className="flex justify-between">
-                <span>Parity S₁: |{s1}⟩</span>
-                <span>Parity S₂: |{s2}⟩</span>
-              </div>
-              {syndromeInfo && (
-                <div className="text-success font-bold mt-1 text-[11px]">
-                  {syndromeInfo.errorIndex === -1
-                    ? "Code Clean"
-                    : `Repaired Qubit ${syndromeInfo.errorIndex}`}
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                <div className="p-1.5 rounded bg-card border border-border">
+                  <span className="text-muted-foreground block text-[9px]">Polar θ</span>
+                  <span className="text-primary font-bold text-xs">{Math.round((state.theta * 180) / Math.PI)}°</span>
                 </div>
-              )}
+                <div className="p-1.5 rounded bg-card border border-border">
+                  <span className="text-muted-foreground block text-[9px]">Azimuthal φ</span>
+                  <span className="text-foreground font-bold text-xs">{Math.round((state.phi * 180) / Math.PI)}°</span>
+                </div>
+              </div>
             </div>
           )}
 
+          {/* Footer Telemetry */}
           <div className="text-[10px] font-mono text-muted-foreground flex justify-between items-center border-t border-border/50 pt-2">
-            <span>QuantumLab Inspector</span>
+            <span>{t("header.title") || "QuantumLab"} Inspector</span>
             <span>Shor r={shorPeriod}</span>
           </div>
         </div>

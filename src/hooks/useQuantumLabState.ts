@@ -44,6 +44,13 @@ export interface QuantumLabState {
   // QEC State (Tab 6)
   qecTriple: BitTriple;
   syndromeInfo: SyndromeResult | null;
+
+  // Interactive Animation & Viewport Controls
+  isPlayingAnimation: boolean;
+  animationSpeed: number;
+  replayTrigger: number;
+  autoRotateCamera: boolean;
+  noiseIntensity: number;
 }
 
 export interface QuantumLabActions {
@@ -61,6 +68,11 @@ export interface QuantumLabActions {
   injectQecBitFlip: (index?: 0 | 1 | 2) => void;
   runQecCorrection: () => void;
   resetQec: (bit?: 0 | 1) => void;
+  togglePlayPause: () => void;
+  setAnimationSpeed: (speed: number) => void;
+  replayAnimation: () => void;
+  toggleAutoRotateCamera: () => void;
+  setNoiseIntensity: (intensity: number) => void;
 }
 
 export type UseQuantumLabStateReturn = QuantumLabState & QuantumLabActions;
@@ -89,6 +101,13 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
   // Tab 6: QEC State
   const [qecTriple, setQecTriple] = useState<BitTriple>(bitFlipEncode(0));
   const [syndromeInfo, setSyndromeInfo] = useState<SyndromeResult | null>(null);
+
+  // Interactive Animation & Viewport State
+  const [isPlayingAnimation, setIsPlayingAnimation] = useState<boolean>(true);
+  const [animationSpeed, setAnimationSpeedState] = useState<number>(1);
+  const [replayTrigger, setReplayTrigger] = useState<number>(0);
+  const [autoRotateCamera, setAutoRotateCamera] = useState<boolean>(false);
+  const [noiseIntensity, setNoiseIntensityState] = useState<number>(1.0);
 
   const setTab = useCallback((tab: number) => {
     setActiveTab(Math.max(0, Math.min(6, tab)));
@@ -168,6 +187,26 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
     setSyndromeInfo(null);
   }, []);
 
+  const togglePlayPause = useCallback(() => {
+    setIsPlayingAnimation((prev) => !prev);
+  }, []);
+
+  const setAnimationSpeed = useCallback((speed: number) => {
+    setAnimationSpeedState(speed);
+  }, []);
+
+  const replayAnimation = useCallback(() => {
+    setReplayTrigger((prev) => prev + 1);
+  }, []);
+
+  const toggleAutoRotateCamera = useCallback(() => {
+    setAutoRotateCamera((prev) => !prev);
+  }, []);
+
+  const setNoiseIntensity = useCallback((intensity: number) => {
+    setNoiseIntensityState(intensity);
+  }, []);
+
   return {
     activeTab,
     state,
@@ -179,6 +218,11 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
     groverProbs,
     qecTriple,
     syndromeInfo,
+    isPlayingAnimation,
+    animationSpeed,
+    replayTrigger,
+    autoRotateCamera,
+    noiseIntensity,
     setTab,
     setSingleQubitState,
     applySingleQubitGate,
@@ -193,6 +237,11 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
     injectQecBitFlip,
     runQecCorrection,
     resetQec,
+    togglePlayPause,
+    setAnimationSpeed,
+    replayAnimation,
+    toggleAutoRotateCamera,
+    setNoiseIntensity,
   };
 }
 
