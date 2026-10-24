@@ -21,6 +21,10 @@ describe('QuantumLab Workspace Component', () => {
   it('applies Hadamard, Pauli-X, and Pauli-Z gates upon ribbon gate clicks', () => {
     render(<QuantumLab />);
 
+    // Switch to Mission 2 where Phase 2 TRANSFORM gates are unlocked
+    fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
+    fireEvent.click(screen.getByRole('button', { name: '2. Gates' }));
+
     // Initial state is |+⟩. Applying H should yield |0⟩
     const hButton = screen.getByTestId('gate-button-H');
     fireEvent.click(hButton);
@@ -46,6 +50,10 @@ describe('QuantumLab Workspace Component', () => {
   it('performs measurement collapse and displays outcome badge', () => {
     render(<QuantumLab />);
 
+    // Switch to Mission 3 where Phase 3 MEASURE collapse is unlocked
+    fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
+    fireEvent.click(screen.getByRole('button', { name: '3. Measurement' }));
+
     const measureButton = screen.getByTestId('measure-collapse-button');
     fireEvent.click(measureButton);
 
@@ -67,6 +75,10 @@ describe('QuantumLab Workspace Component', () => {
 
   it('interacts with Tier 3 QuantumPipelineRibbon controls and gates', () => {
     render(<QuantumLab />);
+
+    // Switch to Mission 3 where all phases (PREPARE, TRANSFORM, MEASURE) are unlocked
+    fireEvent.click(screen.getByTestId('mission-dropdown-trigger'));
+    fireEvent.click(screen.getByRole('button', { name: '3. Measurement' }));
 
     // Apply Hadamard via ribbon
     const ribbonHadamard = screen.getByRole('button', { name: /Apply Hadamard Gate/i });

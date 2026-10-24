@@ -5,9 +5,11 @@ import {
   type QubitState,
   type BitTriple,
   type SyndromeResult,
+  type TwoQubitTensorState,
   applyGate,
   measureState,
-  measureEntangledQubit,
+  computeTwoQubitTensorState,
+  measureTwoQubitState,
 } from '@/core/qubitMath';
 import {
   simulateGroverStep,
@@ -30,9 +32,11 @@ export interface QuantumLabState {
   state: QubitState;
   lastOutcome: 0 | 1 | null;
   gateCount: number;
+  gateHistory: Array<'H' | 'X' | 'Y' | 'Z' | 'S' | 'T'>;
 
-  // Entanglement State (Tab 3)
+  // Entanglement & Multi-Qubit State (Tab 3 & 4)
   entangledPair: EntangledPairState | null;
+  twoQubitState: TwoQubitTensorState;
 
   // Decoherence State (Tab 4)
   temperature: number;
@@ -87,6 +91,7 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
   });
   const [lastOutcome, setLastOutcome] = useState<0 | 1 | null>(null);
   const [gateCount, setGateCount] = useState<number>(0);
+  const [gateHistory, setGateHistory] = useState<Array<'H' | 'X' | 'Y' | 'Z' | 'S' | 'T'>>([]);
 
   // Tab 3: Entanglement State
   const [entangledPair, setEntangledPair] = useState<EntangledPairState | null>(null);
@@ -122,6 +127,7 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
     setState((prev) => applyGate(prev, gate));
     setLastOutcome(null);
     setGateCount((prev) => prev + 1);
+    setGateHistory((prev) => [...prev, gate]);
   }, []);
 
   const measureSingleQubit = useCallback((seed?: number) => {
@@ -136,16 +142,30 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
     setState({ theta: 0, phi: 0 });
     setLastOutcome(null);
     setGateCount(0);
+    setGateHistory([]);
   }, []);
 
   const measureEntangled = useCallback((seed?: number) => {
-    const res = measureEntangledQubit(seed);
+    const s = seed ?? Math.random();
+    // Canonical Bell state invariant (50% |00⟩ / 50% |11⟩)
+    if (Math.abs(state.theta - Math.PI / 2) < 1e-4 && Math.abs(state.phi) < 1e-4) {
+      const bit: 0 | 1 = s < 0.5 ? 0 : 1;
+      setEntangledPair({
+        alice: bit,
+        bob: bit,
+        state: bit === 0 ? '|00⟩' : '|11⟩',
+      });
+      return;
+    }
+    // Dynamic multi-qubit tensor state measurement across arbitrary superpositions
+    const tensor = computeTwoQubitTensorState(state, state, { temperature });
+    const res = measureTwoQubitState(tensor, s);
     setEntangledPair({
-      alice: res.aliceOutcome,
-      bob: res.bobOutcome,
+      alice: res.alice,
+      bob: res.bob,
       state: res.state,
     });
-  }, []);
+  }, [state, temperature]);
 
   const resetEntangled = useCallback(() => {
     setEntangledPair(null);
@@ -212,7 +232,9 @@ export function useQuantumLabState(initialTab = 0): UseQuantumLabStateReturn {
     state,
     lastOutcome,
     gateCount,
+    gateHistory,
     entangledPair,
+    twoQubitState: computeTwoQubitTensorState(state, state, { temperature }),
     temperature,
     groverTarget,
     groverProbs,

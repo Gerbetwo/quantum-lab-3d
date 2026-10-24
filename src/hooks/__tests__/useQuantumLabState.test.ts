@@ -225,4 +225,31 @@ describe('useQuantumLabState - Centralized State Engine', () => {
     expect(result.current.qecTriple).toEqual([1, 1, 1]);
     expect(result.current.syndromeInfo).toBeNull();
   });
+
+  it('yields arbitrary superpositions rather than hardcoded |11⟩ when state is manipulated in Mission 4', () => {
+    const { result } = renderHook(() => useQuantumLabState(3));
+
+    // Manipulate state to custom angle
+    act(() => {
+      result.current.setSingleQubitState({ theta: Math.PI / 4, phi: Math.PI / 3 });
+    });
+
+    expect(result.current.twoQubitState.prob00).toBeGreaterThan(0);
+    expect(result.current.twoQubitState.prob01).toBeGreaterThan(0);
+    expect(result.current.twoQubitState.prob10).toBeGreaterThan(0);
+    expect(result.current.twoQubitState.prob11).toBeGreaterThan(0);
+
+    // Collapsing with different seeds yields varied states (not stuck on |11⟩)
+    act(() => {
+      result.current.measureEntangled(0.05);
+    });
+    expect(result.current.entangledPair?.state).toBe('|00⟩');
+
+    // Also tracks gate sequence history
+    act(() => {
+      result.current.applySingleQubitGate('X');
+      result.current.applySingleQubitGate('H');
+    });
+    expect(result.current.gateHistory).toEqual(['X', 'H']);
+  });
 });

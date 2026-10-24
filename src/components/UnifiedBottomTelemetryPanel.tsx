@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import type { QubitState, StateMetrics } from "@/core/qubitMath";
+import type { QubitState, StateMetrics, TwoQubitTensorState } from "@/core/qubitMath";
 import type { BitTriple, SyndromeResult } from "@/core/types";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
@@ -11,12 +11,8 @@ import {
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
-import { SingleQubitPanel } from "./SingleQubitPanel";
-import {
-  EntanglementPanel,
-  DecoherencePanel,
-} from "./EntanglementDecoherencePanels";
 import { GroverPanel, QECPanel } from "./AlgorithmWorkshopPanels";
+import { MissionSubpanel } from "./ui/MissionSubpanel";
 
 export interface UnifiedBottomTelemetryPanelProps {
   activeTab: number;
@@ -52,6 +48,9 @@ export interface UnifiedBottomTelemetryPanelProps {
   onInjectBitFlip?: (idx?: 0 | 1 | 2) => void;
   onRunSyndromeCorrection?: () => void;
   onResetQec?: (bit?: 0 | 1) => void;
+  gateHistory?: Array<"H" | "X" | "Y" | "Z" | "S" | "T">;
+  activeGate?: string | null;
+  twoQubitState?: TwoQubitTensorState;
 
   // Additional control enhancements
   noiseIntensity?: number;
@@ -77,7 +76,7 @@ export function UnifiedBottomTelemetryPanel({
   shorPeriod = 4,
   className = "",
   defaultExpanded = true,
-  onGate,
+  onGate: _onGate,
   onMeasure,
   onReset,
   onStateChange,
@@ -91,6 +90,9 @@ export function UnifiedBottomTelemetryPanel({
   onInjectBitFlip,
   onRunSyndromeCorrection,
   onResetQec,
+  gateHistory = [],
+  activeGate = "H",
+  twoQubitState,
   noiseIntensity = 1.0,
   onNoiseIntensityChange,
 }: UnifiedBottomTelemetryPanelProps) {
@@ -219,35 +221,24 @@ export function UnifiedBottomTelemetryPanel({
           data-testid="telemetry-expanded-drawer"
           className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-thin rounded-2xl bg-card/95 backdrop-blur-md border border-border shadow-2xl p-3.5 sm:p-4 space-y-3.5 z-30"
         >
-          {/* Active Tab Mission Subpanel */}
-          {activeTab <= 2 && (
-            <SingleQubitPanel
+          {/* Dynamic Mission-Aware Subpanel for Missions 1-5 (Tabs 0-4) */}
+          {activeTab <= 4 && (
+            <MissionSubpanel
               activeTab={activeTab}
               state={state}
               metrics={metrics}
               lastOutcome={lastOutcome}
-              onGate={(g) => onGate?.(g)}
-              onMeasure={() => onMeasure?.()}
-              onReset={() => onReset?.()}
-              onStateChange={onStateChange}
-            />
-          )}
-
-          {activeTab === 3 && (
-            <EntanglementPanel
-              entangledPair={entangledPair}
-              onMeasure={() => onMeasureEntangled?.()}
-              onReset={() => onResetEntangled?.()}
-            />
-          )}
-
-          {activeTab === 4 && (
-            <DecoherencePanel
+              gateHistory={gateHistory}
+              activeGate={activeGate}
               temperature={temperature}
               t2Time={t2Time}
               vectorPurity={vectorPurity}
-              onTemperatureChange={(tVal) => onTemperatureChange?.(tVal)}
-              onReset={() => onResetTemperature?.()}
+              entangledPair={entangledPair}
+              twoQubitState={twoQubitState}
+              onReset={activeTab === 4 ? onResetTemperature : (activeTab === 3 ? onResetEntangled : onReset)}
+              onMeasure={activeTab === 3 ? onMeasureEntangled : onMeasure}
+              onStateChange={onStateChange}
+              onTemperatureChange={onTemperatureChange}
               noiseIntensity={noiseIntensity}
               onNoiseIntensityChange={onNoiseIntensityChange}
             />
@@ -273,8 +264,8 @@ export function UnifiedBottomTelemetryPanel({
             />
           )}
 
-          {/* Quick Precision Kinematic Angle Sliders (always accessible in Inspector drawer) */}
-          {activeTab > 2 && (
+          {/* Quick Precision Kinematic Angle Sliders (always accessible in Inspector drawer for algorithm tabs) */}
+          {activeTab > 4 && (
             <div className="p-2.5 rounded-xl bg-background/80 border border-border space-y-1.5">
               <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-primary" />

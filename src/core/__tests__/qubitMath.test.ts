@@ -8,6 +8,8 @@ import {
   createBellState,
   bellState,
   measureEntangledQubit,
+  computeTwoQubitTensorState,
+  measureTwoQubitState,
 } from '../qubitMath';
 import {
   calculateT2CoherenceTime,
@@ -350,6 +352,87 @@ describe('qubitMath - Core Kinematics & Math Invariants', () => {
       const jitterCooldown = calculateThermalJitter(15, 500);
       expect(jitterCooldown.dTheta).toBe(0);
       expect(jitterCooldown.dPhi).toBe(0);
+    });
+  });
+
+  describe('Multi-Qubit Tensor Product & Arbitrary Superposition States', () => {
+    it('computes arbitrary 2-qubit superpositions without rigid |11⟩ bias', () => {
+      // Both in ground: |00⟩
+      const s00 = computeTwoQubitTensorState({ theta: 0, phi: 0 }, { theta: 0, phi: 0 });
+      expect(s00.prob00).toBeCloseTo(1.0, 5);
+      expect(s00.prob01).toBeCloseTo(0.0, 5);
+      expect(s00.prob10).toBeCloseTo(0.0, 5);
+      expect(s00.prob11).toBeCloseTo(0.0, 5);
+      expect(s00.prob00 + s00.prob01 + s00.prob10 + s00.prob11).toBeCloseTo(1.0, 5);
+
+      // Qubit 1 at |+⟩, Qubit 2 at |0⟩ -> 0.5|00⟩ + 0.5|10⟩
+      const sHalf = computeTwoQubitTensorState({ theta: Math.PI / 2, phi: 0 }, { theta: 0, phi: 0 });
+      expect(sHalf.prob00).toBeCloseTo(0.5, 5);
+      expect(sHalf.prob10).toBeCloseTo(0.5, 5);
+      expect(sHalf.prob01).toBeCloseTo(0.0, 5);
+      expect(sHalf.prob11).toBeCloseTo(0.0, 5);
+
+      // Both in superposition: 0.25 on each of the 4 basis states
+      const sEqual = computeTwoQubitTensorState({ theta: Math.PI / 2, phi: 0 }, { theta: Math.PI / 2, phi: 0 });
+      expect(sEqual.prob00).toBeCloseTo(0.25, 5);
+      expect(sEqual.prob01).toBeCloseTo(0.25, 5);
+      expect(sEqual.prob10).toBeCloseTo(0.25, 5);
+      expect(sEqual.prob11).toBeCloseTo(0.25, 5);
+      expect(sEqual.prob00 + sEqual.prob01 + sEqual.prob10 + sEqual.prob11).toBeCloseTo(1.0, 5);
+
+      // Verify arbitrary angles yield smooth probability changes across all basis states
+      const sCustom = computeTwoQubitTensorState({ theta: Math.PI / 3, phi: Math.PI / 4 }, { theta: 2 * Math.PI / 3, phi: 0 });
+      expect(sCustom.prob00).toBeGreaterThan(0);
+      expect(sCustom.prob01).toBeGreaterThan(0);
+      expect(sCustom.prob10).toBeGreaterThan(0);
+      expect(sCustom.prob11).toBeGreaterThan(0);
+      expect(sCustom.prob00 + sCustom.prob01 + sCustom.prob10 + sCustom.prob11).toBeCloseTo(1.0, 5);
+    });
+
+    it('stochastically collapses across all 4 computational basis states according to Born probabilities', () => {
+      const sEqual = computeTwoQubitTensorState({ theta: Math.PI / 2, phi: 0 }, { theta: Math.PI / 2, phi: 0 });
+
+      // Seed 0.1 -> |00⟩
+      const m00 = measureTwoQubitState(sEqual, 0.1);
+      expect(m00.outcome).toBe('00');
+      expect(m00.state).toBe('|00⟩');
+      expect(m00.alice).toBe(0);
+      expect(m00.bob).toBe(0);
+
+      // Seed 0.35 -> |01⟩
+      const m01 = measureTwoQubitState(sEqual, 0.35);
+      expect(m01.outcome).toBe('01');
+      expect(m01.state).toBe('|01⟩');
+      expect(m01.alice).toBe(0);
+      expect(m01.bob).toBe(1);
+
+      // Seed 0.6 -> |10⟩
+      const m10 = measureTwoQubitState(sEqual, 0.6);
+      expect(m10.outcome).toBe('10');
+      expect(m10.state).toBe('|10⟩');
+      expect(m10.alice).toBe(1);
+      expect(m10.bob).toBe(0);
+
+      // Seed 0.85 -> |11⟩
+      const m11 = measureTwoQubitState(sEqual, 0.85);
+      expect(m11.outcome).toBe('11');
+      expect(m11.state).toBe('|11⟩');
+      expect(m11.alice).toBe(1);
+      expect(m11.bob).toBe(1);
+    });
+
+    it('evaluates thermal entropy and fidelity as temperature increases', () => {
+      const sCold = computeTwoQubitTensorState({ theta: 0, phi: 0 }, { theta: 0, phi: 0 }, { temperature: 15 });
+      const sWarm = computeTwoQubitTensorState({ theta: 0, phi: 0 }, { theta: 0, phi: 0 }, { temperature: 150 });
+      const sHot = computeTwoQubitTensorState({ theta: 0, phi: 0 }, { theta: 0, phi: 0 }, { temperature: 300 });
+
+      // Entropy increases with temperature
+      expect(sCold.entropy).toBeLessThan(sWarm.entropy);
+      expect(sWarm.entropy).toBeLessThan(sHot.entropy);
+
+      // Fidelity decreases with temperature
+      expect(sCold.fidelity).toBeGreaterThan(sWarm.fidelity);
+      expect(sWarm.fidelity).toBeGreaterThan(sHot.fidelity);
     });
   });
 });

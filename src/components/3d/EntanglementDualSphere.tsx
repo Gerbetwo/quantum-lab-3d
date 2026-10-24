@@ -4,18 +4,36 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { readBlochPalette, observeThemeChanges } from '@/lib/3d/blochTheme';
 import { useOrbitCamera } from '@/hooks/useOrbitCamera';
+import { useVectorKeyboardControl } from '@/hooks/useVectorKeyboardControl';
+import type { QubitState } from '@/core/qubitMath';
 
 export interface EntanglementDualSphereProps {
   entangledPair?: { alice: 0 | 1; bob: 0 | 1; state: string } | null;
+  state?: QubitState;
+  interactive?: boolean;
+  onStateChange?: (state: QubitState) => void;
   className?: string;
 }
 
 export function EntanglementDualSphere({
   entangledPair = null,
+  state = { theta: Math.PI / 2, phi: 0 },
+  interactive = true,
+  onStateChange,
   className = '',
 }: EntanglementDualSphereProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pairRef = useRef(entangledPair);
+  const stateRef = useRef<QubitState>(state);
+  const onStateChangeRef = useRef(onStateChange);
+
+  useVectorKeyboardControl(stateRef, {
+    enabled: interactive,
+    onStateChange: (newState) => {
+      stateRef.current = newState;
+      onStateChangeRef.current?.(newState);
+    },
+  });
 
   const orbit = useOrbitCamera(containerRef, {
     initialRadius: 6.5,
@@ -27,7 +45,9 @@ export function EntanglementDualSphere({
 
   useEffect(() => {
     pairRef.current = entangledPair;
-  }, [entangledPair]);
+    stateRef.current = state;
+    onStateChangeRef.current = onStateChange;
+  }, [entangledPair, state, onStateChange]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -156,11 +176,22 @@ export function EntanglementDualSphere({
         helixMat.color.setHex(0x10b981); // Emerald on correlation
         helixMat.opacity = 0.85;
       } else {
-        // Superposition precession
-        const angle = t * 0.75;
-        const precDir = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle)).normalize();
-        alice.arrow.setDirection(precDir);
-        bob.arrow.setDirection(precDir);
+        // Dynamic orientation governed by user theta, phi with entangled correlation
+        const cur = stateRef.current;
+        const th = cur.theta;
+        const ph = cur.phi;
+        const aliceDir = new THREE.Vector3(
+          Math.sin(th) * Math.cos(ph),
+          Math.cos(th),
+          Math.sin(th) * Math.sin(ph)
+        ).normalize();
+        const bobDir = new THREE.Vector3(
+          Math.sin(th) * Math.cos(-ph),
+          Math.cos(th),
+          Math.sin(th) * Math.sin(-ph)
+        ).normalize();
+        alice.arrow.setDirection(aliceDir);
+        bob.arrow.setDirection(bobDir);
         helixMat.color.setHex(0x00f0ff);
         helixMat.opacity = 0.45;
       }

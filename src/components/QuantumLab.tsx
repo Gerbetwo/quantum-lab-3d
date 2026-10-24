@@ -61,7 +61,9 @@ export function QuantumLab() {
     state,
     lastOutcome,
     gateCount,
+    gateHistory,
     entangledPair,
+    twoQubitState,
     temperature,
     groverTarget,
     groverProbs,
@@ -203,13 +205,16 @@ export function QuantumLab() {
         return (
           <EntanglementDualSphere
             entangledPair={entangledPair}
+            state={state}
+            interactive={true}
+            onStateChange={setSingleQubitState}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
         );
       case 4:
         return (
           <CoreBlochSphere
-            state={{ theta: Math.PI / 2, phi: 0 }}
+            state={state}
             purity={vectorPurity}
             thermalCollapse={thermalCollapseFactor(temperature)}
             temperature={temperature}
@@ -217,7 +222,8 @@ export function QuantumLab() {
             autoRotate={autoRotateCamera}
             animationSpeed={animationSpeed}
             isPlaying={isPlayingAnimation}
-            interactive={false}
+            interactive={true}
+            onStateChange={setSingleQubitState}
             className="fixed inset-0 z-0 w-full h-full rounded-none border-0 bg-transparent"
           />
         );
@@ -329,6 +335,9 @@ export function QuantumLab() {
           syndromeInfo={syndromeInfo}
           isObjectiveCompleted={isObjectiveCompleted}
           shorPeriod={shorPeriod}
+          gateHistory={gateHistory}
+          activeGate={activeGate || (gateHistory.length > 0 ? gateHistory[gateHistory.length - 1] : "H")}
+          twoQubitState={twoQubitState}
           onGate={(gate) => {
             applySingleQubitGate(gate);
             playGateSweep(gate);

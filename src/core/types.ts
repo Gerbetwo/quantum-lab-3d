@@ -57,3 +57,26 @@ export interface SyndromeResult {
   errorIndex: number;
   corrected: BitTriple;
 }
+
+export interface TwoQubitTensorState {
+  alpha: ComplexType; // |00⟩
+  beta: ComplexType;  // |01⟩
+  gamma: ComplexType; // |10⟩
+  delta: ComplexType; // |11⟩
+  prob00: number;
+  prob01: number;
+  prob10: number;
+  prob11: number;
+  purity: number;
+  entropy: number;
+  fidelity: number;
+  dirac: string;
+}
+
+export interface TwoQubitMeasurementResult {
+  outcome: '00' | '01' | '10' | '11';
+  alice: 0 | 1;
+  bob: 0 | 1;
+  state: string;
+  probability: number;
+}
