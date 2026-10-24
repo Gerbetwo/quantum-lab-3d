@@ -17,6 +17,7 @@ import {
   Orbit,
   ShieldAlert,
 } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface StatePreset {
   id: string;
@@ -124,6 +125,8 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
   onRunSyndromeCorrection,
   onResetQec,
 }) => {
+  const { t } = useTranslation();
+
   // Shared Animation Control Bar
   const renderAnimationControls = () => (
     <div className="flex items-center gap-1 pl-2 border-l border-border/60">
@@ -149,8 +152,8 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           type="button"
           onClick={onReplayAnimation}
           disabled={disabled}
-          aria-label="Replay Animation"
-          title="Replay Animation"
+          aria-label={t("ribbon.replay")}
+          title={t("ribbon.replay")}
           className="p-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground transition-all cursor-pointer disabled:opacity-40"
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -183,7 +186,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           type="button"
           onClick={onToggleAutoRotateCamera}
           disabled={disabled}
-          aria-label="Toggle Camera Auto-Rotate"
+          aria-label={t("ribbon.toggle_orbit")}
           title={autoRotateCamera ? "Disable Auto-Orbit" : "Enable Auto-Orbit"}
           className={`flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-bold rounded border cursor-pointer transition-all disabled:opacity-40 ${
             autoRotateCamera
@@ -192,7 +195,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           }`}
         >
           <Orbit className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">Orbit</span>
+          <span className="hidden md:inline">{t("ribbon.orbit")}</span>
         </button>
       )}
     </div>
@@ -203,7 +206,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
     return (
       <nav
         data-testid="quantum-pipeline-ribbon"
-        aria-label="Quantum Execution Pipeline"
+        aria-label={t("ribbon.aria_label")}
         className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-2xl max-w-[95vw] overflow-x-auto select-none ${className}`.trim()}
       >
         {/* PHASE 1: PREPARE */}
@@ -216,8 +219,8 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
               onReset?.();
             }}
             disabled={disabled}
-            aria-label="Reset State"
-            title="Reset State"
+            aria-label={t("ribbon.reset_aria")}
+            title={t("ribbon.reset_aria")}
             className="p-1.5 rounded-lg border border-border hover:border-primary text-muted-foreground hover:text-foreground transition-all disabled:opacity-40 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5 text-warning" />
@@ -248,6 +251,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
             <button
               key={g.id}
               type="button"
+              data-testid={`gate-button-${g.id}`}
               onClick={() => {
                 if (disabled) return;
                 playGateSweep(g.id);
@@ -268,17 +272,18 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
         <div data-testid="phase-measure" className="flex items-center gap-1.5">
           <button
             type="button"
+            data-testid="measure-collapse-button"
             onClick={() => {
               if (disabled) return;
               playCollapseDrop();
               onMeasure?.();
             }}
             disabled={disabled}
-            aria-label="Collapse Wavefunction Measurement"
+            aria-label={t("ribbon.collapse_aria")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary bg-secondary hover:bg-card text-primary text-xs font-mono font-bold transition-all disabled:opacity-40 cursor-pointer"
           >
             <Zap className="w-3.5 h-3.5" />
-            <span>COLLAPSE</span>
+            <span>{t("ribbon.collapse")}</span>
           </button>
 
           {lastOutcome !== null && (
@@ -302,7 +307,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
     return (
       <nav
         data-testid="quantum-pipeline-ribbon"
-        aria-label="Entanglement Ribbon"
+        aria-label={t("ribbon.entanglement_aria")}
         className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-3 px-4 py-2 rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-2xl select-none ${className}`.trim()}
       >
         <span className="text-xs font-mono font-bold text-primary">
@@ -310,12 +315,13 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
         </span>
         <button
           type="button"
+          data-testid="measure-entangled-button"
           onClick={onMeasureEntangled}
           disabled={disabled}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success text-background font-mono font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-md disabled:opacity-40"
         >
           <Zap className="w-3.5 h-3.5" />
-          <span>Measure Entangled Pair</span>
+          <span>{t("panels.entanglement.measure")}</span>
         </button>
         {entangledPair && (
           <span className="px-2 py-1 rounded bg-secondary border border-success text-success font-mono text-xs font-bold">
@@ -328,7 +334,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           disabled={disabled}
           className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground text-xs font-mono cursor-pointer disabled:opacity-40"
         >
-          Reset Pair
+          {t("panels.entanglement.reset")}
         </button>
         {renderAnimationControls()}
       </nav>
@@ -340,7 +346,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
     return (
       <nav
         data-testid="quantum-pipeline-ribbon"
-        aria-label="Decoherence Ribbon"
+        aria-label={t("ribbon.decoherence_aria")}
         className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-3 px-4 py-2 rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-2xl select-none ${className}`.trim()}
       >
         <span className="text-xs font-mono font-bold text-primary">
@@ -369,7 +375,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           disabled={disabled}
           className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground text-xs font-mono cursor-pointer disabled:opacity-40"
         >
-          Reset Cryo (15 mK)
+          {t("panels.decoherence.reset")}
         </button>
         {renderAnimationControls()}
       </nav>
@@ -381,7 +387,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
     return (
       <nav
         data-testid="quantum-pipeline-ribbon"
-        aria-label="Grover Search Ribbon"
+        aria-label={t("ribbon.grover_aria")}
         className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-3 px-4 py-2 rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-2xl select-none ${className}`.trim()}
       >
         <span className="text-xs font-mono font-bold text-primary uppercase">
@@ -406,12 +412,13 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
         </div>
         <button
           type="button"
+          data-testid="grover-run-button"
           onClick={onRunGrover}
           disabled={disabled}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-background font-mono font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-md disabled:opacity-40"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
-          <span>Run Diffusion Step</span>
+          <span>{t("panels.grover.run_diffusion")}</span>
         </button>
         <button
           type="button"
@@ -419,7 +426,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           disabled={disabled}
           className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground text-xs font-mono cursor-pointer disabled:opacity-40"
         >
-          Reset
+          {t("panels.grover.reset")}
         </button>
         {renderAnimationControls()}
       </nav>
@@ -431,7 +438,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
     return (
       <nav
         data-testid="quantum-pipeline-ribbon"
-        aria-label="QEC Ribbon"
+        aria-label={t("ribbon.qec_aria")}
         className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-3 px-4 py-2 rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-2xl select-none ${className}`.trim()}
       >
         <div className="flex items-center gap-1">
@@ -442,6 +449,8 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
             <button
               key={idx}
               type="button"
+              data-testid={`qec-flip-q${idx}`}
+              aria-label={`Inject Bit Flip into Qubit ${idx}`}
               onClick={() => onInjectBitFlip?.(idx as 0 | 1 | 2)}
               disabled={disabled}
               className="px-2 py-1 text-xs font-mono font-bold rounded-md border border-destructive/40 bg-secondary text-destructive hover:bg-destructive/20 cursor-pointer disabled:opacity-40"
@@ -452,12 +461,13 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
         </div>
         <button
           type="button"
+          data-testid="qec-correct-button"
           onClick={onRunSyndromeCorrection}
           disabled={disabled}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success text-background font-mono font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-md disabled:opacity-40"
         >
           <ShieldAlert className="w-3.5 h-3.5" />
-          <span>Run Syndrome Correction</span>
+          <span>{t("panels.qec.run_syndrome_correction")}</span>
         </button>
         <button
           type="button"
@@ -465,7 +475,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           disabled={disabled}
           className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground text-xs font-mono cursor-pointer disabled:opacity-40"
         >
-          Encode |000⟩
+          {t("panels.qec.encode_zero")}
         </button>
         {renderAnimationControls()}
       </nav>

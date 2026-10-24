@@ -8,16 +8,16 @@ export interface GroverPanelProps {
   groverTarget: number;
   groverProbs: number[];
   onSelectTarget: (idx: number) => void;
-  onRunGrover: () => void;
-  onReset: () => void;
+  onRunGrover?: () => void;
+  onReset?: () => void;
 }
 
 export function GroverPanel({
   groverTarget,
   groverProbs,
   onSelectTarget,
-  onRunGrover,
-  onReset,
+  onRunGrover: _onRunGrover,
+  onReset: _onReset,
 }: GroverPanelProps) {
   const { t } = useTranslation();
 
@@ -87,23 +87,6 @@ export function GroverPanel({
           })}
         </div>
       </div>
-
-      <div className="pt-2 border-t border-border/80 space-y-2">
-        <button
-          type="button"
-          onClick={onRunGrover}
-          className="w-full py-2 px-4 rounded-lg bg-linear-to-r from-primary to-primary hover:from-primary hover:to-primary text-background font-bold text-xs tracking-wide transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
-        >
-          {t('panels.grover.run_diffusion')}
-        </button>
-        <button
-          type="button"
-          onClick={onReset}
-          className="w-full py-1.5 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-xs transition-all active:scale-95 cursor-pointer"
-        >
-          {t('panels.grover.reset')}
-        </button>
-      </div>
     </div>
   );
 }
@@ -115,17 +98,17 @@ export interface QECPanelProps {
     errorIndex: number;
     corrected: BitTriple;
   } | null;
-  onInjectBitFlip: (idx?: 0 | 1 | 2) => void;
-  onRunSyndromeCorrection: () => void;
-  onReset: (bit?: 0 | 1) => void;
+  onInjectBitFlip?: (idx?: 0 | 1 | 2) => void;
+  onRunSyndromeCorrection?: () => void;
+  onReset?: (bit?: 0 | 1) => void;
 }
 
 export function QECPanel({
   qecTriple,
   syndromeInfo,
-  onInjectBitFlip,
-  onRunSyndromeCorrection,
-  onReset,
+  onInjectBitFlip: _onInjectBitFlip,
+  onRunSyndromeCorrection: _onRunSyndromeCorrection,
+  onReset: _onReset,
 }: QECPanelProps) {
   const { t } = useTranslation();
   const s1 = qecTriple[0] ^ qecTriple[1];
@@ -165,13 +148,9 @@ export function QECPanel({
             >
               <span className="text-muted-foreground text-[10px] font-mono block">q{idx}</span>
               <div className="text-lg font-mono font-bold text-foreground my-0.5">|{bit}⟩</div>
-              <button
-                type="button"
-                onClick={() => onInjectBitFlip(idx as 0 | 1 | 2)}
-                className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-secondary hover:bg-muted text-primary border border-border cursor-pointer w-full truncate"
-              >
-                {t('panels.qec.flip_qubit', { idx })}
-              </button>
+              <span className={`text-[10px] font-mono block truncate ${syndromeInfo && syndromeInfo.errorIndex === idx ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
+                {syndromeInfo && syndromeInfo.errorIndex === idx ? 'Corrupted' : 'Nominal'}
+              </span>
             </div>
           ))}
         </div>
@@ -253,41 +232,6 @@ export function QECPanel({
             {t('panels.qec.hint')}
           </div>
         )}
-      </div>
-
-      <div className="pt-2 border-t border-border/80 space-y-2">
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => onInjectBitFlip()}
-            className="py-2 px-3 rounded-lg bg-secondary hover:bg-rose-800/80 border border-destructive text-destructive font-bold text-xs tracking-wide transition-all active:scale-95 cursor-pointer"
-          >
-            {t('panels.qec.inject_bit_flip')}
-          </button>
-          <button
-            type="button"
-            onClick={onRunSyndromeCorrection}
-            className="py-2 px-3 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-xs tracking-wide transition-all shadow-md shadow-success/20 active:scale-95 cursor-pointer"
-          >
-            {t('panels.qec.run_syndrome_correction')}
-          </button>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => onReset(0)}
-            className="py-1.5 px-2 rounded-lg bg-secondary hover:bg-secondary border border-border text-foreground hover:text-foreground font-mono text-xs cursor-pointer"
-          >
-            {t('panels.qec.encode_zero')}
-          </button>
-          <button
-            type="button"
-            onClick={() => onReset(1)}
-            className="py-1.5 px-2 rounded-lg bg-secondary hover:bg-secondary border border-border text-foreground hover:text-foreground font-mono text-xs cursor-pointer"
-          >
-            {t('panels.qec.encode_one')}
-          </button>
-        </div>
       </div>
     </div>
   );

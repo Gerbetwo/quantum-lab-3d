@@ -5,14 +5,14 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 export interface EntanglementPanelProps {
   entangledPair: { alice: 0 | 1; bob: 0 | 1; state: string } | null;
-  onMeasure: () => void;
-  onReset: () => void;
+  onMeasure?: () => void;
+  onReset?: () => void;
 }
 
 export function EntanglementPanel({
   entangledPair,
-  onMeasure,
-  onReset,
+  onMeasure: _onMeasure,
+  onReset: _onReset,
 }: EntanglementPanelProps) {
   const { t } = useTranslation();
 
@@ -100,29 +100,14 @@ export function EntanglementPanel({
         </div>
       </div>
 
-      <div className="pt-2 border-t border-border/80 space-y-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onMeasure}
-            className="flex-1 py-2 px-3 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-xs tracking-wide transition-all shadow-md shadow-success/20 active:scale-95 cursor-pointer"
-          >
-            {t('panels.entanglement.measure')}
-          </button>
-          {entangledPair && (
-            <div className="px-2.5 py-1.5 rounded-lg bg-secondary border border-success text-success font-mono text-xs font-bold text-center">
-              {t('panels.entanglement.result', { state: entangledPair.state })}
-            </div>
-          )}
+      {entangledPair && (
+        <div className="p-2.5 rounded-xl bg-background/90 border border-success/40 flex items-center justify-between text-xs font-mono">
+          <span className="text-muted-foreground">{t('panels.entanglement.result', { state: '' }).replace(': ', '').trim() || 'Observed Result'}</span>
+          <div className="px-2.5 py-1 rounded-lg bg-secondary border border-success text-success font-mono text-xs font-bold text-center">
+            {t('panels.entanglement.result', { state: entangledPair.state })}
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={onReset}
-          className="w-full py-1.5 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-xs transition-all active:scale-95 cursor-pointer"
-        >
-          {t('panels.entanglement.reset')}
-        </button>
-      </div>
+      )}
     </div>
   );
 }
@@ -132,7 +117,7 @@ export interface DecoherencePanelProps {
   t2Time: number;
   vectorPurity: number;
   onTemperatureChange: (temp: number) => void;
-  onReset: () => void;
+  onReset?: () => void;
   noiseIntensity?: number;
   onNoiseIntensityChange?: (intensity: number) => void;
 }
@@ -142,7 +127,7 @@ export function DecoherencePanel({
   t2Time,
   vectorPurity,
   onTemperatureChange,
-  onReset,
+  onReset: _onReset,
   noiseIntensity = 1.0,
   onNoiseIntensityChange,
 }: DecoherencePanelProps) {
@@ -210,7 +195,7 @@ export function DecoherencePanel({
       <div className="p-3 rounded-xl bg-background/90 border border-border space-y-1.5">
         <div className="flex justify-between items-center text-xs font-mono">
           <span className="text-muted-foreground font-semibold uppercase text-[10px]">
-            Thermal Noise Intensity
+            {t('panels.decoherence.thermal_noise')}
           </span>
           <span className="text-primary font-bold text-xs">{(noiseIntensity * 100).toFixed(0)}%</span>
         </div>
@@ -220,37 +205,15 @@ export function DecoherencePanel({
           max={3}
           step={0.1}
           value={noiseIntensity}
-          aria-label="Thermal noise intensity"
+          aria-label={t('panels.decoherence.thermal_noise')}
           onChange={(e) => onNoiseIntensityChange?.(Number(e.target.value))}
           className="w-full accent-primary cursor-pointer h-1.5 bg-secondary rounded-lg"
         />
         <div className="flex justify-between text-[9px] font-mono text-muted-foreground">
-          <span>0% (Quiet)</span>
-          <span>100% (Nominal)</span>
-          <span>300% (High Jitter)</span>
+          <span>{t('panels.decoherence.noise_quiet')}</span>
+          <span>{t('panels.decoherence.noise_nominal')}</span>
+          <span>{t('panels.decoherence.noise_jitter')}</span>
         </div>
-      </div>
-
-      <div className="pt-2 border-t border-border/80 space-y-2">
-        <div className="grid grid-cols-3 gap-2">
-          {[15, 150, 300].map((tVal) => (
-            <button
-              key={tVal}
-              type="button"
-              onClick={() => onTemperatureChange(tVal)}
-              className="py-1.5 px-2 rounded-lg bg-secondary hover:bg-muted text-foreground font-mono text-xs font-semibold cursor-pointer border border-border"
-            >
-              {tVal} mK
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={onReset}
-          className="w-full py-1.5 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-xs transition-all active:scale-95 cursor-pointer"
-        >
-          {t('panels.decoherence.reset')}
-        </button>
       </div>
     </div>
   );

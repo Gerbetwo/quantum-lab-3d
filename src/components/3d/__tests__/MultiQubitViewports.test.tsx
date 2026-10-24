@@ -81,14 +81,20 @@ describe('Multi-Qubit 3D Viewport Components', () => {
       const { container: c4 } = render(<EntanglementDualSphere entangledPair={null} />);
       const el4 = c4.querySelector('[data-testid="entanglement-dual-sphere"]')!;
       expect(el4).toHaveClass('cursor-grab');
+      expect(el4).toHaveClass('pointer-events-auto');
+      expect(el4).toHaveClass('touch-none');
 
       const { container: c6 } = render(<GroverBarChart3D />);
       const el6 = c6.querySelector('[data-testid="grover-bar-chart-3d"]')!;
       expect(el6).toHaveClass('cursor-grab');
+      expect(el6).toHaveClass('pointer-events-auto');
+      expect(el6).toHaveClass('touch-none');
 
       const { container: c7 } = render(<QECArray3D />);
       const el7 = c7.querySelector('[data-testid="qec-array-3d"]')!;
       expect(el7).toHaveClass('cursor-grab');
+      expect(el7).toHaveClass('pointer-events-auto');
+      expect(el7).toHaveClass('touch-none');
     });
   });
 });

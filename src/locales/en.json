@@ -19,6 +19,13 @@
     "reset_aria": "Reset State",
     "collapse_title": "Collapse Wavefunction",
     "collapse_aria": "Collapse Wavefunction Measurement",
+    "replay": "Replay Animation",
+    "toggle_orbit": "Toggle Camera Auto-Rotate",
+    "orbit": "Orbit",
+    "entanglement_aria": "Entanglement Ribbon",
+    "decoherence_aria": "Decoherence Ribbon",
+    "grover_aria": "Grover Search Ribbon",
+    "qec_aria": "QEC Ribbon",
     "presets": {
       "zero": {
         "label": "Ground |0⟩",
@@ -134,6 +141,10 @@
       "gate_pauli_z": "Pauli-Z (Z)",
       "measure_state": "Measure State",
       "outcome": "Outcome: |{outcome}⟩",
+      "measurement_outcome": "Measurement Outcome",
+      "kinematic_sliders": "Precision Kinematic Sliders",
+      "polar_theta_aria": "Polar angle theta",
+      "azimuthal_phi_aria": "Azimuthal angle phi",
       "reset": "Reset to |0⟩"
     },
     "grover": {
@@ -201,6 +212,10 @@
       "cryo_label": "15 mK (Cryo)",
       "mid_label": "150 mK",
       "noise_label": "300 mK (Noise)",
+      "thermal_noise": "Thermal noise intensity",
+      "noise_quiet": "0% (Quiet)",
+      "noise_nominal": "100% (Nominal)",
+      "noise_jitter": "300% (High Jitter)",
       "telemetry": "Decoherence Telemetry",
       "t2_time": "T₂ Coherence Time:",
       "purity": "Bloch Purity:",

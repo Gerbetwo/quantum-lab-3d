@@ -19,6 +19,13 @@
     "reset_aria": "Restablecer estado",
     "collapse_title": "Colapsar función de onda",
     "collapse_aria": "Medición con colapso de función de onda",
+    "replay": "Repetir animación",
+    "toggle_orbit": "Alternar rotación automática",
+    "orbit": "Órbita",
+    "entanglement_aria": "Cinta de entrelazamiento",
+    "decoherence_aria": "Cinta de decoherencia",
+    "grover_aria": "Cinta de búsqueda de Grover",
+    "qec_aria": "Cinta de corrección de errores",
     "presets": {
       "zero": {
         "label": "Fundamental |0⟩",
@@ -134,6 +141,10 @@
       "gate_pauli_z": "Pauli-Z (Z)",
       "measure_state": "Medir estado",
       "outcome": "Resultado: |{outcome}⟩",
+      "measurement_outcome": "Resultado de la medición",
+      "kinematic_sliders": "Controles cinemáticos de precisión",
+      "polar_theta_aria": "Ángulo polar theta",
+      "azimuthal_phi_aria": "Ángulo azimutal phi",
       "reset": "Restablecer a |0⟩"
     },
     "grover": {
@@ -201,6 +212,10 @@
       "cryo_label": "15 mK (Crio)",
       "mid_label": "150 mK",
       "noise_label": "300 mK (Ruido)",
+      "thermal_noise": "Intensidad del ruido térmico",
+      "noise_quiet": "0% (Silencioso)",
+      "noise_nominal": "100% (Nominal)",
+      "noise_jitter": "300% (Fluctuación alta)",
       "telemetry": "Telemetría de decoherencia",
       "t2_time": "Tiempo de coherencia T₂:",
       "purity": "Pureza de Bloch:",

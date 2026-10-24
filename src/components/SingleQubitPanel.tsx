@@ -9,9 +9,9 @@ export interface SingleQubitPanelProps {
   state: QubitState;
   metrics: StateMetrics;
   lastOutcome: 0 | 1 | null;
-  onGate: (gate: 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T') => void;
-  onMeasure: () => void;
-  onReset: () => void;
+  onGate?: (gate: 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T') => void;
+  onMeasure?: () => void;
+  onReset?: () => void;
   onStateChange?: (state: QubitState) => void;
 }
 
@@ -43,9 +43,9 @@ export function SingleQubitPanel({
   state,
   metrics,
   lastOutcome,
-  onGate,
-  onMeasure,
-  onReset,
+  onGate: _onGate,
+  onMeasure: _onMeasure,
+  onReset: _onReset,
   onStateChange,
 }: SingleQubitPanelProps) {
   const { t } = useTranslation();
@@ -90,12 +90,12 @@ export function SingleQubitPanel({
       {/* Precision Angle Sliders */}
       <div className="p-3 rounded-xl bg-background/90 border border-border space-y-2">
         <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-          Precision Kinematic Sliders
+          {t('panels.singleQubit.kinematic_sliders')}
         </span>
         <div className="space-y-2 text-xs font-mono">
           <div>
             <div className="flex justify-between items-center text-[10px] mb-0.5">
-              <span className="text-muted-foreground">Polar θ</span>
+              <span className="text-muted-foreground">{t('panels.telemetryPanel.polar_theta')}</span>
               <span className="text-primary font-bold">{Math.round((state.theta * 180) / Math.PI)}°</span>
             </div>
             <input
@@ -104,14 +104,14 @@ export function SingleQubitPanel({
               max={Math.PI}
               step="0.01"
               value={state.theta}
-              aria-label="Polar angle theta"
+              aria-label={t('panels.singleQubit.polar_theta_aria')}
               onChange={(e) => onStateChange?.({ theta: parseFloat(e.target.value), phi: state.phi })}
               className="w-full accent-primary h-1.5 bg-secondary rounded-lg cursor-pointer"
             />
           </div>
           <div>
             <div className="flex justify-between items-center text-[10px] mb-0.5">
-              <span className="text-muted-foreground">Azimuthal φ</span>
+              <span className="text-muted-foreground">{t('panels.telemetryPanel.azimuthal_phi')}</span>
               <span className="text-foreground font-bold">{Math.round((state.phi * 180) / Math.PI)}°</span>
             </div>
             <input
@@ -120,7 +120,7 @@ export function SingleQubitPanel({
               max={2 * Math.PI}
               step="0.01"
               value={state.phi}
-              aria-label="Azimuthal angle phi"
+              aria-label={t('panels.singleQubit.azimuthal_phi_aria')}
               onChange={(e) => onStateChange?.({ theta: state.theta, phi: parseFloat(e.target.value) })}
               className="w-full accent-primary h-1.5 bg-secondary rounded-lg cursor-pointer"
             />
@@ -150,53 +150,15 @@ export function SingleQubitPanel({
         </div>
       </div>
 
-      {/* Gate Action Buttons */}
-      <div className="space-y-1.5">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
-          {t('panels.singleQubit.quantum_gates')}
-        </span>
-        <div className="grid grid-cols-3 gap-2">
-          {(['H', 'X', 'Z'] as const).map((gate) => (
-            <button
-              key={gate}
-              type="button"
-              onClick={() => onGate(gate)}
-              className="py-1.5 px-2 rounded-lg bg-secondary hover:bg-muted active:scale-95 border border-primary text-primary font-mono font-bold text-xs transition-all shadow-sm hover:shadow-primary/10 cursor-pointer"
-            >
-              {gate === 'H'
-                ? t('panels.singleQubit.gate_hadamard')
-                : gate === 'X'
-                  ? t('panels.singleQubit.gate_pauli_x')
-                  : t('panels.singleQubit.gate_pauli_z')}
-            </button>
-          ))}
+      {/* Collapsed Outcome Readout */}
+      {lastOutcome !== null && (
+        <div className="p-2.5 rounded-xl bg-background/90 border border-success/40 flex items-center justify-between text-xs font-mono">
+          <span className="text-muted-foreground">{t('panels.singleQubit.measurement_outcome')}</span>
+          <div className="px-2.5 py-1 rounded-lg bg-secondary border border-success text-success font-mono text-xs font-bold text-center">
+            {t('panels.singleQubit.outcome', { outcome: lastOutcome })}
+          </div>
         </div>
-      </div>
-
-      {/* Measurement & Reset */}
-      <div className="pt-2 border-t border-border/80 space-y-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onMeasure}
-            className="flex-1 py-2 px-3 rounded-lg bg-linear-to-r from-success to-success hover:from-success hover:to-success text-background font-bold text-xs tracking-wide transition-all shadow-md shadow-success/20 active:scale-95 cursor-pointer"
-          >
-            {t('panels.singleQubit.measure_state')}
-          </button>
-          {lastOutcome !== null && (
-            <div className="px-2.5 py-1.5 rounded-lg bg-secondary border border-success text-success font-mono text-xs font-bold text-center">
-              {t('panels.singleQubit.outcome', { outcome: lastOutcome })}
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={onReset}
-          className="w-full py-1.5 px-3 rounded-lg bg-secondary hover:bg-secondary border border-border hover:border-border text-foreground hover:text-foreground font-medium text-xs transition-all active:scale-95 cursor-pointer"
-        >
-          {t('panels.singleQubit.reset')}
-        </button>
-      </div>
+      )}
     </div>
   );
 }

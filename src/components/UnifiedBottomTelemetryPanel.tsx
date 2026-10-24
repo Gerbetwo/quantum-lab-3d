@@ -199,7 +199,7 @@ export function UnifiedBottomTelemetryPanel({
           {isObjectiveCompleted && (
             <div className="hidden md:flex items-center gap-1 text-[11px] font-mono text-success font-bold">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Met</span>
+              <span>{t('panels.telemetryPanel.objective_met')}</span>
             </div>
           )}
 
@@ -278,15 +278,15 @@ export function UnifiedBottomTelemetryPanel({
             <div className="p-2.5 rounded-xl bg-background/80 border border-border space-y-1.5">
               <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-primary" />
-                Kinematic Angles
+                {t('panels.telemetryPanel.kinematic_angles')}
               </span>
               <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                 <div className="p-1.5 rounded bg-card border border-border">
-                  <span className="text-muted-foreground block text-[9px]">Polar θ</span>
+                  <span className="text-muted-foreground block text-[9px]">{t('panels.telemetryPanel.polar_theta')}</span>
                   <span className="text-primary font-bold text-xs">{Math.round((state.theta * 180) / Math.PI)}°</span>
                 </div>
                 <div className="p-1.5 rounded bg-card border border-border">
-                  <span className="text-muted-foreground block text-[9px]">Azimuthal φ</span>
+                  <span className="text-muted-foreground block text-[9px]">{t('panels.telemetryPanel.azimuthal_phi')}</span>
                   <span className="text-foreground font-bold text-xs">{Math.round((state.phi * 180) / Math.PI)}°</span>
                 </div>
               </div>

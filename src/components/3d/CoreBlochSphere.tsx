@@ -363,6 +363,8 @@ export function CoreBlochSphere({
       arrow.setDirection(vec);
       const vecLen = Math.max(0.05, 1.2 * curPur);
       arrow.setLength(vecLen, Math.min(vecLen * 0.25, 0.2), Math.min(vecLen * 0.1, 0.08));
+      const tipVec = new THREE.Vector3(vecLen * Math.sin(finalTh) * Math.cos(finalPh), vecLen * Math.cos(finalTh), vecLen * Math.sin(finalTh) * Math.sin(finalPh));
+      useSpatialTelemetryBridge.getState().setVectorTip(tipVec, { theta: finalTh, phi: finalPh });
 
       // Probability projection disk height & radius (P0 = cos²(theta/2))
       if (projectionDisk.visible) {
@@ -414,6 +416,7 @@ export function CoreBlochSphere({
       stopThemeObserver();
       cameraRef.current = null;
       useSpatialTelemetryBridge.getState().setCamera(null);
+      useSpatialTelemetryBridge.getState().setVectorTip(null, null);
       disposeRings();
       disposeParticles();
       if (targetZoneMeshRef.current) {
@@ -485,7 +488,8 @@ export function CoreBlochSphere({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onPointerLeave={handlePointerLeave}
-      className={`relative w-full h-full min-h-60 select-none cursor-grab active:cursor-grabbing ${className}`.trim()}
+      style={{ touchAction: 'none' }}
+      className={`relative w-full h-full min-h-60 select-none pointer-events-auto touch-none cursor-grab active:cursor-grabbing ${className}`.trim()}
     />
   );
 }

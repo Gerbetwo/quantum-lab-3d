@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Camera } from 'three';
+import type { Camera, Vector3 } from 'three';
 
 /**
  * Metadata mapping a 3D spatial element ID to HUD telemetry symbols and descriptions.
@@ -117,7 +117,10 @@ export interface SpatialTelemetryState {
   activeFocusId: string | null;
   hoveredElement: TelemetrySymbolMapping | null;
   camera: Camera | null;
+  vectorTip: Vector3 | null;
+  vectorAngles: { theta: number; phi: number } | null;
   setCamera: (camera: Camera | null) => void;
+  setVectorTip: (tip: Vector3 | null, angles?: { theta: number; phi: number } | null) => void;
   setActiveFocusId: (id: string | null) => void;
   onPointerOver: (id: string) => void;
   onPointerOut: (id: string) => void;
@@ -128,8 +131,13 @@ export const useSpatialTelemetryBridge = create<SpatialTelemetryState>((set) => 
   activeFocusId: null,
   hoveredElement: null,
   camera: null,
+  vectorTip: null,
+  vectorAngles: null,
 
   setCamera: (camera: Camera | null) => set({ camera }),
+
+  setVectorTip: (tip: Vector3 | null, angles?: { theta: number; phi: number } | null) =>
+    set({ vectorTip: tip, vectorAngles: angles ?? null }),
 
   setActiveFocusId: (id: string | null) =>
     set({

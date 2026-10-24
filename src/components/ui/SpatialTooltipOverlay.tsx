@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSpatialTelemetryBridge } from '@/hooks/useSpatialTelemetryBridge';
@@ -23,6 +23,10 @@ export interface SpatialTooltipOverlayProps {
   offset?: [number, number];
   /** Optional spatial identifier mapped to useSpatialTelemetryBridge */
   spatialId?: string;
+  /** Whether to show real-time coordinates badge at arrow tip */
+  showCoordinates?: boolean;
+  /** Explicit spherical angles { theta, phi } */
+  coordinates?: { theta: number; phi: number } | null;
   /** Explicit visibility toggle */
   visible?: boolean;
   /** Custom content to display inside the tooltip */
@@ -103,6 +107,8 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
   containerRef,
   offset = [0, -12],
   spatialId,
+  showCoordinates,
+  coordinates,
   visible = true,
   children,
   className = '',
@@ -113,26 +119,47 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
   const hoveredElement = useSpatialTelemetryBridge((s) => s.hoveredElement);
   const activeFocusId = useSpatialTelemetryBridge((s) => s.activeFocusId);
   const bridgeCamera = useSpatialTelemetryBridge((s) => s.camera);
+  const bridgeVectorTip = useSpatialTelemetryBridge((s) => s.vectorTip);
+  const bridgeVectorAngles = useSpatialTelemetryBridge((s) => s.vectorAngles);
+
+  const angles = coordinates || bridgeVectorAngles;
+  const thetaDeg = angles ? Math.round((angles.theta * 180) / Math.PI) : null;
+  const phiDeg = angles ? Math.round((angles.phi * 180) / Math.PI) : null;
 
   const isSpatialMatch = spatialId ? activeFocusId === spatialId || hoveredElement?.id === spatialId : false;
+  const isTipBadge = (showCoordinates || spatialId === 'state-vector') && thetaDeg !== null && phiDeg !== null;
+
   const effectiveContent = children || (isSpatialMatch && hoveredElement ? (
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 border-b border-border pb-0.5">
         <span className="text-[10px] font-bold text-primary">{hoveredElement.symbol}</span>
         <span className="text-[11px] font-semibold text-foreground">{hoveredElement.label}</span>
       </div>
+      {thetaDeg !== null && phiDeg !== null && (
+        <div data-testid="vector-tip-angles" className="text-[10px] font-mono font-bold text-primary">
+          θ: {thetaDeg}°, φ: {phiDeg}°
+        </div>
+      )}
       <div className="text-[10px] font-mono text-muted-foreground">{hoveredElement.latex}</div>
       <div className="text-[9px] text-muted-foreground/80">{hoveredElement.description}</div>
     </div>
+  ) : isTipBadge ? (
+    <div
+      data-testid="vector-tip-badge"
+      className="flex items-center gap-1 font-mono text-[11px] font-bold text-primary whitespace-nowrap"
+    >
+      <span>θ: {thetaDeg}°, φ: {phiDeg}°</span>
+    </div>
   ) : null);
 
-  const posVec = useMemo(() => toVector3(position), [position]);
-
   const calculateProjection = useCallback((): ScreenCoordinates => {
-    const activeCamera = resolveCamera(cameraProp) || bridgeCamera;
+    const activeCamera = resolveCamera(cameraProp) || useSpatialTelemetryBridge.getState().camera;
     if (!activeCamera) {
-      return { x: 0, y: 0, isVisible: true, z: 0 };
+      return { x: 0, y: 0, isVisible: false, z: 0 };
     }
+
+    const tipFromBridge = useSpatialTelemetryBridge.getState().vectorTip;
+    const currentPos = position ? toVector3(position) : (tipFromBridge || new THREE.Vector3(0, 0, 0));
 
     let width = typeof window !== 'undefined' ? window.innerWidth || 800 : 800;
     let height = typeof window !== 'undefined' ? window.innerHeight || 600 : 600;
@@ -143,15 +170,16 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
       height = rect.height || height;
     }
 
-    return project3DTo2D(posVec, activeCamera, width, height);
-  }, [cameraProp, bridgeCamera, containerRef, posVec]);
+    return project3DTo2D(currentPos, activeCamera, width, height);
+  }, [cameraProp, containerRef, position]);
 
   const [screenCoords, setScreenCoords] = useState<ScreenCoordinates>(() => {
     const cam = resolveCamera(cameraProp) || bridgeCamera;
     if (cam) {
       const width = typeof window !== 'undefined' ? window.innerWidth || 800 : 800;
       const height = typeof window !== 'undefined' ? window.innerHeight || 600 : 600;
-      return project3DTo2D(posVec, cam, width, height);
+      const initPos = position ? toVector3(position) : (bridgeVectorTip || new THREE.Vector3(0, 0, 0));
+      return project3DTo2D(initPos, cam, width, height);
     }
     return { x: 0, y: 0, isVisible: true, z: 0 };
   });

@@ -59,27 +59,31 @@ describe('UnifiedBottomTelemetryPanel', () => {
     expect(screen.queryByTestId('telemetry-expanded-drawer')).not.toBeInTheDocument();
   });
 
-  it('renders single qubit controls and triggers gate actions in expanded view', () => {
-    const onGate = vi.fn();
+  it('renders single qubit telemetry readouts and precision kinematic sliders in expanded view', () => {
+    const onStateChange = vi.fn();
     render(
       <UnifiedBottomTelemetryPanel
         {...defaultProps}
         activeTab={1}
-        onGate={onGate}
+        onStateChange={onStateChange}
         defaultExpanded={true}
       />
     );
 
     expect(screen.getByText(/State Vector Readout/i)).toBeInTheDocument();
     expect(screen.getByText(/Born Probabilities/i)).toBeInTheDocument();
+    expect(screen.getByText(/Precision Kinematic Sliders/i)).toBeInTheDocument();
 
-    // Click Hadamard gate
-    const hButton = screen.getByRole('button', { name: /^Hadamard/i });
-    fireEvent.click(hButton);
-    expect(onGate).toHaveBeenCalledWith('H');
+    // Adjust polar angle theta slider
+    const thetaSlider = screen.getByLabelText(/Polar angle theta/i);
+    expect(thetaSlider).toBeInTheDocument();
+    fireEvent.change(thetaSlider, { target: { value: '1.25' } });
+    expect(onStateChange).toHaveBeenCalledWith(
+      expect.objectContaining({ theta: 1.25 })
+    );
   });
 
-  it('renders cryogenic temperature controls on Tab 4 (Decoherence)', () => {
+  it('renders cryogenic temperature controls and coherence metrics on Tab 4 (Decoherence)', () => {
     const onTempChange = vi.fn();
     render(
       <UnifiedBottomTelemetryPanel
@@ -93,10 +97,13 @@ describe('UnifiedBottomTelemetryPanel', () => {
       />
     );
 
-    expect(screen.getAllByRole('slider')[0]).toBeInTheDocument();
-    const preset300 = screen.getByRole('button', { name: '300 mK' });
-    fireEvent.click(preset300);
-    expect(onTempChange).toHaveBeenCalledWith(300);
+    const tempSlider = screen.getAllByRole('slider')[0];
+    expect(tempSlider).toBeInTheDocument();
+    fireEvent.change(tempSlider, { target: { value: '250' } });
+    expect(onTempChange).toHaveBeenCalledWith(250);
+
+    expect(screen.getAllByText(/200\.0\s*μs/)[0]).toBeInTheDocument();
+    expect(screen.getByText(/80\.0%/)).toBeInTheDocument();
   });
 
   it('renders 2 parity check nodes (S1 and S2) on Tab 6 (QEC)', () => {

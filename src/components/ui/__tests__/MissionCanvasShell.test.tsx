@@ -34,6 +34,7 @@ describe('MissionCanvasShell', () => {
         tier2Canvas={<div data-testid="custom-canvas">Custom Tier 2 Canvas</div>}
         tier2Overlays={<div data-testid="custom-overlays">Custom Overlay Node</div>}
         tier3Ribbon={<div data-testid="custom-ribbon">Custom Tier 3 Ribbon</div>}
+        bottomRightControls={null}
       >
         <div data-testid="child-overlay">Extra Child Overlay</div>
       </MissionCanvasShell>
@@ -50,7 +51,7 @@ describe('MissionCanvasShell', () => {
     expect(screen.queryByTestId('quantum-pipeline-ribbon')).not.toBeInTheDocument();
   });
 
-  it('toggles theme when the Tier 1 theme toggle button is clicked', () => {
+  it('toggles theme when the floating theme toggle button is clicked', () => {
     render(
       <MissionCanvasShell
         tier2Canvas={<div data-testid="canvas-slot">Canvas</div>}

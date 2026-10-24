@@ -21,7 +21,10 @@ const ALLOW: RegExp[] = [
   /^\d+(,\d+)*\s*(mK|K)\s*\(.*\)$/,
   // Whitelist quantum lab technical telemetry and state labels
   /^\|[01]{2}⟩$/,
-  /^(State Indicator|Temperature Slider|T₂ Coherence Time:|Bloch Purity:|QuantumLab Workshop Suite|Alice \(q0\)|Bob \(q1\))$/,
+  /^(State Indicator|Temperature Slider|T₂ Coherence Time:|Bloch Purity:|QuantumLab Workshop Suite|Alice \(q0\)|Bob \(q1\)|Bell Pair|Cryostat)$/,
+  /^v\d+\.\d+$/,
+  /^N=\d+$/,
+  /^\d+-Qubit$/,
 ];
 const ATTRS: string[] = ['title', 'aria-label', 'aria-description', 'placeholder', 'label'];
 

@@ -49,4 +49,26 @@ describe('SpatialTooltipOverlay', () => {
 
     expect(screen.getByTestId('custom-tooltip-text')).toBeInTheDocument();
   });
+
+  it('renders real-time coordinates overlay badge anchored at arrow tip', () => {
+    const camera = new THREE.PerspectiveCamera(45, 800 / 600, 0.1, 100);
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+    useSpatialTelemetryBridge.getState().setCamera(camera);
+    useSpatialTelemetryBridge.getState().setVectorTip(new THREE.Vector3(0, 1.2, 0), {
+      theta: Math.PI / 2,
+      phi: 0,
+    });
+
+    render(
+      <SpatialTooltipOverlay
+        spatialId="state-vector"
+        showCoordinates={true}
+      />
+    );
+
+    expect(screen.getByTestId('vector-tip-badge')).toBeInTheDocument();
+    expect(screen.getByText(/θ:\s*90°,\s*φ:\s*0°/)).toBeInTheDocument();
+  });
 });

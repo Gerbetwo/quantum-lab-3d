@@ -55,6 +55,13 @@ export interface MissionCanvasShellProps {
   /** Custom props passed to default QuantumPipelineRibbon if tier3Ribbon is not overridden */
   pipelineRibbonProps?: QuantumPipelineRibbonProps;
 
+  /**
+   * Floating bottom-right controls slot.
+   * If undefined, renders the default floating Theme & Language bar.
+   * Pass null to explicitly suppress.
+   */
+  bottomRightControls?: React.ReactNode;
+
   /** Additional overlay children rendered inside the tactical HUD container */
   children?: React.ReactNode;
 
@@ -79,6 +86,7 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
   tier2Overlays,
   tier3Ribbon,
   pipelineRibbonProps,
+  bottomRightControls,
   children,
   className = '',
 }) => {
@@ -127,9 +135,9 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
                 </span>
               </div>
 
-              {/* Tier 1 Embedded Target Objective Card */}
+              {/* Tier 1 Embedded Target Objective Card (Centered) */}
               {activeObjective && (
-                <div className="pointer-events-auto hidden sm:flex flex-1 justify-center max-w-md mx-2">
+                <div className="pointer-events-auto flex mx-auto flex-1 justify-center max-w-md">
                   <TargetGoalCard
                     objective={activeObjective}
                     isCompleted={isObjectiveCompleted}
@@ -137,36 +145,6 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
                   />
                 </div>
               )}
-
-              {/* Tier 1 Switchers: Language & Theme */}
-              <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md">
-                <button
-                  type="button"
-                  onClick={toggleLanguage}
-                  data-testid="language-toggle-button"
-                  aria-label={t('header.toggle_language')}
-                  title={t('header.toggle_language')}
-                  className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
-                >
-                  <Globe className="w-3.5 h-3.5 text-primary" />
-                  <span>{locale === 'en' ? 'EN' : 'ES'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  data-testid="theme-toggle-button"
-                  aria-label={t('header.toggle_theme')}
-                  title={theme === 'dark' ? t('header.switch_to_light') : t('header.switch_to_dark')}
-                  className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="w-4 h-4 text-warning" />
-                  ) : (
-                    <Moon className="w-4 h-4 text-primary" />
-                  )}
-                </button>
-              </div>
             </>
           )}
         </header>
@@ -195,6 +173,43 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
           </div>
         </footer>
       </div>
+
+      {/* FIXED BOTTOM-RIGHT FLOATING BAR: Theme & Language HUD */}
+      {bottomRightControls !== undefined ? (
+        bottomRightControls
+      ) : (
+        <div
+          data-testid="bottom-right-floating-bar"
+          className="fixed bottom-4 right-4 z-30 pointer-events-auto bg-card/85 backdrop-blur-md border border-border shadow-lg p-1.5 rounded-xl flex items-center gap-1.5"
+        >
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            data-testid="language-toggle-button"
+            aria-label={t('header.toggle_language')}
+            title={t('header.toggle_language')}
+            className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+          >
+            <Globe className="w-3.5 h-3.5 text-primary" />
+            <span>{locale === 'en' ? 'EN' : 'ES'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            data-testid="theme-toggle-button"
+            aria-label={t('header.toggle_theme')}
+            title={theme === 'dark' ? t('header.switch_to_light') : t('header.switch_to_dark')}
+            className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-warning" />
+            ) : (
+              <Moon className="w-4 h-4 text-primary" />
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
