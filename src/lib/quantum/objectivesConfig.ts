@@ -25,6 +25,7 @@ export interface QuantumObjective {
   titleKey: string;
   descKey: string;
   criteriaText: string;
+  criteriaKey: string;
   check: (context: QuantumObjectiveContext) => boolean;
 }
 
@@ -35,6 +36,7 @@ export const OBJECTIVES: QuantumObjective[] = [
     titleKey: 'goals.superposition.title',
     descKey: 'goals.superposition.desc',
     criteriaText: 'Prepare state |+⟩ in ≤ 2 gates (θ = π/2, φ = 0)',
+    criteriaKey: 'goals.superposition.criteria',
     check: (ctx) => {
       if (!ctx.state) return false;
       const isAtPlus =
@@ -45,24 +47,12 @@ export const OBJECTIVES: QuantumObjective[] = [
     },
   },
   {
-    id: 'measurement',
+    id: 'gates',
     tabIndex: 1,
-    titleKey: 'goals.measurement.title',
-    descKey: 'goals.measurement.desc',
-    criteriaText: 'Collect 100 shots matching Born rule P(|0⟩) = cos²(θ/2)',
-    check: (ctx) => {
-      const shots = ctx.totalShots ?? 0;
-      if (shots < 100) return false;
-      if (ctx.observedP0 === undefined || ctx.expectedP0 === undefined) return false;
-      return Math.abs(ctx.observedP0 - ctx.expectedP0) <= 0.12;
-    },
-  },
-  {
-    id: 'interferometer',
-    tabIndex: 2,
     titleKey: 'goals.gates.title',
     descKey: 'goals.gates.desc',
     criteriaText: 'Set lower-arm phase φ = π for total destructive interference (Pd = 0)',
+    criteriaKey: 'goals.gates.criteria',
     check: (ctx) => {
       const phi = ctx.phasePhi ?? ctx.state?.phi;
       if (phi === undefined) return false;
@@ -72,11 +62,26 @@ export const OBJECTIVES: QuantumObjective[] = [
     },
   },
   {
+    id: 'measurement',
+    tabIndex: 2,
+    titleKey: 'goals.measurement.title',
+    descKey: 'goals.measurement.desc',
+    criteriaText: 'Collect 100 shots matching Born rule P(|0⟩) = cos²(θ/2)',
+    criteriaKey: 'goals.measurement.criteria',
+    check: (ctx) => {
+      const shots = ctx.totalShots ?? 0;
+      if (shots < 100) return false;
+      if (ctx.observedP0 === undefined || ctx.expectedP0 === undefined) return false;
+      return Math.abs(ctx.observedP0 - ctx.expectedP0) <= 0.12;
+    },
+  },
+  {
     id: 'entanglement',
     tabIndex: 3,
     titleKey: 'goals.entanglement.title',
     descKey: 'goals.entanglement.desc',
     criteriaText: 'Collapse Alice & Bob to |11⟩',
+    criteriaKey: 'goals.entanglement.criteria',
     check: (ctx) => {
       if (!ctx.entangledPair) return false;
       return ctx.entangledPair.alice === 1 && ctx.entangledPair.bob === 1;
@@ -88,6 +93,7 @@ export const OBJECTIVES: QuantumObjective[] = [
     titleKey: 'goals.decoherence.title',
     descKey: 'goals.decoherence.desc',
     criteriaText: 'Maintain purity > 80% by tuning cryostat temperature (T ≤ 15 mK)',
+    criteriaKey: 'goals.decoherence.criteria',
     check: (ctx) => {
       const temp = ctx.temperature ?? 15;
       const purity = ctx.purity ?? 1;
@@ -100,6 +106,7 @@ export const OBJECTIVES: QuantumObjective[] = [
     titleKey: 'goals.grover.title',
     descKey: 'goals.grover.desc',
     criteriaText: 'Amplify target amplitude to over 90% (|a_target|² > 0.90)',
+    criteriaKey: 'goals.grover.criteria',
     check: (ctx) => {
       if (ctx.groverTargetProb === undefined) return false;
       return ctx.groverTargetProb > 0.9;
@@ -111,8 +118,8 @@ export const OBJECTIVES: QuantumObjective[] = [
     titleKey: 'goals.qec.title',
     descKey: 'goals.qec.desc',
     criteriaText: 'Detect and repair a bit flip on Qubit 2 using syndrome diagnostics',
+    criteriaKey: 'goals.qec.criteria',
     check: (ctx) => {
-      // Syndrome 2 corresponds to error on qubit 2 (or index 1/2) and corrected
       const hasErrorOrSyndrome = ctx.qecSyndrome === 2 || ctx.qecErrorIndex === 2 || ctx.qecErrorIndex === 1;
       const isCorrected = ctx.qecCorrectedTriple ? ctx.qecCorrectedTriple[0] === ctx.qecCorrectedTriple[1] : true;
       return hasErrorOrSyndrome && isCorrected;
@@ -121,7 +128,9 @@ export const OBJECTIVES: QuantumObjective[] = [
 ];
 
 export function getObjectiveById(id: string): QuantumObjective | undefined {
-  return OBJECTIVES.find((o) => o.id === id);
+  return OBJECTIVES.find(
+    (o) => o.id === id || (id === 'interferometer' && o.id === 'gates') || (id === 'gates' && o.id === 'interferometer')
+  );
 }
 
 export function getObjectiveByTabIndex(tabIndex: number): QuantumObjective | undefined {

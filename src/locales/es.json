@@ -1,4 +1,13 @@
 {
+  "tabs": {
+    "superposition": "1. Superposición",
+    "gates": "2. Compuertas",
+    "measurement": "3. Medición",
+    "entanglement": "4. Entrelazamiento",
+    "decoherence": "5. Decoherencia",
+    "grover": "6. Búsqueda de Grover",
+    "qec": "7. Corrección de errores"
+  },
   "header": {
     "title": "QuantumLab 3D",
     "mission": "Misión: {mission}",
@@ -26,6 +35,15 @@
     "decoherence_aria": "Cinta de decoherencia",
     "grover_aria": "Cinta de búsqueda de Grover",
     "qec_aria": "Cinta de corrección de errores",
+    "controls": {
+      "pause_animation": "Pausar animación",
+      "play_animation": "Reproducir animación",
+      "enable_orbit": "Activar auto-órbita",
+      "disable_orbit": "Desactivar auto-órbita",
+      "flip_label": "Invertir:",
+      "inject_flip_aria": "Inyectar inversión de bit en cúbit {idx}",
+      "result_label": "Resultado: {state}"
+    },
     "presets": {
       "zero": {
         "label": "Fundamental |0⟩",
@@ -88,33 +106,107 @@
     "purity": "Pureza: {percent}%"
   },
   "goals": {
+    "status": {
+      "completed": "COMPLETADO",
+      "in_progress": "EN PROGRESO"
+    },
     "superposition": {
       "title": "Superposición",
-      "desc": "Prepara estados de superposición cuántica en la esfera de Bloch."
+      "desc": "Prepara estados de superposición cuántica en la esfera de Bloch.",
+      "criteria": "Prepara el estado |+⟩ en ≤ 2 compuertas (θ = π/2, φ = 0)"
     },
     "gates": {
       "title": "Compuertas cuánticas",
-      "desc": "Rota el vector de estado mediante operadores unitarios."
+      "desc": "Rota el vector de estado mediante operadores unitarios.",
+      "criteria": "Ajusta la fase del brazo inferior φ = π para interferencia destructiva total (Pd = 0)"
     },
     "measurement": {
       "title": "Medición",
-      "desc": "Observa el colapso de la función de onda en la base computacional."
+      "desc": "Observa el colapso de la función de onda en la base computacional.",
+      "criteria": "Recolecta 100 disparos que coincidan con la regla de Born P(|0⟩) = cos²(θ/2)"
     },
     "entanglement": {
       "title": "Entrelazamiento",
-      "desc": "Genera pares EPR entrelazados."
+      "desc": "Genera pares EPR entrelazados.",
+      "criteria": "Colapsa a Alice y Bob en |11⟩"
     },
     "decoherence": {
       "title": "Decoherencia térmica",
-      "desc": "Observa el decaimiento de fase al aumentar la temperatura."
+      "desc": "Observa el decaimiento de fase al aumentar la temperatura.",
+      "criteria": "Mantén la pureza > 80% ajustando la temperatura del criostato (T ≤ 15 mK)"
     },
     "grover": {
       "title": "Búsqueda de Grover",
-      "desc": "Amplifica la probabilidad del estado objetivo mediante difusión."
+      "desc": "Amplifica la probabilidad del estado objetivo mediante difusión.",
+      "criteria": "Amplifica la amplitud del objetivo a más del 90% (|a_target|² > 0.90)"
     },
     "qec": {
       "title": "Corrección de errores cuánticos",
-      "desc": "Detecta y corrige inversiones de bit con código de 3 cúbits."
+      "desc": "Detecta y corrige inversiones de bit con código de 3 cúbits.",
+      "criteria": "Detecta y repara una inversión de bit en el Cúbit 2 usando diagnósticos de síndrome"
+    }
+  },
+  "progress": {
+    "gates_count": "{count}/2 compuertas",
+    "budget_exceeded": "Presupuesto excedido",
+    "observed": "Observado: {state}",
+    "unmeasured": "Sin medir",
+    "purity_status": "T = {temp} mK, {purity}% pureza",
+    "target_prob": "P(objetivo) = {prob}%",
+    "clean": "Limpio",
+    "fixed_qubit": "q{idx} corregido",
+    "ready": "Listo"
+  },
+  "qec": {
+    "node_status": {
+      "corrupted": "Corrupto",
+      "nominal": "Nominal"
+    }
+  },
+  "spatial": {
+    "theta_arc": {
+      "label": "Ángulo polar (θ)",
+      "desc": "Controla amplitudes de superposición α = cos(θ/2) y β = sin(θ/2)"
+    },
+    "phase_disk": {
+      "label": "Fase azimutal (φ)",
+      "desc": "Ángulo de fase relativa entre estados de base en e^{iφ}"
+    },
+    "state_vector": {
+      "label": "Vector de estado cuántico",
+      "desc": "Vector unitario de estado puro sobre la superficie de la esfera de Bloch"
+    },
+    "north_pole": {
+      "label": "Estado fundamental computacional",
+      "desc": "Autoestado del polo norte con P(|0⟩) = 1.0"
+    },
+    "south_pole": {
+      "label": "Estado excitado computacional",
+      "desc": "Autoestado del polo sur con P(|1⟩) = 1.0"
+    },
+    "gate_axis_x": {
+      "label": "Eje de compuerta Pauli-X",
+      "desc": "Eje de rotación π de inversión de bit alrededor de X (mapea |0⟩ ↔ |1⟩)"
+    },
+    "gate_axis_y": {
+      "label": "Eje de compuerta Pauli-Y",
+      "desc": "Eje de rotación π de inversión de bit y fase alrededor de Y"
+    },
+    "gate_axis_z": {
+      "label": "Eje de compuerta Pauli-Z",
+      "desc": "Eje de rotación π de inversión de fase alrededor de Z (mapea |+⟩ ↔ |-⟩)"
+    },
+    "gate_axis_h": {
+      "label": "Eje de compuerta Hadamard",
+      "desc": "Eje de rotación π de superposición alrededor de (X+Z)/√2"
+    },
+    "beam_splitter": {
+      "label": "Divisor de haz 50:50",
+      "desc": "Transformación unitaria que crea superposición de modos espaciales"
+    },
+    "amplitude_bar": {
+      "label": "Amplitud de probabilidad de base",
+      "desc": "Amplitud de probabilidad de Born para el estado de base correspondiente"
     }
   },
   "tooltip": {

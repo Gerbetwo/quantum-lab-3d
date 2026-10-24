@@ -31,6 +31,7 @@ export interface GateItem {
   id: "H" | "X" | "Y" | "Z" | "S" | "T";
   symbol: string;
   name: string;
+  translationKey: "hadamard" | "pauliX" | "pauliY" | "pauliZ" | "phaseS" | "phaseT";
 }
 
 export const STATE_PRESETS: StatePreset[] = [
@@ -41,12 +42,12 @@ export const STATE_PRESETS: StatePreset[] = [
 ];
 
 export const PIPELINE_GATES: GateItem[] = [
-  { id: "H", symbol: "H", name: "Hadamard" },
-  { id: "X", symbol: "X", name: "Pauli-X" },
-  { id: "Y", symbol: "Y", name: "Pauli-Y" },
-  { id: "Z", symbol: "Z", name: "Pauli-Z" },
-  { id: "S", symbol: "S", name: "Phase-S" },
-  { id: "T", symbol: "T", name: "Phase-T" },
+  { id: "H", symbol: "H", name: "Hadamard", translationKey: "hadamard" },
+  { id: "X", symbol: "X", name: "Pauli-X", translationKey: "pauliX" },
+  { id: "Y", symbol: "Y", name: "Pauli-Y", translationKey: "pauliY" },
+  { id: "Z", symbol: "Z", name: "Pauli-Z", translationKey: "pauliZ" },
+  { id: "S", symbol: "S", name: "Phase-S", translationKey: "phaseS" },
+  { id: "T", symbol: "T", name: "Phase-T", translationKey: "phaseT" },
 ];
 
 export interface QuantumPipelineRibbonProps {
@@ -135,8 +136,8 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           type="button"
           onClick={onTogglePlayPause}
           disabled={disabled}
-          aria-label={isPlayingAnimation ? "Pause Animation" : "Play Animation"}
-          title={isPlayingAnimation ? "Pause Animation" : "Play Animation"}
+          aria-label={isPlayingAnimation ? t('ribbon.controls.pause_animation') : t('ribbon.controls.play_animation')}
+          title={isPlayingAnimation ? t('ribbon.controls.pause_animation') : t('ribbon.controls.play_animation')}
           className="p-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground transition-all cursor-pointer disabled:opacity-40"
         >
           {isPlayingAnimation ? (
@@ -187,7 +188,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           onClick={onToggleAutoRotateCamera}
           disabled={disabled}
           aria-label={t("ribbon.toggle_orbit")}
-          title={autoRotateCamera ? "Disable Auto-Orbit" : "Enable Auto-Orbit"}
+          title={autoRotateCamera ? t('ribbon.controls.disable_orbit') : t('ribbon.controls.enable_orbit')}
           className={`flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-bold rounded border cursor-pointer transition-all disabled:opacity-40 ${
             autoRotateCamera
               ? "bg-secondary border-primary text-primary"
@@ -225,45 +226,51 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
           >
             <RotateCcw className="w-3.5 h-3.5 text-warning" />
           </button>
-          {STATE_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => {
-                if (disabled) return;
-                playVectorSnap();
-                onPreparePreset?.(p);
-              }}
-              disabled={disabled}
-              aria-label={`Prepare ${p.name}`}
-              className="px-2 py-1 text-xs font-mono font-semibold rounded-md border border-border bg-card text-muted-foreground hover:text-foreground transition-all disabled:opacity-40 cursor-pointer"
-            >
-              {p.symbol}
-            </button>
-          ))}
+          {STATE_PRESETS.map((p) => {
+            const pLabel = t(`ribbon.presets.${p.id}.label`) || p.name;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  if (disabled) return;
+                  playVectorSnap();
+                  onPreparePreset?.(p);
+                }}
+                disabled={disabled}
+                aria-label={`Prepare ${pLabel}`}
+                className="px-2 py-1 text-xs font-mono font-semibold rounded-md border border-border bg-card text-muted-foreground hover:text-foreground transition-all disabled:opacity-40 cursor-pointer"
+              >
+                {p.symbol}
+              </button>
+            );
+          })}
         </div>
 
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
 
         {/* PHASE 2: TRANSFORM */}
         <div data-testid="phase-transform" className="flex items-center gap-1">
-          {PIPELINE_GATES.map((g) => (
-            <button
-              key={g.id}
-              type="button"
-              data-testid={`gate-button-${g.id}`}
-              onClick={() => {
-                if (disabled) return;
-                playGateSweep(g.id);
-                onTransformGate?.(g.id);
-              }}
-              disabled={disabled}
-              aria-label={`Apply ${g.name} Gate`}
-              className="px-2 py-1 text-xs font-mono font-bold rounded-md border border-border bg-card text-foreground hover:border-quantum-purple hover:text-quantum-purple transition-all disabled:opacity-40 cursor-pointer"
-            >
-              {g.symbol}
-            </button>
-          ))}
+          {PIPELINE_GATES.map((g) => {
+            const gName = t(`gates.${g.translationKey}.name`) || g.name;
+            return (
+              <button
+                key={g.id}
+                type="button"
+                data-testid={`gate-button-${g.id}`}
+                onClick={() => {
+                  if (disabled) return;
+                  playGateSweep(g.id);
+                  onTransformGate?.(g.id);
+                }}
+                disabled={disabled}
+                aria-label={`Apply ${gName} Gate`}
+                className="px-2 py-1 text-xs font-mono font-bold rounded-md border border-border bg-card text-foreground hover:border-quantum-purple hover:text-quantum-purple transition-all disabled:opacity-40 cursor-pointer"
+              >
+                {g.symbol}
+              </button>
+            );
+          })}
         </div>
 
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
@@ -325,7 +332,7 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
         </button>
         {entangledPair && (
           <span className="px-2 py-1 rounded bg-secondary border border-success text-success font-mono text-xs font-bold">
-            Result: {entangledPair.state}
+            {t("ribbon.controls.result_label", { state: entangledPair.state })}
           </span>
         )}
         <button
@@ -443,14 +450,14 @@ export const QuantumPipelineRibbon: React.FC<QuantumPipelineRibbonProps> = ({
       >
         <div className="flex items-center gap-1">
           <span className="text-xs font-mono text-muted-foreground mr-1">
-            Flip:
+            {t("ribbon.controls.flip_label")}
           </span>
           {qecTriple.map((_, idx) => (
             <button
               key={idx}
               type="button"
               data-testid={`qec-flip-q${idx}`}
-              aria-label={`Inject Bit Flip into Qubit ${idx}`}
+              aria-label={t("ribbon.controls.inject_flip_aria", { idx })}
               onClick={() => onInjectBitFlip?.(idx as 0 | 1 | 2)}
               disabled={disabled}
               className="px-2 py-1 text-xs font-mono font-bold rounded-md border border-destructive/40 bg-secondary text-destructive hover:bg-destructive/20 cursor-pointer disabled:opacity-40"

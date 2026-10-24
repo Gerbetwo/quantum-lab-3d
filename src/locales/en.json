@@ -1,4 +1,13 @@
 {
+  "tabs": {
+    "superposition": "1. Superposition",
+    "gates": "2. Gates",
+    "measurement": "3. Measurement",
+    "entanglement": "4. Entanglement",
+    "decoherence": "5. Decoherence",
+    "grover": "6. Grover Search",
+    "qec": "7. Error Correction"
+  },
   "header": {
     "title": "QuantumLab 3D",
     "mission": "Mission: {mission}",
@@ -26,6 +35,15 @@
     "decoherence_aria": "Decoherence Ribbon",
     "grover_aria": "Grover Search Ribbon",
     "qec_aria": "QEC Ribbon",
+    "controls": {
+      "pause_animation": "Pause Animation",
+      "play_animation": "Play Animation",
+      "enable_orbit": "Enable Auto-Orbit",
+      "disable_orbit": "Disable Auto-Orbit",
+      "flip_label": "Flip:",
+      "inject_flip_aria": "Inject Bit Flip into Qubit {idx}",
+      "result_label": "Result: {state}"
+    },
     "presets": {
       "zero": {
         "label": "Ground |0⟩",
@@ -88,33 +106,107 @@
     "purity": "Purity: {percent}%"
   },
   "goals": {
+    "status": {
+      "completed": "COMPLETED",
+      "in_progress": "IN PROGRESS"
+    },
     "superposition": {
       "title": "Superposition",
-      "desc": "Prepare quantum superposition states on the Bloch sphere."
+      "desc": "Prepare quantum superposition states on the Bloch sphere.",
+      "criteria": "Prepare state |+⟩ in ≤ 2 gates (θ = π/2, φ = 0)"
     },
     "gates": {
       "title": "Quantum Gates",
-      "desc": "Rotate the state vector using unitary operators."
+      "desc": "Rotate the state vector using unitary operators.",
+      "criteria": "Set lower-arm phase φ = π for total destructive interference (Pd = 0)"
     },
     "measurement": {
       "title": "Measurement",
-      "desc": "Observe wavefunction collapse into computational basis."
+      "desc": "Observe wavefunction collapse into computational basis.",
+      "criteria": "Collect 100 shots matching Born rule P(|0⟩) = cos²(θ/2)"
     },
     "entanglement": {
       "title": "Entanglement",
-      "desc": "Create correlated EPR Bell pairs."
+      "desc": "Create correlated EPR Bell pairs.",
+      "criteria": "Collapse Alice & Bob to |11⟩"
     },
     "decoherence": {
       "title": "Thermal Decoherence",
-      "desc": "Observe phase decay as temperature rises."
+      "desc": "Observe phase decay as temperature rises.",
+      "criteria": "Maintain purity > 80% by tuning cryostat temperature (T ≤ 15 mK)"
     },
     "grover": {
       "title": "Grover Search",
-      "desc": "Amplify target state probability through amplitude amplification."
+      "desc": "Amplify target state probability through amplitude amplification.",
+      "criteria": "Amplify target amplitude to over 90% (|a_target|² > 0.90)"
     },
     "qec": {
       "title": "Quantum Error Correction",
-      "desc": "Detect and correct bit flips with a 3-qubit code."
+      "desc": "Detect and correct bit flips with a 3-qubit code.",
+      "criteria": "Detect and repair a bit flip on Qubit 2 using syndrome diagnostics"
+    }
+  },
+  "progress": {
+    "gates_count": "{count}/2 gates",
+    "budget_exceeded": "Budget exceeded",
+    "observed": "Observed: {state}",
+    "unmeasured": "Unmeasured",
+    "purity_status": "T = {temp} mK, {purity}% purity",
+    "target_prob": "P(target) = {prob}%",
+    "clean": "Clean",
+    "fixed_qubit": "Fixed q{idx}",
+    "ready": "Ready"
+  },
+  "qec": {
+    "node_status": {
+      "corrupted": "Corrupted",
+      "nominal": "Nominal"
+    }
+  },
+  "spatial": {
+    "theta_arc": {
+      "label": "Polar Angle (θ)",
+      "desc": "Controls superposition amplitudes α = cos(θ/2) and β = sin(θ/2)"
+    },
+    "phase_disk": {
+      "label": "Azimuthal Phase (φ)",
+      "desc": "Relative phase angle between basis states in e^{iφ}"
+    },
+    "state_vector": {
+      "label": "Quantum State Vector",
+      "desc": "Pure state unit vector pointing on the surface of the Bloch sphere"
+    },
+    "north_pole": {
+      "label": "Computational Ground State",
+      "desc": "North pole eigenstate with P(|0⟩) = 1.0"
+    },
+    "south_pole": {
+      "label": "Computational Excited State",
+      "desc": "South pole eigenstate with P(|1⟩) = 1.0"
+    },
+    "gate_axis_x": {
+      "label": "Pauli-X Gate Axis",
+      "desc": "Bit-flip rotation axis π around X (maps |0⟩ ↔ |1⟩)"
+    },
+    "gate_axis_y": {
+      "label": "Pauli-Y Gate Axis",
+      "desc": "Bit and phase flip rotation axis π around Y"
+    },
+    "gate_axis_z": {
+      "label": "Pauli-Z Gate Axis",
+      "desc": "Phase-flip rotation axis π around Z (maps |+⟩ ↔ |-⟩)"
+    },
+    "gate_axis_h": {
+      "label": "Hadamard Gate Axis",
+      "desc": "Superposition axis rotation π around (X+Z)/√2"
+    },
+    "beam_splitter": {
+      "label": "50:50 Beam Splitter",
+      "desc": "Unitary transformation creating spatial mode superposition"
+    },
+    "amplitude_bar": {
+      "label": "Basis Probability Amplitude",
+      "desc": "Born probability amplitude for the corresponding basis state"
     }
   },
   "tooltip": {

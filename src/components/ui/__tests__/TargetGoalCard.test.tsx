@@ -62,4 +62,21 @@ describe('TargetGoalCard', () => {
       })
     );
   });
+
+  it('renders localized criteria and status tags in Spanish', () => {
+    localStorage.setItem('ql-lang', 'es');
+    const objective = getObjectiveById('superposition');
+
+    const { rerender } = render(
+      <TargetGoalCard objective={objective} isCompleted={false} />
+    );
+
+    expect(screen.getByText('EN PROGRESO')).toBeInTheDocument();
+    expect(
+      screen.getByText('Prepara el estado |+⟩ en ≤ 2 compuertas (θ = π/2, φ = 0)')
+    ).toBeInTheDocument();
+
+    rerender(<TargetGoalCard objective={objective} isCompleted={true} />);
+    expect(screen.getByText('COMPLETADO')).toBeInTheDocument();
+  });
 });

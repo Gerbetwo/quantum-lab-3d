@@ -92,4 +92,32 @@ describe('QuantumPipelineRibbon', () => {
     const hButton = screen.getByRole('button', { name: /Apply Hadamard Gate/i });
     expect(hButton).toBeDisabled();
   });
+
+  it('renders localized labels and aria attributes in Spanish', () => {
+    localStorage.setItem('ql-lang', 'es');
+
+    const { rerender } = render(<QuantumPipelineRibbon activeTab={0} />);
+
+    // Collapse button translated to Spanish
+    expect(screen.getByText('COLAPSAR')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Medición con colapso de función de onda/i })
+    ).toBeInTheDocument();
+
+    // Tab 3: Entanglement result badge
+    rerender(
+      <QuantumPipelineRibbon
+        activeTab={3}
+        entangledPair={{ alice: 0, bob: 0, state: '|00⟩' }}
+      />
+    );
+    expect(screen.getByText('Resultado: |00⟩')).toBeInTheDocument();
+
+    // Tab 6: QEC flip label and ARIA attributes
+    rerender(<QuantumPipelineRibbon activeTab={6} qecTriple={[0, 0, 0]} />);
+    expect(screen.getByText('Invertir:')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Inyectar inversión de bit en cúbit 1' })
+    ).toBeInTheDocument();
+  });
 });

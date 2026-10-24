@@ -109,4 +109,40 @@ describe('useTranslation & getTranslation', () => {
     expect(b.result.current.locale).toBe('es');
     expect(b.result.current.t('ribbon.prepare')).toBe('1. PREPARAR');
   });
+
+  it('translates tabs, goals criteria, progress and spatial keys in en and es', () => {
+    // Tabs
+    expect(getTranslation('tabs.superposition', 'en')).toBe('1. Superposition');
+    expect(getTranslation('tabs.superposition', 'es')).toBe('1. Superposición');
+    expect(getTranslation('tabs.gates', 'en')).toBe('2. Gates');
+    expect(getTranslation('tabs.gates', 'es')).toBe('2. Compuertas');
+
+    // Goals & criteria
+    expect(getTranslation('goals.status.completed', 'en')).toBe('COMPLETED');
+    expect(getTranslation('goals.status.completed', 'es')).toBe('COMPLETADO');
+    expect(getTranslation('goals.status.in_progress', 'en')).toBe('IN PROGRESS');
+    expect(getTranslation('goals.status.in_progress', 'es')).toBe('EN PROGRESO');
+    expect(getTranslation('goals.superposition.criteria', 'en')).toContain('Prepare state |+⟩');
+    expect(getTranslation('goals.superposition.criteria', 'es')).toContain('Prepara el estado |+⟩');
+
+    // Progress interpolation
+    expect(getTranslation('progress.gates_count', 'en', { count: 1 })).toBe('1/2 gates');
+    expect(getTranslation('progress.gates_count', 'es', { count: 1 })).toBe('1/2 compuertas');
+    expect(getTranslation('progress.purity_status', 'en', { temp: 15, purity: 95 })).toBe('T = 15 mK, 95% purity');
+    expect(getTranslation('progress.purity_status', 'es', { temp: 15, purity: 95 })).toBe('T = 15 mK, 95% pureza');
+
+    // Ribbon controls
+    expect(getTranslation('ribbon.controls.pause_animation', 'en')).toBe('Pause Animation');
+    expect(getTranslation('ribbon.controls.pause_animation', 'es')).toBe('Pausar animación');
+    expect(getTranslation('ribbon.controls.inject_flip_aria', 'en', { idx: 1 })).toBe('Inject Bit Flip into Qubit 1');
+    expect(getTranslation('ribbon.controls.inject_flip_aria', 'es', { idx: 1 })).toBe('Inyectar inversión de bit en cúbit 1');
+
+    // QEC node status
+    expect(getTranslation('qec.node_status.corrupted', 'en')).toBe('Corrupted');
+    expect(getTranslation('qec.node_status.corrupted', 'es')).toBe('Corrupto');
+
+    // Spatial telemetry
+    expect(getTranslation('spatial.state_vector.label', 'en')).toBe('Quantum State Vector');
+    expect(getTranslation('spatial.state_vector.label', 'es')).toBe('Vector de estado cuántico');
+  });
 });

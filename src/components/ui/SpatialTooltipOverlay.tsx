@@ -133,7 +133,9 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 border-b border-border pb-0.5">
         <span className="text-[10px] font-bold text-primary">{hoveredElement.symbol}</span>
-        <span className="text-[11px] font-semibold text-foreground">{hoveredElement.label}</span>
+        <span className="text-[11px] font-semibold text-foreground">
+          {hoveredElement.labelKey ? t(hoveredElement.labelKey) : hoveredElement.label}
+        </span>
       </div>
       {thetaDeg !== null && phiDeg !== null && (
         <div data-testid="vector-tip-angles" className="text-[10px] font-mono font-bold text-primary">
@@ -141,7 +143,9 @@ export const SpatialTooltipOverlay: React.FC<SpatialTooltipOverlayProps> = ({
         </div>
       )}
       <div className="text-[10px] font-mono text-muted-foreground">{hoveredElement.latex}</div>
-      <div className="text-[9px] text-muted-foreground/80">{hoveredElement.description}</div>
+      <div className="text-[9px] text-muted-foreground/80">
+        {hoveredElement.descKey ? t(hoveredElement.descKey) : hoveredElement.description}
+      </div>
     </div>
   ) : isTipBadge ? (
     <div

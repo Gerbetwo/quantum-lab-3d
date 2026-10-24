@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useTheme } from '@/hooks/useTheme';
-import { useTranslation } from '@/hooks/useTranslation';
+import React from "react";
+import { useTheme } from "@/hooks/useTheme";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   type QuantumObjective,
   getObjectiveById,
-} from '@/lib/quantum/objectivesConfig';
-import { TargetGoalCard } from './TargetGoalCard';
-import { SpatialTooltipOverlay } from './SpatialTooltipOverlay';
-import { CoreBlochSphere } from '../3d/CoreBlochSphere';
+} from "@/lib/quantum/objectivesConfig";
+import { TargetGoalCard } from "./TargetGoalCard";
+import { SpatialTooltipOverlay } from "./SpatialTooltipOverlay";
+import { CoreBlochSphere } from "../3d/CoreBlochSphere";
 import {
   QuantumPipelineRibbon,
   type QuantumPipelineRibbonProps,
-} from './QuantumPipelineRibbon';
-import { Sun, Moon, Globe } from 'lucide-react';
+} from "./QuantumPipelineRibbon";
+import { Sun, Moon, Globe } from "lucide-react";
 
 export interface MissionCanvasShellProps {
   /** Active mission or workshop ID / title */
@@ -77,7 +77,7 @@ export interface MissionCanvasShellProps {
  * - Tier 3: Quantum Pipeline Ribbon [1. PREPARE] -> [2. TRANSFORM] -> [3. MEASURE]
  */
 export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
-  missionId = 'superposition',
+  missionId = "superposition",
   activeObjective: propObjective,
   isObjectiveCompleted = false,
   objectiveProgress,
@@ -88,7 +88,7 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
   pipelineRibbonProps,
   bottomRightControls,
   children,
-  className = '',
+  className = "",
 }) => {
   const { theme, toggleTheme } = useTheme();
   const { locale, toggleLanguage, t } = useTranslation();
@@ -128,16 +128,16 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
             <>
               <div className="pointer-events-auto flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-md">
                 <span className="font-mono text-xs font-bold tracking-widest text-primary uppercase bg-secondary px-2 py-0.5 rounded border border-border">
-                  {t('header.title')}
+                  {t("header.title")}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground hidden lg:inline">
-                  {t('header.mission', { mission: missionId })}
+                  {t("header.mission", { mission: missionId })}
                 </span>
               </div>
 
               {/* Tier 1 Embedded Target Objective Card (Centered) */}
               {activeObjective && (
-                <div className="pointer-events-auto flex mx-auto flex-1 justify-center max-w-md">
+                <div className="pointer-events-auto flex mx-auto flex-1 justify-center max-w-xl px-4">
                   <TargetGoalCard
                     objective={activeObjective}
                     isCompleted={isObjectiveCompleted}
@@ -186,23 +186,27 @@ export const MissionCanvasShell: React.FC<MissionCanvasShellProps> = ({
             type="button"
             onClick={toggleLanguage}
             data-testid="language-toggle-button"
-            aria-label={t('header.toggle_language')}
-            title={t('header.toggle_language')}
+            aria-label={t("header.toggle_language")}
+            title={t("header.toggle_language")}
             className="px-2 py-1 rounded-lg text-xs font-mono font-bold border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
           >
             <Globe className="w-3.5 h-3.5 text-primary" />
-            <span>{locale === 'en' ? 'EN' : 'ES'}</span>
+            <span>{locale === "en" ? "EN" : "ES"}</span>
           </button>
 
           <button
             type="button"
             onClick={toggleTheme}
             data-testid="theme-toggle-button"
-            aria-label={t('header.toggle_theme')}
-            title={theme === 'dark' ? t('header.switch_to_light') : t('header.switch_to_dark')}
+            aria-label={t("header.toggle_theme")}
+            title={
+              theme === "dark"
+                ? t("header.switch_to_light")
+                : t("header.switch_to_dark")
+            }
             className="p-1.5 rounded-lg text-xs font-mono border border-border bg-card hover:bg-secondary text-foreground transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
           >
-            {theme === 'dark' ? (
+            {theme === "dark" ? (
               <Sun className="w-4 h-4 text-warning" />
             ) : (
               <Moon className="w-4 h-4 text-primary" />

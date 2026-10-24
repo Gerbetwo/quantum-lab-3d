@@ -71,4 +71,24 @@ describe('SpatialTooltipOverlay', () => {
     expect(screen.getByTestId('vector-tip-badge')).toBeInTheDocument();
     expect(screen.getByText(/θ:\s*90°,\s*φ:\s*0°/)).toBeInTheDocument();
   });
+
+  it('renders localized spatial tooltip in Spanish when locale is set', () => {
+    localStorage.setItem('ql-lang', 'es');
+    useSpatialTelemetryBridge.getState().onPointerOver('state-vector');
+
+    render(
+      <SpatialTooltipOverlay
+        spatialId="state-vector"
+        position={new THREE.Vector3(0, 1, 0)}
+      />
+    );
+
+    expect(screen.getByTestId('spatial-tooltip-overlay')).toBeInTheDocument();
+    expect(screen.getByText('Vector de estado cuántico')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Vector unitario de estado puro sobre la superficie de la esfera de Bloch'
+      )
+    ).toBeInTheDocument();
+  });
 });

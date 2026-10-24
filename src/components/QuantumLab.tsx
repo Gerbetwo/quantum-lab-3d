@@ -31,6 +31,7 @@ import { EntanglementDualSphere } from "./3d/EntanglementDualSphere";
 import { GroverBarChart3D } from "./3d/GroverBarChart3D";
 import { QECArray3D } from "./3d/QECArray3D";
 import { ChevronDown, ChevronUp, Check } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const WORKSHOP_TABS = [
   "1. Superposition",
@@ -43,6 +44,18 @@ export const WORKSHOP_TABS = [
 ] as const;
 
 export function QuantumLab() {
+  const { t } = useTranslation();
+  const tabKeys = [
+    "superposition",
+    "gates",
+    "measurement",
+    "entanglement",
+    "decoherence",
+    "grover",
+    "qec",
+  ] as const;
+  const localizedTabs = tabKeys.map((key) => t(`tabs.${key}`));
+
   const {
     activeTab,
     state,
@@ -132,25 +145,32 @@ export function QuantumLab() {
   const getObjectiveProgress = (): string => {
     switch (activeTab) {
       case 0:
-        return gateCount <= 2 ? `${gateCount}/2 gates` : "Budget exceeded";
+        return gateCount <= 2
+          ? t('progress.gates_count', { count: gateCount })
+          : t('progress.budget_exceeded');
       case 1:
-        return `P(|0⟩): ${(metrics.prob0 * 100).toFixed(0)}%`;
-      case 2:
         return `φ = ${(state.phi / Math.PI).toFixed(2)}π`;
+      case 2:
+        return `P(|0⟩): ${(metrics.prob0 * 100).toFixed(0)}%`;
       case 3:
         return entangledPair
-          ? `Observed: ${entangledPair.state}`
-          : "Unmeasured";
+          ? t('progress.observed', { state: entangledPair.state })
+          : t('progress.unmeasured');
       case 4:
-        return `T = ${temperature} mK, ${(vectorPurity * 100).toFixed(0)}% purity`;
+        return t('progress.purity_status', {
+          temp: temperature,
+          purity: (vectorPurity * 100).toFixed(0),
+        });
       case 5:
-        return `P(target) = ${(groverProbs[groverTarget] * 100).toFixed(0)}%`;
+        return t('progress.target_prob', {
+          prob: (groverProbs[groverTarget] * 100).toFixed(0),
+        });
       case 6:
         return syndromeInfo
           ? syndromeInfo.errorIndex === -1
-            ? "Clean"
-            : `Fixed q${syndromeInfo.errorIndex}`
-          : "Ready";
+            ? t('progress.clean')
+            : t('progress.fixed_qubit', { idx: syndromeInfo.errorIndex })
+          : t('progress.ready');
       default:
         return "";
     }
@@ -240,7 +260,7 @@ export function QuantumLab() {
             QuantumLab
           </span>
           <span className="text-xs font-mono text-foreground font-semibold pr-1 hidden sm:inline">
-            {WORKSHOP_TABS[activeTab]}
+            {localizedTabs[activeTab]}
           </span>
           {isMissionDropdownOpen ? (
             <ChevronUp className="w-3.5 h-3.5 text-muted-foreground mr-1" />
@@ -255,9 +275,9 @@ export function QuantumLab() {
             className="absolute left-0 top-full mt-2 w-56 sm:w-64 z-40"
           >
             <GlassCard className="p-1.5 space-y-1 rounded-xl shadow-2xl border border-border bg-card/95 backdrop-blur-md">
-              {WORKSHOP_TABS.map((tab, idx) => (
+              {localizedTabs.map((tab, idx) => (
                 <button
-                  key={tab}
+                  key={tabKeys[idx]}
                   type="button"
                   data-testid={`mission-select-${idx}`}
                   onClick={() => {

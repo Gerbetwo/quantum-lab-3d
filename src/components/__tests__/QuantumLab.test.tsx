@@ -186,4 +186,39 @@ describe('QuantumLab Workspace Component', () => {
     expect(screen.getByText(/Corrected State:\s*\[0, 0, 0\]/)).toBeInTheDocument();
     expect(screen.getByText(/\[q0, q1, q2\] = \[0, 0, 0\]/)).toBeInTheDocument();
   });
+
+  it('dynamically switches language between EN and ES updating goal cards and tabs', () => {
+    render(<QuantumLab />);
+
+    // Initially in EN: superposition goal is completed at initial |+⟩ state
+    expect(screen.getByText('COMPLETED')).toBeInTheDocument();
+    expect(screen.getByText(/Prepare state \|\+⟩/i)).toBeInTheDocument();
+
+    const langToggle = screen.getByTestId('language-toggle-button');
+    expect(langToggle).toHaveTextContent('EN');
+
+    // Switch to ES
+    fireEvent.click(langToggle);
+    expect(langToggle).toHaveTextContent('ES');
+
+    // Goal card should update dynamically to Spanish
+    expect(screen.getByText('COMPLETADO')).toBeInTheDocument();
+    expect(screen.getByText(/Prepara el estado \|\+⟩/i)).toBeInTheDocument();
+
+    // Mission dropdown should show Spanish tabs
+    const dropdownTrigger = screen.getByTestId('mission-dropdown-trigger');
+    expect(dropdownTrigger).toHaveTextContent('1. Superposición');
+    fireEvent.click(dropdownTrigger);
+
+    // Switch to Mission 2 (Gates) in Spanish
+    fireEvent.click(screen.getByRole('button', { name: '2. Compuertas' }));
+    expect(screen.getByText('EN PROGRESO')).toBeInTheDocument();
+    expect(screen.getByText(/Ajusta la fase del brazo inferior/i)).toBeInTheDocument();
+
+    // Switch back to EN
+    fireEvent.click(langToggle);
+    expect(langToggle).toHaveTextContent('EN');
+    expect(screen.getByText('IN PROGRESS')).toBeInTheDocument();
+    expect(screen.getByText(/Set lower-arm phase/i)).toBeInTheDocument();
+  });
 });

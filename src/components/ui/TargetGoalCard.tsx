@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef } from 'react';
-import confetti from 'canvas-confetti';
-import type { QuantumObjective } from '@/lib/quantum/objectivesConfig';
-import { playCompletionTriad } from '@/lib/audio/soundEngine';
-import { useTranslation } from '@/hooks/useTranslation';
-import { Target, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
+import type { QuantumObjective } from "@/lib/quantum/objectivesConfig";
+import { playCompletionTriad } from "@/lib/audio/soundEngine";
+import { useTranslation } from "@/hooks/useTranslation";
+import { Target, CheckCircle2 } from "lucide-react";
 
 export interface TargetGoalCardProps {
   objective?: QuantumObjective;
@@ -23,7 +23,7 @@ export const TargetGoalCard: React.FC<TargetGoalCardProps> = ({
   objective,
   isCompleted = false,
   progressText,
-  className = '',
+  className = "",
 }) => {
   const { t } = useTranslation();
   const wasCompletedRef = useRef(isCompleted);
@@ -34,7 +34,7 @@ export const TargetGoalCard: React.FC<TargetGoalCardProps> = ({
         particleCount: 50,
         spread: 60,
         origin: { y: 0.2 },
-        colors: ['#00f0ff', '#10b981', '#a855f7'],
+        colors: ["#00f0ff", "#10b981", "#a855f7"],
       });
       playCompletionTriad();
     }
@@ -46,16 +46,18 @@ export const TargetGoalCard: React.FC<TargetGoalCardProps> = ({
   }
 
   const title = t(objective.titleKey);
-  const criteria = objective.criteriaText;
+  const criteria = objective.criteriaKey
+    ? t(objective.criteriaKey)
+    : objective.criteriaText;
 
   return (
     <div
       data-testid="target-goal-card"
-      data-completed={isCompleted ? 'true' : 'false'}
+      data-completed={isCompleted ? "true" : "false"}
       className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl border transition-all backdrop-blur-md select-none ${
         isCompleted
-          ? 'bg-success/10 border-success/40 text-foreground shadow-sm'
-          : 'bg-card/90 border-border text-foreground shadow-sm'
+          ? "bg-success/10 border-success/40 text-foreground shadow-sm"
+          : "bg-card/90 border-border text-foreground shadow-sm"
       } ${className}`.trim()}
     >
       <div className="shrink-0 flex items-center justify-center">
@@ -74,14 +76,16 @@ export const TargetGoalCard: React.FC<TargetGoalCardProps> = ({
           <span
             className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-semibold ${
               isCompleted
-                ? 'bg-success/20 text-success'
-                : 'bg-secondary text-primary'
+                ? "bg-success/20 text-success"
+                : "bg-secondary text-primary"
             }`}
           >
-            {isCompleted ? 'COMPLETED' : 'IN PROGRESS'}
+            {isCompleted
+              ? t("goals.status.completed")
+              : t("goals.status.in_progress")}
           </span>
         </div>
-        <p className="text-xs font-mono text-foreground truncate max-w-xs sm:max-w-md">
+        <p className="text-xs font-mono text-foreground whitespace-normal wrap-break-word">
           {criteria}
         </p>
       </div>

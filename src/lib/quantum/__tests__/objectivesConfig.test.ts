@@ -6,8 +6,12 @@ import {
 } from '../objectivesConfig';
 
 describe('Objectives Evaluation Engine (7 Concepts)', () => {
-  it('defines objectives for all 7 concepts', () => {
+  it('defines objectives for all 7 concepts with valid criteriaKeys', () => {
     expect(OBJECTIVES).toHaveLength(7);
+    OBJECTIVES.forEach((obj) => {
+      expect(obj.criteriaKey).toBeDefined();
+      expect(obj.criteriaKey).toMatch(/^goals\.[a-z]+\.criteria$/);
+    });
   });
 
   it('evaluates Superposition objective: reach state |+⟩ in ≤ 2 gates', () => {

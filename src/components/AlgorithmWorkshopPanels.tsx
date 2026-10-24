@@ -149,7 +149,9 @@ export function QECPanel({
               <span className="text-muted-foreground text-[10px] font-mono block">q{idx}</span>
               <div className="text-lg font-mono font-bold text-foreground my-0.5">|{bit}⟩</div>
               <span className={`text-[10px] font-mono block truncate ${syndromeInfo && syndromeInfo.errorIndex === idx ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
-                {syndromeInfo && syndromeInfo.errorIndex === idx ? 'Corrupted' : 'Nominal'}
+                {syndromeInfo && syndromeInfo.errorIndex === idx
+                  ? t('qec.node_status.corrupted')
+                  : t('qec.node_status.nominal')}
               </span>
             </div>
           ))}

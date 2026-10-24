@@ -15,6 +15,10 @@ export interface TelemetrySymbolMapping {
   label: string;
   /** Pedagogical description of the physical entity */
   description: string;
+  /** Localization key for label */
+  labelKey?: string;
+  /** Localization key for description */
+  descKey?: string;
   /** Associated HUD section */
   hudSection?: 'state-vector' | 'born-probabilities' | 'angles' | 'cryo' | 'gates';
 }
@@ -29,6 +33,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '\\theta',
     label: 'Polar Angle (θ)',
     description: 'Controls superposition amplitudes α = cos(θ/2) and β = sin(θ/2)',
+    labelKey: 'spatial.theta_arc.label',
+    descKey: 'spatial.theta_arc.desc',
     hudSection: 'angles',
   },
   'phase-disk': {
@@ -37,6 +43,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '\\phi',
     label: 'Azimuthal Phase (φ)',
     description: 'Relative phase angle between basis states in e^{iφ}',
+    labelKey: 'spatial.phase_disk.label',
+    descKey: 'spatial.phase_disk.desc',
     hudSection: 'angles',
   },
   'state-vector': {
@@ -45,6 +53,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '|\\psi\\rangle = \\alpha|0\\rangle + \\beta|1\\rangle',
     label: 'Quantum State Vector',
     description: 'Pure state unit vector pointing on the surface of the Bloch sphere',
+    labelKey: 'spatial.state_vector.label',
+    descKey: 'spatial.state_vector.desc',
     hudSection: 'state-vector',
   },
   'north-pole': {
@@ -53,6 +63,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '|0\\rangle = \\begin{pmatrix} 1 \\\\ 0 \\end{pmatrix}',
     label: 'Computational Ground State',
     description: 'North pole eigenstate with P(|0⟩) = 1.0',
+    labelKey: 'spatial.north_pole.label',
+    descKey: 'spatial.north_pole.desc',
     hudSection: 'state-vector',
   },
   'south-pole': {
@@ -61,6 +73,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '|1\\rangle = \\begin{pmatrix} 0 \\\\ 1 \\end{pmatrix}',
     label: 'Computational Excited State',
     description: 'South pole eigenstate with P(|1⟩) = 1.0',
+    labelKey: 'spatial.south_pole.label',
+    descKey: 'spatial.south_pole.desc',
     hudSection: 'state-vector',
   },
   'gate-axis-x': {
@@ -69,6 +83,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '\\hat{\\sigma}_x = \\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}',
     label: 'Pauli-X Gate Axis',
     description: 'Bit-flip rotation axis π around X (maps |0⟩ ↔ |1⟩)',
+    labelKey: 'spatial.gate_axis_x.label',
+    descKey: 'spatial.gate_axis_x.desc',
     hudSection: 'gates',
   },
   'gate-axis-y': {
@@ -77,6 +93,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '\\hat{\\sigma}_y = \\begin{pmatrix} 0 & -i \\\\ i & 0 \\end{pmatrix}',
     label: 'Pauli-Y Gate Axis',
     description: 'Bit and phase flip rotation axis π around Y',
+    labelKey: 'spatial.gate_axis_y.label',
+    descKey: 'spatial.gate_axis_y.desc',
     hudSection: 'gates',
   },
   'gate-axis-z': {
@@ -85,6 +103,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '\\hat{\\sigma}_z = \\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}',
     label: 'Pauli-Z Gate Axis',
     description: 'Phase-flip rotation axis π around Z (maps |+⟩ ↔ |-⟩)',
+    labelKey: 'spatial.gate_axis_z.label',
+    descKey: 'spatial.gate_axis_z.desc',
     hudSection: 'gates',
   },
   'gate-axis-h': {
@@ -93,6 +113,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: 'H = \\frac{1}{\\sqrt{2}}\\begin{pmatrix} 1 & 1 \\\\ 1 & -1 \\end{pmatrix}',
     label: 'Hadamard Gate Axis',
     description: 'Superposition axis rotation π around (X+Z)/√2',
+    labelKey: 'spatial.gate_axis_h.label',
+    descKey: 'spatial.gate_axis_h.desc',
     hudSection: 'gates',
   },
   'beam-splitter': {
@@ -101,6 +123,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: '\\frac{1}{\\sqrt{2}}\\begin{pmatrix} 1 & 1 \\\\ 1 & -1 \\end{pmatrix}',
     label: '50:50 Beam Splitter',
     description: 'Unitary transformation creating spatial mode superposition',
+    labelKey: 'spatial.beam_splitter.label',
+    descKey: 'spatial.beam_splitter.desc',
     hudSection: 'gates',
   },
   'amplitude-bar': {
@@ -109,6 +133,8 @@ export const SPATIAL_TELEMETRY_MAP: Record<string, TelemetrySymbolMapping> = {
     latex: 'P_i = |a_i|^2',
     label: 'Basis Probability Amplitude',
     description: 'Born probability amplitude for the corresponding basis state',
+    labelKey: 'spatial.amplitude_bar.label',
+    descKey: 'spatial.amplitude_bar.desc',
     hudSection: 'born-probabilities',
   },
 };
