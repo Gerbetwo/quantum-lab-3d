@@ -11,6 +11,14 @@ import { useBlochKeyboard } from '@/hooks/useBlochKeyboard';
 import { readBlochPalette, observeThemeChanges } from '@/lib/3d/blochTheme';
 import { createBlochTargetZoneMesh, isVectorInBlochTarget, type TargetZoneMesh } from '@/lib/3d/TargetZone3D';
 import { calculateThermalJitter, CRYO_MIN_MK } from '@/core/decoherenceMath';
+import {
+  createThermalDistortionShaderMaterial,
+  createDecoherenceParticleSystem,
+  updateThermalDistortionUniforms,
+  updateThermalParticles,
+  calculateDecoherenceVisualMetrics,
+  HOT_DECOHERENCE_COLOR,
+} from './DecoherenceEffects';
 
 export { slerpUnitVectors };
 
@@ -38,23 +46,10 @@ export interface CoreBlochSphereProps {
 }
 
 export function CoreBlochSphere({
-  state = { theta: 0, phi: 0 },
-  className = '',
-  purity = 1,
-  thermalCollapse = 1,
-  temperature = 15,
-  activeGate = null,
-  interactive = true,
-  onStateChange,
-  targetZone = null,
-  onAlignmentChange,
-  showGateRings = false,
-  showMeasurementPlane = false,
-  lastOutcome = null,
-  autoRotate = false,
-  noiseIntensity = 1.0,
-  animationSpeed = 1.0,
-  isPlaying = true,
+  state = { theta: 0, phi: 0 }, className = '', purity = 1, thermalCollapse = 1, temperature = 15,
+  activeGate = null, interactive = true, onStateChange, targetZone = null, onAlignmentChange,
+  showGateRings = false, showMeasurementPlane = false, lastOutcome = null, autoRotate = false,
+  noiseIntensity = 1.0, animationSpeed = 1.0, isPlaying = true,
 }: CoreBlochSphereProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -72,6 +67,11 @@ export function CoreBlochSphere({
   const interactiveObjectsRef = useRef<THREE.Object3D[]>([]);
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const isVectorInteractingRef = useRef(false);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const targetZoneMeshRef = useRef<TargetZoneMesh | null>(null);
+  const ringsGroupRef = useRef<THREE.Group | null>(null);
+  const projectionDiskRef = useRef<THREE.Mesh | null>(null);
+  const triggerArcRef = useRef<((start: THREE.Vector3, target: THREE.Vector3, color?: number) => void) | null>(null);
 
   const onPointerOver = useSpatialTelemetryBridge((s) => s.onPointerOver);
   const clearFocus = useSpatialTelemetryBridge((s) => s.clearFocus);
@@ -108,23 +108,13 @@ export function CoreBlochSphere({
     autoRotateSpeed: 0.005 * (isPlaying ? animationSpeed : 0),
   });
 
-  // State Vector drag hook with magnetic snapping
   const {
-    onPointerDown: onDragPointerDown,
-    onPointerMove: onDragPointerMove,
-    onPointerUp: onDragPointerUp,
-    onPointerCancel: onDragPointerCancel,
-    isDragging,
+    onPointerDown: onDragPointerDown, onPointerMove: onDragPointerMove,
+    onPointerUp: onDragPointerUp, onPointerCancel: onDragPointerCancel, isDragging,
   } = useVectorDrag({
-    camera: cameraRef,
-    center: new THREE.Vector3(0, 0, 0),
-    radius: 1.2,
-    initialTheta: state.theta,
-    initialPhi: state.phi,
-    enabled: interactive,
-    snapEnabled: true,
-    snapThreshold: 0.08,
-    playSnapAudio: true,
+    camera: cameraRef, center: new THREE.Vector3(0, 0, 0), radius: 1.2,
+    initialTheta: state.theta, initialPhi: state.phi, enabled: interactive,
+    snapEnabled: true, snapThreshold: 0.08, playSnapAudio: true,
     onDrag: (coords) => {
       targetStateRef.current = coords;
       onStateChange?.(coords);
@@ -184,21 +174,13 @@ export function CoreBlochSphere({
     [isDragging, onDragPointerMove, orbit, onPointerOver, activeFocusId, clearFocus]
   );
 
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerRelease = useCallback((e: React.PointerEvent<HTMLDivElement>, isCancel = false) => {
     if (isVectorInteractingRef.current || isDragging) {
-      onDragPointerUp(e);
+      if (isCancel) onDragPointerCancel(e); else onDragPointerUp(e);
       isVectorInteractingRef.current = false;
     }
-    orbit.onPointerUp(e);
-  }, [isDragging, onDragPointerUp, orbit]);
-
-  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (isVectorInteractingRef.current || isDragging) {
-      onDragPointerCancel(e);
-      isVectorInteractingRef.current = false;
-    }
-    orbit.onPointerCancel(e);
-  }, [isDragging, onDragPointerCancel, orbit]);
+    if (isCancel) orbit.onPointerCancel(e); else orbit.onPointerUp(e);
+  }, [isDragging, onDragPointerUp, onDragPointerCancel, orbit]);
 
   const handlePointerLeave = useCallback(() => {
     orbit.onPointerLeave();
@@ -206,12 +188,6 @@ export function CoreBlochSphere({
   }, [orbit, clearFocus]);
 
   // Main Three.js Scene Lifecycle (Mounted once)
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const targetZoneMeshRef = useRef<TargetZoneMesh | null>(null);
-  const ringsGroupRef = useRef<THREE.Group | null>(null);
-  const projectionDiskRef = useRef<THREE.Mesh | null>(null);
-  const triggerArcRef = useRef<((start: THREE.Vector3, target: THREE.Vector3, color?: number) => void) | null>(null);
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -234,11 +210,19 @@ export function CoreBlochSphere({
     raycasterRef.current.params.Line = { threshold: 0.12 };
     const initialPalette = readBlochPalette();
 
-    // 1. Sphere wireframe
-    const sphereGeo = new THREE.SphereGeometry(1.2, 24, 16);
-    const sphereMat = new THREE.MeshBasicMaterial({ color: initialPalette.primary, wireframe: true, transparent: true, opacity: initialPalette.wireOpacity });
+    // 1. Sphere wireframe with thermal distortion shader
+    const sphereGeo = new THREE.SphereGeometry(1.2, 28, 20);
+    const sphereMat = createThermalDistortionShaderMaterial({
+      baseColor: initialPalette.primary,
+      hotColor: HOT_DECOHERENCE_COLOR,
+      opacity: initialPalette.wireOpacity,
+    });
     const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
     scene.add(sphereMesh);
+
+    // 1b. Thermal decoherence particle dispersion system
+    const decoherenceParticles = createDecoherenceParticleSystem(180);
+    scene.add(decoherenceParticles.points);
 
     // 2. Equator Ring & 3. Coordinate Axes
     const ringGeo = new THREE.RingGeometry(1.18, 1.22, 64);
@@ -305,12 +289,14 @@ export function CoreBlochSphere({
     interactiveObjectsRef.current = [arrow.line, arrow.cone, ...Object.values(rings)];
 
     // Live theme subscriber
+    let currentPalette = initialPalette;
     const stopThemeObserver = observeThemeChanges((p) => {
-      sphereMat.color.setHex(p.primary); sphereMat.opacity = p.wireOpacity * curCollapse;
+      currentPalette = p;
+      sphereMat.uniforms.uBaseColor.value.setHex(p.primary);
+      sphereMat.uniforms.uOpacity.value = p.wireOpacity * curCollapse;
       ringMat.color.setHex(p.primary); ringMat.opacity = p.ringOpacity * curCollapse;
       axesMat.color.setHex(p.foreground); axesMat.opacity = p.axesOpacity * curCollapse;
       diskMat.color.setHex(p.purple); diskMat.opacity = p.diskOpacity;
-      arrow.setColor(p.primary);
     });
 
     let animId = 0;
@@ -344,16 +330,23 @@ export function CoreBlochSphere({
 
       // Thermal collapse scaling (wireframe, ring, axes)
       sphereMesh.scale.setScalar(curCollapse);
-      sphereMat.opacity = initialPalette.wireOpacity * curCollapse;
+      sphereMat.uniforms.uOpacity.value = currentPalette.wireOpacity * curCollapse;
       ring.scale.setScalar(curCollapse);
-      ringMat.opacity = initialPalette.ringOpacity * curCollapse;
+      ringMat.opacity = currentPalette.ringOpacity * curCollapse;
       axes.scale.setScalar(curCollapse);
-      axesMat.opacity = initialPalette.axesOpacity * curCollapse;
+      axesMat.opacity = currentPalette.axesOpacity * curCollapse;
+
+      // Thermal decoherence animation: mesh vertex distortion, particle dispersion, and red shift
+      const curTemp = targetTemperatureRef.current ?? CRYO_MIN_MK;
+      const decoMetrics = calculateDecoherenceVisualMetrics(curTemp, curPur);
+      const degradation = decoMetrics.normalizedDegradation;
+
+      updateThermalDistortionUniforms(sphereMat, now / 1000, curTemp, curPur, noiseIntensityRef.current ?? 1.0);
+      updateThermalParticles(decoherenceParticles, dt * spd, curTemp, curPur);
 
       // State vector position & length (governed by purity and thermal jitter)
       let finalTh = curTh;
       let finalPh = curPh;
-      const curTemp = targetTemperatureRef.current;
       if (typeof curTemp === 'number' && curTemp > CRYO_MIN_MK) {
         const { dTheta, dPhi } = calculateThermalJitter(curTemp, now, noiseIntensityRef.current ?? 1.0);
         finalTh = Math.max(0.001, Math.min(Math.PI - 0.001, curTh + dTheta));
@@ -363,6 +356,13 @@ export function CoreBlochSphere({
       arrow.setDirection(vec);
       const vecLen = Math.max(0.05, 1.2 * curPur);
       arrow.setLength(vecLen, Math.min(vecLen * 0.25, 0.2), Math.min(vecLen * 0.1, 0.08));
+
+      // Dynamic red hue shift across state vector
+      const lerpedArrowColor = new THREE.Color(currentPalette.primary).lerp(
+        new THREE.Color(HOT_DECOHERENCE_COLOR),
+        degradation
+      );
+      arrow.setColor(lerpedArrowColor.getHex());
       const tipVec = new THREE.Vector3(vecLen * Math.sin(finalTh) * Math.cos(finalPh), vecLen * Math.cos(finalTh), vecLen * Math.sin(finalTh) * Math.sin(finalPh));
       useSpatialTelemetryBridge.getState().setVectorTip(tipVec, { theta: finalTh, phi: finalPh });
 
@@ -419,6 +419,7 @@ export function CoreBlochSphere({
       useSpatialTelemetryBridge.getState().setVectorTip(null, null);
       disposeRings();
       disposeParticles();
+      decoherenceParticles.dispose();
       if (targetZoneMeshRef.current) {
         targetZoneMeshRef.current.dispose();
         scene.remove(targetZoneMeshRef.current.mesh);
@@ -462,22 +463,19 @@ export function CoreBlochSphere({
     }
   }, [targetZone]);
 
-  // Gate transition geodesic particle arc
+  // Geodesic particle arcs for gate rotations and measurement collapse
   useEffect(() => {
-    if (activeGate && activeGate !== prevGateRef.current && triggerArcRef.current) {
+    if (!triggerArcRef.current) return;
+    if (activeGate && activeGate !== prevGateRef.current) {
       triggerArcRef.current(toVector(state.theta, state.phi), toVector(targetStateRef.current.theta, targetStateRef.current.phi));
       prevGateRef.current = activeGate;
     }
-  }, [activeGate, state]);
-
-  // Measurement collapse animation
-  useEffect(() => {
-    if (lastOutcome !== null && lastOutcome !== prevOutcomeRef.current && triggerArcRef.current) {
+    if (lastOutcome !== null && lastOutcome !== prevOutcomeRef.current) {
       const collapseTarget = lastOutcome === 0 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, -1, 0);
       triggerArcRef.current(toVector(targetStateRef.current.theta, targetStateRef.current.phi), collapseTarget, 0xa855f7);
       prevOutcomeRef.current = lastOutcome;
     }
-  }, [lastOutcome]);
+  }, [activeGate, state, lastOutcome]);
 
   return (
     <div
@@ -485,8 +483,8 @@ export function CoreBlochSphere({
       ref={containerRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
+      onPointerUp={(e) => handlePointerRelease(e, false)}
+      onPointerCancel={(e) => handlePointerRelease(e, true)}
       onPointerLeave={handlePointerLeave}
       style={{ touchAction: 'none' }}
       className={`relative w-full h-full min-h-60 select-none pointer-events-auto touch-none cursor-grab active:cursor-grabbing ${className}`.trim()}

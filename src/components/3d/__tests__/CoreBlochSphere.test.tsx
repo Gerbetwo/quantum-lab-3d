@@ -160,4 +160,47 @@ describe('CoreBlochSphere Component', () => {
 
     unmount();
   });
+
+  it('handles dynamic decoherence thermal parameters (temperature, purity, noiseIntensity) and resets gracefully', () => {
+    const { container, rerender, unmount } = render(
+      <CoreBlochSphere
+        state={{ theta: Math.PI / 2, phi: 0 }}
+        temperature={15}
+        purity={1.0}
+        thermalCollapse={1.0}
+        noiseIntensity={1.0}
+      />
+    );
+
+    const initialCanvas = container.querySelector('canvas');
+    expect(initialCanvas).toBeInTheDocument();
+
+    // Trigger high decoherence
+    rerender(
+      <CoreBlochSphere
+        state={{ theta: Math.PI / 2, phi: 0 }}
+        temperature={300}
+        purity={0.4}
+        thermalCollapse={0.1}
+        noiseIntensity={2.0}
+      />
+    );
+
+    // Canvas must remain singleton instance
+    expect(container.querySelector('canvas')).toBe(initialCanvas);
+
+    // Reset to cryo nominal
+    rerender(
+      <CoreBlochSphere
+        state={{ theta: Math.PI / 2, phi: 0 }}
+        temperature={15}
+        purity={1.0}
+        thermalCollapse={1.0}
+        noiseIntensity={1.0}
+      />
+    );
+    expect(container.querySelector('canvas')).toBe(initialCanvas);
+
+    unmount();
+  });
 });
